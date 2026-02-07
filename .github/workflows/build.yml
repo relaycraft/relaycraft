@@ -1,0 +1,126 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
+      - name: Build Frontend
+        run: pnpm build
+
+  build-tauri:
+    needs: build-frontend
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            target: 'aarch64-apple-darwin' # Apple Silicon
+          - platform: 'ubuntu-22.04'
+            args: ''
+            target: 'x86_64-unknown-linux-gnu'
+          - platform: 'windows-latest'
+            args: ''
+            target: 'x86_64-pc-windows-msvc'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install -r engine-core/requirements.txt
+
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      # --- Python Sidecar Build ---
+      - name: Build Python Sidecar
+        run: |
+          python engine-core/build.py
+
+      - name: Prepare Sidecar (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri/binaries
+          Move-Item dist/mitmdump.exe src-tauri/binaries/engine-${{ matrix.target }}.exe
+          ls src-tauri/binaries
+
+      - name: Prepare Sidecar (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          mkdir -p src-tauri/binaries
+          mv dist/mitmdump src-tauri/binaries/engine-${{ matrix.target }}
+          chmod +x src-tauri/binaries/engine-${{ matrix.target }}
+          ls -l src-tauri/binaries
+
+      - name: Prepare Sidecar (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          mkdir -p src-tauri/resources/engine
+          # macOS build.py output is 'onedir' in dist/mitmdump (folder)
+          cp -r dist/mitmdump/* src-tauri/resources/engine/
+          ls -R src-tauri/resources/engine
+
+      # --- Tauri Build ---
+      - name: Tauri Build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'RelayCraft v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

@@ -1,0 +1,9 @@
+{
+    "identifier": "com.beta.relaycraft",
+    "bundle": {
+        "resources": [
+            "resources/addons",
+            "resources/engine/**/*"
+        ]
+    }
+}

@@ -1,0 +1,496 @@
+import React from 'react';
+import { Button } from '../common/Button';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { AISettingsPanel } from '../ai/AISettingsPanel';
+import { LogViewer } from '../traffic/LogViewer';
+import {
+    SettingsPage,
+    SettingsSection,
+    SettingsRow,
+    SettingsToggle,
+    SettingsInput,
+    SettingsSelect,
+    SettingsTabButton
+} from './SettingsLayout';
+import { invoke } from '@tauri-apps/api/core';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { useUIStore } from '../../stores/uiStore';
+import {
+    Shield,
+    Info,
+    Settings as SettingsIcon,
+    Palette,
+    Globe,
+    Package as PackageIcon,
+    Sparkles,
+    AlertTriangle,
+    CheckCircle2,
+    XCircle,
+    RefreshCcw,
+    FolderOpen,
+    Github
+} from 'lucide-react';
+import { CertificateSettings } from './CertificateSettings';
+import { AppearanceSettings } from './AppearanceSettings';
+import { PluginSettings } from './PluginSettings';
+import { MarketView } from './MarketView';
+import { AppLogo } from '../layout/AppLogo';
+
+export function SettingsView() {
+    const { t } = useTranslation();
+    const { availableLanguages, settingsTab, setSettingsTab } = useUIStore();
+    const {
+        config,
+        updateProxyPort,
+        updateSslInsecure,
+        updateVerboseLogging,
+        updateLanguage,
+        updateUpstreamProxy,
+        updateAlwaysOnTop,
+        updateConfirmExit,
+        updateAutoStartProxy,
+        testingUpstream,
+        upstreamStatus,
+        testUpstreamConnectivity,
+        resetUpstreamStatus,
+        updateMaxTrafficEntries
+    } = useSettingsStore();
+
+    const [showLogViewer, setShowLogViewer] = React.useState(false);
+    const [systemInfo, setSystemInfo] = React.useState<{ version: string; platform: string; arch: string; engine: string } | null>(null);
+
+    React.useEffect(() => {
+        invoke('get_system_info').then((info: any) => setSystemInfo(info)).catch(console.error);
+    }, []);
+
+    const sidebar = (
+        <>
+            <SettingsTabButton
+                label={t('settings.general.title')}
+                icon={SettingsIcon}
+                active={settingsTab === 'general'}
+                onClick={() => setSettingsTab('general')}
+            />
+            <SettingsTabButton
+                label={t('settings.appearance.title')}
+                icon={Palette}
+                active={settingsTab === 'appearance'}
+                onClick={() => setSettingsTab('appearance')}
+            />
+            <SettingsTabButton
+                label={t('settings.network.title')}
+                icon={Globe}
+                active={settingsTab === 'network'}
+                onClick={() => setSettingsTab('network')}
+            />
+            <SettingsTabButton
+                label={t('ai.title')}
+                icon={Sparkles}
+                active={settingsTab === 'ai'}
+                onClick={() => setSettingsTab('ai')}
+            />
+            <SettingsTabButton
+                label={t('plugins.title')}
+                icon={PackageIcon}
+                active={settingsTab === 'plugins'}
+                onClick={() => setSettingsTab('plugins')}
+            />
+            <SettingsTabButton
+                label={t('sidebar.certificate')}
+                icon={Shield}
+                active={settingsTab === 'certificate'}
+                onClick={() => setSettingsTab('certificate')}
+            />
+            <SettingsTabButton
+                label={t('settings.about.title')}
+                icon={Info}
+                active={settingsTab === 'about'}
+                onClick={() => setSettingsTab('about')}
+            />
+        </>
+    );
+
+    return (
+        <SettingsPage sidebar={sidebar}>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={settingsTab}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.15 }}
+                >
+                    {settingsTab === 'general' && (
+                        <SettingsSection title={t('settings.general.title')}>
+                            <SettingsRow
+                                title={t('settings.general.language')}
+                                description={t('settings.general.language_desc')}
+                            >
+                                <SettingsSelect
+                                    value={config.language || 'zh'}
+                                    onChange={(val) => updateLanguage(val)}
+                                    options={availableLanguages}
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.general.always_on_top')}
+                                description={t('settings.general.always_on_top_desc')}
+                            >
+                                <SettingsToggle
+                                    checked={config.always_on_top || false}
+                                    onCheckedChange={(val) => updateAlwaysOnTop(val)}
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.general.confirm_exit')}
+                                description={t('settings.general.confirm_exit_desc')}
+                            >
+                                <SettingsToggle
+                                    checked={config.confirm_exit}
+                                    onCheckedChange={(val) => updateConfirmExit(val)}
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.general.auto_start_proxy')}
+                                description={t('settings.general.auto_start_proxy_desc')}
+                            >
+                                <SettingsToggle
+                                    checked={config.auto_start_proxy}
+                                    onCheckedChange={(val) => updateAutoStartProxy(val)}
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.general.max_traffic')}
+                                description={t('settings.general.max_traffic_desc')}
+                            >
+                                <SettingsInput
+                                    value={config.max_traffic_entries || 10000}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (/^\d*$/.test(val)) updateMaxTrafficEntries(val === '' ? 0 : parseInt(val));
+                                    }}
+                                    onBlur={(e) => {
+                                        let val = parseInt(e.target.value);
+                                        if (isNaN(val)) val = 10000;
+                                        // Allow 0 (unlimited)
+                                        if (val !== 0) {
+                                            val = Math.max(100, Math.min(100000, val));
+                                        }
+                                        updateMaxTrafficEntries(val);
+                                    }}
+                                    className="w-24"
+                                />
+                            </SettingsRow>
+                        </SettingsSection>
+                    )}
+
+                    {settingsTab === 'appearance' && <AppearanceSettings />}
+
+                    {settingsTab === 'network' && (
+                        <SettingsSection title={t('settings.network.title')}>
+                            <SettingsRow
+                                title={t('settings.network.port')}
+                                description={t('settings.network.port_desc')}
+                            >
+                                <SettingsInput
+                                    value={config.proxy_port}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (/^\d*$/.test(val)) updateProxyPort(val === '' ? 0 : parseInt(val));
+                                    }}
+                                    onBlur={(e) => {
+                                        let port = parseInt(e.target.value) || 9090;
+                                        port = Math.max(1024, Math.min(65535, port));
+                                        updateProxyPort(port);
+                                    }}
+                                    className="w-24"
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.network.ssl_insecure')}
+                                description={
+                                    <span className="flex flex-col gap-1">
+                                        <span>{t('settings.network.ssl_insecure_desc')}</span>
+                                        {config.ssl_insecure && (
+                                            <span className="text-destructive inline-flex items-center gap-1 font-medium scale-90 origin-left">
+                                                <AlertTriangle className="w-3 h-3" /> {t('settings.network.mitm_risk')}
+                                            </span>
+                                        )}
+                                    </span>
+                                }
+                                danger={config.ssl_insecure}
+                            >
+                                <SettingsToggle
+                                    checked={config.ssl_insecure || false}
+                                    onCheckedChange={(val) => updateSslInsecure(val)}
+                                />
+                            </SettingsRow>
+
+                            <SettingsRow
+                                title={t('settings.network.upstream_title')}
+                                description={t('settings.network.upstream_desc')}
+                            >
+                                <SettingsToggle
+                                    checked={config.upstream_proxy?.enabled || false}
+                                    onCheckedChange={(val) => {
+                                        updateUpstreamProxy({
+                                            ...config.upstream_proxy!,
+                                            enabled: val
+                                        });
+                                    }}
+                                />
+                            </SettingsRow>
+
+                            {config.upstream_proxy?.enabled && (
+                                <div>
+                                    <SettingsRow
+                                        title={t('settings.network.upstream_url')}
+                                        description={t('settings.network.upstream_url_desc')}
+                                    >
+                                        <div className="flex flex-col items-end gap-2">
+                                            <SettingsInput
+                                                value={config.upstream_proxy?.url || ''}
+                                                onChange={(e) => {
+                                                    updateUpstreamProxy({
+                                                        ...config.upstream_proxy!,
+                                                        url: e.target.value
+                                                    });
+                                                    // Reset status when URL changes
+                                                    resetUpstreamStatus();
+                                                }}
+                                                placeholder={t('settings.network.upstream_placeholder')}
+                                                className="w-64"
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                {/* Connectivity Status Badge */}
+                                                {upstreamStatus !== 'idle' && (
+                                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium ${upstreamStatus === 'success'
+                                                        ? 'text-green-600 bg-green-500/10'
+                                                        : 'text-destructive bg-destructive/10'
+                                                        }`}>
+                                                        {upstreamStatus === 'success' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                                                        {upstreamStatus === 'success'
+                                                            ? t('settings.network.upstream_check_success')
+                                                            : t('settings.network.upstream_check_failed')
+                                                        }
+                                                    </div>
+                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="xs"
+                                                    className="text-[10px] h-7 px-2 gap-1.5"
+                                                    onClick={testUpstreamConnectivity}
+                                                    disabled={testingUpstream || !config.upstream_proxy?.url}
+                                                >
+                                                    {testingUpstream ? (
+                                                        <RefreshCcw className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        <RefreshCcw className="w-3 h-3" />
+                                                    )}
+                                                    {testingUpstream
+                                                        ? t('settings.network.upstream_checking')
+                                                        : t('settings.network.upstream_check')}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </SettingsRow>
+                                </div>
+                            )}
+
+                            <div className="bg-muted/10 p-3 text-[11px] text-muted-foreground/60 text-center border-t border-border/40">
+                                {t('settings.network.restart_hint')}
+                            </div>
+                        </SettingsSection>
+                    )}
+
+                    {settingsTab === 'ai' && <AISettingsPanel />}
+
+                    {settingsTab === 'plugins' && <PluginSettings />}
+
+                    {settingsTab === 'certificate' && <CertificateSettings />}
+
+                    {settingsTab === 'about' && (
+                        <div className="space-y-6">
+                            {/* Branding Section */}
+                            <div className="flex flex-col items-center justify-center py-5 bg-muted/20 rounded-xl border border-border/40">
+                                <AppLogo size={64} className="mb-4" />
+                                <h2 className="text-xl font-semibold text-foreground">RelayCraft</h2>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Version {systemInfo?.version}
+                                </p>
+                            </div>
+
+                            <SettingsSection title={t('settings.about.title')}>
+                                <div className="px-4 py-3 flex items-center justify-between">
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="text-system font-medium text-foreground">RelayCraft v{systemInfo?.version}</span>
+                                        <span className="text-[11px] text-muted-foreground">
+                                            {t('settings.about.checking_updates')}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={async () => {
+                                            const btn = document.getElementById('btn-check-update');
+                                            if (btn) {
+                                                const originalText = btn.innerText;
+                                                btn.innerText = t('settings.about.checking');
+                                                btn.setAttribute('disabled', 'true');
+
+                                                try {
+                                                    const { check } = await import('@tauri-apps/plugin-updater');
+                                                    const { ask } = await import('@tauri-apps/plugin-dialog');
+                                                    const { relaunch } = await import('@tauri-apps/plugin-process');
+
+                                                    const update = await check();
+                                                    if (update) {
+                                                        const yes = await ask(`New version ${update.version} is available!\n\n${update.body || ''}\n\nDo you want to update now?`, {
+                                                            title: 'Update Available',
+                                                            kind: 'info'
+                                                        });
+
+                                                        if (yes) {
+                                                            btn.innerText = "Downloading...";
+                                                            await update.downloadAndInstall();
+                                                            await relaunch();
+                                                        } else {
+                                                            btn.innerText = originalText;
+                                                            btn.removeAttribute('disabled');
+                                                        }
+                                                    } else {
+                                                        btn.innerText = t('settings.about.up_to_date');
+                                                        setTimeout(() => {
+                                                            btn.innerText = originalText;
+                                                            btn.removeAttribute('disabled');
+                                                        }, 2000);
+                                                    }
+                                                } catch (e) {
+                                                    console.error("Update check failed:", e);
+                                                    const { notify } = await import('../../lib/notify');
+                                                    notify.error(t('settings.about.error_fetch'));
+                                                    btn.innerText = t('settings.about.check_failed');
+                                                    setTimeout(() => {
+                                                        btn.innerText = originalText;
+                                                        btn.removeAttribute('disabled');
+                                                    }, 2000);
+                                                }
+                                            }
+                                        }}
+                                        id="btn-check-update"
+                                        className="text-xs h-8 px-3"
+                                    >
+                                        {t('settings.about.check_update_btn')}
+                                    </Button>
+                                </div>
+                            </SettingsSection>
+
+                            <SettingsSection title={t('settings.about.troubleshooting')}>
+                                <SettingsRow
+                                    title={t('settings.about.verbose')}
+                                    description={t('settings.about.verbose_desc')}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowLogViewer(true)}
+                                            className="text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+                                        >
+                                            {t('settings.about.view_logs')}
+                                        </Button>
+                                        <SettingsToggle
+                                            checked={config.verbose_logging || false}
+                                            onCheckedChange={(val) => updateVerboseLogging(val)}
+                                        />
+                                    </div>
+                                </SettingsRow>
+                            </SettingsSection>
+
+                            <SettingsSection title={t('settings.about.dev_tools')}>
+                                <SettingsRow
+                                    title={t('settings.about.open_config')}
+                                    description={t('settings.about.open_config_desc')}
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-2 text-xs font-medium"
+                                        onClick={() => invoke('open_config_dir').catch(console.error)}
+                                    >
+                                        <FolderOpen className="w-3.5 h-3.5" />
+                                        {t('common.open')}
+                                    </Button>
+                                </SettingsRow>
+                                <SettingsRow
+                                    title={t('settings.about.open_logs')}
+                                    description={t('settings.about.open_logs_desc')}
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-2 text-xs font-medium"
+                                        onClick={() => invoke('open_logs_dir').catch(console.error)}
+                                    >
+                                        <FolderOpen className="w-3.5 h-3.5" />
+                                        {t('common.open')}
+                                    </Button>
+                                </SettingsRow>
+                            </SettingsSection>
+
+                            <SettingsSection title={t('settings.about.links')}>
+                                <SettingsRow title={t('settings.about.github')} description={t('settings.about.github_desc')}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                                        onClick={async () => {
+                                            const { openUrl } = await import('@tauri-apps/plugin-opener');
+                                            openUrl('https://github.com/relaycraft/relaycraft').catch(console.error);
+                                        }}
+                                    >
+                                        <Github className="w-3.5 h-3.5" />
+                                        {t('settings.about.visit_github')}
+                                    </Button>
+                                </SettingsRow>
+                                <SettingsRow title={t('settings.about.homepage')} description={t('settings.about.homepage_desc')}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                                        onClick={async () => {
+                                            const { openUrl } = await import('@tauri-apps/plugin-opener');
+                                            openUrl('https://www.relaycraft.dev').catch(console.error);
+                                        }}
+                                    >
+                                        <Globe className="w-3.5 h-3.5" />
+                                        {t('settings.about.visit_website')}
+                                    </Button>
+                                </SettingsRow>
+                            </SettingsSection>
+                        </div>
+                    )}
+
+                    <div className="text-center pt-8 pb-8">
+                        <p className="text-xs text-muted-foreground/25 tracking-tight font-medium">
+                            {systemInfo
+                                ? `RelayCraft v${systemInfo.version} · ${systemInfo.platform} ${systemInfo.arch} · Relay Engine: ${systemInfo.engine}`
+                                : t('settings.footer')
+                            }
+                        </p>
+                    </div>
+                </motion.div>
+            </AnimatePresence>
+
+            {/* Modals */}
+            {showLogViewer && <LogViewer onClose={() => setShowLogViewer(false)} />}
+            <MarketView />
+        </SettingsPage >
+    );
+}

@@ -1,0 +1,1141 @@
+{
+    "sidebar": {
+        "traffic": "Traffic Monitor",
+        "composer": "Request Composer",
+        "rules": "Rules",
+        "scripts": "Scripts",
+        "plugins": "Plugins",
+        "certificate": "Certificates",
+        "settings": "Settings",
+        "themes": "Themes"
+    },
+    "command_center": {
+        "placeholder": {
+            "ai": "Enter instructions or describe task...",
+            "default": "Enter command (e.g. /start) or search...",
+            "editing_rule": "Editing current rule, enter command to adjust..."
+        },
+        "suggestions": {
+            "scenario": "Scenario Suggestions",
+            "common": "Common Commands",
+            "nav_traffic": "/traffic (Go to Traffic)",
+            "nav_rules": "/rules (Go to Rules)",
+            "nav_scripts": "/scripts (Go to Scripts)",
+            "nav_composer": "/composer (Request Composer)",
+            "nav_plugins": "/plugins (Plugins Market)",
+            "proxy_stop": "/stop (Stop Proxy)",
+            "proxy_start": "/start (Start Proxy)",
+            "clear": "/clear (Clear Traffic)",
+            "settings": "/settings (Open Settings)",
+            "go_to": "Go to",
+            "ai_composer_gen": "AI Generate Request",
+            "ai_composer_upload": "AI Build from Document",
+            "ai_explain_rule": "Explain this rule",
+            "rule_conflict": "Check for rule conflicts",
+            "rule_block_example": "Block all requests from target domain",
+            "traffic_analyze": "Analyze this {{method}} request",
+            "traffic_mock": "Create mock response for this request",
+            "traffic_security": "Analyze security risks",
+            "traffic_tunneled": "Show tunneled connections",
+            "traffic_trends": "Analyze traffic trends",
+            "traffic_anomalies": "Find anomalies or failed requests",
+            "script_auth_example": "Auto add authorization token for target domain",
+            "script_login_example": "Intercept login requests for target domain",
+            "composer_post_example": "Construct a POST request to target server"
+        },
+        "loading": {
+            "ai": "AI analyzing intent...",
+            "default": "Processing command..."
+        },
+        "not_enabled_warning": "> [!WARNING]\n> **AI Disabled**. Enable AI for natural language. Use commands starting with `/` (e.g. `/start`, `/clear`).",
+        "selected_flow": "Selected Flow",
+        "confirm_required": "Confirmation Required",
+        "confirm_action": "Confirm Action",
+        "default_explanation": "This action requires your confirmation to proceed.",
+        "execute_confirm": "Confirm Execution",
+        "ready_to_exec": "Ready to execute {{action}}",
+        "actions": {
+            "navigate": "Navigate",
+            "create_rule": "Create Rule",
+            "create_script": "Create Script",
+            "open_settings": "Settings",
+            "clear_traffic": "Clear Traffic",
+            "toggle_proxy": "Toggle Proxy",
+            "chat": "AI Chat"
+        },
+        "explanations": {
+            "clear": "Clearing traffic list...",
+            "start": "Starting proxy engine...",
+            "stop": "Stopping proxy engine...",
+            "nav_rules": "Navigating to Rules...",
+            "nav_scripts": "Navigating to Scripts...",
+            "nav_settings": "Navigating to Settings...",
+            "nav_traffic": "Navigating to Traffic Monitor...",
+            "nav_composer": "Navigating to Request Composer...",
+            "nav_plugins": "Navigating to Plugin Market..."
+        },
+        "status": {
+            "local_ready": "Local Engine Ready",
+            "ai_ready": "AI Engine Ready",
+            "editing": "Editing Mode"
+        }
+    },
+    "composer": {
+        "title": "Request Composer",
+        "reset": "Reset Form",
+        "method": "Method",
+        "url": "URL",
+        "send": "Send",
+        "sending": "Sending...",
+        "body": "Body",
+        "body_type": "Body Type",
+        "headers": "Headers",
+        "response": "Response",
+        "no_content": "No Content",
+        "url_placeholder": "Enter request URL...",
+        "parse_curl_tooltip": "Parse from cURL",
+        "response_body": "Body Content",
+        "body_none": "This request has no body content",
+        "send_desc": "No request sent",
+        "request_failed": "Request Failed",
+        "url_builder_error": "Builder error for URL ({{url}})",
+        "error_sending_request": "Error sending request for URL ({{url}})",
+        "generic_builder_error": "Request build failed, please check URL format",
+        "clear_error": "Clear Error",
+        "curl_modal": {
+            "title": "Parse from cURL",
+            "desc": "Paste the complete cURL command below to extract URL, headers, and body.",
+            "placeholder": "curl 'https://api.service.com/v1/resource' -H 'Accept: */*' ...",
+            "parse_btn": "Parse",
+            "error_empty": "Please enter a cURL command",
+            "error_format": "Could not parse command, please ensure it is standard curl format"
+        },
+        "form_editor": {
+            "title": "Form Data (x-www-form-urlencoded)",
+            "add_param": "Add Parameter",
+            "key": "Key",
+            "value": "Value",
+            "empty": "No parameters defined"
+        }
+    },
+    "rules": {
+        "new": "New Rule",
+        "search_placeholder": "Search rules...",
+        "add_group": "Add New Group",
+        "new_group_name": "New Rule Group",
+        "uncategorized": "Uncategorized Rules",
+        "empty": {
+            "title": "No Rules or Groups",
+            "desc": "Use 'New Rule' in the title bar or the button below to create a group.",
+            "create_first_group": "Create First Group",
+            "group_empty": "No rules in this group"
+        },
+        "conflict": {
+            "shadowed": "Rule Shadowed",
+            "shadowed_desc": "The terminal rule \"{{name}}\" above captures this traffic, so this rule will not execute. Try moving it up.",
+            "overridden": "Overridden"
+        },
+        "match_all": "Match All Requests",
+        "summary": {
+            "map_local": "Map Local: {{path}}",
+            "map_remote": "Redirect to: {{url}}",
+            "rewrite_body": "Rewrite {{target}} body: {{type}}",
+            "rewrite_header": "Modify {{req}} req / {{res}} res headers",
+            "throttle": "Throttle: {{delay}}ms",
+            "block": "Blocked",
+            "manual_mock": "Manual Mock",
+            "types": {
+                "replace": "Replace",
+                "regex": "Regex",
+                "json": "JSON",
+                "set": "Set",
+                "request": "Request",
+                "response": "Response"
+            }
+        },
+        "alerts": {
+            "discard_title": "Discard Changes?",
+            "discard_msg": "You have unsaved changes. Switching rules will lose these changes. Continue?",
+            "discard_close_msg": "Unsaved changes detected. Are you sure you want to discard and close?",
+            "delete_title": "Delete Rule",
+            "delete_msg": "Are you sure you want to delete this rule? This action cannot be undone.",
+            "load_error_title": "Corrupted Rules Detected",
+            "load_error_msg": "Some rule files on disk could not be parsed and were skipped. Please fix them manually."
+        },
+        "validation": {
+            "empty": "Rule object is empty",
+            "missing_name": "Missing or invalid 'name'",
+            "invalid_type": "Invalid or missing 'type'. Must be one of: {{types}}",
+            "missing_match": "Missing or invalid 'match' configuration",
+            "match_request_array": "'match.request' must be an array",
+            "actions_array": "'actions' must be an array",
+            "min_actions": "Rule must have at least one action"
+        },
+        "export_all": "Export All Rules",
+        "export_zip_success": "Rules exported to {{path}}",
+        "import_zip_success": "Successfully imported {{count}} rules",
+        "import_zip_extracting": "Extracting...",
+        "export_description": "Export as ZIP file, preserving directory structure"
+    },
+    "scripts": {
+        "title": "Python Scripting",
+        "subtitle": "Powered by mitmproxy. Use Python scripts for advanced control and workflow automation.",
+        "new": "New Script",
+        "save_script": "Save Script",
+        "search_placeholder": "script_name.py",
+        "empty": {
+            "title": "No Scripts",
+            "desc": "Create a Python script to intercept and modify traffic.",
+            "create": "Create Script"
+        },
+        "delete_title": "Delete Script",
+        "delete_confirm": "Are you sure you want to delete script \"{{name}}\"? This will permanently delete the file from disk.",
+        "select_title": "Select Script",
+        "select_desc": "Select a script from the list to edit, or create a new one.",
+        "restart_hint": "Changes require proxy restart to take effect",
+        "restart_btn": "Restart Now",
+        "create_script": "New Script"
+    },
+    "cert": {
+        "mode": {
+            "auto": "Auto Install",
+            "manual": "Manual Guide"
+        },
+        "ca_name": "RelayCraft Root Certificate",
+        "status": {
+            "trusted": "This computer trusts the root certificate.",
+            "untrusted": "System does not trust this certificate. HTTPS cannot be decrypted."
+        },
+        "state": {
+            "trusted_desc": "RelayCraft Root CA is trusted by your system. No further action is required.",
+            "untrusted_desc": "Install the root certificate to intercept and analyze HTTPS traffic securely."
+        },
+        "info": {
+            "expires": "Expires",
+            "fingerprint": "Fingerprint (SHA256)"
+        },
+        "actions": {
+            "install": "Install & Trust Certificate",
+            "remove": "Remove Trust from System",
+            "regenerate": "Regenerate Root CA"
+        },
+        "storage": {
+            "title": "Certificate Storage",
+            "desc": "Root certificate is stored in your home directory. You can export it to other devices.",
+            "open": "Open Storage Directory"
+        },
+        "auto": {
+            "title": "Smart Auto Install",
+            "desc": "Click the \"Install & Trust Certificate\" button on the left. RelayCraft will attempt to configure local trust store automatically.",
+            "desktop": "Desktop",
+            "desktop_desc": "Supports automatic injection for Windows (CertUtil) and macOS (Keychain).",
+            "mobile": "Mobile",
+            "mobile_desc": "Mobile devices require manual configuration using the guide on the right.",
+            "admin_hint": "Auto install requires administrator privileges to modify system trust store"
+        },
+        "manual": {
+            "tabs": {
+                "desktop": "Desktop (PC)",
+                "mobile": "Mobile (iOS/Android)"
+            },
+            "desktop": {
+                "windows": "Windows",
+                "macos": "macOS",
+                "linux": "Linux"
+            },
+            "guides": {
+                "title": "Installation Guides",
+                "windows": [
+                    "Click <strong>Open Storage Directory</strong> on the left",
+                    "Double click <code class=\"bg-muted px-1.5 py-0.5 rounded text-xs font-mono border border-border\">mitmproxy-ca-cert.pem</code>",
+                    "In Import Wizard, select [Current User] → [Next], leave password empty",
+                    "Select <strong>[Place all certificates in the following store]</strong>",
+                    "Click [Browse] and select <strong>[Trusted Root Certification Authorities]</strong> → [OK]",
+                    "Finish import and click [Yes] in security warning"
+                ],
+                "macos_sequoia_hint": {
+                    "title": "macOS 15 (Sequoia) Automation Limit",
+                    "desc": "Due to system restrictions, auto-install may fail on Sequoia. We recommend using the <strong>Terminal Command</strong> below."
+                },
+                "macos": [
+                    "Click <strong>Install & Trust Certificate</strong> on the left to open certificate preview",
+                    "In Keychain Access, double click RelayCraft certificate",
+                    "Expand [Trust] dropdown, set [When using this certificate] to [Always Trust]",
+                    "Close window and enter system password"
+                ],
+                "terminal_hint": "Faster Way: Terminal One-Click Trust",
+                "terminal_copy": "Copy Command",
+                "terminal_desc": "Paste into terminal, enter password and press Enter.",
+                "linux_title": "Linux Certificate Installation Guide",
+                "linux": {
+                    "debian": "Ubuntu / Debian / Kali",
+                    "fedora": "Fedora / CentOS / RHEL",
+                    "arch": "Arch Linux / Manjaro",
+                    "debian_cmd": "sudo cp \"{{path}}\" /usr/local/share/ca-certificates/RelayCraft_CA.crt && sudo update-ca-certificates",
+                    "fedora_cmd": "sudo cp \"{{path}}\" /etc/pki/ca-trust/source/anchors/RelayCraft_CA.crt && sudo update-ca-trust",
+                    "arch_cmd": "sudo trust anchor \"{{path}}\""
+                },
+                "mobile": {
+                    "step1": "Step 1: Get Certificate",
+                    "step1_desc": "Ensure mobile device is on the same LAN and proxy is configured.",
+                    "wifi_config": "1. Configure Wi-Fi Proxy",
+                    "browser_access": "2. Browser Access (or Scan) Link",
+                    "step2": "Step 2: Install & Trust",
+                    "manual_transfer_tip": "Tip: If connection fails, send the certificate file from computer to phone directly (most reliable).",
+                    "android_hint": "Note: Modern Android systems have strict built-in security policies; Root access or specialized debugging configurations may be required for traffic decryption.",
+                    "qr_code_hint": "Scan to open download link",
+                    "troubleshooting": {
+                        "title": "Still can't capture?",
+                        "ios_trust": "iOS MUST enable full trust in [About] → [Certificate Trust Settings].",
+                        "app_pinning": "Some apps (banking, enterprise) use SSL Pinning and cannot be easily decrypted."
+                    }
+                },
+                "ios": [
+                    "Go to [Settings] → [Profile Downloaded] and install",
+                    "Go to [Settings] → [General] → [About]",
+                    "Scroll to bottom and click [Certificate Trust Settings] (Crucial)",
+                    "Enable full trust for [RelayCraft] certificate (Required)"
+                ],
+                "android": [
+                    "Go to [Settings] → [Security/Encryption & Credentials]",
+                    "Click [Install Certificate] → [CA Certificate]",
+                    "Select the downloaded file and confirm installation"
+                ]
+            }
+        }
+    },
+    "plugins": {
+        "title": "Plugins",
+        "market_title": "Extension Market",
+        "install_local": "Install from File",
+        "redesign": {
+            "permissions": "Permissions",
+            "author": "Author",
+            "version": "Version",
+            "homepage": "Homepage",
+            "uninstall": "Uninstall"
+        },
+        "scanning": "Scanning plugins...",
+        "empty": {
+            "title": "No Plugins Found",
+            "desc": "Place plugins in the 'plugins' folder in data directory",
+            "rescan": "Rescan"
+        },
+        "market": {
+            "title_plugin": "Plugin Manager",
+            "title_theme": "Theme Market",
+            "sync": "Sync Market",
+            "install": "Install",
+            "installed": "Installed",
+            "loading": "Fetching market data...",
+            "empty_tip": "No matching plugins or themes found",
+            "type_all": "All",
+            "type_plugin": "Plugin",
+            "type_theme": "Theme",
+            "no_preview": "No Preview"
+        },
+        "market_desc": "Discover and install community plugins to extend RelayCraft capabilities.",
+        "market_desc_theme": "Discover and install community themes to customize RelayCraft appearance.",
+        "search_placeholder": "Search market...",
+        "search_placeholder_plugin": "Search plugins...",
+        "search_placeholder_theme": "Search themes...",
+        "import_theme": "Import Theme",
+        "browse_market": "Browse Market",
+        "installing": "Installing...",
+        "uninstall": "Uninstall",
+        "confirm_uninstall": "Are you sure you want to uninstall this plugin?",
+        "enable": "Enable",
+        "disable": "Disable",
+        "running": "Running",
+        "restart_required": "Restart Required",
+        "guide": {
+            "title": "Plugin Management",
+            "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy</span> in the title bar."
+        },
+        "no_description": "No description",
+        "notifications": {
+            "load_failed_title": "Plugin Load Failed",
+            "load_failed_msg": "Could not fetch plugin list: {{error}}",
+            "enabled_title": "Plugin Enabled",
+            "disabled_title": "Plugin Disabled",
+            "enabled_msg": "Plugin \"{{name}}\" has been successfully enabled.",
+            "disabled_msg": "Plugin \"{{name}}\" has been disabled.",
+            "toggle_failed_title": "Plugin Operation Failed",
+            "toggle_failed_msg": "Could not {{action}} plugin \"{{id}}\". Error: {{error}}",
+            "install_success_title": "Installation Successful",
+            "install_success_msg": "Plugin \"{{id}}\" has been successfully installed and enabled.",
+            "uninstall_success_title": "Plugin Uninstalled",
+            "uninstall_success_msg": "Plugin \"{{name}}\" has been successfully uninstalled.",
+            "uninstall_failed_title": "Uninstall Failed",
+            "uninstall_failed_msg": "Could not uninstall plugin \"{{id}}\".\n\nError: {{error}}"
+        },
+        "errors": {
+            "install_failed": "Installation Failed",
+            "download_failed": "Download Failed",
+            "timeout": "Request Timeout",
+            "not_found": "Plugin Not Found",
+            "generic": "Error: {{error}}",
+            "help_text": "Please check your network connection or try again later.",
+            "invalid_format_title": "Invalid Plugin Format",
+            "invalid_format_msg": "plugin.json format is incorrect or contains syntax errors. Please check the plugin package integrity.\n\nDetails: {{error}}",
+            "invalid_pkg_msg": "plugin.json contains trailing characters or format errors. This may not be a valid RelayCraft plugin package.\n\nTip: Ensure you selected a .rcplugin or .zip file containing a valid plugin.json.",
+            "file_not_found_title": "File Not Found",
+            "file_not_found_msg": "Could not find or access the selected file. Please verify the file path.",
+            "permission_denied_title": "Permission Denied",
+            "permission_denied_msg": "Cannot access the file. Please check file permissions.",
+            "already_exists_title": "Plugin Already Exists",
+            "already_exists_msg": "This plugin is already installed. To reinstall, please uninstall the existing version first."
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "general": {
+            "title": "General",
+            "language": "Language",
+            "language_desc": "Select language for RelayCraft",
+            "always_on_top": "Always on Top",
+            "always_on_top_desc": "Keep window above other windows",
+            "auto_check_update": "Auto-check Updates",
+            "auto_check_update_desc": "Automatically check for app and plugin updates on startup",
+            "confirm_exit": "Confirm on Exit",
+            "confirm_exit_desc": "Show a confirmation dialog when closing the app to prevent accidental disruption",
+            "auto_start_proxy": "Auto Start Proxy",
+            "auto_start_proxy_desc": "Automatically start system proxy and capture service on launch.",
+            "max_traffic": "Max Traffic Entries",
+            "max_traffic_desc": "Max requests to keep. Set to 0 for unlimited (watch memory usage)."
+        },
+        "appearance": {
+            "title": "Appearance",
+            "theme": "Color Theme",
+            "theme_desc": "Select or browse new visual themes",
+            "mode_light": "Light Mode",
+            "mode_dark": "Dark Mode",
+            "mode_system": "System Sync",
+            "mode_custom": "Custom Theme",
+            "active": "Active",
+            "apply": "Apply",
+            "import_zip": "Import Theme",
+            "market_btn": "Browse Market",
+            "theme_modern_charcoal": "Modern Charcoal",
+            "theme_nebula_white": "Nebula White",
+            "discover_themes_desc": "Browse our growing collection of themes to personalize your experience.",
+            "discover_themes_title": "Discover Community Themes",
+            "density": "Information Density",
+            "density_desc": "Adjust spacing for traffic list and sidebars",
+            "density_compact": "Compact",
+            "density_comfortable": "Comfortable",
+            "density_relaxed": "Relaxed",
+            "exit_confirm_title": "Confirm Exit",
+            "exit_confirm_message": "Are you sure you want to exit RelayCraft?\nThe proxy service will be stopped."
+        },
+        "network": {
+            "title": "Network & Proxy",
+            "port": "Proxy Port",
+            "port_desc": "Proxy Server Port (1024-65535)",
+            "ssl_insecure": "Ignore SSL Certificate Validation",
+            "ssl_insecure_desc": "For intranet or self-signed certificate environments",
+            "mitm_risk": "Risk of Man-in-the-Middle Attack",
+            "upstream_title": "Upstream Proxy",
+            "upstream_desc": "In some networks, RelayCraft needs an upstream proxy to reach the internet (e.g., for Plugin Market or AI services).",
+            "upstream_enabled": "Enable Upstream Proxy",
+            "upstream_url": "Proxy URL",
+            "upstream_url_desc": "Supports HTTP/HTTPS protocols, e.g., http://127.0.0.1:7890",
+            "upstream_placeholder": "http://127.0.0.1:7890",
+            "upstream_bypass": "Bypass Domains (No Proxy)",
+            "upstream_bypass_desc": "Domains in this list will not use the upstream proxy. Separate with commas. Supports suffix matching (e.g., .xxx.com).",
+            "upstream_bypass_placeholder": "localhost, 127.0.0.1",
+            "upstream_check": "Check Connection",
+            "upstream_checking": "Testing connection...",
+            "upstream_check_success": "Connected successfully",
+            "upstream_check_failed": "Connection failed",
+            "restart_hint": "Note: Proxy restart required after changing Port, SSL, or Upstream Proxy settings"
+        },
+        "about": {
+            "title": "Support & About",
+            "troubleshooting": "Troubleshooting",
+            "checking_updates": "Check for the latest version",
+            "check_update_btn": "Check for Updates",
+            "checking": "Checking...",
+            "up_to_date": "Up to date",
+            "update_available_title": "Update Available",
+            "update_available_msg": "New version {{version}} is available!\n\n{{body}}\n\nDo you want to update now?",
+            "downloading": "Downloading...",
+            "check_failed": "Check Failed",
+            "error_fetch": "Failed to fetch version info. Please check your network.",
+            "open_config": "Open Config Folder",
+            "open_logs": "Open Logs Folder",
+            "view_logs": "View System Logs",
+            "verbose": "Verbose Mode",
+            "verbose_desc": "Log detailed core traffic for diagnostics",
+            "github": "Repository",
+            "homepage": "Product Home",
+            "dev_tools": "Developer Tools",
+            "links": "Resources",
+            "open_config_desc": "Locate configuration files",
+            "open_logs_desc": "View internal runtime logs",
+            "github_desc": "Browse source code and join the community",
+            "homepage_desc": "Official RelayCraft product website",
+            "visit_github": "Visit Repository",
+            "visit_website": "Visit Website"
+        },
+        "footer": "RelayCraft · Initializing core engine..."
+    },
+    "common": {
+        "terminology": {
+            "rules": "Rules",
+            "scripts": "Scripts",
+            "traffic": "Traffic",
+            "proxy": "Proxy",
+            "map_local": "Map Local",
+            "rewrite": "Rewrite"
+        },
+        "add": "Add",
+        "browse": "Browse",
+        "ok": "OK",
+        "cancel": "Cancel",
+        "enable": "Enable",
+        "disable": "Disable",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "save": "Save",
+        "optional": "Optional",
+        "delete": "Delete",
+        "edit": "Edit",
+        "copy": "Copy",
+        "confirm": "Confirm",
+        "confirm_delete_title": "Delete Item?",
+        "confirm_delete_desc": "This action cannot be undone.",
+        "reset": "Reset",
+        "clear": "Clear",
+        "help": "Help",
+        "search": "Search...",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "warning": "Warning",
+        "info": "Info",
+        "open": "Open Session",
+        "export_har": "Export HAR",
+        "import_har": "Import HAR",
+        "import_har_hint": "Import HAR (Append)",
+        "export": "Export",
+        "import": "Import",
+        "clear_filter": "Clear Filter",
+        "move_up": "Move Up",
+        "move_down": "Move Down",
+        "double_click_rename": "Double click to rename",
+        "pending_restart": "Pending Restart (Not Active)",
+        "copy_json": "Copy JSON",
+        "format": "Format",
+        "beautify": "Beautify",
+        "custom": "Custom",
+        "settings": "Settings",
+        "unknown": "Unknown",
+        "script": "Script",
+        "rule": "Rule",
+        "select_placeholder": "Please select..."
+    },
+    "traffic": {
+        "empty_search": "No matching requests",
+        "empty_title": "Waiting for Traffic...",
+        "empty_desc": "Configure your device proxy to start capturing requests.",
+        "proxy_stopped": "Proxy Stopped",
+        "start_hint": "Click the \"Start\" button or use shortcut to begin capturing.",
+        "start_proxy": "Start Proxy",
+        "listening": "Listening for traffic...",
+        "server_status": "Running",
+        "setup": {
+            "system": "System Proxy",
+            "system_desc": "Route your computer's HTTP/HTTPS traffic through RelayCraft.",
+            "mobile": "Mobile Proxy",
+            "mobile_desc": "Set the manual proxy on your phone to decrypt your apps.",
+            "guide": "Setup Guide",
+            "cert": "Certificate Manager"
+        },
+        "security": {
+            "untrusted_title": "Root Certificate Not Trusted",
+            "untrusted_desc": "HTTPS decryption will not work until you install the root certificate.",
+            "fix_now": "Install Now"
+        },
+        "list_header": "Traffic List",
+        "method": "Method",
+        "host": "Host",
+        "path": "Path",
+        "status": "Status",
+        "size": "Size",
+        "time": "Time",
+        "context_menu": {
+            "copy_url": "Copy URL",
+            "url_copied": "URL copied to clipboard",
+            "copy_curl": "Copy as cURL",
+            "curl_copied": "cURL command copied to clipboard",
+            "replay": "Replay Request",
+            "create_rule": "Create Rule from this Flow",
+            "edit_composer": "Edit in Composer",
+            "set_breakpoint": "Set Breakpoint",
+            "copy_req_body": "Copy Request Body",
+            "req_body_copied": "Request body copied to clipboard",
+            "copy_res_body": "Copy Response Body",
+            "res_body_copied": "Response body copied to clipboard"
+        },
+        "filter": {
+            "current": "Current Filter:",
+            "placeholder": "Enter filter conditions...",
+            "regex_tooltip": "Regex",
+            "case_tooltip": "Case Sensitive",
+            "matched_tooltip": "Only Matched",
+            "clear": "Clear list",
+            "quick": "Quick Filters",
+            "and": "Combined (AND)",
+            "and_desc": "Intersection of different types",
+            "or": "Multi-value (OR)",
+            "or_desc": "Union of same types",
+            "neg": "Negative (Exclude)",
+            "compare": "Numerical Compare",
+            "headers": "Header Search",
+            "body": "Body Search"
+        },
+        "new_requests": " new requests",
+        "jump_to_latest": "Jump to latest",
+        "replay_success": "Request replayed",
+        "replay_failed": "Replay failed",
+        "list_cleared": "Traffic list cleared",
+        "breakpoint_hit_tooltip": "This domain has breakpoint enabled",
+        "file_not_found": "File not found",
+        "source": {
+            "local": "Local",
+            "remote": "Remote"
+        }
+    },
+    "flow": {
+        "analysis": {
+            "title": "AI Analysis",
+            "btn": "AI Analysis",
+            "check_settings": "Check Settings"
+        },
+        "replay": "Replay Request",
+        "replay_btn": "Replay",
+        "tabs": {
+            "request": "Request",
+            "preview": "Preview",
+            "response": "Response",
+            "timing": "Timing",
+            "overview": "Overview",
+            "messages": "Messages"
+        },
+        "sections": {
+            "general": "General",
+            "request_headers": "Request Headers",
+            "response_headers": "Response Headers",
+            "request_body": "Request Body",
+            "response_body": "Response Body",
+            "query_params": "Query Parameters"
+        }
+    },
+    "reply": "Reply",
+    "replay_btn": "Replay",
+    "labels": {
+        "status_code": "Status Code",
+        "method": "Method",
+        "url": "URL",
+        "client_ip": "Client IP",
+        "duration": "Duration",
+        "timestamp": "Timestamp"
+    },
+    "map_local": {
+        "file_not_found": "Local File Missing",
+        "fallback_hint": "Automatically fell back to remote response"
+    },
+    "rule_editor": {
+        "title_edit": "Edit Rule",
+        "title_create": "Create New Rule",
+        "smart_gen": "Smart Gen",
+        "advanced_assistant": "Advanced Assistant",
+        "ai": {
+            "title": "Smart Rule Assistant",
+            "tab_ai": "Smart Mode",
+            "tab_json": "JSON Mode",
+            "tab_script": "Script Preview",
+            "yaml_error": "Invalid YAML Format",
+            "generate_fail": "AI Rule Generation Failed",
+            "edit_yaml": "Edit YAML",
+            "yaml_hint": "Supports YAML format, more concise and readable",
+            "apply_yaml": "Apply YAML",
+            "fill_form": "Fill Form",
+            "analysis_title": "Smart Analysis",
+            "generating_rule_hint": "Generating rule configuration...",
+            "generating_explanation_hint": "Analyzing and explaining the rule...",
+            "parse_error_hint": "Failed to parse generated rule. Switched to YAML mode for manual adjustment.",
+            "placeholder": "Enter instructions, e.g., block all requests to target domain",
+            "chip_explain": "Explain Rule",
+            "chip_modify": "Modify Rule",
+            "chip_create": "Create Rule",
+            "chip_import": "Import External Rules",
+            "script": {
+                "name": "Script Name",
+                "name_placeholder": "Enter script name (e.g., custom_filter.py)",
+                "disable_rule": "Disable original rule",
+                "enable_script": "Enable new script",
+                "create_btn": "Create Python Script"
+            },
+            "apply": "Apply Code",
+            "integrated_ready": "Integrated Smart Assistant Ready"
+        },
+        "convert_to_script": "Convert to Script",
+        "convert_script_tooltip": "Convert this rule to Python script",
+        "convert_script_title": "Confirm Conversion",
+        "convert_script_confirm": "Are you sure you want to convert this rule to a Python script?",
+        "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
+        "convert_script_confirm_disable_rule": "The original rule will be disabled.",
+        "convert_script_confirm_enable_script": "The new script will be enabled.",
+        "convert_script_confirm_restart": "Note: Enabling script requires proxy restart.",
+        "convert_success_title": "Unified Success",
+        "convert_success_restart_msg": "Script has been created and enabled. Restart proxy to apply changes?",
+        "restart_now": "Restart Now",
+        "restart_later": "Later",
+        "sections": {
+            "core": "Basic Info",
+            "match": "Match Logic",
+            "action": "Action Config"
+        },
+        "core": {
+            "name": "Rule Name",
+            "name_placeholder": "Enter rule name",
+            "group": "Group",
+            "no_group": "Uncategorized",
+            "type": "Rule Type",
+            "types": {
+                "rewrite_body": {
+                    "label": "Rewrite Body",
+                    "desc": "Modify request or response body content"
+                },
+                "mock": {
+                    "label": "Modify Response",
+                    "desc": "Intercept and modify response body, supporting full replacement or field injection"
+                },
+                "map_local": {
+                    "label": "Map Local",
+                    "desc": "Redirect request to local file"
+                },
+                "map_remote": {
+                    "label": "Map Remote",
+                    "desc": "Redirect request to remote server"
+                },
+                "rewrite": {
+                    "label": "Rewrite Header",
+                    "desc": "Add, modify or delete request/response headers"
+                },
+                "throttle": {
+                    "label": "Network Throttling",
+                    "desc": "Simulate network delay, packet loss and bandwidth limit"
+                },
+                "block": {
+                    "label": "Block Request",
+                    "desc": "Abort request immediately"
+                }
+            },
+            "hints": {
+                "terminal": "Terminal Action: Successfully matched, stops all subsequent request and response rules.",
+                "request_terminal": "Terminal Action: Intercepts and returns a response. All subsequent request and response rules will be skipped.",
+                "modify": "Non-terminal Action: Executes modifications and continues matching subsequent rules."
+            }
+        },
+        "match": {
+            "url_match_type": {
+                "contains": "Contains",
+                "exact": "Exact",
+                "regex": "Regex",
+                "wildcard": "Wildcard"
+            },
+            "url_placeholder": "Enter match pattern...",
+            "test": {
+                "label": "Live Match Test",
+                "placeholder": "Enter a URL to test...",
+                "matched": "MATCHED",
+                "not_matched": "NOT MATCHED"
+            },
+            "headers": {
+                "label": "Header Matching (Optional)",
+                "tooltip": "Match only when request contains specific headers",
+                "add": "Add Condition",
+                "empty": "No header filters configured"
+            }
+        },
+        "action": {
+            "mock": {
+                "mode": "Intercept Mode",
+                "mode_full": "Full Replacement (Static)",
+                "mode_modify": "Field Modification (Dynamic)",
+                "status": "Status Code",
+                "body_source": "Body Source",
+                "manual": "Manual",
+                "file": "Local File",
+                "file_placeholder": "Enter file path...",
+                "manual_placeholder": "{ \"key\": \"value\" }",
+                "html_hint": "Regex capture groups $1, $2 supported",
+                "json_path_hint": "Path supports JSON Path (e.g. $.data.user.id)",
+                "path_placeholder": "Enter path...",
+                "value_placeholder": "Enter value...",
+                "ops": {
+                    "fill_form": "Fill Form",
+                    "disabled_title": "AI Assistant Disabled",
+                    "disabled_hint": "Please configure AI API Key in Settings to unlock smart generation.",
+                    "json_hint": "Hint: JSON changes sync to form in real-time.",
+                    "apply_json": "Apply & Save"
+                },
+                "headers_label": "Response Headers"
+            },
+            "map_local": {
+                "headers_override": "Override Response Headers",
+                "source": "Map Source",
+                "source_file": "Local File",
+                "source_manual": "Manual Data (Mock)",
+                "path": "File Path",
+                "content": "Mock Body Content",
+                "status_code": "Status Code",
+                "content_type": "Content-Type",
+                "select_btn": "Select File",
+                "file_placeholder": "Enter file path"
+            },
+            "map_remote": {
+                "url": "Target URL",
+                "preserve_path": "Preserve Path",
+                "preserve_path_desc": "Append original path to target URL"
+            },
+            "throttle": {
+                "delay": "Delay (ms)",
+                "packet_loss": "Packet Loss (%)",
+                "bandwidth": "Bandwidth (kbps)"
+            },
+            "rewrite": {
+                "smart_gen": "Smart Gen",
+                "advanced_assistant": "Advanced Assistant",
+                "type": "Rewrite Mode",
+                "req": "Request",
+                "res": "Response",
+                "req_headers": "Request Headers",
+                "res_headers": "Response Headers",
+                "status_code": "Status Code",
+                "status_code_hint": "Optional, modify response status code",
+                "ops": {
+                    "add": "Add Operation",
+                    "set": "Set",
+                    "remove": "Remove"
+                },
+                "modes": {
+                    "set": "Set Content",
+                    "replace": "String Replace",
+                    "regex": "Regex Replace",
+                    "json": "JSON Modify"
+                },
+                "jsonpath_hint": "Hint: Path supports JSON Path (e.g. $.data.user.id)",
+                "json_ops": {
+                    "set": "Set",
+                    "delete": "Delete",
+                    "append": "Append"
+                },
+                "json_value_placeholder": "Value (JSON)",
+                "placeholders": {
+                    "content": "Enter new body content...",
+                    "pattern": "String to find...",
+                    "regex_pattern": "Regex pattern...",
+                    "replacement": "Replacement string...",
+                    "json_value": "Value"
+                }
+            }
+        }
+    },
+    "import_modal": {
+        "title": "Import Rules",
+        "desc": "Support single rule JSON or full backup Bundle",
+        "select": "Select File...",
+        "placeholder": "Paste JSON content here...",
+        "success": "Successfully imported {{count}} rules and groups!",
+        "success_single": "Rule imported successfully!",
+        "action": "Import"
+    },
+    "titlebar": {
+        "search_placeholder": "Command or Search ({{hotkey}})",
+        "start_proxy": "Start Proxy",
+        "stop_proxy": "Stop Proxy",
+        "running": "Running",
+        "stopped": "Stopped",
+        "minimize": "Minimize",
+        "maximize": "Maximize",
+        "restore": "Restore",
+        "close": "Close"
+    },
+    "ai": {
+        "title": "AI Assistant Config",
+        "enable": "Enable AI Features",
+        "enable_desc": "Enable AI-powered script generation and rule creation",
+        "provider": "API Provider",
+        "provider_desc": "Select AI service provider",
+        "endpoint": "API Endpoint",
+        "endpoint_desc": "Support Ollama, LocalAI (OpenAI compatible)",
+        "api_key": "API Key",
+        "api_key_desc": "Key for accessing the API",
+        "model": "Model Name",
+        "model_desc": "e.g. gpt-5, qwen3-max, llama3",
+        "temperature": "Temperature",
+        "temperature_desc": "Randomness (0.0 - 2.0)",
+        "max_tokens": "Max Tokens",
+        "max_tokens_desc": "Max tokens per request",
+        "memory_turns": "Memory Turns",
+        "memory_turns_desc": "Number of recent turns AI will remember (Sliding window)",
+        "clear_memory": "Clear Memory",
+        "connection": {
+            "success": "Connected",
+            "failure": "Connection failed, check logs",
+            "test": "Test Connection",
+            "save": "Save Config",
+            "placeholder_openai": "sk-...",
+            "placeholder_optional": "Optional (if not required)"
+        },
+        "providers": {
+            "openrouter": "OpenRouter",
+            "openai": "OpenAI",
+            "deepseek": "DeepSeek",
+            "aliyun": "Tongyi",
+            "google": "Google",
+            "anthropic": "Anthropic",
+            "moonshot": "Moonshot AI",
+            "custom": "Custom"
+        }
+    },
+    "setup_guide": {
+        "title": "Proxy Setup Guide",
+        "current_proxy": "Current Proxy Address",
+        "copy_address": "Copy Address",
+        "pc_config": "PC / Browser Config",
+        "switchy_omega": "Recommended: SwitchyOmega",
+        "switchy_omega_desc": "Install SwitchyOmega extension, create <strong>HTTP</strong> proxy with Host <code>{{ip}}</code> and Port <code>{{port}}</code>.",
+        "system_proxy": "System Proxy",
+        "system_proxy_desc": "Search 'Proxy' in system settings, enable 'Use a proxy server', and enter the address/port above.",
+        "mobile_config": "Mobile Config (iOS/Android)",
+        "wifi_manual": "Wi-Fi Manual Config",
+        "wifi_manual_desc": "Ensure mobile is on same Wi-Fi. Go to settings → Wi-Fi details → Proxy → <strong>Manual</strong>.",
+        "install_cert": "Certificate Required",
+        "install_cert_desc": "After setting proxy, visit <strong>http://mitm.it</strong> on mobile browser to install certificate for HTTPS.",
+        "trouble": "Having Issues?",
+        "trouble_desc": "Check firewall settings and ensure port {{port}} is available.",
+        "got_it": "Got it"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "empty": "No notifications",
+        "mark_all_read": "Mark all as read",
+        "clear_all": "Clear all",
+        "enable": "Enable notifications",
+        "disable": "Disable notifications (DND)",
+        "dnd_on": "Do Not Disturb On",
+        "count_suffix": "notifications",
+        "count": "{{count}} notifications",
+        "all_processed": "You are all caught up",
+        "delete_title": "Delete",
+        "category": {
+            "label": "Category",
+            "system": "System",
+            "plugin": "Plugin",
+            "script": "Script",
+            "network": "Network",
+            "update": "Update",
+            "security": "Security",
+            "all": "All"
+        },
+        "priority": {
+            "label": "Priority",
+            "critical": "Critical",
+            "high": "High",
+            "normal": "Normal",
+            "low": "Low",
+            "all": "All"
+        },
+        "status": {
+            "failed": "Failed",
+            "encrypted": "Encrypted",
+            "active": "Active",
+            "inactive": "Inactive",
+            "connected": "Connected",
+            "read": "Read"
+        },
+        "relative_time": {
+            "just_now": "Just now",
+            "minutes_ago": "{{count}}m ago",
+            "hours_ago": "{{count}}h ago",
+            "days_ago": "{{count}}d ago"
+        },
+        "filters": {
+            "search_placeholder": "Search notifications...",
+            "toggle": "Filters",
+            "active": "Active"
+        }
+    },
+    "save_session": {
+        "title": "Save Current Session",
+        "name": "Session Name",
+        "name_placeholder": "Enter session name...",
+        "desc": "Description (Optional)",
+        "desc_placeholder": "Enter notes about this session...",
+        "saving": "Saving...",
+        "save_btn": "Save Session",
+        "success": "Session saved successfully"
+    },
+    "status_bar": {
+        "port": "Listening Port",
+        "ip": "Local IP",
+        "captured": "Requests Captured",
+        "breakpoints": "Manage Breakpoints",
+        "memory": "Memory Usage",
+        "listening": "Listening",
+        "stopped": "Stopped"
+    },
+    "copy_button": {
+        "copy": "Copy",
+        "copied": "Copied"
+    },
+    "confirmation_modal": {
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    },
+    "rule_group": {
+        "delete_title": "Delete Group",
+        "delete_msg": "Are you sure you want to delete group \"{{name}}\"? Rules will become 'Uncategorized'.",
+        "move_up": "Move Up",
+        "move_down": "Move Down",
+        "edit_name": "Edit Name",
+        "delete_group": "Delete Group",
+        "disable_group": "Disable Group",
+        "enable_group": "Enable Group"
+    },
+    "breakpoint": {
+        "control_center": "Intercept Control Center",
+        "abort_all": "Abort All",
+        "resume_all": "Resume All",
+        "queue": "Intercept Queue",
+        "request": "Request",
+        "response": "Response",
+        "abort": "Abort",
+        "resume": "Resume",
+        "method_protocol": "Method / Protocol",
+        "active_manager": "Active Breakpoint Manager",
+        "clear_all": "Clear All",
+        "remove_one": "Remove this breakpoint",
+        "hint": "Requests matching domains above will be suspended..."
+    },
+    "alert_dialog": {
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
+    "script_editor": {
+        "save_hint": "Save",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "create_and_save": "Create & Save",
+        "revert": "Revert Changes",
+        "revert_hint": "Discard unsaved changes and restore to last saved state",
+        "revert_success": "Script successfully restored",
+        "intro_desc": "Scripts allow deep interception and modification of traffic flowing through RelayCraft, using Python.",
+        "ai_helper": "AI Assistant",
+        "smart_create": "Smart Create",
+        "or_create_blank": "Create Blank Script",
+        "ai": {
+            "placeholder": "Enter instructions, e.g., intercept google.com and modify response...",
+            "chip_explain": "Explain Script",
+            "chip_modify": "Modify Script",
+            "chip_create": "Create Script",
+            "chip_fix": "Fix Bugs",
+            "prompt_modify": "Modify current script: ",
+            "prompt_create": "Create a script: ",
+            "prompt_fix": "Fix errors in current script: ",
+            "syncing": "Syncing to editor in real-time...",
+            "syncing_desc": "Content synced directly to editor below",
+            "synced": "Synced to editor",
+            "analysis_title": "AI Analysis",
+            "chip_custom_logic": "Generate specific logic...",
+            "prompt_custom_logic": "Help me write a logic that: "
+        }
+    },
+    "log_viewer": {
+        "title": "Runtime Logs",
+        "proxy_logs": "Proxy Log",
+        "app_logs": "System Log",
+        "audit_logs": "Audit Log",
+        "script_logs": "Script Log",
+        "plugin_logs": "Plugin Log",
+        "crash_logs": "Crash Log",
+        "showing_lines": "Showing last 1000 lines",
+        "hide_local": "Hide Local/Internal Traffic",
+        "show_local": "Show Local/Internal Traffic",
+        "refresh": "Refresh Logs",
+        "empty_or_no_log": "No logs available or log file is empty",
+        "hidden_local": "--- Hidden {{count}} local/internal log entries ---",
+        "all_filtered": "All logs are currently filtered",
+        "view_all": "View All Logs",
+        "close_analysis": "Close Analysis",
+        "sensitive_info": "Logs may contain sensitive info",
+        "sensitive_warning": "Logs may contain sensitive information (e.g. Tokens). Please handle with care and do not display in insecure environments."
+    },
+    "header_editor": {
+        "title": "Header Operations",
+        "add": "Add Operation",
+        "op_add": "Add",
+        "op_set": "Set",
+        "op_remove": "Remove",
+        "delete_item": "Delete Item",
+        "no_config": "No header modifications configured"
+    },
+    "content_preview": {
+        "view_source": "View Source",
+        "view_parsed": "View Parsed",
+        "copy": "Copy Content",
+        "download": "Download File",
+        "binary": "Binary Content",
+        "base64": "Base64 Encoded Content",
+        "download_btn": "Download File",
+        "no_content": "No content available"
+    },
+    "proxy_store": {
+        "start_success_title": "Proxy Started",
+        "start_success_msg": "Proxy service started successfully on port {{port}}.",
+        "scripts_loaded": "Loaded {{count}} scripts.",
+        "start_fail_title": "Proxy Start Failed",
+        "start_fail_msg": "Failed to start proxy service. Error: {{error}}",
+        "stop_success_title": "Proxy Stopped",
+        "stop_success_msg": "Proxy service stopped successfully.",
+        "stop_fail_title": "Proxy Stop Failed",
+        "stop_fail_msg": "Failed to stop proxy service. Error: {{error}}"
+    },
+    "ai_assistant": {
+        "analyzing": "Smart Assistant is thinking...",
+        "search": {
+            "title": "Smart Search Assistant",
+            "placeholder": "Describe filter (e.g. find all 404 requests)",
+            "suggestions": {
+                "error": "Find all 4xx or 5xx error requests",
+                "json": "Search all JSON responses",
+                "slow": "Find requests taking over 500ms"
+            }
+        },
+        "regex": {
+            "title": "Smart Regex Assistant",
+            "placeholder": "Describe match rule (e.g. paths starting with api/v1)",
+            "explain_btn": "Explain Regex Meaning",
+            "analyzing": "Analyzing regex...",
+            "suggestions": {
+                "path": "Match paths starting with api/v1",
+                "domain": "Match example.com and its subdomains",
+                "error": "Case-insensitive match for status:error"
+            }
+        },
+        "naming": {
+            "title": "Smart Naming Assistant",
+            "placeholder": "Describe rule purpose...",
+            "suggestions": {
+                "auto": "Auto-name based on config",
+                "tech": "More technical naming",
+                "desc": "More descriptive naming"
+            }
+        }
+    }
+}
