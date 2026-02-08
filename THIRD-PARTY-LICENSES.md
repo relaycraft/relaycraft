@@ -709,13 +709,13 @@ This project makes use of the following open source packages:
 
 ---
 
-### @codemirror/view@6.39.12
+### @codemirror/view@6.39.13
 * **License:** MIT
 * **Repository:** https://github.com/codemirror/view
 
 ---
 
-### @lezer/common@1.5.0
+### @lezer/common@1.5.1
 * **License:** MIT
 * **Repository:** https://github.com/lezer-parser/common
 
@@ -745,7 +745,7 @@ This project makes use of the following open source packages:
 
 ---
 
-### @tauri-apps/plugin-http@2.5.6
+### @tauri-apps/plugin-http@2.5.7
 * **License:** MIT OR Apache-2.0
 * **Repository:** https://github.com/tauri-apps/plugins-workspace
 
@@ -817,7 +817,7 @@ This project makes use of the following open source packages:
 
 ---
 
-### framer-motion@12.29.0
+### framer-motion@12.33.0
 * **License:** MIT
 * **Repository:** https://github.com/motiondivision/motion
 
@@ -835,7 +835,7 @@ This project makes use of the following open source packages:
 
 ---
 
-### i18next@25.8.0
+### i18next@25.8.4
 * **License:** MIT
 * **Repository:** https://github.com/i18next/i18next
 
@@ -859,13 +859,13 @@ This project makes use of the following open source packages:
 
 ---
 
-### react-dom@19.2.3
+### react-dom@19.2.4
 * **License:** MIT
 * **Repository:** https://github.com/facebook/react
 
 ---
 
-### react-i18next@16.5.3
+### react-i18next@16.5.4
 * **License:** MIT
 * **Repository:** https://github.com/i18next/react-i18next
 
@@ -883,7 +883,7 @@ This project makes use of the following open source packages:
 
 ---
 
-### react@19.2.3
+### react@19.2.4
 * **License:** MIT
 * **Repository:** https://github.com/facebook/react
 
@@ -907,7 +907,7 @@ This project makes use of the following open source packages:
 
 ---
 
-### zustand@5.0.10
+### zustand@5.0.11
 * **License:** MIT
 * **Repository:** https://github.com/pmndrs/zustand
 
@@ -940,7 +940,6 @@ This project makes use of the following open source packages:
 | cffi                      | 2.0.0      | MIT                                                            | https://cffi.readthedocs.io/en/latest/whatsnew.html                  |
 | charset-normalizer        | 3.4.4      | MIT                                                            | https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md |
 | click                     | 8.3.1      | BSD-3-Clause                                                   | https://github.com/pallets/click/                                    |
-| colorama                  | 0.4.6      | BSD License                                                    | https://github.com/tartley/colorama                                  |
 | cryptography              | 46.0.4     | Apache-2.0 OR BSD-3-Clause                                     | https://github.com/pyca/cryptography                                 |
 | h11                       | 0.16.0     | MIT License                                                    | https://github.com/python-hyper/h11                                  |
 | h2                        | 4.3.0      | MIT License                                                    | https://github.com/python-hyper/h2/                                  |
@@ -952,24 +951,21 @@ This project makes use of the following open source packages:
 | kaitaistruct              | 0.11       | MIT                                                            | https://kaitai.io                                                    |
 | ldap3                     | 2.9.1      | GNU Lesser General Public License v3 (LGPLv3)                  | https://github.com/cannatag/ldap3                                    |
 | mitmproxy                 | 12.2.1     | MIT License                                                    | https://mitmproxy.org                                                |
-| mitmproxy-windows         | 0.12.9     | LGPL-3.0-or-later                                              | https://github.com/mitmproxy/mitmproxy-rs                            |
+| mitmproxy_linux           | 0.12.9     | UNKNOWN                                                        | UNKNOWN                                                              |
 | mitmproxy_rs              | 0.12.9     | UNKNOWN                                                        | UNKNOWN                                                              |
 | msgpack                   | 1.1.2      | Apache-2.0                                                     | https://msgpack.org/                                                 |
 | packaging                 | 26.0       | Apache-2.0 OR BSD-2-Clause                                     | https://github.com/pypa/packaging                                    |
-| pefile                    | 2024.8.26  | MIT                                                            | https://github.com/erocarrera/pefile                                 |
 | ply                       | 3.11       | BSD                                                            | http://www.dabeaz.com/ply/                                           |
 | publicsuffix2             | 2.20191221 | MIT License; Mozilla Public License 2.0 (MPL 2.0)              | https://github.com/nexb/python-publicsuffix2                         |
 | pyOpenSSL                 | 25.3.0     | Apache Software License                                        | https://pyopenssl.org/                                               |
 | pyasn1                    | 0.6.2      | BSD-2-Clause                                                   | https://github.com/pyasn1/pyasn1                                     |
 | pyasn1_modules            | 0.4.2      | BSD License                                                    | https://github.com/pyasn1/pyasn1-modules                             |
 | pycparser                 | 3.0        | BSD-3-Clause                                                   | https://github.com/eliben/pycparser                                  |
-| pydivert                  | 2.1.0      | GNU Lesser General Public License v3 or later (LGPLv3+)        | https://github.com/ffalcinelli/pydivert                              |
 | pyinstaller               | 6.18.0     | GNU General Public License v2 (GPLv2)                          | https://pyinstaller.org                                              |
 | pyinstaller-hooks-contrib | 2026.0     | Apache Software License; GNU General Public License v2 (GPLv2) | https://github.com/pyinstaller/pyinstaller-hooks-contrib             |
 | pylsqpack                 | 0.3.23     | BSD-3-Clause                                                   | https://github.com/aiortc/pylsqpack                                  |
 | pyparsing                 | 3.2.5      | MIT                                                            | https://github.com/pyparsing/pyparsing/                              |
 | pyperclip                 | 1.11.0     | BSD License                                                    | https://github.com/asweigart/pyperclip                               |
-| pywin32-ctypes            | 0.2.3      | BSD-3-Clause                                                   | https://github.com/enthought/pywin32-ctypes                          |
 | requests                  | 2.32.5     | Apache Software License                                        | https://requests.readthedocs.io                                      |
 | ruamel.yaml               | 0.18.16    | MIT license                                                    | https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/          |
 | ruamel.yaml.clib          | 0.2.15     | MIT License                                                    | https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree/     |
@@ -977,7 +973,7 @@ This project makes use of the following open source packages:
 | sortedcontainers          | 2.4.0      | Apache Software License                                        | http://www.grantjenks.com/docs/sortedcontainers/                     |
 | soupsieve                 | 2.8.3      | MIT                                                            | https://github.com/facelessuser/soupsieve                            |
 | tornado                   | 6.5.2      | Apache Software License                                        | http://www.tornadoweb.org/                                           |
-| typing_extensions         | 4.15.0     | PSF-2.0                                                        | https://github.com/python/typing_extensions                          |
+| typing_extensions         | 4.14.0     | PSF-2.0                                                        | https://github.com/python/typing_extensions                          |
 | urllib3                   | 2.6.3      | MIT                                                            | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst             |
 | urwid                     | 3.0.3      | GNU Library or Lesser General Public License (LGPL)            | https://urwid.org/                                                   |
 | websockets                | 16.0       | BSD-3-Clause                                                   | https://github.com/python-websockets/websockets                      |
