@@ -86,6 +86,7 @@
           "SimpChinese"
         ]
       }
-    }
+    },
+    "createUpdaterArtifacts": true
   }
 }
