@@ -15,12 +15,12 @@ This project makes use of the following open source packages:
 | android_log-sys | 0.3.2 | Apache-2.0 OR MIT | https://github.com/rust-mobile/android_log-sys-rs |
 | android_logger | 0.15.1 | Apache-2.0 OR MIT | https://github.com/rust-mobile/android_logger-rs |
 | android_system_properties | 0.1.5 | Apache-2.0 OR MIT | https://github.com/nical/android_system_properties |
-| anyhow | 1.0.100 | Apache-2.0 OR MIT | https://github.com/dtolnay/anyhow |
+| anyhow | 1.0.101 | Apache-2.0 OR MIT | https://github.com/dtolnay/anyhow |
 | arbitrary | 1.4.2 | Apache-2.0 OR MIT | https://github.com/rust-fuzz/arbitrary/ |
 | arrayvec | 0.7.6 | Apache-2.0 OR MIT | https://github.com/bluss/arrayvec |
 | async-broadcast | 0.7.2 | Apache-2.0 OR MIT | https://github.com/smol-rs/async-broadcast |
 | async-channel | 2.5.0 | Apache-2.0 OR MIT | https://github.com/smol-rs/async-channel |
-| async-compression | 0.4.37 | Apache-2.0 OR MIT | https://github.com/Nullus157/async-compression |
+| async-compression | 0.4.39 | Apache-2.0 OR MIT | https://github.com/Nullus157/async-compression |
 | async-executor | 1.13.3 | Apache-2.0 OR MIT | https://github.com/smol-rs/async-executor |
 | async-io | 2.6.0 | Apache-2.0 OR MIT | https://github.com/smol-rs/async-io |
 | async-lock | 3.4.2 | Apache-2.0 OR MIT | https://github.com/smol-rs/async-lock |
@@ -33,8 +33,8 @@ This project makes use of the following open source packages:
 | atk-sys | 0.18.2 | MIT | https://github.com/gtk-rs/gtk3-rs |
 | atomic-waker | 1.1.2 | Apache-2.0 OR MIT | https://github.com/smol-rs/atomic-waker |
 | autocfg | 1.5.0 | Apache-2.0 OR MIT | https://github.com/cuviper/autocfg |
-| aws-lc-rs | 1.15.3 | (Apache-2.0 OR ISC) AND ISC | https://github.com/aws/aws-lc-rs |
-| aws-lc-sys | 0.36.0 | (Apache-2.0 OR ISC) AND ISC AND OpenSSL | https://github.com/aws/aws-lc-rs |
+| aws-lc-rs | 1.15.4 | (Apache-2.0 OR ISC) AND ISC | https://github.com/aws/aws-lc-rs |
+| aws-lc-sys | 0.37.0 | (Apache-2.0 OR ISC) AND ISC AND OpenSSL | https://github.com/aws/aws-lc-rs |
 | base64 | 0.21.7 | Apache-2.0 OR MIT | https://github.com/marshallpierce/rust-base64 |
 | base64 | 0.22.1 | Apache-2.0 OR MIT | https://github.com/marshallpierce/rust-base64 |
 | bitflags | 1.3.2 | Apache-2.0 OR MIT | https://github.com/bitflags/bitflags |
@@ -52,9 +52,9 @@ This project makes use of the following open source packages:
 | byte-unit | 5.2.0 | MIT | https://github.com/magiclen/byte-unit |
 | bytecheck | 0.6.12 | MIT | https://github.com/djkoloski/bytecheck |
 | bytecheck_derive | 0.6.12 | MIT | https://github.com/djkoloski/bytecheck |
-| bytemuck | 1.24.0 | Apache-2.0 OR MIT OR Zlib | https://github.com/Lokathor/bytemuck |
+| bytemuck | 1.25.0 | Apache-2.0 OR MIT OR Zlib | https://github.com/Lokathor/bytemuck |
 | byteorder | 1.5.0 | MIT OR Unlicense | https://github.com/BurntSushi/byteorder |
-| bytes | 1.11.0 | MIT | https://github.com/tokio-rs/bytes |
+| bytes | 1.11.1 | MIT | https://github.com/tokio-rs/bytes |
 | bzip2 | 0.5.2 | Apache-2.0 OR MIT | https://github.com/trifectatechfoundation/bzip2-rs |
 | bzip2-sys | 0.1.13+1.0.8 | Apache-2.0 OR MIT | https://github.com/alexcrichton/bzip2-rs |
 | cairo-rs | 0.18.5 | MIT | https://github.com/gtk-rs/gtk-rs-core |
@@ -63,7 +63,7 @@ This project makes use of the following open source packages:
 | cargo-platform | 0.1.9 | Apache-2.0 OR MIT | https://github.com/rust-lang/cargo |
 | cargo_metadata | 0.19.2 | MIT | https://github.com/oli-obk/cargo_metadata |
 | cargo_toml | 0.22.3 | Apache-2.0 OR MIT | https://gitlab.com/lib.rs/cargo_toml |
-| cc | 1.2.53 | Apache-2.0 OR MIT | https://github.com/rust-lang/cc-rs |
+| cc | 1.2.55 | Apache-2.0 OR MIT | https://github.com/rust-lang/cc-rs |
 | cesu8 | 1.1.0 | Apache-2.0 OR MIT | https://github.com/emk/cesu8-rs |
 | cfb | 0.7.3 | MIT | https://github.com/mdsteele/rust-cfb |
 | cfg-expr | 0.15.8 | Apache-2.0 OR MIT | https://github.com/EmbarkStudios/cfg-expr |
@@ -144,8 +144,8 @@ This project makes use of the following open source packages:
 | fern | 0.7.1 | MIT | https://github.com/daboross/fern |
 | field-offset | 0.3.6 | Apache-2.0 OR MIT | https://github.com/Diggsey/rust-field-offset |
 | filetime | 0.2.27 | Apache-2.0 OR MIT | https://github.com/alexcrichton/filetime |
-| find-msvc-tools | 0.1.8 | Apache-2.0 OR MIT | https://github.com/rust-lang/cc-rs |
-| flate2 | 1.1.8 | Apache-2.0 OR MIT | https://github.com/rust-lang/flate2-rs |
+| find-msvc-tools | 0.1.9 | Apache-2.0 OR MIT | https://github.com/rust-lang/cc-rs |
+| flate2 | 1.1.9 | Apache-2.0 OR MIT | https://github.com/rust-lang/flate2-rs |
 | fnv | 1.0.7 | Apache-2.0 OR MIT | https://github.com/servo/rust-fnv |
 | foreign-types | 0.5.0 | Apache-2.0 OR MIT | https://github.com/sfackler/foreign-types |
 | foreign-types-macros | 0.2.3 | Apache-2.0 OR MIT | https://github.com/sfackler/foreign-types |
@@ -203,8 +203,8 @@ This project makes use of the following open source packages:
 | httparse | 1.10.1 | Apache-2.0 OR MIT | https://github.com/seanmonstar/httparse |
 | hyper | 1.8.1 | MIT | https://github.com/hyperium/hyper |
 | hyper-rustls | 0.27.7 | Apache-2.0 OR ISC OR MIT | https://github.com/rustls/hyper-rustls |
-| hyper-util | 0.1.19 | MIT | https://github.com/hyperium/hyper-util |
-| iana-time-zone | 0.1.64 | Apache-2.0 OR MIT | https://github.com/strawlab/iana-time-zone |
+| hyper-util | 0.1.20 | MIT | https://github.com/hyperium/hyper-util |
+| iana-time-zone | 0.1.65 | Apache-2.0 OR MIT | https://github.com/strawlab/iana-time-zone |
 | iana-time-zone-haiku | 0.1.2 | Apache-2.0 OR MIT | https://github.com/strawlab/iana-time-zone |
 | ico | 0.5.0 | MIT | https://github.com/mdsteele/rust-ico |
 | icu_collections | 2.1.1 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
@@ -258,7 +258,7 @@ This project makes use of the following open source packages:
 | markup5ever | 0.14.1 | Apache-2.0 OR MIT | https://github.com/servo/html5ever |
 | match_token | 0.1.0 | Apache-2.0 OR MIT | https://github.com/servo/html5ever |
 | matches | 0.1.10 | MIT | https://github.com/SimonSapin/rust-std-candidates |
-| memchr | 2.7.6 | MIT OR Unlicense | https://github.com/BurntSushi/memchr |
+| memchr | 2.8.0 | MIT OR Unlicense | https://github.com/BurntSushi/memchr |
 | memoffset | 0.9.1 | MIT | https://github.com/Gilnaa/memoffset |
 | mime | 0.3.17 | Apache-2.0 OR MIT | https://github.com/hyperium/mime |
 | minisign-verify | 0.2.4 | MIT | https://github.com/jedisct1/rust-minisign-verify |
@@ -273,7 +273,7 @@ This project makes use of the following open source packages:
 | new_debug_unreachable | 1.0.6 | MIT | https://github.com/mbrubeck/rust-debug-unreachable |
 | nodrop | 0.1.14 | Apache-2.0 OR MIT | https://github.com/bluss/arrayvec |
 | ntapi | 0.4.2 | Apache-2.0 OR MIT | https://github.com/MSxDOS/ntapi |
-| num-conv | 0.1.0 | Apache-2.0 OR MIT | https://github.com/jhpratt/num-conv |
+| num-conv | 0.2.0 | Apache-2.0 OR MIT | https://github.com/jhpratt/num-conv |
 | num-traits | 0.2.19 | Apache-2.0 OR MIT | https://github.com/rust-num/num-traits |
 | num_enum | 0.7.5 | Apache-2.0 OR BSD-3-Clause OR MIT | https://github.com/illicitonion/num_enum |
 | num_enum_derive | 0.7.5 | Apache-2.0 OR BSD-3-Clause OR MIT | https://github.com/illicitonion/num_enum |
@@ -343,7 +343,7 @@ This project makes use of the following open source packages:
 | proc-macro-error | 1.0.4 | Apache-2.0 OR MIT | https://gitlab.com/CreepySkeleton/proc-macro-error |
 | proc-macro-error-attr | 1.0.4 | Apache-2.0 OR MIT | https://gitlab.com/CreepySkeleton/proc-macro-error |
 | proc-macro-hack | 0.5.20+deprecated | Apache-2.0 OR MIT | https://github.com/dtolnay/proc-macro-hack |
-| proc-macro2 | 1.0.105 | Apache-2.0 OR MIT | https://github.com/dtolnay/proc-macro2 |
+| proc-macro2 | 1.0.106 | Apache-2.0 OR MIT | https://github.com/dtolnay/proc-macro2 |
 | psl-types | 2.0.11 | Apache-2.0 OR MIT | https://github.com/addr-rs/psl-types |
 | ptr_meta | 0.1.4 | MIT | https://github.com/djkoloski/ptr_meta |
 | ptr_meta_derive | 0.1.4 | MIT | https://github.com/djkoloski/ptr_meta |
@@ -352,7 +352,7 @@ This project makes use of the following open source packages:
 | quinn | 0.11.9 | Apache-2.0 OR MIT | https://github.com/quinn-rs/quinn |
 | quinn-proto | 0.11.13 | Apache-2.0 OR MIT | https://github.com/quinn-rs/quinn |
 | quinn-udp | 0.5.14 | Apache-2.0 OR MIT | https://github.com/quinn-rs/quinn |
-| quote | 1.0.43 | Apache-2.0 OR MIT | https://github.com/dtolnay/quote |
+| quote | 1.0.44 | Apache-2.0 OR MIT | https://github.com/dtolnay/quote |
 | r-efi | 5.3.0 | Apache-2.0 OR LGPL-2.1-or-later OR MIT | https://github.com/r-efi/r-efi |
 | radium | 0.7.0 | MIT | https://github.com/bitvecto-rs/radium |
 | rand | 0.7.3 | Apache-2.0 OR MIT | https://github.com/rust-random/rand |
@@ -375,13 +375,13 @@ This project makes use of the following open source packages:
 | redox_users | 0.5.2 | MIT | https://gitlab.redox-os.org/redox-os/users |
 | ref-cast | 1.0.25 | Apache-2.0 OR MIT | https://github.com/dtolnay/ref-cast |
 | ref-cast-impl | 1.0.25 | Apache-2.0 OR MIT | https://github.com/dtolnay/ref-cast |
-| regex | 1.12.2 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
-| regex-automata | 0.4.13 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
-| regex-syntax | 0.8.8 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
+| regex | 1.12.3 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
+| regex-automata | 0.4.14 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
+| regex-syntax | 0.8.9 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
 | relative-path | 1.9.3 | Apache-2.0 OR MIT | https://github.com/udoprog/relative-path |
 | rend | 0.4.2 | MIT | https://github.com/djkoloski/rend |
 | reqwest | 0.12.28 | Apache-2.0 OR MIT | https://github.com/seanmonstar/reqwest |
-| reqwest | 0.13.1 | Apache-2.0 OR MIT | https://github.com/seanmonstar/reqwest |
+| reqwest | 0.13.2 | Apache-2.0 OR MIT | https://github.com/seanmonstar/reqwest |
 | rfd | 0.16.0 | MIT | https://github.com/PolyMeilex/rfd |
 | ring | 0.17.14 | Apache-2.0 AND ISC | https://github.com/briansmith/ring |
 | rkyv | 0.7.46 | MIT | https://github.com/rkyv/rkyv |
@@ -404,7 +404,7 @@ This project makes use of the following open source packages:
 | schannel | 0.1.28 | MIT | https://github.com/steffengy/schannel-rs |
 | schemars | 0.8.22 | MIT | https://github.com/GREsau/schemars |
 | schemars | 0.9.0 | MIT | https://github.com/GREsau/schemars |
-| schemars | 1.2.0 | MIT | https://github.com/GREsau/schemars |
+| schemars | 1.2.1 | MIT | https://github.com/GREsau/schemars |
 | schemars_derive | 0.8.22 | MIT | https://github.com/GREsau/schemars |
 | scopeguard | 1.2.0 | Apache-2.0 OR MIT | https://github.com/bluss/scopeguard |
 | seahash | 4.1.0 | MIT | https://gitlab.redox-os.org/redox-os/seahash |
@@ -437,10 +437,10 @@ This project makes use of the following open source packages:
 | simdutf8 | 0.1.5 | Apache-2.0 OR MIT | https://github.com/rusticstuff/simdutf8 |
 | simplelog | 0.12.2 | Apache-2.0 OR MIT | https://github.com/drakulix/simplelog.rs |
 | siphasher | 0.3.11 | Apache-2.0 OR MIT | https://github.com/jedisct1/rust-siphash |
-| siphasher | 1.0.1 | Apache-2.0 OR MIT | https://github.com/jedisct1/rust-siphash |
-| slab | 0.4.11 | MIT | https://github.com/tokio-rs/slab |
+| siphasher | 1.0.2 | Apache-2.0 OR MIT | https://github.com/jedisct1/rust-siphash |
+| slab | 0.4.12 | MIT | https://github.com/tokio-rs/slab |
 | smallvec | 1.15.1 | Apache-2.0 OR MIT | https://github.com/servo/rust-smallvec |
-| socket2 | 0.6.1 | Apache-2.0 OR MIT | https://github.com/rust-lang/socket2 |
+| socket2 | 0.6.2 | Apache-2.0 OR MIT | https://github.com/rust-lang/socket2 |
 | softbuffer | 0.4.8 | Apache-2.0 OR MIT | https://github.com/rust-windowing/softbuffer |
 | soup3 | 0.5.0 | MIT | https://gitlab.gnome.org/World/Rust/soup3-rs |
 | soup3-sys | 0.5.0 | MIT | https://gitlab.gnome.org/World/Rust/soup3-rs |
@@ -455,7 +455,7 @@ This project makes use of the following open source packages:
 | sync_wrapper | 1.0.2 | Apache-2.0 | https://github.com/Actyx/sync_wrapper |
 | synstructure | 0.13.2 | MIT | https://github.com/mystor/synstructure |
 | sysinfo | 0.33.1 | MIT | https://github.com/GuillaumeGomez/sysinfo |
-| system-configuration | 0.6.1 | Apache-2.0 OR MIT | https://github.com/mullvad/system-configuration-rs |
+| system-configuration | 0.7.0 | Apache-2.0 OR MIT | https://github.com/mullvad/system-configuration-rs |
 | system-configuration-sys | 0.6.0 | Apache-2.0 OR MIT | https://github.com/mullvad/system-configuration-rs |
 | system-deps | 6.2.2 | Apache-2.0 OR MIT | https://github.com/gdesmott/system-deps |
 | tao | 0.34.5 | Apache-2.0 | https://github.com/tauri-apps/tao |
@@ -467,15 +467,15 @@ This project makes use of the following open source packages:
 | tauri-build | 2.5.5 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-codegen | 2.5.4 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-macros | 2.5.4 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
-| tauri-plugin | 2.5.2 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
+| tauri-plugin | 2.5.3 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-plugin-dialog | 2.6.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-fs | 2.4.5 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
-| tauri-plugin-http | 2.5.6 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
+| tauri-plugin-http | 2.5.7 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-log | 2.8.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-opener | 2.5.3 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-plugin-process | 2.3.1 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
-| tauri-plugin-single-instance | 2.3.7 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
-| tauri-plugin-updater | 2.9.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
+| tauri-plugin-single-instance | 2.4.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
+| tauri-plugin-updater | 2.10.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/plugins-workspace |
 | tauri-runtime | 2.10.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-runtime-wry | 2.10.0 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
 | tauri-utils | 2.8.2 | Apache-2.0 OR MIT | https://github.com/tauri-apps/tauri |
@@ -487,9 +487,9 @@ This project makes use of the following open source packages:
 | thiserror | 2.0.18 | Apache-2.0 OR MIT | https://github.com/dtolnay/thiserror |
 | thiserror-impl | 1.0.69 | Apache-2.0 OR MIT | https://github.com/dtolnay/thiserror |
 | thiserror-impl | 2.0.18 | Apache-2.0 OR MIT | https://github.com/dtolnay/thiserror |
-| time | 0.3.45 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
-| time-core | 0.1.7 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
-| time-macros | 0.2.25 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
+| time | 0.3.47 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
+| time-core | 0.1.8 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
+| time-macros | 0.2.27 | Apache-2.0 OR MIT | https://github.com/time-rs/time |
 | tinystr | 0.8.2 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
 | tinyvec | 1.10.0 | Apache-2.0 OR MIT OR Zlib | https://github.com/Lokathor/tinyvec |
 | tinyvec_macros | 0.1.1 | Apache-2.0 OR MIT OR Zlib | https://github.com/Soveu/tinyvec_macros |
@@ -532,7 +532,7 @@ This project makes use of the following open source packages:
 | utf-8 | 0.7.6 | Apache-2.0 OR MIT | https://github.com/SimonSapin/rust-utf8 |
 | utf8-width | 0.1.8 | MIT | https://github.com/magiclen/utf8-width |
 | utf8_iter | 1.0.4 | Apache-2.0 OR MIT | https://github.com/hsivonen/utf8_iter |
-| uuid | 1.19.0 | Apache-2.0 OR MIT | https://github.com/uuid-rs/uuid |
+| uuid | 1.20.0 | Apache-2.0 OR MIT | https://github.com/uuid-rs/uuid |
 | value-bag | 1.12.0 | Apache-2.0 OR MIT | https://github.com/sval-rs/value-bag |
 | version-compare | 0.2.1 | MIT | https://gitlab.com/timvisee/version-compare |
 | version_check | 0.9.5 | Apache-2.0 OR MIT | https://github.com/SergioBenitez/version_check |
@@ -548,13 +548,13 @@ This project makes use of the following open source packages:
 | wasm-bindgen-macro | 0.2.108 | Apache-2.0 OR MIT | https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro |
 | wasm-bindgen-macro-support | 0.2.108 | Apache-2.0 OR MIT | https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro-support |
 | wasm-bindgen-shared | 0.2.108 | Apache-2.0 OR MIT | https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/shared |
-| wasm-streams | 0.4.2 | Apache-2.0 OR MIT | https://github.com/MattiasBuelens/wasm-streams/ |
+| wasm-streams | 0.5.0 | Apache-2.0 OR MIT | https://github.com/MattiasBuelens/wasm-streams/ |
 | web-sys | 0.3.85 | Apache-2.0 OR MIT | https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/web-sys |
 | web-time | 1.1.0 | Apache-2.0 OR MIT | https://github.com/daxpedda/web-time |
 | webkit2gtk | 2.0.2 | MIT | https://github.com/tauri-apps/webkit2gtk-rs |
 | webkit2gtk-sys | 2.0.2 | MIT | https://github.com/tauri-apps/webkit2gtk-rs |
-| webpki-root-certs | 1.0.5 | CDLA-Permissive-2.0 | https://github.com/rustls/webpki-roots |
-| webpki-roots | 1.0.5 | CDLA-Permissive-2.0 | https://github.com/rustls/webpki-roots |
+| webpki-root-certs | 1.0.6 | CDLA-Permissive-2.0 | https://github.com/rustls/webpki-roots |
+| webpki-roots | 1.0.6 | CDLA-Permissive-2.0 | https://github.com/rustls/webpki-roots |
 | webview2-com | 0.38.2 | MIT | https://github.com/wravery/webview2-rs |
 | webview2-com-macros | 0.8.1 | MIT | https://github.com/wravery/webview2-rs |
 | webview2-com-sys | 0.38.2 | MIT | https://github.com/wravery/webview2-rs |
@@ -642,8 +642,8 @@ This project makes use of the following open source packages:
 | zbus | 5.13.2 | MIT | https://github.com/z-galaxy/zbus/ |
 | zbus_macros | 5.13.2 | MIT | https://github.com/z-galaxy/zbus/ |
 | zbus_names | 4.3.1 | MIT | https://github.com/z-galaxy/zbus/ |
-| zerocopy | 0.8.33 | Apache-2.0 OR BSD-2-Clause OR MIT | https://github.com/google/zerocopy |
-| zerocopy-derive | 0.8.33 | Apache-2.0 OR BSD-2-Clause OR MIT | https://github.com/google/zerocopy |
+| zerocopy | 0.8.39 | Apache-2.0 OR BSD-2-Clause OR MIT | https://github.com/google/zerocopy |
+| zerocopy-derive | 0.8.39 | Apache-2.0 OR BSD-2-Clause OR MIT | https://github.com/google/zerocopy |
 | zerofrom | 0.1.6 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
 | zerofrom-derive | 0.1.6 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
 | zeroize | 1.8.2 | Apache-2.0 OR MIT | https://github.com/RustCrypto/utils |
@@ -653,7 +653,7 @@ This project makes use of the following open source packages:
 | zerovec-derive | 0.11.2 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
 | zip | 2.4.2 | MIT | https://github.com/zip-rs/zip2.git |
 | zip | 4.6.1 | MIT | https://github.com/zip-rs/zip2.git |
-| zmij | 1.0.15 | MIT | https://github.com/dtolnay/zmij |
+| zmij | 1.0.19 | MIT | https://github.com/dtolnay/zmij |
 | zopfli | 0.8.3 | Apache-2.0 | https://github.com/zopfli-rs/zopfli |
 | zstd | 0.13.3 | MIT | https://github.com/gyscos/zstd-rs |
 | zstd-safe | 7.2.4 | Apache-2.0 OR MIT | https://github.com/gyscos/zstd-rs |
@@ -775,15 +775,9 @@ This project makes use of the following open source packages:
 
 ---
 
-### @tauri-apps/plugin-updater@2.9.0
+### @tauri-apps/plugin-updater@2.10.0
 * **License:** MIT OR Apache-2.0
 * **Repository:** https://github.com/tauri-apps/plugins-workspace
-
----
-
-### @types/react-i18next@8.1.0
-* **License:** MIT
-* **Repository:** https://github.com/i18next/react-i18next
 
 ---
 
