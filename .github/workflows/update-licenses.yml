@@ -1,0 +1,64 @@
+name: Update Licenses
+
+on:
+  push:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'engine-core/requirements.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup Node.js
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # Setup Rust
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+            workspaces: './src-tauri -> target'
+
+      # Setup Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      # Install Tools
+      - name: Install Tools
+        run: |
+          npm install -g pnpm
+          cargo install cargo-license
+          pip install pip-licenses
+
+      # Generate Licenses
+      - name: Generate Licenses
+        run: pnpm gen:licenses
+
+      # Commit & Push if Changed
+      - name: Commit & Push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add THIRD-PARTY-LICENSES.md
+          if git diff-index --quiet HEAD; then
+            echo "No changes in licenses."
+          else
+            git commit -m "ci: update third-party licenses [skip ci]"
+            git push
+          fi
