@@ -1067,12 +1067,13 @@
             "synced_short": "已就绪",
             "synced": "已同步到编辑器",
             "analysis_title": "AI 分析",
-            "insight_title": "智能助手",
+            "insight_title": "AI 脚本分析",
             "suggestions_header": "优化建议",
             "summary_header": "功能摘要",
             "logic_header": "核心逻辑",
             "chip_custom_logic": "生成特定逻辑...",
-            "prompt_custom_logic": "帮我写一个逻辑，功能是："
+            "prompt_custom_logic": "帮我写一个逻辑，功能是：",
+            "restart_notice": "重启提示"
         }
     },
     "log_viewer": {

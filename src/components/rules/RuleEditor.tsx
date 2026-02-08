@@ -103,6 +103,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
                 <div className="flex items-center gap-2">
                     <Button
                         variant="quiet"
+                        size="sm"
                         onClick={() => setShowAIAssistant(!showAIAssistant)}
                         className={`gap-1.5 ${showAIAssistant ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
                     >
@@ -110,7 +111,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
                         {t('rule_editor.advanced_assistant')}
                     </Button>
                     <Button
-
+                        size="sm"
                         onClick={handleSave}
                         className="gap-1.5"
                     >

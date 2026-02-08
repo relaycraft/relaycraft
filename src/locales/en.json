@@ -1041,6 +1041,10 @@
         "or_create_blank": "Create Blank Script",
         "ai": {
             "placeholder": "Enter instructions, e.g., intercept google.com and modify response...",
+            "insight_title": "AI Script Analysis",
+            "summary_header": "Script Summary",
+            "logic_header": "Key Logic",
+            "suggestions_header": "Optimization Suggestions",
             "chip_explain": "Explain Script",
             "chip_modify": "Modify Script",
             "chip_create": "Create Script",
@@ -1053,7 +1057,8 @@
             "synced": "Synced to editor",
             "analysis_title": "AI Analysis",
             "chip_custom_logic": "Generate specific logic...",
-            "prompt_custom_logic": "Help me write a logic that: "
+            "prompt_custom_logic": "Help me write a logic that: ",
+            "restart_notice": "Restart Required"
         }
     },
     "log_viewer": {

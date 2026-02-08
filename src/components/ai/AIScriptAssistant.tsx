@@ -137,9 +137,10 @@ export function AIScriptAssistant({ onApply, onClose, currentCode, isCreateMode,
                     content: SCRIPT_EXPLAIN_SYSTEM_PROMPT
                         .replace(/{{LANGUAGE}}/g, langInfo.name)
                         .replace(/{{TERMINOLOGY}}/g, 'RelayCraft, mitmproxy, Addon')
-                        .replace(/{{SUMMARY}}/g, t('script_editor.ai.summary_header') || 'Summary')
-                        .replace(/{{KEY_LOGIC}}/g, t('script_editor.ai.logic_header') || 'Key Logic')
-                        .replace(/{{SUGGESTIONS}}/g, t('script_editor.ai.suggestions_header') || 'Suggestions')
+                        .replace(/{{SUMMARY}}/g, t('script_editor.ai.summary_header', 'Summary'))
+                        .replace(/{{KEY_LOGIC}}/g, t('script_editor.ai.logic_header', 'Key Logic'))
+                        .replace(/{{SUGGESTIONS}}/g, t('script_editor.ai.suggestions_header', 'Suggestions'))
+                        .replace(/{{RESTART_NOTICE}}/g, t('script_editor.ai.restart_notice', 'Restart Required'))
                 };
                 userMsg = { role: 'user' as const, content: getScriptExplanationPrompt(currentCode || '') };
             } else {
@@ -225,7 +226,7 @@ export function AIScriptAssistant({ onApply, onClose, currentCode, isCreateMode,
                         </div>
                         <div className="flex-1 space-y-2 min-w-0">
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80 uppercase">{t('script_editor.ai.insight_title') || 'RelayCraft AI Insight'}</span>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">{t('script_editor.ai.insight_title', 'RelayCraft AI Insight')}</span>
                                 <div className="flex items-center gap-2">
                                     {tempCode && (
                                         <div className="flex items-center gap-2">
@@ -255,7 +256,7 @@ export function AIScriptAssistant({ onApply, onClose, currentCode, isCreateMode,
                                         <button
                                             onClick={() => { setExplanation(''); setGenMode(null); }}
                                             className="hover:bg-primary/10 p-1 rounded-full transition-colors"
-                                            title={t('common.close') || 'Close'}
+                                            title={t('common.close', 'Close')}
                                         >
                                             <X className="w-3.5 h-3.5 text-muted-foreground/70" />
                                         </button>
