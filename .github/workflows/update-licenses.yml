@@ -2,6 +2,8 @@ name: Update Licenses
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -9,6 +11,11 @@ on:
       - 'pnpm-lock.yaml'
       - 'engine-core/requirements.txt'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 permissions:
   contents: write
@@ -32,19 +39,26 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with:
-            workspaces: './src-tauri -> target'
+            workspaces: 'src-tauri -> target'
+
 
       # Setup Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       
+      # Install Dependencies
+      - name: Install Dependencies
+        run: |
+          pnpm install
+          pip install -r engine-core/requirements.txt
+
       # Install Tools
       - name: Install Tools
         run: |
-          npm install -g pnpm
           cargo install cargo-license
           pip install pip-licenses
+
 
       # Generate Licenses
       - name: Generate Licenses

@@ -38,7 +38,8 @@ try {
 
     const rustOutput = run(`cargo license --json`, TAURI_DIR);
     if (rustOutput) {
-        const crates = JSON.parse(rustOutput);
+        const crates = JSON.parse(rustOutput).filter(c => c.name !== 'relaycraft');
+        console.log(`Found ${crates.length} Rust dependencies.`);
         crates.forEach(c => {
             rustLicenses += `| ${c.name} | ${c.version} | ${c.license || 'Unknown'} | ${c.repository || 'N/A'} |\n`;
         });
@@ -55,9 +56,11 @@ try {
     // We use npx to run license-checker without permanent install
     const jsonOutput = run('npx -y license-checker --json --production', path.join(__dirname, '..'));
     if (jsonOutput) {
-        const licenses = JSON.parse(jsonOutput);
-        Object.keys(licenses).forEach(pkg => {
-            const info = licenses[pkg];
+        const allLicenses = JSON.parse(jsonOutput);
+        const pkgs = Object.keys(allLicenses).filter(pkg => !pkg.startsWith('relaycraft@'));
+        console.log(`Found ${pkgs.length} Frontend dependencies.`);
+        pkgs.forEach(pkg => {
+            const info = allLicenses[pkg];
             frontendLicenses += `### ${pkg}\n`;
             frontendLicenses += `* **License:** ${info.licenses}\n`;
             frontendLicenses += `* **Repository:** ${info.repository}\n`;
@@ -90,6 +93,8 @@ try {
     // Generate markdown table (without full license text to save space)
     const pipOutput = run('pip-licenses --format=markdown --with-urls', ENGINE_DIR);
     if (pipOutput) {
+        const lines = pipOutput.split('\n');
+        console.log(`Found ${Math.max(0, lines.length - 2)} Python dependencies.`);
         pythonLicenses += pipOutput;
         pythonLicenses += '\n\n---\n\n';
     }

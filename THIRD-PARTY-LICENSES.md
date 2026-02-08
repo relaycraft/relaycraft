@@ -379,7 +379,6 @@ This project makes use of the following open source packages:
 | regex-automata | 0.4.13 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
 | regex-syntax | 0.8.8 | Apache-2.0 OR MIT | https://github.com/rust-lang/regex |
 | relative-path | 1.9.3 | Apache-2.0 OR MIT | https://github.com/udoprog/relative-path |
-| relaycraft | 0.99.1 | Unknown | N/A |
 | rend | 0.4.2 | MIT | https://github.com/djkoloski/rend |
 | reqwest | 0.12.28 | Apache-2.0 OR MIT | https://github.com/seanmonstar/reqwest |
 | reqwest | 0.13.1 | Apache-2.0 OR MIT | https://github.com/seanmonstar/reqwest |
@@ -887,12 +886,6 @@ This project makes use of the following open source packages:
 ### react@19.2.3
 * **License:** MIT
 * **Repository:** https://github.com/facebook/react
-
----
-
-### relaycraft@0.99.1
-* **License:** UNLICENSED
-* **Repository:** undefined
 
 ---
 
