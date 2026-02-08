@@ -7,12 +7,15 @@ import os
 
 def build():
     """Build the mitmproxy executable"""
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    wrapper_path = os.path.join(script_dir, 'mitmdump_wrapper.py')
     
     # Determine the platform-specific executable name
-    exe_name = 'mitmdump'
+    exe_name = 'engine'
     
     args = [
-        'mitmdump_wrapper.py',
+        wrapper_path,
         '--name=' + exe_name,
         # '--add-data=addons:addons', # Removed: we don't bundle scripts anymore
         '--hidden-import=mitmproxy',
@@ -46,7 +49,7 @@ def build():
     
     PyInstaller.__main__.run(args)
     
-    print(f"\n✓ Build complete! Executable: dist/{exe_name}")
+    print(f"\n[OK] Build complete! Executable: dist/{exe_name}")
     print(f"  Copy this file to: src-tauri/binaries/{exe_name}")
     print(f"  NOTE: This binary requires src-tauri/resources/addons/combined_addons.py to be present at runtime.")
 

@@ -63,6 +63,7 @@ pub fn open_cert_dir() -> Result<(), String> {
 #[tauri::command]
 pub async fn check_cert_installed() -> Result<bool, String> {
     // Helper to get local certificate hash
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     fn get_local_cert_hash() -> Result<String, String> {
         use base64::prelude::*;
         use sha1::{Digest, Sha1};
@@ -222,6 +223,7 @@ pub async fn check_cert_installed() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn install_cert_automated() -> Result<(), String> {
+    let _ = logging::write_domain_log("audit", "Triggered automated certificate installation");
     let cert_path = get_cert_path()?;
 
     // Windows implementation using certutil
@@ -262,12 +264,75 @@ pub async fn install_cert_automated() -> Result<(), String> {
         return Err("MANUAL_STEP".to_string());
     }
 
-    let _ = logging::write_domain_log("audit", "Triggered automated certificate installation");
+    #[cfg(target_os = "linux")]
+    {
+        use std::path::Path;
+        use std::process::Command;
+
+        // Detect distro style
+        let is_debian = Path::new("/usr/local/share/ca-certificates").exists();
+        let is_rhel = Path::new("/etc/pki/ca-trust/source/anchors").exists();
+
+        if is_debian {
+            let dest = "/usr/local/share/ca-certificates/relaycraft-ca.crt";
+            // Check if we are root
+            let is_root = unsafe { libc::geteuid() == 0 };
+
+            if is_root {
+                std::fs::copy(&cert_path, dest).map_err(|e| e.to_string())?;
+                Command::new("update-ca-certificates")
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            } else {
+                // Use pkexec for UI elevation
+                let status = Command::new("pkexec")
+                    .args([
+                        "sh",
+                        "-c",
+                        &format!("cp '{}' '{}' && update-ca-certificates", cert_path, dest),
+                    ])
+                    .status()
+                    .map_err(|e| format!("Failed to execute pkexec: {}", e))?;
+
+                if !status.success() {
+                    return Err("用户取消了授权或安装失败".to_string());
+                }
+            }
+        } else if is_rhel {
+            let dest = "/etc/pki/ca-trust/source/anchors/relaycraft-ca.crt";
+            let is_root = unsafe { libc::geteuid() == 0 };
+
+            if is_root {
+                std::fs::copy(&cert_path, dest).map_err(|e| e.to_string())?;
+                Command::new("update-ca-trust")
+                    .output()
+                    .map_err(|e| e.to_string())?;
+            } else {
+                let status = Command::new("pkexec")
+                    .args([
+                        "sh",
+                        "-c",
+                        &format!("cp '{}' '{}' && update-ca-trust", cert_path, dest),
+                    ])
+                    .status()
+                    .map_err(|e| format!("Failed to execute pkexec: {}", e))?;
+
+                if !status.success() {
+                    return Err("用户取消了授权或安装失败".to_string());
+                }
+            }
+        } else {
+            return Err("MANUAL_STEP".to_string());
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
     Ok(())
 }
 
 #[tauri::command]
 pub async fn remove_cert_automated() -> Result<(), String> {
+    let _ = logging::write_domain_log("audit", "Triggered automated certificate removal");
     // Windows implementation using certutil
     #[cfg(target_os = "windows")]
     {
@@ -302,7 +367,64 @@ pub async fn remove_cert_automated() -> Result<(), String> {
         return Err("MANUAL_STEP".to_string());
     }
 
-    let _ = logging::write_domain_log("audit", "Triggered automated certificate removal");
+    #[cfg(target_os = "linux")]
+    {
+        use std::path::Path;
+        use std::process::Command;
+
+        let is_debian = Path::new("/usr/local/share/ca-certificates").exists();
+        let is_rhel = Path::new("/etc/pki/ca-trust/source/anchors").exists();
+
+        if is_debian {
+            let target = "/usr/local/share/ca-certificates/relaycraft-ca.crt";
+            if Path::new(target).exists() {
+                let is_root = unsafe { libc::geteuid() == 0 };
+                if is_root {
+                    std::fs::remove_file(target).map_err(|e| e.to_string())?;
+                    Command::new("update-ca-certificates")
+                        .output()
+                        .map_err(|e| e.to_string())?;
+                } else {
+                    let status = Command::new("pkexec")
+                        .args([
+                            "sh",
+                            "-c",
+                            &format!("rm -f '{}' && update-ca-certificates", target),
+                        ])
+                        .status()
+                        .map_err(|e| e.to_string())?;
+                    if !status.success() {
+                        return Err("卸载失败".to_string());
+                    }
+                }
+            }
+        } else if is_rhel {
+            let target = "/etc/pki/ca-trust/source/anchors/relaycraft-ca.crt";
+            if Path::new(target).exists() {
+                let is_root = unsafe { libc::geteuid() == 0 };
+                if is_root {
+                    std::fs::remove_file(target).map_err(|e| e.to_string())?;
+                    Command::new("update-ca-trust")
+                        .output()
+                        .map_err(|e| e.to_string())?;
+                } else {
+                    let status = Command::new("pkexec")
+                        .args([
+                            "sh",
+                            "-c",
+                            &format!("rm -f '{}' && update-ca-trust", target),
+                        ])
+                        .status()
+                        .map_err(|e| e.to_string())?;
+                    if !status.success() {
+                        return Err("卸载失败".to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
     Ok(())
 }
 

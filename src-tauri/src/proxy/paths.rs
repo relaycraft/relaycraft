@@ -58,6 +58,8 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
             .resource_dir()
             .map_err(|e| format!("Failed to get resource dir: {}", e))?;
 
+        log::info!("DEBUG: resource_dir = {:?}", resource_dir);
+
         let exe_dir = std::env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|p| p.to_path_buf()));
@@ -86,8 +88,20 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
         // 2. Try resource_dir (Contents/Resources)
         #[cfg(target_os = "macos")]
         {
-            // macOS onedir structure: <resource_dir>/engine/engine
-            let onedir_path = resource_dir.join(binary_name).join(binary_name);
+            // macOS onedir structure might be nested depending on bundling
+            // 1. Try <resource_dir>/resources/engine/<binary_name> (Most likely for 'resources/engine' config)
+            let nested_onedir = resource_dir
+                .join("resources")
+                .join("engine")
+                .join(binary_name);
+            log::info!("DEBUG: Checking macOS nested path: {:?}", nested_onedir);
+            if nested_onedir.exists() {
+                return Ok(nested_onedir);
+            }
+
+            // 2. Try <resource_dir>/engine/<binary_name> (If flattened)
+            let onedir_path = resource_dir.join("engine").join(binary_name);
+            log::info!("DEBUG: Checking macOS onedir path: {:?}", onedir_path);
             if onedir_path.exists() {
                 return Ok(onedir_path);
             }
@@ -114,7 +128,7 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 
         // Return error if still not found
         Err(format!(
-            "Engine executable not found. Please ensure '.core/{}' exists.",
+            "Engine executable not found ({}). Please reinstall the application or check permissions.",
             binary_name
         ))
     }

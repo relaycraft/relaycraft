@@ -90,11 +90,78 @@ impl Default for AppConfig {
     }
 }
 
-/// Get the application root directory (where the executable is)
+/// Get the application root directory
 pub fn get_app_root_dir() -> Result<PathBuf, String> {
-    let exe_path = std::env::current_exe().map_err(|e| format!("Failed to get exe path: {}", e))?;
-    let exe_dir = exe_path.parent().ok_or("Failed to get exe directory")?;
-    Ok(exe_dir.to_path_buf())
+    // 1. Portable Mode Check (Highest Priority)
+    // If a file named "portable" exists next to the executable, use that directory.
+    // This allows easy sharing of rules/config (e.g., on USB drives) and overrides all other logic.
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            if exe_dir.join("portable").exists() {
+                return Ok(exe_dir.to_path_buf());
+            }
+        }
+    }
+
+    // In Debug mode, keep using the executable directory (Portable/Dev experience)
+    if cfg!(debug_assertions) {
+        let exe_path =
+            std::env::current_exe().map_err(|e| format!("Failed to get exe path: {}", e))?;
+        let exe_dir = exe_path.parent().ok_or("Failed to get exe directory")?;
+        return Ok(exe_dir.to_path_buf());
+    }
+
+    // In Release mode, use standard platform-specific user data directories
+    // This fixes "Read-only file system" errors in AppImages (Linux) and permission issues on macOS/Windows
+    #[cfg(target_os = "linux")]
+    {
+        let home =
+            std::env::var("HOME").map_err(|_| "Failed to resolve HOME variable".to_string())?;
+        let path = PathBuf::from(home).join(".config").join("relaycraft");
+        if !path.exists() {
+            let _ = fs::create_dir_all(&path);
+        }
+        Ok(path)
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let home =
+            std::env::var("HOME").map_err(|_| "Failed to resolve HOME variable".to_string())?;
+        let path = PathBuf::from(home)
+            .join("Library")
+            .join("Application Support")
+            .join("relaycraft");
+        if !path.exists() {
+            let _ = fs::create_dir_all(&path);
+        }
+        Ok(path)
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            let path = PathBuf::from(appdata).join("relaycraft");
+            if !path.exists() {
+                let _ = fs::create_dir_all(&path);
+            }
+            return Ok(path);
+        }
+        // Fallback to exe dir if APPDATA missing (unlikely)
+        let exe_path =
+            std::env::current_exe().map_err(|e| format!("Failed to get exe path: {}", e))?;
+        let exe_dir = exe_path.parent().ok_or("Failed to get exe directory")?;
+        Ok(exe_dir.to_path_buf())
+    }
+
+    // Fallback for other OS
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    {
+        let exe_path =
+            std::env::current_exe().map_err(|e| format!("Failed to get exe path: {}", e))?;
+        let exe_dir = exe_path.parent().ok_or("Failed to get exe directory")?;
+        Ok(exe_dir.to_path_buf())
+    }
 }
 
 /// Get the configuration directory: config/

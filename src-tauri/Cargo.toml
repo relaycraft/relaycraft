@@ -1,8 +1,8 @@
 [package]
 name = "relaycraft"
-version = "1.0.0-beta1"
+version = "0.99.1"
 description = "RelayCraft - Powerful HTTP Proxy Tool"
-authors = ["Beta"]
+authors = ["RelayCraft Team"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2.10.0", features = ["protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-log = "2"
@@ -30,6 +30,7 @@ local-ip-address = "0.5"
 dirs = "6.0.0"
 sysinfo = "0.33"
 regex = "1"
+libc = "0.2"
 lazy_static = "1.4"
 log = "0.4"
 simplelog = "0.12"

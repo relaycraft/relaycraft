@@ -7,28 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-      
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Install Frontend Dependencies
-        run: pnpm install
-
-      - name: Build Frontend
-        run: pnpm build
-
   build-tauri:
-    needs: build-frontend
     permissions:
       contents: write
     strategy:
@@ -49,29 +28,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # --- Cache & Setup Node ---
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
       - name: Install Frontend Dependencies
         run: pnpm install
 
+      - name: Test Frontend
+        run: pnpm test
+
+      # --- Cache & Setup Rust ---
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+
+
+      # --- Cache & Setup Python ---
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: 'engine-core/requirements.txt'
 
       - name: Install Python Dependencies
         run: |
@@ -81,7 +74,16 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
 
       # --- Python Sidecar Build ---
       - name: Build Python Sidecar
@@ -93,14 +95,14 @@ jobs:
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path src-tauri/binaries
-          Move-Item dist/mitmdump.exe src-tauri/binaries/engine-${{ matrix.target }}.exe
+          Move-Item dist/engine.exe src-tauri/binaries/engine-${{ matrix.target }}.exe
           ls src-tauri/binaries
 
       - name: Prepare Sidecar (Linux)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           mkdir -p src-tauri/binaries
-          mv dist/mitmdump src-tauri/binaries/engine-${{ matrix.target }}
+          mv dist/engine src-tauri/binaries/engine-${{ matrix.target }}
           chmod +x src-tauri/binaries/engine-${{ matrix.target }}
           ls -l src-tauri/binaries
 
@@ -108,9 +110,21 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           mkdir -p src-tauri/resources/engine
-          # macOS build.py output is 'onedir' in dist/mitmdump (folder)
-          cp -r dist/mitmdump/* src-tauri/resources/engine/
-          ls -R src-tauri/resources/engine
+          # macOS build.py output is 'onedir' in dist/engine (folder)
+          cp -r dist/engine/* src-tauri/resources/engine/
+          
+          # Fix RPATH for libpython to look in the same directory
+          cd src-tauri/resources/engine
+          PYTHON_LIB=$(ls libpython*.dylib 2>/dev/null | head -n 1)
+          if [ ! -z "$PYTHON_LIB" ]; then
+            echo "Fixing RPATH for $PYTHON_LIB in 'engine' binary..."
+            install_name_tool -change "@executable_path/../Frameworks/$PYTHON_LIB" "@executable_path/$PYTHON_LIB" engine
+          fi
+          ls -R .
+
+      - name: Test Backend
+        run: cargo test
+        working-directory: src-tauri
 
       # --- Tauri Build ---
       - name: Tauri Build
