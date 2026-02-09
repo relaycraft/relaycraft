@@ -29,6 +29,9 @@ export const useAIContext = () => {
       window.clearTimeout(timeoutRef.current);
     }
 
+    // Reactive dependencies to trigger refresh
+    [_ruleUpdated, _scriptUpdated, _configUpdated].forEach(() => {});
+
     timeoutRef.current = window.setTimeout(() => {
       refreshContext();
     }, 1000); // 1-second debounce to avoid thrashing during typing or bulk updates
@@ -36,5 +39,5 @@ export const useAIContext = () => {
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [refreshContext]);
+  }, [refreshContext, _ruleUpdated, _scriptUpdated, _configUpdated]);
 };

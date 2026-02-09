@@ -248,11 +248,19 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   },
 
   addGroup: (group) => {
-    // Enforce ID = Name for directory mapping
-    // Logic: specific ID -> use it, otherwise use Name
+    // 1. Ensure unique name within current groups
+    const currentGroups = get().groups;
+    let uniqueName = group.name;
+    let counter = 1;
+    while (currentGroups.some((g) => g.name === uniqueName)) {
+      uniqueName = `${group.name} (${counter++})`;
+    }
+
+    // 2. Enforce ID = Name for directory mapping
     const finalGroup = {
       ...group,
-      id: group.name, // Force ID to match Name for consistency
+      name: uniqueName,
+      id: uniqueName, // Force ID to match unique Name
       enabled: group.enabled ?? true,
     };
     set((state) => ({ groups: [...state.groups, finalGroup] }));
@@ -260,9 +268,47 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   },
 
   updateGroup: (id, updates) => {
-    set((state) => ({
-      groups: state.groups.map((group) => (group.id === id ? { ...group, ...updates } : group)),
-    }));
+    const state = get();
+    const oldGroup = state.groups.find((g) => g.id === id);
+    if (!oldGroup) return;
+
+    const newName = updates.name !== undefined ? updates.name : oldGroup.name;
+    const isNameChanging = updates.name !== undefined && updates.name !== oldGroup.name;
+
+    let finalName = newName;
+    if (isNameChanging) {
+      // Ensure the new name is unique (excluding self)
+      let counter = 1;
+      const otherGroups = state.groups.filter((g) => g.id !== id);
+      while (otherGroups.some((g) => g.name === finalName)) {
+        finalName = `${newName} (${counter++})`;
+      }
+    }
+
+    // If name changed, we also need to update its ID (since ID=Name)
+    // AND update the ruleGroups mapping for all rules in this group
+    const newId = isNameChanging ? finalName : id;
+
+    set((state) => {
+      const updatedGroups = state.groups.map((group) =>
+        group.id === id ? { ...group, ...updates, name: finalName, id: newId } : group,
+      );
+
+      const newState: any = { groups: updatedGroups };
+
+      if (isNameChanging) {
+        const newRuleGroups = { ...state.ruleGroups };
+        Object.keys(newRuleGroups).forEach((rid) => {
+          if (newRuleGroups[rid] === id) {
+            newRuleGroups[rid] = newId;
+          }
+        });
+        newState.ruleGroups = newRuleGroups;
+      }
+
+      return newState;
+    });
+
     get().saveRules();
   },
 
