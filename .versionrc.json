@@ -1,60 +1,60 @@
 {
-    "bumpFiles": [
-        {
-            "filename": "package.json",
-            "type": "json"
-        },
-        {
-            "filename": "src-tauri/tauri.conf.json",
-            "type": "json"
-        },
-        {
-            "filename": "src-tauri/Cargo.toml",
-            "updater": "scripts/cargo-updater.cjs"
-        }
-    ],
-    "packageFiles": [
-        {
-            "filename": "package.json",
-            "type": "json"
-        }
-    ],
-    "types": [
-        {
-            "type": "feat",
-            "section": "Features"
-        },
-        {
-            "type": "fix",
-            "section": "Bug Fixes"
-        },
-        {
-            "type": "perf",
-            "section": "Performance Improvements"
-        },
-        {
-            "type": "chore",
-            "hidden": true
-        },
-        {
-            "type": "docs",
-            "hidden": true
-        },
-        {
-            "type": "style",
-            "hidden": true
-        },
-        {
-            "type": "refactor",
-            "hidden": true
-        },
-        {
-            "type": "test",
-            "hidden": true
-        },
-        {
-            "type": "ci",
-            "hidden": true
-        }
-    ]
+  "bumpFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    },
+    {
+      "filename": "src-tauri/tauri.conf.json",
+      "type": "json"
+    },
+    {
+      "filename": "src-tauri/Cargo.toml",
+      "updater": "scripts/cargo-updater.cjs"
+    }
+  ],
+  "packageFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    }
+  ],
+  "types": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance Improvements"
+    },
+    {
+      "type": "chore",
+      "hidden": true
+    },
+    {
+      "type": "docs",
+      "hidden": true
+    },
+    {
+      "type": "style",
+      "hidden": true
+    },
+    {
+      "type": "refactor",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "hidden": true
+    }
+  ]
 }

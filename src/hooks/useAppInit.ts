@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { useSettingsStore } from '../stores/settingsStore';
-import { useAIStore } from '../stores/aiStore';
-import { useRuleStore } from '../stores/ruleStore';
-import { useScriptStore } from '../stores/scriptStore';
-import { useProxyStore } from '../stores/proxyStore';
-import { useThemeStore } from '../stores/themeStore';
-import { usePluginStore } from '../stores/pluginStore';
-import { useUIStore } from '../stores/uiStore';
-import { initPlugins } from '../plugins/pluginLoader';
-import { type } from '@tauri-apps/plugin-os';
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { type } from "@tauri-apps/plugin-os";
+import { useEffect } from "react";
+import { initPlugins } from "../plugins/pluginLoader";
+import { useAIStore } from "../stores/aiStore";
+import { usePluginStore } from "../stores/pluginStore";
+import { useProxyStore } from "../stores/proxyStore";
+import { useRuleStore } from "../stores/ruleStore";
+import { useScriptStore } from "../stores/scriptStore";
+import { useSettingsStore } from "../stores/settingsStore";
+import { useThemeStore } from "../stores/themeStore";
+import { useUIStore } from "../stores/uiStore";
 
 interface UseAppInitProps {
   setShowExitModal: (show: boolean) => void;
@@ -24,15 +24,15 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
 
   // Apply display density to document root
   useEffect(() => {
-    document.documentElement.setAttribute('data-density', config.display_density);
+    document.documentElement.setAttribute("data-density", config.display_density);
   }, [config.display_density]);
 
   // Update language class on html element
   useEffect(() => {
-    if (config.language && config.language.startsWith('zh')) {
-      document.documentElement.classList.add('lang-zh');
+    if (config.language?.startsWith("zh")) {
+      document.documentElement.classList.add("lang-zh");
     } else {
-      document.documentElement.classList.remove('lang-zh');
+      document.documentElement.classList.remove("lang-zh");
     }
   }, [config.language]);
 
@@ -42,25 +42,25 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       // Check OS type first and apply class to HTML
       try {
         const osType = await type();
-        if (osType === 'macos') {
-          document.documentElement.classList.add('platform-mac');
+        if (osType === "macos") {
+          document.documentElement.classList.add("platform-mac");
           useUIStore.getState().setOsType(true);
         }
-      } catch (e) {
+      } catch (_e) {
         // Fallback
-        const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.userAgent);
+        const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
         if (isMac) {
-          document.documentElement.classList.add('platform-mac');
+          document.documentElement.classList.add("platform-mac");
         }
         useUIStore.getState().setOsType(isMac);
       }
 
       // Apply language class
-      const currentLang = useSettingsStore.getState().config.language || 'en';
-      if (currentLang.startsWith('zh')) {
-        document.documentElement.classList.add('lang-zh');
+      const currentLang = useSettingsStore.getState().config.language || "en";
+      if (currentLang.startsWith("zh")) {
+        document.documentElement.classList.add("lang-zh");
       } else {
-        document.documentElement.classList.remove('lang-zh');
+        document.documentElement.classList.remove("lang-zh");
       }
 
       // Critical path - must complete first
@@ -81,7 +81,7 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       const currentConfig = useSettingsStore.getState().config;
       const isRunning = useProxyStore.getState().running;
       if (currentConfig.auto_start_proxy && !isRunning) {
-        startProxy().catch(err => console.error('Failed to auto-start proxy:', err));
+        startProxy().catch((err) => console.error("Failed to auto-start proxy:", err));
       }
 
       // Show window after initialization is complete to avoid white screen
@@ -90,7 +90,15 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       }, 100);
     };
     init();
-  }, []);
+  }, [
+    checkCertTrust,
+    checkStatus,
+    fetchScripts,
+    loadAISettings,
+    loadConfig,
+    loadRules,
+    startProxy,
+  ]);
 
   // Deferred Plugin Loading - Don't block initial render
   useEffect(() => {
@@ -111,7 +119,7 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     });
 
     return () => {
-      unlisten.then(f => f());
+      unlisten.then((f) => f());
     };
   }, [setShowExitModal]);
 
@@ -121,16 +129,16 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       // Allow native context menu for inputs, textareas, and the CodeMirror editor
       const target = e.target as HTMLElement;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.closest('.cm-editor')
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.closest(".cm-editor")
       ) {
         return;
       }
       e.preventDefault();
     };
-    document.addEventListener('contextmenu', handleContextMenu);
-    return () => document.removeEventListener('contextmenu', handleContextMenu);
+    document.addEventListener("contextmenu", handleContextMenu);
+    return () => document.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
   // Proxy Status Heartbeat
@@ -145,9 +153,9 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     const handleFocus = () => {
       checkCertTrust();
     };
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener("focus", handleFocus);
       clearInterval(heartbeat);
     };
   }, [checkStatus, checkCertTrust]);

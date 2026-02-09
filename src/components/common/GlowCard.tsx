@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, ReactNode } from 'react';
-import { cn } from '../../lib/utils';
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { cn } from "../../lib/utils";
 
 /**
  * GlowCard - Premium Mouse-Following Glow Effect Component
@@ -36,74 +36,72 @@ import { cn } from '../../lib/utils';
  * @param {number} [glowOpacity=0.6] - Opacity of the glow (0-1)
  */
 interface GlowCardProps {
-    children: ReactNode;
-    className?: string;
-    glowColor?: string;
-    glowSize?: number;
-    glowOpacity?: number;
+  children: ReactNode;
+  className?: string;
+  glowColor?: string;
+  glowSize?: number;
+  glowOpacity?: number;
 }
 
 export function GlowCard({
-    children,
-    className,
-    glowColor = 'rgba(59, 130, 246, 0.4)', // primary color
-    glowSize = 200,
-    glowOpacity = 0.6
+  children,
+  className,
+  glowColor = "rgba(59, 130, 246, 0.4)", // primary color
+  glowSize = 200,
+  glowOpacity = 0.6,
 }: GlowCardProps) {
-    const cardRef = useRef<HTMLDivElement>(null);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const [isHovering, setIsHovering] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
 
-    useEffect(() => {
-        const card = cardRef.current;
-        if (!card) return;
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
 
-        const handleMouseMove = (e: MouseEvent) => {
-            const rect = card.getBoundingClientRect();
-            setMousePosition({
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            });
-        };
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = card.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    };
 
-        const handleMouseEnter = () => setIsHovering(true);
-        const handleMouseLeave = () => setIsHovering(false);
+    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseLeave = () => setIsHovering(false);
 
-        card.addEventListener('mousemove', handleMouseMove);
-        card.addEventListener('mouseenter', handleMouseEnter);
-        card.addEventListener('mouseleave', handleMouseLeave);
+    card.addEventListener("mousemove", handleMouseMove);
+    card.addEventListener("mouseenter", handleMouseEnter);
+    card.addEventListener("mouseleave", handleMouseLeave);
 
-        return () => {
-            card.removeEventListener('mousemove', handleMouseMove);
-            card.removeEventListener('mouseenter', handleMouseEnter);
-            card.removeEventListener('mouseleave', handleMouseLeave);
-        };
-    }, []);
+    return () => {
+      card.removeEventListener("mousemove", handleMouseMove);
+      card.removeEventListener("mouseenter", handleMouseEnter);
+      card.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
 
-    return (
+  return (
+    <div
+      ref={cardRef}
+      className={cn("relative overflow-hidden", className)}
+      style={{
+        ["--mouse-x" as any]: `${mousePosition.x}px`,
+        ["--mouse-y" as any]: `${mousePosition.y}px`,
+      }}
+    >
+      {/* Glow Effect */}
+      {isHovering && (
         <div
-            ref={cardRef}
-            className={cn('relative overflow-hidden', className)}
-            style={{
-                ['--mouse-x' as any]: `${mousePosition.x}px`,
-                ['--mouse-y' as any]: `${mousePosition.y}px`,
-            }}
-        >
-            {/* Glow Effect */}
-            {isHovering && (
-                <div
-                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300"
-                    style={{
-                        opacity: isHovering ? glowOpacity : 0,
-                        background: `radial-gradient(${glowSize}px circle at var(--mouse-x) var(--mouse-y), ${glowColor}, transparent 80%)`
-                    }}
-                />
-            )}
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300"
+          style={{
+            opacity: isHovering ? glowOpacity : 0,
+            background: `radial-gradient(${glowSize}px circle at var(--mouse-x) var(--mouse-y), ${glowColor}, transparent 80%)`,
+          }}
+        />
+      )}
 
-            {/* Content */}
-            <div className="relative z-10">
-                {children}
-            </div>
-        </div>
-    );
+      {/* Content */}
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
 }

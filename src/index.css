@@ -2,193 +2,197 @@
 
 /* Local JetBrains Mono Font Definitions */
 @font-face {
-    font-family: 'JetBrains Mono';
-    src: url('/fonts/JetBrainsMono-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrains Mono';
-    src: url('/fonts/JetBrainsMono-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrains Mono';
-    src: url('/fonts/JetBrainsMono-SemiBold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-    font-display: swap;
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrains Mono';
-    src: url('/fonts/JetBrainsMono-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* Local Inter Font Definitions */
 @font-face {
-    font-family: 'Inter';
-    src: url('/fonts/Inter-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Inter";
+  src: url("/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Inter';
-    src: url('/fonts/Inter-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Inter";
+  src: url("/fonts/Inter-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Inter';
-    src: url('/fonts/Inter-SemiBold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Inter";
+  src: url("/fonts/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
-    font-family: 'Inter';
-    src: url('/fonts/Inter-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
+  font-family: "Inter";
+  src: url("/fonts/Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @theme {
-    /*
+  /*
        DESIGN TOKENS & THEME DEFAULTS
        These values serve as the fallback "Modern Charcoal" theme.
        They are dynamically overridden by JS in themeStore.ts.
     */
-    /* Custom Fonts */
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-    /* Optimized Monospace Stack: JetBrains Mono (Best for Code) -> Fira Code -> Roboto Mono -> System Fallbacks */
-    --font-mono: "JetBrains Mono", "Fira Code", "Roboto Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Custom Fonts */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  /* Optimized Monospace Stack: JetBrains Mono (Best for Code) -> Fira Code -> Roboto Mono -> System Fallbacks */
+  --font-mono:
+    "JetBrains Mono", "Fira Code", "Roboto Mono", Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 
-    /* Premium "Modern Charcoal" Palette - Balanced contrast for dev tools */
-    --color-background: #0b0c0f;
-    /* Pure depth for the main workspace */
-    --color-foreground: #e6edf3;
-    /* High legibility soft-white */
+  /* Premium "Modern Charcoal" Palette - Balanced contrast for dev tools */
+  --color-background: #0b0c0f;
+  /* Pure depth for the main workspace */
+  --color-foreground: #e6edf3;
+  /* High legibility soft-white */
 
-    --color-card: #161a22;
-    /* Primary UI surfaces (Flow list, Editor) */
-    --color-card-foreground: #e6edf3;
+  --color-card: #161a22;
+  /* Primary UI surfaces (Flow list, Editor) */
+  --color-card-foreground: #e6edf3;
 
-    --color-primary: #60a5fa;
-    /* Blue 400 - Better Dark Mode Contrast */
-    --color-primary-foreground: #ffffff;
+  --color-primary: #60a5fa;
+  /* Blue 400 - Better Dark Mode Contrast */
+  --color-primary-foreground: #ffffff;
 
-    --color-secondary: #0d1117;
-    /* Secondary surfaces */
-    --color-secondary-foreground: #8b949e;
+  --color-secondary: #0d1117;
+  /* Secondary surfaces */
+  --color-secondary-foreground: #8b949e;
 
-    --color-muted: #11141a;
-    /* Sidebar / Tab Bars / Lower hierarchy */
-    --color-muted-foreground: #8b949e;
+  --color-muted: #11141a;
+  /* Sidebar / Tab Bars / Lower hierarchy */
+  --color-muted-foreground: #8b949e;
 
-    --color-accent: #1e2229;
-    /* Hover / Selection states */
-    --color-accent-foreground: #ffffff;
+  --color-accent: #1e2229;
+  /* Hover / Selection states */
+  --color-accent-foreground: #ffffff;
 
-    --color-destructive: #fb7185;
-    /* Rose 400 - Better Dark Mode Contrast */
-    --color-destructive-foreground: #ffffff;
+  --color-destructive: #fb7185;
+  /* Rose 400 - Better Dark Mode Contrast */
+  --color-destructive-foreground: #ffffff;
 
-    --color-success: #10b981;
-    --color-success-foreground: #ffffff;
+  --color-success: #10b981;
+  --color-success-foreground: #ffffff;
 
-    --color-warning: #f59e0b;
-    --color-warning-foreground: #000000;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #000000;
 
-    --color-info: #3b82f6;
-    --color-info-foreground: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
 
-    --color-border: rgba(255, 255, 255, 0.08);
-    /* Defining edges without harshness */
-    --color-input: #0d0f14;
-    --color-ring: #3b82f6;
-    --color-popover: #161b22;
-    --color-popover-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.08);
+  /* Defining edges without harshness */
+  --color-input: #0d0f14;
+  --color-ring: #3b82f6;
+  --color-popover: #161b22;
+  --color-popover-foreground: #ffffff;
 
-    /* Custom Variables for Personalization */
-    --density-p: 8px;
-    /* Default: Comfortable */
+  /* Custom Variables for Personalization */
+  --density-p: 8px;
+  /* Default: Comfortable */
 
-    --shadow-premium: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+  --shadow-premium: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
 }
 
-
-
 /* High-DPI (2K/4K) Premium Visual Enhancements */
-@media (-webkit-min-device-pixel-ratio: 2),
-(min-resolution: 192dpi) {
-    :root {
-        /* Finer borders and deeper, multi-layered shadows for high-res displays */
-        --color-border: rgba(255, 255, 255, 0.06);
-        --shadow-premium: 0 0 0 1px rgba(255, 255, 255, 0.03),
-            0 2px 4px rgba(0, 0, 0, 0.2),
-            0 12px 32px -8px rgba(0, 0, 0, 0.6);
-    }
+/* biome-ignore lint/correctness/noUnknownMediaFeatureName: Vendor specific prefix for device pixel ratio */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  :root {
+    /* Finer borders and deeper, multi-layered shadows for high-res displays */
+    --color-border: rgba(255, 255, 255, 0.06);
+    --shadow-premium:
+      0 0 0 1px rgba(255, 255, 255, 0.03), 0 2px 4px rgba(0, 0, 0, 0.2),
+      0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  }
 }
 
 /* Information Density Overrides */
 [data-density="compact"] {
-    --density-p: 2px;
+  --density-p: 2px;
 }
 
 [data-density="comfortable"] {
-    --density-p: 8px;
+  --density-p: 8px;
 }
 
 [data-density="relaxed"] {
-    --density-p: 16px;
+  --density-p: 16px;
 }
 
 ::selection {
-    background-color: color-mix(in srgb, var(--color-primary), transparent 70%);
-    color: var(--color-foreground);
+  background-color: color-mix(in srgb, var(--color-primary), transparent 70%);
+  color: var(--color-foreground);
 }
 
 /* Hide number input spinners */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-input[type=number] {
-    appearance: textfield;
-    -moz-appearance: textfield;
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 /* Premium Typography System */
 * {
-    /* Enable advanced font features for better rendering */
-    font-feature-settings: 'liga' 1, 'calt' 1;
+  /* Enable advanced font features for better rendering */
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
 }
 
 body {
-    font-family: var(--font-sans);
-    font-weight: 400;
-    line-height: 1.5;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* Specific optimization for macOS + Chinese: Increase base font size */
 html.platform-mac.lang-zh {
-    font-size: 17px;
+  font-size: 17px;
 }
 
 /* Typography Hierarchy */
@@ -198,107 +202,111 @@ h3,
 h4,
 h5,
 h6 {
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-weight: 600;
 }
 
 /* CJK Font Weight Optimization: prevent too bold appearance */
 html.lang-zh body,
 html.lang-ja body,
 html.lang-ko body {
-    --font-weight-bold: 600;
+  --font-weight-bold: 600;
 }
 
 html.lang-zh .font-bold {
-    font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bold);
 }
 
 /* Tighter tracking for uppercase labels */
 .uppercase {
-    letter-spacing: 0.05em;
+  letter-spacing: 0.05em;
 }
 
 /* UI Textures & Elevation */
 .glass-panel {
-    background-color: color-mix(in srgb, var(--color-popover), transparent 60%);
-    backdrop-filter: blur(12px) saturate(160%);
-    border: 1px solid var(--color-border);
-    box-shadow: inset 0 1px 1px 0 color-mix(in srgb, var(--color-foreground), transparent 98%);
+  background-color: color-mix(in srgb, var(--color-popover), transparent 60%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 1px 0 color-mix(in srgb, var(--color-foreground), transparent 98%);
 }
 
 .bg-vibrancy-container {
-    position: fixed;
-    inset: 0;
-    z-index: -10;
-    overflow: hidden;
-    pointer-events: none;
-    background: radial-gradient(circle at 50% 50%, var(--color-input) 0%, var(--color-background) 100%);
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--color-input) 0%,
+    var(--color-background) 100%
+  );
 }
 
 .vibrancy-blob {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.15;
-    mix-blend-mode: screen;
-    pointer-events: none;
-    transition: all 1s ease-in-out;
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: all 1s ease-in-out;
 }
 
 .blob-1 {
-    background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
-    top: -200px;
-    right: -100px;
-    animation: blob-float 20s infinite alternate;
+  background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
+  top: -200px;
+  right: -100px;
+  animation: blob-float 20s infinite alternate;
 }
 
 .blob-2 {
-    background: radial-gradient(circle, var(--color-success) 0%, transparent 70%);
-    bottom: -150px;
-    left: -50px;
-    animation: blob-float 25s infinite alternate-reverse;
-    opacity: 0.1;
+  background: radial-gradient(circle, var(--color-success) 0%, transparent 70%);
+  bottom: -150px;
+  left: -50px;
+  animation: blob-float 25s infinite alternate-reverse;
+  opacity: 0.1;
 }
 
 @keyframes drift {
-    0% {
-        transform: translate(0, 0) rotate(0deg) scale(1);
-    }
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
 
-    33% {
-        transform: translate(10%, 15%) rotate(120deg) scale(1.1);
-    }
+  33% {
+    transform: translate(10%, 15%) rotate(120deg) scale(1.1);
+  }
 
-    66% {
-        transform: translate(-15%, 5%) rotate(240deg) scale(0.9);
-    }
+  66% {
+    transform: translate(-15%, 5%) rotate(240deg) scale(0.9);
+  }
 
-    100% {
-        transform: translate(0, 0) rotate(360deg) scale(1);
-    }
+  100% {
+    transform: translate(0, 0) rotate(360deg) scale(1);
+  }
 }
 
 .animate-vibrancy-drift {
-    animation: drift 40s linear infinite;
+  animation: drift 40s linear infinite;
 }
 
 .pro-card {
-    background-color: var(--color-card);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-premium);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-premium);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pro-card:hover {
-    border-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 10%);
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+  border-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 10%);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
 }
 
 * {
-    outline-color: var(--color-primary);
+  outline-color: var(--color-primary);
 }
 
 /* Refined typography weight for specific elements */
@@ -306,282 +314,288 @@ h1,
 h2,
 h3,
 .font-bold {
-    letter-spacing: -0.01em;
+  letter-spacing: -0.01em;
 }
 
 * {
-    border-color: var(--color-border);
+  border-color: var(--color-border);
 }
 
 button {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 button:disabled {
-    cursor: not-allowed;
+  cursor: not-allowed;
 }
 
 body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-size: 13px;
-    line-height: 1.6;
-    font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: var(--font-sans);
 
-    /* Extreme Font Rendering Optimizations */
-    text-rendering: optimizeLegibility;
-    /* chws: Contextual Half-width Spacing for better CJK punctuation */
-    font-feature-settings: "liga" 1, "calt" 1, "kern" 1, "chws" 1;
-    font-optical-sizing: auto;
-    letter-spacing: 0.005em;
+  /* Extreme Font Rendering Optimizations */
+  text-rendering: optimizeLegibility;
+  /* chws: Contextual Half-width Spacing for better CJK punctuation */
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1,
+    "kern" 1,
+    "chws" 1;
+  font-optical-sizing: auto;
+  letter-spacing: 0.005em;
 }
 
 /* Monospace font stack for code and technical data */
 code,
 pre,
 .font-mono {
-    font-family: var(--font-mono);
-    font-variant-ligatures: common-ligatures;
-    font-feature-settings: "liga" 1, "calt" 1;
+  font-family: var(--font-mono);
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
 }
-
-
 
 /* Global Dynamic Scrollbar Profile - v2 (Centralized) */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 /* Base State: Invisible but present */
 ::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 10px;
-    transition: background-color 0.2s ease;
+  background-color: transparent;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
 }
 
 /* Global Visibility: Show on Hover or Scrolling */
 /* Using :hover on the element itself to trigger thumb visibility */
 :hover::-webkit-scrollbar-thumb,
 .is-scrolling::-webkit-scrollbar-thumb {
-    background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
 }
 
 /* Hovering the thumb itself makes it darker */
 ::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
 }
 
 /* macOS Specific Overrides */
 /* 1. Reset to standard Mac overlay feel (transparent base) */
 html.platform-mac ::-webkit-scrollbar-thumb {
-    border: 2px solid transparent;
-    /* Increases hit area */
-    background-clip: content-box;
-    background-color: transparent;
+  border: 2px solid transparent;
+  /* Increases hit area */
+  background-clip: content-box;
+  background-color: transparent;
 }
 
 /* 2. Specific Visibility for macOS (Higher specificity than base) */
 html.platform-mac :hover::-webkit-scrollbar-thumb,
 html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
-    background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
 }
 
 html.platform-mac ::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
 }
 
 /* Utility to completely hide */
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Select dropdown options dark theme */
 select {
-    border-radius: 8px;
+  border-radius: 8px;
 }
 
 select option {
-    background-color: var(--color-popover);
-    color: var(--color-popover-foreground);
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin: 2px 4px;
+  background-color: var(--color-popover);
+  color: var(--color-popover-foreground);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 2px 4px;
 }
 
 select option:checked {
-    background: var(--color-primary);
-    color: var(--color-primary-foreground);
-    font-weight: 500;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-weight: 500;
 }
 
 select option:hover {
-    background-color: var(--color-accent);
-    color: var(--color-accent-foreground);
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
 }
 
 /* Markdown Analysis Styles */
 .markdown-analysis h1 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    color: var(--color-primary);
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: var(--color-primary);
 }
 
 .markdown-analysis h2 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: var(--color-foreground);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.25rem;
 }
 
 .markdown-analysis h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-top: 0.75rem;
-    margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .markdown-analysis p {
-    margin-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .markdown-analysis ul,
 .markdown-analysis ol {
-    margin-left: 1rem;
-    margin-bottom: 0.75rem;
-    list-style-type: disc;
+  margin-left: 1rem;
+  margin-bottom: 0.75rem;
+  list-style-type: disc;
 }
 
 .markdown-analysis li {
-    margin-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .markdown-analysis code {
-    background-color: var(--color-muted);
-    padding: 0.1rem 0.3rem;
-    border-radius: 0.25rem;
-    font-size: 0.85em;
+  background-color: var(--color-muted);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
 }
 
 .markdown-analysis pre {
-    background-color: var(--color-muted);
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin-bottom: 0.75rem;
-    border: 1px solid var(--color-border);
+  background-color: var(--color-muted);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
 }
 
 .markdown-analysis strong {
-    font-weight: 700;
-    color: var(--color-primary);
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 .markdown-analysis blockquote {
-    border-left: 3px solid var(--color-primary);
-    padding-left: 0.75rem;
-    font-style: italic;
-    color: var(--color-muted-foreground);
-    margin: 0.75rem 0;
+  border-left: 3px solid var(--color-primary);
+  padding-left: 0.75rem;
+  font-style: italic;
+  color: var(--color-muted-foreground);
+  margin: 0.75rem 0;
 }
 
 /* Premium Toast Styling (Sonner Overrides) */
 .relaycraft-toast-container {
-    background: color-mix(in srgb, var(--color-popover), transparent 20%);
-    backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 color-mix(in srgb, var(--color-background), transparent 95%);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 300px;
+  background: color-mix(in srgb, var(--color-popover), transparent 20%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow:
+    0 8px 32px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 color-mix(in srgb, var(--color-background), transparent 95%);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
 }
 
 .relaycraft-toast-title {
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    color: var(--color-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
 }
 
 .relaycraft-toast-description {
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--color-muted-foreground);
-    margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
 }
 
 /* Fix Sonner Close Button positioning and style */
 .relaycraft-toast-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: transparent;
-    border: none;
-    color: var(--color-muted-foreground);
-    border-radius: 6px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    opacity: 0;
-    cursor: pointer;
-    transform: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--color-muted-foreground);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+  cursor: pointer;
+  transform: none;
 }
 
 .relaycraft-toast-container:hover .relaycraft-toast-close {
-    opacity: 1;
+  opacity: 1;
 }
 
 .relaycraft-toast-close:hover {
-    background: var(--color-accent);
-    color: var(--color-foreground);
+  background: var(--color-accent);
+  color: var(--color-foreground);
 }
 
 /* Success/Error Icon Colors (Since we removed richColors) */
 [data-icon] {
-    margin-right: 0;
-    margin-top: 0;
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
+  margin-right: 0;
+  margin-top: 0;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 [data-type="success"] [data-icon] {
-    color: var(--color-success);
+  color: var(--color-success);
 }
 
 [data-type="error"] [data-icon] {
-    color: var(--color-destructive);
+  color: var(--color-destructive);
 }
 
 [data-type="warning"] [data-icon] {
-    color: var(--color-warning);
+  color: var(--color-warning);
 }
 
 [data-type="info"] [data-icon] {
-    color: var(--color-info);
+  color: var(--color-info);
 }

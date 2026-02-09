@@ -1,8 +1,6 @@
 {
-    "identifier": "com.beta.relaycraft",
-    "bundle": {
-        "externalBin": [
-            "binaries/engine"
-        ]
-    }
+  "identifier": "com.beta.relaycraft",
+  "bundle": {
+    "externalBin": ["binaries/engine"]
+  }
 }

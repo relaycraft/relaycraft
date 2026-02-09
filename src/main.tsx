@@ -5,13 +5,13 @@ import "./index.css";
 import "./i18n";
 import { Logger } from "./lib/logger";
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (window as any).React = React;
 }
 
 // Synchronously apply cached theme colors to prevent flash
 try {
-  const cachedColors = localStorage.getItem('themeColors');
+  const cachedColors = localStorage.getItem("themeColors");
   if (cachedColors) {
     const colors = JSON.parse(cachedColors);
     const root = document.documentElement;
@@ -20,7 +20,7 @@ try {
     });
   }
 } catch (e) {
-  Logger.error('Failed to apply cached theme colors', e);
+  Logger.error("Failed to apply cached theme colors", e);
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

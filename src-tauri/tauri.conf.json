@@ -56,23 +56,16 @@
       "icons/icon.ico"
     ],
     "externalBin": [],
-    "resources": [
-      "resources/addons/*.py",
-      "resources/addons/core"
-    ],
+    "resources": ["resources/addons/*.py", "resources/addons/core"],
     "fileAssociations": [
       {
-        "ext": [
-          "rctheme"
-        ],
+        "ext": ["rctheme"],
         "name": "RelayCraft Theme",
         "description": "RelayCraft Theme File",
         "role": "Viewer"
       },
       {
-        "ext": [
-          "rcplugin"
-        ],
+        "ext": ["rcplugin"],
         "name": "RelayCraft Plugin",
         "description": "RelayCraft Plugin File",
         "role": "Viewer"
@@ -81,10 +74,7 @@
     "windows": {
       "nsis": {
         "installMode": "perMachine",
-        "languages": [
-          "English",
-          "SimpChinese"
-        ]
+        "languages": ["English", "SimpChinese"]
       }
     },
     "createUpdaterArtifacts": true
