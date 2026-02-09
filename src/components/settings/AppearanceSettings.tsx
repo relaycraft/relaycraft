@@ -125,10 +125,10 @@ export const AppearanceSettings: React.FC = () => {
                                     <div className="space-y-1.5">
                                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
                                             <Palette className="w-4 h-4" />
-                                            {t('settings.appearance.discover_themes_title', 'Discover Community Themes')}
+                                            {t('settings.appearance.discover_themes_title')}
                                         </h4>
                                         <p className="text-[11px] text-muted-foreground max-w-[200px] leading-relaxed">
-                                            {t('settings.appearance.discover_themes_desc', 'Browse our growing collection of themes to personalize your experience.')}
+                                            {t('settings.appearance.discover_themes_desc')}
                                         </p>
                                     </div>
                                     <Button size="sm" className="h-8 text-xs shadow-sm hover:shadow-md transition-all">
@@ -169,10 +169,10 @@ export const AppearanceSettings: React.FC = () => {
                     <div className="bg-popover border border-border rounded-xl shadow-lg p-6 max-w-sm w-full space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         <div className="space-y-2">
                             <h3 className="text-lg font-semibold leading-none tracking-tight">
-                                {t('common.confirm_delete_title', 'Delete Theme?')}
+                                {t('common.confirm_delete_title')}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                {t('common.confirm_delete_desc', 'This action cannot be undone. This will permanently delete the theme files.')}
+                                {t('common.confirm_delete_desc')}
                             </p>
                         </div>
                         <div className="flex justify-end gap-2 pt-2">

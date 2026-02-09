@@ -11,10 +11,10 @@ export function ActionBlock() {
             </div>
             <div>
                 <h4 className="text-sm font-semibold text-foreground mb-1">
-                    {t('rule_editor.core.types.block.label')}
+                    {t('rule_editor.core.types.block_label')}
                 </h4>
                 <p className="text-xs text-muted-foreground max-w-[280px]">
-                    {t('rule_editor.core.types.block.desc')}
+                    {t('rule_editor.core.types.block_desc')}
                 </p>
             </div>
         </div>

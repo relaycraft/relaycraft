@@ -206,12 +206,12 @@ export const MarketView: React.FC = () => {
                                                                 isActiveTheme ? (
                                                                     <>
                                                                         <Check className="w-3.5 h-3.5 mr-2" />
-                                                                        {t('settings.appearance.active', 'Active')}
+                                                                        {t('settings.appearance.active')}
                                                                     </>
                                                                 ) : (
                                                                     <>
                                                                         <Palette className="w-3.5 h-3.5 mr-2" />
-                                                                        {t('settings.appearance.apply', 'Apply')}
+                                                                        {t('settings.appearance.apply')}
                                                                     </>
                                                                 )
                                                             ) : (

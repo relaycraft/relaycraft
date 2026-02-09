@@ -71,10 +71,10 @@ export function LogViewer({ onClose }: LogViewerProps) {
         html = html.replace(/\b(INFO)\b/gi, '<span class="text-blue-500 font-bold">$1</span>');
         html = html.replace(/\b(DEBUG)\b/gi, '<span class="text-gray-500 font-bold">$1</span>');
         html = html.replace(/\b(SUCCESS)\b/gi, '<span class="text-green-500 font-bold">$1</span>');
-        html = html.replace(/\[AUDIT\]/g, '<span class="text-amber-500 font-bold">[AUDIT]</span>');
-        html = html.replace(/\[SCRIPT\]/g, '<span class="text-purple-500 font-bold">[SCRIPT]</span>');
-        html = html.replace(/\[PLUGIN\]/g, '<span class="text-pink-500 font-bold">[PLUGIN]</span>');
-        html = html.replace(/\[CRASH\]/g, '<span class="text-red-500 font-bold">[CRASH]</span>');
+        html = html.replace(/\[AUDIT\]/g, `<span class="text-amber-500 font-bold">[${t('log_viewer.audit_logs').replace(/\s*Logs?$/i, '')}]</span>`);
+        html = html.replace(/\[SCRIPT\]/g, `<span class="text-purple-500 font-bold">[${t('log_viewer.script_logs').replace(/\s*Logs?$/i, '')}]</span>`);
+        html = html.replace(/\[PLUGIN\]/g, `<span class="text-pink-500 font-bold">[${t('log_viewer.plugin_logs').replace(/\s*Logs?$/i, '')}]</span>`);
+        html = html.replace(/\[CRASH\]/g, `<span class="text-red-500 font-bold">[${t('log_viewer.crash_logs').replace(/\s*Logs?$/i, '')}]</span>`);
 
         // 4. Highlight HTTP Methods
         html = html.replace(/\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT)\b/g, '<span class="text-purple-400 font-bold">$1</span>');

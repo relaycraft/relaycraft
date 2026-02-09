@@ -12,7 +12,7 @@ interface PluginPageWrapperProps {
 export const PluginPageWrapper: React.FC<PluginPageWrapperProps> = ({ pluginId, component: Component }) => {
     const { config } = useSettingsStore();
     const { themeMode } = useThemeStore();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     // Retrieve the scoped API for this plugin
     const api: PluginAPI = (window as any).__PLUGIN_APIS?.[pluginId];
@@ -20,7 +20,7 @@ export const PluginPageWrapper: React.FC<PluginPageWrapperProps> = ({ pluginId, 
     if (!api) {
         return (
             <div className="flex items-center justify-center h-full text-destructive">
-                Error: Plugin API not found for {pluginId}
+                {t('plugins.api_error', { pluginId })}
             </div>
         );
     }

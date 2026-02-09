@@ -11,6 +11,11 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest",
+    "lint": "biome lint src",
+    "format": "biome format --write src",
+    "check": "biome check --apply src",
+    "i18n-audit": "node scripts/audit-i18n-literals.cjs",
+    "i18n-check": "node scripts/audit-i18n-missing.cjs",
     "gen:licenses": "node scripts/generate-licenses.cjs",
     "release": "standard-version"
   },
@@ -57,6 +62,7 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.10.0",

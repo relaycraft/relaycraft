@@ -61,7 +61,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
     const iosSteps = (t('cert.manual.guides.ios', { returnObjects: true }) as string[]).map((step: string) => <span>{step}</span>);
     const androidSteps = [
         ...(t('cert.manual.guides.android', { returnObjects: true }) as string[]).map((step: string) => <span>{step}</span>),
-        <span className="text-amber-600/90 font-medium">{t('cert.manual.guides.mobile.android_hint')}</span>
+        <span className="text-amber-600/90 font-medium">{t('cert.manual.guides.mobile_android_hint')}</span>
     ];
 
     return (
@@ -136,9 +136,9 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                                     <div className="flex items-start gap-3">
                                                         <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                                                         <div className="space-y-1">
-                                                            <h4 className="text-xs font-bold text-amber-600">{t('cert.manual.guides.macos_sequoia_hint.title')}</h4>
+                                                            <h4 className="text-xs font-bold text-amber-600">{t('cert.manual.guides.macos_sequoia_hint_title')}</h4>
                                                             <p className="text-[10px] text-muted-foreground leading-relaxed">
-                                                                <span dangerouslySetInnerHTML={{ __html: t('cert.manual.guides.macos_sequoia_hint.desc') }} />
+                                                                <span dangerouslySetInnerHTML={{ __html: t('cert.manual.guides.macos_sequoia_hint_desc') }} />
                                                             </p>
                                                         </div>
                                                     </div>
@@ -169,9 +169,9 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                             <div className="space-y-4">
                                                 <div className="space-y-3">
                                                     {[
-                                                        { id: 'debian', label: t('cert.manual.guides.linux.debian'), cmd: t('cert.manual.guides.linux.debian_cmd') },
-                                                        { id: 'fedora', label: t('cert.manual.guides.linux.fedora'), cmd: t('cert.manual.guides.linux.fedora_cmd') },
-                                                        { id: 'arch', label: t('cert.manual.guides.linux.arch'), cmd: t('cert.manual.guides.linux.arch_cmd') }
+                                                        { id: 'debian', label: t('cert.manual.guides.linux_debian'), cmd: t('cert.manual.guides.linux_debian_cmd') },
+                                                        { id: 'fedora', label: t('cert.manual.guides.linux_fedora'), cmd: t('cert.manual.guides.linux_fedora_cmd') },
+                                                        { id: 'arch', label: t('cert.manual.guides.linux_arch'), cmd: t('cert.manual.guides.linux_arch_cmd') }
                                                     ].map((distro) => (
                                                         <div key={distro.id} className="space-y-1.5">
                                                             <div className="text-[10px] font-bold text-muted-foreground uppercase px-1">
@@ -203,23 +203,23 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                     <div className="space-y-2">
                                         <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
                                             <Globe className="w-3.5 h-3.5 text-primary" />
-                                            {t('cert.manual.guides.mobile.step1')}
+                                            {t('cert.manual.guides.mobile_step1')}
                                         </h3>
                                         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 relative overflow-hidden group">
                                             <p className="text-[10px] text-muted-foreground leading-relaxed mb-3 max-w-lg font-medium">
-                                                {t('cert.manual.guides.mobile.step1_desc')}
+                                                {t('cert.manual.guides.mobile_step1_desc')}
                                             </p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10">
-                                                    <div className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tight">{t('cert.manual.guides.mobile.wifi_config')}</div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tight">{t('cert.manual.guides.mobile_wifi_config')}</div>
                                                     <div className="font-mono text-[10px] flex items-center justify-between">
-                                                        <span className="text-muted-foreground">IP: <span className="select-all text-primary font-bold">{localIp}</span></span>
-                                                        <span className="text-muted-foreground">Port: <span className="text-primary font-bold">{proxyPort}</span></span>
+                                                        <span className="text-muted-foreground">{t('cert.info.ip')} <span className="select-all text-primary font-bold">{localIp}</span></span>
+                                                        <span className="text-muted-foreground">{t('cert.info.port')} <span className="text-primary font-bold">{proxyPort}</span></span>
                                                     </div>
                                                 </div>
                                                 <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 flex items-center justify-between gap-2 transition-all hover:border-primary/30 group/linkbox">
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tight">{t('cert.manual.guides.mobile.browser_access')}</div>
+                                                        <div className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tight">{t('cert.manual.guides.mobile_browser_access')}</div>
                                                         <a href={`http://${localIp}:${proxyPort}/cert`} target="_blank" className="font-mono text-[10px] text-primary font-bold flex items-center gap-2 hover:underline group/link">
                                                             <span className="truncate">http://{localIp}:{proxyPort}/cert</span>
                                                             <ExternalLink className="w-3 h-3 shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
@@ -231,7 +231,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                                             "p-1.5 rounded-md border transition-all shrink-0",
                                                             showQr ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground"
                                                         )}
-                                                        title={t('cert.manual.guides.mobile.qr_code_hint')}
+                                                        title={t('cert.manual.guides.mobile_qr_code_hint')}
                                                     >
                                                         <QrCode className="w-3.5 h-3.5" />
                                                     </button>
@@ -250,7 +250,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                                             <div className="p-2 bg-white rounded-lg shadow-sm border border-border/20">
                                                                 <QRCodeSVG value={`http://${localIp}:${proxyPort}/cert`} size={130} level="H" includeMargin={false} />
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">{t('cert.manual.guides.mobile.qr_code_hint')}</span>
+                                                            <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">{t('cert.manual.guides.mobile_qr_code_hint')}</span>
                                                         </div>
                                                     </motion.div>
                                                 )}
@@ -259,7 +259,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                             <div className="mt-3 flex items-start gap-2 px-1">
                                                 <div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" />
                                                 <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                                                    {t('cert.manual.guides.mobile.manual_transfer_tip')}
+                                                    {t('cert.manual.guides.mobile_manual_transfer_tip')}
                                                 </p>
                                             </div>
                                         </div>
@@ -268,7 +268,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                     <div className="space-y-3 pb-4">
                                         <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
                                             <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-                                            {t('cert.manual.guides.mobile.step2')}
+                                            {t('cert.manual.guides.mobile_step2')}
                                         </h3>
 
                                         <Tabs defaultValue="ios" className="w-full">
@@ -290,16 +290,16 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
                                             <div className="flex items-center gap-2 text-amber-600 mb-2">
                                                 <Info className="w-3.5 h-3.5" />
-                                                <h4 className="text-[11px] font-bold uppercase tracking-tight">{t('cert.manual.guides.mobile.troubleshooting.title')}</h4>
+                                                <h4 className="text-[11px] font-bold uppercase tracking-tight">{t('cert.manual.guides.mobile_troubleshooting_title')}</h4>
                                             </div>
                                             <ul className="space-y-2">
                                                 <li className="flex gap-2 items-start text-[10px] text-muted-foreground leading-relaxed">
                                                     <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
-                                                    {t('cert.manual.guides.mobile.troubleshooting.ios_trust')}
+                                                    {t('cert.manual.guides.mobile_troubleshooting_ios_trust')}
                                                 </li>
                                                 <li className="flex gap-2 items-start text-[10px] text-muted-foreground leading-relaxed">
                                                     <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
-                                                    {t('cert.manual.guides.mobile.troubleshooting.app_pinning')}
+                                                    {t('cert.manual.guides.mobile_troubleshooting_app_pinning')}
                                                 </li>
                                             </ul>
                                         </div>

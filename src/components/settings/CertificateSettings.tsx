@@ -59,7 +59,7 @@ export function CertificateSettings() {
             if (path) setCertPath(path);
         } catch (err) {
             console.error(err);
-            if (!silent) setError(typeof err === 'string' ? err : t('common.loading') + ' failed');
+            if (!silent) setError(typeof err === 'string' ? err : t('common.loading') + ' ' + t('common.failed'));
         } finally {
             if (!silent) setInitialLoading(false);
         }
@@ -77,7 +77,7 @@ export function CertificateSettings() {
             await loadCertInfo(false); // Reload with skeleton to show "refreshing" feeling
         } catch (err) {
             console.error(err);
-            const errorMsg = typeof err === 'string' ? err : `${action} failed`;
+            const errorMsg = typeof err === 'string' ? err : `${action} ` + t('common.failed');
 
             // Special handling for macOS manual step requirement
             if (errorMsg.includes('MANUAL_STEP')) {
@@ -192,8 +192,8 @@ export function CertificateSettings() {
                                                 </div>
                                                 <p className="text-system text-muted-foreground leading-relaxed max-w-2xl">
                                                     {isInstalled
-                                                        ? t('cert.state.trusted_desc', { defaultValue: 'RelayCraft Root CA is trusted by your system. No further action is required.' })
-                                                        : t('cert.state.untrusted_desc', { defaultValue: 'Install the root certificate to intercept and analyze HTTPS traffic securely.' })
+                                                        ? t('cert.state.trusted_desc')
+                                                        : t('cert.state.untrusted_desc')
                                                     }
                                                 </p>
                                             </div>
@@ -206,7 +206,7 @@ export function CertificateSettings() {
                                                         {t('cert.info.expires')}
                                                     </div>
                                                     <div className="font-mono text-xs font-medium pl-1 text-foreground/90">
-                                                        {certInfo?.not_after || t('common.unknown', 'Unknown')}
+                                                        {certInfo?.not_after || t('common.unknown')}
                                                     </div>
                                                 </div>
 
@@ -216,7 +216,7 @@ export function CertificateSettings() {
                                                         {t('cert.info.fingerprint')} <span className="text-muted-foreground/50 font-normal normal-case ml-1">(SHA256)</span>
                                                     </div>
                                                     <div className="font-mono text-[10px] text-muted-foreground break-all leading-normal pl-1">
-                                                        {certInfo?.fingerprint || 'Not Loaded'}
+                                                        {certInfo?.fingerprint || t('common.not_loaded')}
                                                     </div>
                                                 </div>
                                             </div>
@@ -268,7 +268,7 @@ export function CertificateSettings() {
                                             size="sm"
                                         >
                                             <BookOpen className="w-4 h-4 text-primary max-sm:mr-1" />
-                                            {t('cert.manual.guides.title', { defaultValue: 'Installation Guides' })}
+                                            {t('cert.manual.guides.title')}
                                             <ChevronRight className="w-3.5 h-3.5 opacity-40 ml-1" />
                                         </Button>
                                     </div>

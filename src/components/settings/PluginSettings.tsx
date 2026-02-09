@@ -53,7 +53,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
     const locale = i18n.language?.split('-')[0] || 'en';
     const localized = plugin.manifest.locales?.[locale];
     const displayName = localized?.name || plugin.manifest.name;
-    const displayDescription = localized?.description || plugin.manifest.description || 'No description provided.';
+    const displayDescription = localized?.description || plugin.manifest.description || t('plugins.no_description');
 
     return (
         <motion.div
@@ -286,10 +286,10 @@ export const PluginSettings: React.FC = () => {
                             </div>
                             <div className="space-y-1">
                                 <h4 className="text-sm font-bold text-muted-foreground/80">
-                                    {searchQuery ? t('common.no_results', 'No matches found') : t('plugins.empty.title')}
+                                    {searchQuery ? t('common.no_results') : t('plugins.empty.title')}
                                 </h4>
                                 <p className="text-[11px] text-muted-foreground/50 max-w-[200px] mx-auto leading-relaxed">
-                                    {searchQuery ? t('common.try_another_search', 'Try adjusting your search query') : t('plugins.empty.desc')}
+                                    {searchQuery ? t('common.try_another_search') : t('plugins.empty.desc')}
                                 </p>
                             </div>
                         </div>

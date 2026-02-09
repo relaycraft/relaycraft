@@ -184,7 +184,7 @@ export const TrafficListItem = memo(({
               }
               return <span className="px-1.5 py-0.5 rounded-[4px] bg-red-500/10 text-red-500 font-medium text-[10px]">{t('traffic.status.failed', 'Failed')}</span>;
             }
-            return <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/30 italic">Pending</span>;
+            return <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/30 italic">{t('traffic.status.pending')}</span>;
           })()}
 
           <span>•</span>

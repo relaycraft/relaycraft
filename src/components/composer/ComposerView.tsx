@@ -250,9 +250,9 @@ export function ComposerView() {
                                     align="right"
                                     className="bg-muted/40 h-7 !text-[10px] !font-black uppercase border-border/20 min-w-[80px]"
                                 >
-                                    <option value="none">None</option>
-                                    <option value="x-www-form-urlencoded">Form Data</option>
-                                    <option value="raw">Raw JSON</option>
+                                    <option value="none">{t('common.none', 'None')}</option>
+                                    <option value="x-www-form-urlencoded">{t('composer.form_data')}</option>
+                                    <option value="raw">{t('composer.raw_json')}</option>
                                 </Select>
                             </TabsContent>
                         </div>
@@ -322,8 +322,8 @@ export function ComposerView() {
                                     {lastResponse.status}
                                 </span>
                                 <div className="flex items-center bg-muted/30 p-0.5 rounded-lg border border-border/20">
-                                    <button onClick={() => setViewMode('preview')} className={cn("px-2 py-0.5 text-[9px] font-bold rounded-md transition-all", viewMode === 'preview' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground')}>PREVIEW</button>
-                                    <button onClick={() => setViewMode('raw')} className={cn("px-2 py-0.5 text-[9px] font-bold rounded-md transition-all", viewMode === 'raw' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground')}>RAW</button>
+                                    <button onClick={() => setViewMode('preview')} className={cn("px-2 py-0.5 text-[9px] font-bold rounded-md transition-all", viewMode === 'preview' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground')}>{t('composer.preview')}</button>
+                                    <button onClick={() => setViewMode('raw')} className={cn("px-2 py-0.5 text-[9px] font-bold rounded-md transition-all", viewMode === 'raw' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground')}>{t('composer.raw')}</button>
                                 </div>
                             </div>
                         )}

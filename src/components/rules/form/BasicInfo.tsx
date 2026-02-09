@@ -150,12 +150,12 @@ export function BasicInfo({
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                     {[
-                        { id: 'rewrite_body', label: t('rule_editor.core.types.rewrite_body.label'), icon: FileSignature, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-200 dark:border-purple-900', desc: t('rule_editor.core.types.rewrite_body.desc') },
-                        { id: 'rewrite_header', label: t('rule_editor.core.types.rewrite.label'), icon: LayoutList, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-200 dark:border-orange-900', desc: t('rule_editor.core.types.rewrite.desc') },
-                        { id: 'map_local', label: t('rule_editor.core.types.map_local.label'), icon: FileCode, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-200 dark:border-blue-900', desc: t('rule_editor.core.types.map_local.desc') },
-                        { id: 'map_remote', label: t('rule_editor.core.types.map_remote.label'), icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-900', desc: t('rule_editor.core.types.map_remote.desc') },
-                        { id: 'throttle', label: t('rule_editor.core.types.throttle.label'), icon: Wifi, color: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-200 dark:border-cyan-900', desc: t('rule_editor.core.types.throttle.desc') },
-                        { id: 'block_request', label: t('rule_editor.core.types.block.label'), icon: Ban, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-200 dark:border-rose-900', desc: t('rule_editor.core.types.block.desc') },
+                        { id: 'rewrite_body', label: t('rule_editor.core.types.rewrite_body_label'), icon: FileSignature, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-200 dark:border-purple-900', desc: t('rule_editor.core.types.rewrite_body_desc') },
+                        { id: 'rewrite_header', label: t('rule_editor.core.types.rewrite_label'), icon: LayoutList, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-200 dark:border-orange-900', desc: t('rule_editor.core.types.rewrite_desc') },
+                        { id: 'map_local', label: t('rule_editor.core.types.map_local_label'), icon: FileCode, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-200 dark:border-blue-900', desc: t('rule_editor.core.types.map_local_desc') },
+                        { id: 'map_remote', label: t('rule_editor.core.types.map_remote_label'), icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-900', desc: t('rule_editor.core.types.map_remote_desc') },
+                        { id: 'throttle', label: t('rule_editor.core.types.throttle_label'), icon: Wifi, color: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-200 dark:border-cyan-900', desc: t('rule_editor.core.types.throttle_desc') },
+                        { id: 'block_request', label: t('rule_editor.core.types.block_label'), icon: Ban, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-200 dark:border-rose-900', desc: t('rule_editor.core.types.block_desc') },
                     ].map((type) => (
                         <Tooltip key={type.id} content={type.desc} side="top">
                             <button

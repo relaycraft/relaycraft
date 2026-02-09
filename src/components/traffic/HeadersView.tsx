@@ -1,14 +1,17 @@
+import { useTranslation } from 'react-i18next';
+
 interface HeadersViewProps {
     headers: Record<string, string>;
 }
 
 export function HeadersView({ headers }: HeadersViewProps) {
+    const { t } = useTranslation();
     const entries = Object.entries(headers);
 
     if (entries.length === 0) {
         return (
             <div className="text-sm text-muted-foreground italic">
-                No headers
+                {t('common.no_content')}
             </div>
         );
     }
@@ -18,8 +21,8 @@ export function HeadersView({ headers }: HeadersViewProps) {
             <table className="w-full text-sm">
                 <thead className="bg-muted/40 uppercase tracking-tight">
                     <tr>
-                        <th className="text-left p-2 font-bold w-1/3 text-xs text-muted-foreground/70">Name</th>
-                        <th className="text-left p-2 font-bold text-xs text-muted-foreground/70">Value</th>
+                        <th className="text-left p-2 font-bold w-1/3 text-xs text-muted-foreground/70">{t('common.name')}</th>
+                        <th className="text-left p-2 font-bold text-xs text-muted-foreground/70">{t('common.value')}</th>
                     </tr>
                 </thead>
                 <tbody>

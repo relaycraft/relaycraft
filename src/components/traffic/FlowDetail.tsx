@@ -180,7 +180,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                                     flow.statusCode ? 'bg-red-500/20 text-red-400' :
                                         'bg-gray-500/20 text-gray-400'
                                 }`}>
-                                {flow.statusCode || 'pending'}
+                                {flow.statusCode || t('traffic.status.pending')}
                             </span>
                         )}
                         {!!flow.duration && (
@@ -487,8 +487,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                                 >
                                     <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-xl border border-border/40 overflow-hidden">
                                         <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20">
-                                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">WebSocket Frames</h3>
-                                            <span className="text-[10px] text-muted-foreground/60">{flow.websocketFrames?.length || 0} messages</span>
+                                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">{t('traffic.websocket.frames')}</h3>
+                                            <span className="text-[10px] text-muted-foreground/60">{t('traffic.websocket.messages_count', { count: flow.websocketFrames?.length || 0 })}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto scrollbar-thin">
                                             {flow.websocketFrames && flow.websocketFrames.length > 0 ? (
@@ -530,7 +530,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                                                     <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mb-3">
                                                         <Wifi className="w-6 h-6 text-muted-foreground/20" />
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground/50 font-medium">No WebSocket frames captured yet</p>
+                                                    <p className="text-xs text-muted-foreground/50 font-medium">{t('traffic.websocket.no_frames')}</p>
                                                 </div>
                                             )}
                                         </div>

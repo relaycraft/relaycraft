@@ -116,7 +116,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                                         <Select
                                             value={String(value)}
                                             onChange={(val) => handleChange(key, prop.type === 'number' ? Number(val) : val)}
-                                            placeholder="Select..."
+                                            placeholder={t('common.select')}
                                             options={prop.enum.map((opt: any) => ({
                                                 label: String(opt),
                                                 value: String(opt)

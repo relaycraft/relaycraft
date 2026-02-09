@@ -203,7 +203,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                                     <div className="space-y-1.5">
                                         <div className="flex items-center gap-2 pl-1">
                                             <Hash className="w-3 h-3 text-primary" />
-                                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Status Code</span>
+                                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('breakpoint.status_code')}</span>
                                         </div>
                                         <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-[11px] font-bold">
                                             <input
@@ -220,7 +220,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                             <div className="space-y-1.5">
                                 <div className="flex items-center gap-2 pl-1">
                                     <ArrowRightLeft className="w-3 h-3 text-primary" />
-                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Headers</span>
+                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('breakpoint.headers')}</span>
                                 </div>
                                 <div className="bg-muted/10 border border-border/40 rounded-xl p-3">
                                     <HeaderListEditor
@@ -233,14 +233,14 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                             <div className="space-y-1.5">
                                 <div className="flex items-center gap-2 pl-1">
                                     <Layers className="w-3 h-3 text-primary" />
-                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Body Content</span>
+                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('breakpoint.body_content')}</span>
                                 </div>
                                 <div className="bg-muted/10 border border-border/40 rounded-xl p-3">
                                     <textarea
                                         value={body}
                                         onChange={(e) => setBody(e.target.value)}
                                         className="w-full h-40 bg-transparent text-xs font-mono resize-y outline-none"
-                                        placeholder="No body content"
+                                        placeholder={t('common.no_content')}
                                     />
                                 </div>
                             </div>
