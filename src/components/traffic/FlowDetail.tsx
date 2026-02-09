@@ -358,14 +358,16 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
                     </div>
                     <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                      <span className="font-semibold truncate">{hit.name}</span>
+                      <span className="text-[12px] font-extrabold truncate tracking-tight">
+                        {hit.name}
+                      </span>
                     </Tooltip>
                     {hit.message && (
                       <Tooltip
                         content={hit.message}
                         className="ml-auto flex-shrink truncate max-w-[60%] text-right"
                       >
-                        <span className="text-[9px] opacity-60 italic truncate font-mono">
+                        <span className="text-[10px] opacity-60 italic truncate font-mono">
                           {hit.message}
                         </span>
                       </Tooltip>
@@ -375,12 +377,12 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
               </div>
 
               {flow.hits.some((h) => h.status === "file_not_found") && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 flex items-start gap-3 shadow-sm">
-                  <div className="p-1.5 bg-yellow-500/20 rounded-lg flex-shrink-0">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-1.5 flex items-start gap-2 shadow-sm">
+                  <div className="p-0.5 bg-yellow-500/20 rounded flex-shrink-0">
+                    <AlertTriangle className="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div className="text-xs space-y-1.5 min-w-0 flex-1">
-                    <div className="font-bold text-yellow-700">
+                  <div className="text-[10px] space-y-0.5 min-w-0 flex-1">
+                    <div className="font-bold text-yellow-700 leading-tight">
                       {t("flow.map_local.file_not_found")}
                     </div>
                     <Tooltip
@@ -389,15 +391,15 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         .map((h) => h.message)
                         .join(", ")}
                     >
-                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-2 py-1 rounded border border-yellow-500/10 select-all cursor-help">
+                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-[9px]">
                         {flow.hits
                           .filter((h) => h.status === "file_not_found")
                           .map((h) => h.message)
                           .join(", ")}
                       </div>
                     </Tooltip>
-                    <div className="text-yellow-600/70 text-[10px] italic flex items-center gap-1.5">
-                      <Globe className="w-3 h-3" />
+                    <div className="text-yellow-600/70 text-[8px] italic flex items-center gap-1">
+                      <Globe className="w-2 h-2" />
                       {t("flow.map_local.fallback_hint")}
                     </div>
                   </div>

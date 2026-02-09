@@ -47,31 +47,35 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
 
       <div className="space-y-1.5">
         {headers.map((item, index) => (
-          <div key={index} className="flex items-center gap-2 group">
+          <div key={index} className="flex items-center gap-1.5 group">
             <button
               type="button"
               onClick={() => updateItem(index, "enabled", !item.enabled)}
-              className={`p-1 rounded-md transition-colors ${item.enabled ? "text-primary" : "text-muted-foreground/30"}`}
+              className={`p-1.5 rounded-lg transition-all ${item.enabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground/30 hover:bg-muted"}`}
             >
               {item.enabled ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
             </button>
-            <input
-              type="text"
-              value={item.key}
-              onChange={(e) => updateItem(index, "key", e.target.value)}
-              placeholder={t("composer.headers_list.key")}
-              className={`flex-1 px-3 py-1.5 bg-muted/20 border border-border/40 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all ${!item.enabled && "opacity-50 grayscale"}`}
-            />
-            <input
-              type="text"
-              value={item.value}
-              onChange={(e) => updateItem(index, "value", e.target.value)}
-              placeholder={t("composer.headers_list.value")}
-              className={`flex-[1.5] px-3 py-1.5 bg-muted/20 border border-border/40 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all ${!item.enabled && "opacity-50 grayscale"}`}
-            />
+            <div
+              className={`flex-1 flex items-center bg-muted/20 border border-border/40 rounded-xl overflow-hidden transition-all focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20 ${!item.enabled && "opacity-50 grayscale"}`}
+            >
+              <input
+                type="text"
+                value={item.key}
+                onChange={(e) => updateItem(index, "key", e.target.value)}
+                placeholder={t("composer.headers_list.key")}
+                className="w-1/3 px-3 py-1.5 bg-transparent text-xs font-mono focus:outline-none border-r border-border/20"
+              />
+              <input
+                type="text"
+                value={item.value}
+                onChange={(e) => updateItem(index, "value", e.target.value)}
+                placeholder={t("composer.headers_list.value")}
+                className="flex-1 px-3 py-1.5 bg-transparent text-xs font-mono focus:outline-none"
+              />
+            </div>
             <button
               onClick={() => removeItem(index)}
-              className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

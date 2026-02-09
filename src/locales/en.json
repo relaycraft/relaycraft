@@ -25,7 +25,17 @@
     "provider_desc": "Select AI service provider",
     "temperature": "Temperature",
     "temperature_desc": "Randomness (0.0 - 2.0)",
-    "title": "AI Assistant Config"
+    "title": "AI Assistant Config",
+    "providers": {
+      "openai": "OpenAI",
+      "anthropic": "Anthropic",
+      "google": "Google",
+      "deepseek": "DeepSeek",
+      "aliyun": "Aliyun Bailian",
+      "moonshot": "Moonshot AI",
+      "openrouter": "OpenRouter",
+      "custom": "Custom"
+    }
   },
   "ai_assistant": {
     "analyzing": "Smart Assistant is thinking...",
@@ -154,8 +164,8 @@
       "untrusted_desc": "Install the root certificate to intercept and analyze HTTPS traffic securely."
     },
     "status": {
-      "trusted": "此计算机已信任根证书。",
-      "untrusted": "系统尚未信任此证书，无法解密 HTTPS。"
+      "trusted": "This computer trusts the root certificate.",
+      "untrusted": "The system does not yet trust this certificate, HTTPS cannot be decrypted."
     },
     "storage": {
       "open": "Open Storage Directory",
@@ -816,6 +826,9 @@
       "active": "Active",
       "apply": "Apply",
       "density": "Information Density",
+      "density_comfortable": "Comfortable",
+      "density_compact": "Compact",
+      "density_relaxed": "Relaxed",
       "discover_themes_desc": "Browse our growing collection of themes to personalize your experience.",
       "discover_themes_title": "Discover Community Themes",
       "exit_confirm_message": "Are you sure you want to exit RelayCraft?\nThe proxy service will be stopped.",

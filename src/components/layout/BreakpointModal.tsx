@@ -146,33 +146,33 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                 {t("breakpoint.queue")}
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-1.5 space-y-1 no-scrollbar">
               {flows.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setSelectedFlowId(f.id)}
                   className={`w-full text-left p-2.5 rounded-xl transition-all group relative overflow-hidden ${
                     selectedFlowId === f.id
-                      ? "bg-primary/10 border border-primary/20"
+                      ? "bg-primary/10 border border-primary/20 shadow-sm"
                       : "hover:bg-muted/40 border border-transparent"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span
-                      className={`text-[8px] font-black px-1 py-0.5 rounded ${
+                      className={`text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm border ${
                         f.interceptPhase === "request"
-                          ? "bg-blue-500/10 text-blue-600"
-                          : "bg-green-500/10 text-green-600"
+                          ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          : "bg-green-500/10 text-green-600 border-green-500/20"
                       }`}
                     >
                       {f.method}
                     </span>
-                    <span className="text-[8px] font-mono text-muted-foreground opacity-40">
+                    <span className="text-[9px] font-mono text-muted-foreground/40">
                       #{f.id.slice(-4)}
                     </span>
                   </div>
                   <div
-                    className={`text-[11px] font-mono truncate ${selectedFlowId === f.id ? "text-primary font-bold" : "text-foreground/60"}`}
+                    className={`text-[12px] font-mono truncate leading-tight ${selectedFlowId === f.id ? "text-primary font-bold" : "text-foreground/60 group-hover:text-foreground/80"}`}
                   >
                     {f.url}
                   </div>
@@ -196,7 +196,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                     >
                       {isRequest ? t("breakpoint.request") : t("breakpoint.response")}
                     </span>
-                    <span className="text-[10px] font-bold text-foreground/70 truncate font-mono">
+                    <span className="text-[11px] font-bold text-foreground/70 truncate font-mono">
                       {flow.url}
                     </span>
                   </div>

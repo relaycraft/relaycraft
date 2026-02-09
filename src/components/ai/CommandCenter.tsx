@@ -54,6 +54,7 @@ export function CommandCenter() {
       setExecuting(false);
       setStreamingMessage(null);
       setAction(null);
+      setError(null); // Clear error when closing
     }
   }, [isOpen]);
 

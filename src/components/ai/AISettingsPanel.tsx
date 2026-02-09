@@ -21,6 +21,7 @@ export function AISettingsPanel() {
     loadSettings,
     saveSettings,
     testConnection,
+    connectionMessage,
   } = useAIStore();
 
   const [localSettings, setLocalSettings] = useState(settings);
@@ -37,11 +38,15 @@ export function AISettingsPanel() {
 
   useEffect(() => {
     setHasChanges(JSON.stringify(localSettings) !== JSON.stringify(settings));
+  }, [localSettings, settings]);
+
+  // Reset connection status if settings change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when settings change
+  useEffect(() => {
     if (connectionStatus !== "idle") {
       useAIStore.getState().resetConnectionStatus();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSettings, settings, connectionStatus]);
+  }, [localSettings]);
 
   const handleSave = async () => {
     try {
@@ -237,6 +242,16 @@ export function AISettingsPanel() {
                     : t("ai.connection.failure")}
                 </div>
               )}
+              {connectionStatus !== "idle" &&
+                connectionMessage &&
+                !connectionMessage.toLowerCase().includes("success") && (
+                  <div
+                    className="text-[10px] text-muted-foreground/60 max-w-[200px] truncate"
+                    title={connectionMessage}
+                  >
+                    {connectionMessage}
+                  </div>
+                )}
             </div>
 
             <div className="flex items-center gap-2">

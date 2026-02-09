@@ -35,9 +35,11 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
 
   if (!content) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-muted-foreground bg-muted/20 rounded-lg border border-border mt-2 h-40">
-        <FileText className="w-8 h-8 opacity-50 mb-2" />
-        <span className="text-sm">{t("content_preview.no_content")}</span>
+      <div className="flex flex-col items-center justify-center p-6 text-muted-foreground/50 bg-muted/5 rounded-lg border border-border/30 mt-2 h-24">
+        <FileText className="w-4 h-4 opacity-30 mb-1" />
+        <span className="text-[10px] font-medium opacity-60">
+          {t("content_preview.no_content")}
+        </span>
       </div>
     );
   }

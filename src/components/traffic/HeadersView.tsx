@@ -9,7 +9,11 @@ export function HeadersView({ headers }: HeadersViewProps) {
   const entries = Object.entries(headers);
 
   if (entries.length === 0) {
-    return <div className="text-sm text-muted-foreground italic">{t("common.no_content")}</div>;
+    return (
+      <div className="text-[10px] text-muted-foreground/40 italic px-2 py-4">
+        {t("common.no_content")}
+      </div>
+    );
   }
 
   return (

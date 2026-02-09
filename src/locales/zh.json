@@ -25,7 +25,17 @@
     "provider_desc": "选择 AI 服务提供商",
     "temperature": "生成温度",
     "temperature_desc": "控制生成结果的随机性 (0.0 - 2.0)",
-    "title": "AI 助手配置"
+    "title": "AI 助手配置",
+    "providers": {
+      "openai": "OpenAI",
+      "anthropic": "Anthropic",
+      "google": "Google",
+      "deepseek": "DeepSeek",
+      "aliyun": "阿里云百炼",
+      "moonshot": "月之暗面",
+      "openrouter": "OpenRouter",
+      "custom": "自定义接口"
+    }
   },
   "ai_assistant": {
     "analyzing": "智能助手正在思考...",
@@ -273,7 +283,7 @@
     "reset": "重置",
     "rule": "规则",
     "save": "保存",
-    "save_success": "Saved successfully",
+    "save_success": "保存成功",
     "script": "脚本",
     "search": "搜索...",
     "select": "请选择...",
@@ -816,6 +826,9 @@
       "active": "当前使用",
       "apply": "应用",
       "density": "信息密度",
+      "density_comfortable": "舒适模式",
+      "density_compact": "紧凑模式",
+      "density_relaxed": "宽松模式",
       "discover_themes_desc": "浏览已上架的社区主题，打造专属于你的个性化界面。",
       "discover_themes_title": "发现社区主题",
       "exit_confirm_message": "确定要退出 RelayCraft 吗？\n代理服务将会停止。",
