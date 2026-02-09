@@ -1,0 +1,2 @@
+# Ensure plist files always use LF line endings (required for macOS codesign)
+*.plist text eol=lf

@@ -122,6 +122,29 @@ jobs:
           fi
           ls -R .
 
+      # --- macOS Code Signing ---
+      - name: Import Code-Signing Certificates (macOS)
+        if: matrix.platform == 'macos-latest'
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Sign Python Sidecar (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          echo "Signing Python sidecar binary..."
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --entitlements src-tauri/entitlements.plist \
+            --timestamp \
+            src-tauri/resources/engine/engine
+          
+          echo "Verifying signature..."
+          codesign -dvv src-tauri/resources/engine/engine
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+
       - name: Test Backend
         run: cargo test
         working-directory: src-tauri
@@ -133,6 +156,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_KEY_PASSWORD }}
+          # macOS Code Signing & Notarization
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'RelayCraft v__VERSION__'
