@@ -1,31 +1,34 @@
 import time
+from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
 from .rules import RuleEngine
 from .monitor import TrafficMonitor
 from .debug import DebugManager
 from .proxy import ProxyManager
-from .utils import setup_logging
+from .utils import setup_logging, RelayCraftLogger
 
 class CoreAddon:
     def __init__(self):
-        self.logger = setup_logging()
-        self.rule_engine = RuleEngine()
-        self.debug_mgr = DebugManager()
-        self.proxy_mgr = ProxyManager()
-        self.traffic_monitor = TrafficMonitor(self.debug_mgr)
-        self._scripts_wrapped = False
+        self.logger: RelayCraftLogger = setup_logging()
+        self.rule_engine: RuleEngine = RuleEngine()
+        self.debug_mgr: DebugManager = DebugManager()
+        self.proxy_mgr: ProxyManager = ProxyManager()
+        self.traffic_monitor: TrafficMonitor = TrafficMonitor(self.debug_mgr)
+        self._scripts_wrapped: bool = False
 
-    def load(self, loader):
+    def load(self, loader: Any) -> None:
         """Standard mitmproxy load hook"""
         if hasattr(ctx, "master"):
             ctx.master.relaycraft_main = self
 
-    async def request(self, flow: http.HTTPFlow):
-        # 0. One-time script wrapping (with retry/check)
+    async def running(self) -> None:
+        """Called when proxy is up and running. Good time for discovery."""
         if not self._scripts_wrapped:
-            ctx.log.info("RelayCraft: Performing initial script discovery...")
+            self.logger.info("RelayCraft: Performing initial script discovery...")
             self.discover_and_wrap_scripts()
             self._scripts_wrapped = True
+
+    async def request(self, flow: http.HTTPFlow) -> None:
 
         # 1. System / Relay Requests - Handle first and exclusively
         if self.is_internal_request(flow):
@@ -36,7 +39,7 @@ class CoreAddon:
                     if inspect.iscoroutine(coro):
                         await coro
             except Exception as e:
-                ctx.log.error(f"Error handling relay request: {e}")
+                self.logger.error(f"Error handling relay request: {e}")
             return
 
         try:
@@ -66,9 +69,9 @@ class CoreAddon:
                 if inspect.iscoroutine(coro):
                     await coro
         except Exception as e:
-            ctx.log.error(f"Critical error in CoreAddon.request: {e}")
+            self.logger.error(f"Critical error in CoreAddon.request: {e}")
 
-    async def response(self, flow: http.HTTPFlow):
+    async def response(self, flow: http.HTTPFlow) -> None:
         try:
             # 1. Rule Engine response handling - Synchronous
             self.rule_engine.handle_response(flow)
@@ -85,14 +88,14 @@ class CoreAddon:
                 if inspect.iscoroutine(coro):
                     await coro
         except Exception as e:
-            ctx.log.error(f"Critical error in CoreAddon.response hook processing: {e}")
+            self.logger.error(f"Critical error in CoreAddon.response hook processing: {e}")
         
         # 3. Baseline Capture - Synchronous
         # This records the state BEFORE user scripts process it (or AFTER rules)
         try:
             self.traffic_monitor.handle_response(flow)
         except Exception as e:
-            ctx.log.error(f"Critical error capturing traffic: {e}")
+            self.logger.error(f"Critical error capturing traffic: {e}")
 
         # 4. Access Logging
         if not self.is_internal_request(flow):
@@ -103,7 +106,7 @@ class CoreAddon:
             except:
                 pass
 
-    def is_internal_request(self, flow: http.HTTPFlow):
+    def is_internal_request(self, flow: http.HTTPFlow) -> bool:
         """Check if request is to RelayCraft internal API"""
         if not flow or not flow.request:
             return False
@@ -126,13 +129,13 @@ class CoreAddon:
         except:
             return False
 
-    async def error(self, flow: http.HTTPFlow):
+    async def error(self, flow: http.HTTPFlow) -> None:
         """Handle errors (e.g. connection failures)"""
         if self.is_internal_request(flow):
             return
         
         err_msg = str(flow.error)
-        ctx.log.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
+        self.logger.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
         
         # Capture the error flow for the UI so it doesn't just disappear
         try:
@@ -146,9 +149,9 @@ class CoreAddon:
                 }
                 self.traffic_monitor.flow_buffer.append(flow_data)
         except Exception as e:
-            ctx.log.error(f"Error capturing error flow: {e}")
+            self.logger.error(f"Error capturing error flow: {e}")
 
-    def tls_failed_client(self, tls_start: tls.TlsData):
+    def tls_failed_client(self, tls_start: tls.TlsData) -> None:
         """
         Hook called when a client TLS handshake fails (e.g. unknown CA, pinning).
         This is critical for detecting SSL Pinning issues.
@@ -159,9 +162,9 @@ class CoreAddon:
             # For now, we trust process_tls_error to format it nicely.
             self.traffic_monitor.process_tls_error(tls_start)
         except Exception as e:
-            ctx.log.error(f"Error in tls_failed_client: {e}")
+            self.logger.error(f"Error in tls_failed_client: {e}")
 
-    def discover_and_wrap_scripts(self):
+    def discover_and_wrap_scripts(self) -> None:
         """Discover and wrap all loaded script addons."""
         try:
             count = 0
@@ -194,15 +197,15 @@ class CoreAddon:
                         count += 1
                                     
             if count > 0:
-                ctx.log.info(f"RelayCraft: Initialized tracking for {count} user scripts")
+                self.logger.info(f"RelayCraft: Initialized tracking for {count} user scripts")
             else:
-                ctx.log.info("RelayCraft: No user scripts found to wrap.")
+                self.logger.info("RelayCraft: No user scripts found to wrap.")
         except Exception as e:
-            ctx.log.error(f"RelayCraft: Discovery error: {e}")
+            self.logger.error(f"RelayCraft: Discovery error: {e}")
             import traceback
-            ctx.log.error(traceback.format_exc())
+            self.logger.error(traceback.format_exc())
 
-    def wrap_script_addon(self, addon):
+    def wrap_script_addon(self, addon: Any) -> None:
         """Dynamic wrapping logic (placeholder for now as it relies on AST injection in injector.py)"""
         # This method is kept for future runtime wrapping extensions
         pass

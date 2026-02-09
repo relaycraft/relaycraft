@@ -2,15 +2,17 @@ import re
 import json
 import time
 from pathlib import Path
+from typing import Optional, Any, Dict, List, Union
 from mitmproxy import http, ctx
 from mitmproxy.http import Response
-from ..utils import get_mime_type
+from ..utils import get_mime_type, setup_logging
 
 class ActionExecutor:
-    def __init__(self, engine):
-        self.engine = engine  # Reference back to engine if needed (e.g. for recording hits)
+    def __init__(self, engine: Any):
+        self.engine = engine  # Reference back to engine if needed
+        self.logger = setup_logging()
 
-    def apply_rewrite_body(self, flow: http.HTTPFlow, action: dict, url_match=None):
+    def apply_rewrite_body(self, flow: http.HTTPFlow, action: Dict[str, Any], url_match: Optional[re.Match] = None) -> None:
         """Apply body modifications (Text/Regex/JSON) to Request or Response"""
         target = action.get("target", "response")
         
@@ -41,9 +43,9 @@ class ActionExecutor:
                             if mod.get("enabled") is False: continue
                             self.apply_json_modification(json_data, mod.get("path", ""), mod.get("value"), mod.get("operation", "set"))
                         message.text = json.dumps(json_data, ensure_ascii=False)
-                        ctx.log.info(f"RelayCraft: Applied JSON rewrite to {target}")
+                        self.logger.info(f"RelayCraft: Applied JSON rewrite to {target}")
                     except json.JSONDecodeError:
-                        ctx.log.warn(f"Cannot apply JSON rewrite: Body is not valid JSON ({target})")
+                        self.logger.warn(f"Cannot apply JSON rewrite: Body is not valid JSON ({target})")
                 
             # Handle Text/Regex modes
             elif set_mode or replace_mode or regex_mode:
@@ -70,11 +72,11 @@ class ActionExecutor:
                             else:
                                 new_content_str = re.sub(pattern, replacement, original_content)
                         except re.error as e:
-                            ctx.log.error(f"Invalid regex for body rewrite: {e}")
+                            self.logger.error(f"Invalid regex for body rewrite: {e}")
 
                 if new_content_str != original_content:
                     message.text = new_content_str
-                    ctx.log.info(f"Applied body rewrite to {target}")
+                    self.logger.info(f"Applied body rewrite to {target}")
 
             # Apply status code / content type if specified (Set mode only in V3)
             if set_mode and target == "response" and flow.response:
@@ -86,9 +88,9 @@ class ActionExecutor:
                     flow.response.headers["Content-Type"] = content_type
 
         except Exception as e:
-            ctx.log.error(f"Error in apply_rewrite_body: {e}")
+            self.logger.error(f"Error in apply_rewrite_body: {e}")
     
-    def apply_json_modification(self, data, path: str, value, operation: str):
+    def apply_json_modification(self, data: Union[Dict, List], path: str, value: Any, operation: str) -> None:
         """Apply JSONPath modification to data"""
         try:
             import jsonpath_ng
@@ -98,7 +100,7 @@ class ActionExecutor:
             matches = jsonpath_expr.find(data)
             
             if not matches:
-                ctx.log.warn(f"RelayCraft: JSONPath '{path}' matched no fields in the body")
+                self.logger.warn(f"RelayCraft: JSONPath '{path}' matched no fields in the body")
                 return
             
             if operation == "set":
@@ -150,17 +152,17 @@ class ActionExecutor:
                 for match in matches:
                     if isinstance(match.value, list):
                         match.value.append(value)
-                        ctx.log.info(f"Appended to {path}")
+                        self.logger.info(f"Appended to {path}")
                     else:
-                        ctx.log.warn(f"Cannot append to non-array at {path}")
+                        self.logger.warn(f"Cannot append to non-array at {path}")
                         
         except ImportError:
-            ctx.log.error("jsonpath-ng not installed, cannot modify JSON")
+            self.logger.error("jsonpath-ng not installed, cannot modify JSON")
         except Exception as e:
-            ctx.log.error(f"JSONPath error for '{path}': {e}")
+            self.logger.error(f"JSONPath error for '{path}': {e}")
     
 
-    def apply_map_local(self, flow: http.HTTPFlow, action: dict, url_match=None):
+    def apply_map_local(self, flow: http.HTTPFlow, action: Dict[str, Any], url_match: Optional[re.Match] = None) -> None:
         """Apply map local - supports File and Manual sources"""
         source = action.get("source", "file")
         content_type = action.get("contentType", "")
@@ -189,7 +191,7 @@ class ActionExecutor:
             if headers_config:
                 self.apply_rewrite_header(flow, headers_config, "response")
                 
-            ctx.log.info(f"Map Local (Manual Mock): {len(body)} bytes, status {status_code}")
+            self.logger.info(f"Map Local (Manual Mock): {len(body)} bytes, status {status_code}")
             return
 
         # --- File Source Logic ---
@@ -202,13 +204,13 @@ class ActionExecutor:
                 # 2. Convert $1, $2 to \1, \2 for python regex expansion
                 template = re.sub(r'\$(\d+)', r'\\\1', template)
                 local_path = url_match.expand(template)
-                ctx.log.info(f"Regex substitution result: {local_path}")
+                self.logger.info(f"Regex substitution result: {local_path}")
             except Exception as e:
-                ctx.log.error(f"Error expanding regex in local path: {e}")
+                self.logger.error(f"Error expanding regex in local path: {e}")
         
         if not local_path:
             # Case 1: Empty path -> Use status code only (mock response)
-            ctx.log.info(f"Map Local (Empty Path): using status {status_code}")
+            self.logger.info(f"Map Local (Empty Path): using status {status_code}")
             flow.response = Response.make(
                 status_code=status_code,
                 content=b"",
@@ -241,15 +243,15 @@ class ActionExecutor:
                 if headers_config:
                     self.apply_rewrite_header(flow, headers_config, "response")
                     
-                ctx.log.info(f"[DEBUG] Map Local SUCCESS: {local_path}")
+                self.logger.info(f"[DEBUG] Map Local SUCCESS: {local_path}")
                 # ctx.log.info(f"[DEBUG] Request Headers Count: {len(flow.request.headers)}")
                 # ctx.log.info(f"[DEBUG] Request Headers: {dict(flow.request.headers)}")
-                ctx.log.info(f"Map Local (File): {local_path}, status {status_code}")
+                self.logger.info(f"Map Local (File): {local_path}, status {status_code}")
             except Exception as e:
-                ctx.log.error(f"Error reading local file: {e}")
+                self.logger.error(f"Error reading local file: {e}")
         else:
             # Case 2: File missing -> Fallback to remote + Warning Flag
-            ctx.log.warn(f"Map Local file not found: {local_path}")
+            self.logger.warn(f"Map Local file not found: {local_path}")
             
             # Use record_rule_hit to signal UI warning
             # We pass rule directly if we had it, but apply_map_local only gets action.
@@ -263,7 +265,7 @@ class ActionExecutor:
             
             # Do NOT set flow.response, allowing fallback to network (or next rule)
     
-    def apply_map_remote(self, flow: http.HTTPFlow, action: dict, url_match=None):
+    def apply_map_remote(self, flow: http.HTTPFlow, action: Dict[str, Any], url_match: Optional[re.Match] = None) -> None:
         """Apply URL redirection with regex substitution support"""
         target_url = action.get("targetUrl", "")
         preserve_path = action.get("preservePath", True)
@@ -280,13 +282,13 @@ class ActionExecutor:
             try:
                 # Escape backslashes in Windows paths (if any)
                 template = target_url.replace("\\", "\\\\")
-                # Convert $1, $2 to \1, \2 for python regex expansion
+                # 2. Convert $1, $2 to \1, \2 for python regex expansion
                 template = re.sub(r'\$(\d+)', r'\\\1', template)
                 target_url = url_match.expand(template)
-                ctx.log.info(f"Regex substitution result: {target_url}")
+                self.logger.info(f"Regex substitution result: {target_url}")
                 flow.request.url = target_url
             except Exception as e:
-                ctx.log.error(f"Error expanding regex in target URL: {e}")
+                self.logger.error(f"Error expanding regex in target URL: {e}")
                 # Fallback to simple replacement if regex fails
                 flow.request.url = target_url
 
@@ -327,13 +329,13 @@ class ActionExecutor:
                         flow.request.path = prefix + original_path
                         
                 except Exception as e:
-                    ctx.log.error(f"Error parsing target URL {target_url}: {e}")
+                    self.logger.error(f"Error parsing target URL {target_url}: {e}")
                     flow.request.url = target_url
             else:
                 # No preserve path -> Exact replacement
                 flow.request.url = target_url
         
-        ctx.log.info(f"Redirected to: {flow.request.url}")
+        self.logger.info(f"Redirected to: {flow.request.url}")
         
         # Apply optional request headers
         headers_config = action.get("headers")
@@ -347,7 +349,7 @@ class ActionExecutor:
                 "request": request_headers
             }, "request")
     
-    def apply_rewrite_header(self, flow: http.HTTPFlow, headers_config: dict, phase: str):
+    def apply_rewrite_header(self, flow: http.HTTPFlow, headers_config: Dict[str, Any], phase: str) -> None:
         # V3: headers_config is { "request": [...], "response": [...] }
         operations = headers_config.get(phase, [])
         if not operations:
@@ -370,9 +372,9 @@ class ActionExecutor:
                 if key in message.headers:
                     del message.headers[key]
         
-        ctx.log.info(f"RelayCraft: Applied {len(operations)} header operations to {phase}")
+        self.logger.info(f"RelayCraft: Applied {len(operations)} header operations to {phase}")
     
-    def apply_throttle(self, flow: http.HTTPFlow, action: dict, phase: str = "request"):
+    def apply_throttle(self, flow: http.HTTPFlow, action: Dict[str, Any], phase: str = "request") -> None:
         """Apply network faults (Latency, Packet Loss, and Bandwidth Throttling)"""
         import random
         
@@ -389,7 +391,7 @@ class ActionExecutor:
         if phase == "request" and packet_loss > 0:
             if random.randint(1, 100) <= packet_loss:
                 flow.kill()
-                ctx.log.info(f"Dropped request (Packet Loss {packet_loss}%)")
+                self.logger.info(f"Dropped request (Packet Loss {packet_loss}%)")
                 return
 
         # 3. Simulate Bandwidth Throttling (Speed limit)

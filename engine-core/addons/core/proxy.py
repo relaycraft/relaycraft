@@ -1,9 +1,12 @@
 import os
+from typing import Optional, Tuple, Any
 from mitmproxy import ctx
+from .utils import setup_logging
 
 class ProxyManager:
     def __init__(self):
-        self.upstream_proxy = None
+        self.logger = setup_logging()
+        self.upstream_proxy: Optional[Tuple[str, Tuple[str, int]]] = None
         
         # Parse upstream proxy from environment variable for robustness
         proxy_url = os.environ.get("RELAYCRAFT_UPSTREAM_PROXY", "")
@@ -40,8 +43,8 @@ class ProxyManager:
                     if parsed.username and parsed.password:
                         ctx.options.proxy_auth = f"{parsed.username}:{parsed.password}"
                     
-                    ctx.log.info(f"ProxyManager: Upstream target -> {scheme}://{parsed.hostname}:{parsed.port}")
+                    self.logger.info(f"ProxyManager: Upstream target -> {scheme}://{parsed.hostname}:{parsed.port}")
                 else:
-                    ctx.log.warn(f"ProxyManager: Invalid proxy URL (missing hostname or port): {proxy_url}")
+                    self.logger.warn(f"ProxyManager: Invalid proxy URL (missing hostname or port): {proxy_url}")
             except Exception as e:
-                ctx.log.error(f"ProxyManager: failed to parse upstream proxy: {e}")
+                self.logger.error(f"ProxyManager: failed to parse upstream proxy: {e}")

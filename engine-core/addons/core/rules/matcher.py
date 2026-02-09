@@ -1,12 +1,25 @@
 import re
+from typing import Optional, Tuple, Dict, Any
 from mitmproxy import http, ctx
+from ..utils import setup_logging
 
 class RuleMatcher:
-    def match_url(self, url: str, pattern: str, match_type: str):
+    def __init__(self):
+        self.logger = setup_logging()
+
+    def match_url(self, url: str, pattern: str, match_type: str, compiled_re: Optional[re.Pattern] = None) -> Tuple[bool, Optional[re.Match]]:
         """Match URL against pattern based on match type
         Returns: (matched: bool, match_object: Optional[re.Match])
         """
         try:
+            # Fast path: use pre-compiled regex if available
+            if compiled_re:
+                if match_type == "regex":
+                    match = compiled_re.search(url)
+                    return (bool(match), match)
+                elif match_type == "wildcard":
+                    match = compiled_re.match(url)
+                    return (bool(match), match)
             if match_type == "contains":
                 return (pattern in url, None)
             elif match_type == "exact":
@@ -20,7 +33,7 @@ class RuleMatcher:
                 match = re.match(regex_pattern, url)
                 return (bool(match), match)
         except Exception as e:
-            ctx.log.error(f"Error matching URL: {e}")
+            self.logger.error(f"Error matching URL: {e}")
             return (False, None)
         
         return (False, None)
@@ -32,13 +45,14 @@ class RuleMatcher:
         key = atom.get("key")
         value = atom.get("value")
         invert = atom.get("invert", False)
+        compiled_re = atom.get("_compiled_re")
 
         result = False
 
         if target_type == "url":
-            result, _ = self.match_url(flow.request.pretty_url, str(value), match_type)
+            result, _ = self.match_url(flow.request.pretty_url, str(value), match_type, compiled_re)
         elif target_type == "host":
-            result, _ = self.match_url(flow.request.host, str(value), match_type)
+            result, _ = self.match_url(flow.request.host, str(value), match_type, compiled_re)
         elif target_type == "method":
             allowed_methods = value if isinstance(value, list) else [value]
             result = flow.request.method in allowed_methods
@@ -50,7 +64,7 @@ class RuleMatcher:
             elif match_type == "not_exists":
                 result = actual_value is None
             elif actual_value is not None:
-                result, _ = self.match_url(actual_value, str(value), match_type)
+                result, _ = self.match_url(actual_value, str(value), match_type, compiled_re)
         elif target_type == "query":
             if not key: return False
             actual_value = flow.request.query.get(key)
@@ -59,15 +73,15 @@ class RuleMatcher:
             elif match_type == "not_exists":
                 result = actual_value is None
             elif actual_value is not None:
-                result, _ = self.match_url(actual_value, str(value), match_type)
+                result, _ = self.match_url(actual_value, str(value), match_type, compiled_re)
         elif target_type == "port":
             result = str(flow.request.port) == str(value)
         elif target_type == "ip":
-            result, _ = self.match_url(flow.client_conn.address[0], str(value), match_type)
+            result, _ = self.match_url(flow.client_conn.address[0], str(value), match_type, compiled_re)
 
         return not result if invert else result
 
-    def match_rule(self, flow: http.HTTPFlow, rule: dict):
+    def match_rule(self, flow: http.HTTPFlow, rule: Dict[str, Any]) -> Tuple[bool, Optional[re.Match]]:
         """Check if flow matches rule conditions (Request Phase)
         Returns: (matched: bool, url_match_object: Optional[re.Match])
         """
@@ -85,7 +99,7 @@ class RuleMatcher:
         url_match_obj = None
         for atom in atoms:
             if atom.get("type") == "url" and atom.get("matchType") == "regex":
-                _, url_match_obj = self.match_url(flow.request.pretty_url, str(atom.get("value")), "regex")
+                _, url_match_obj = self.match_url(flow.request.pretty_url, str(atom.get("value")), "regex", atom.get("_compiled_re"))
                 break
         
         return (matched, url_match_obj)

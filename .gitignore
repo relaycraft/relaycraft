@@ -55,3 +55,4 @@ src-tauri/gen/schemas/
 # Binaries (Local dev artifacts)
 src-tauri/binaries/
 src-tauri/resources/engine/
+src-tauri/resources/addons/

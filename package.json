@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
+    "tauri": "python engine-core/build.py --sync && tauri",
     "test": "vitest",
     "lint": "biome lint src",
     "format": "biome format --write src",

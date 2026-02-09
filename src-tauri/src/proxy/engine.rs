@@ -414,9 +414,9 @@ impl MitmproxyEngine {
             } else {
                 current_dir
             };
+            // Directly use engine-core/addons in debug mode for hot reloading
             Ok(project_root
-                .join("src-tauri")
-                .join("resources")
+                .join("engine-core")
                 .join("addons")
                 .join("entry.py"))
         } else {
@@ -447,9 +447,9 @@ impl MitmproxyEngine {
             } else {
                 current_dir
             };
+            // Directly use engine-core/addons in debug mode
             Ok(project_root
-                .join("src-tauri")
-                .join("resources")
+                .join("engine-core")
                 .join("addons")
                 .join("injector.py"))
         } else {

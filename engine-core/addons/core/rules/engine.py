@@ -1,24 +1,47 @@
-import time
+from typing import List, Dict, Any, Optional
 from mitmproxy import http, ctx
 from mitmproxy.http import Response
 from .loader import RuleLoader
 from .matcher import RuleMatcher
 from .actions import ActionExecutor
+from ..utils import setup_logging
+import time # Added for new record_rule_hit
 
 class RuleEngine:
     def __init__(self):
+        self.logger = setup_logging()
         self.loader = RuleLoader()
         self.matcher = RuleMatcher()
         self.executor = ActionExecutor(self)
         
-    def handle_request(self, flow: http.HTTPFlow):
+    def handle_request(self, flow: http.HTTPFlow) -> None:
         """Standard matching and request-phase pipeline execution"""
         self.loader.load_rules()
         matched_rules = []
         
-        # 1. Identify all matching rules (One-time matching)
-        for rule in self.loader.rules:
-            # Check enabled status from execution object
+        # 1. Tiered Candidate Selection
+        host = flow.request.host
+        candidates = []
+        
+        # Add Global Rules
+        candidates.extend(self.loader.global_rules)
+        # Add Exact Host Matches
+        if host in self.loader.exact_host_rules:
+            candidates.extend(self.loader.exact_host_rules[host])
+        # Add Wildcard/Complex Host Matches
+        candidates.extend(self.loader.wildcard_host_rules)
+        
+        # Sort candidates by priority to maintain deterministic execution
+        # (Since candidates from different buckets might have interleaved priorities)
+        candidates.sort(key=lambda r: (
+            r.get("execution", {}).get("priority", 9999),
+            r.get("name", ""),
+            r.get("id", "")
+        ))
+
+        # 2. Identify all matching rules (Optimized matching)
+        for rule in candidates:
+            # Check enabled status (should be True by default)
             if not rule.get("execution", {}).get("enabled", True):
                 continue
             
@@ -26,7 +49,7 @@ class RuleEngine:
             if matched:
                 # Store match context in rule object for this flow
                 rc = rule.copy()
-                # Ensure url_match data is serializable (don't store the Match object directly)
+                # Ensure url_match data is serializable
                 if url_match and hasattr(url_match, "expand"):
                     rc["_url_match_data"] = {
                         "groups": url_match.groups(),
@@ -38,7 +61,7 @@ class RuleEngine:
                 
                 matched_rules.append(rc)
                 
-                # Record hit (Even if some actions are for response phase)
+                # Record hit
                 self.record_rule_hit(flow, rule)
                 
                 # stopOnMatch prevents FURTHER rules from matching
@@ -50,7 +73,7 @@ class RuleEngine:
             # 2. Execute Request Pipeline
             self.execute_pipeline(flow, "request")
 
-    def handle_response(self, flow: http.HTTPFlow):
+    def handle_response(self, flow: http.HTTPFlow) -> None:
         """Execute response-phase pipeline for already matched rules"""
         # Skip if flow was terminated in request phase (e.g. Map Local / Block)
         if flow.metadata.get("_relaycraft_terminated"):
@@ -59,7 +82,7 @@ class RuleEngine:
         # Execute Response Pipeline
         self.execute_pipeline(flow, "response")
 
-    def execute_pipeline(self, flow: http.HTTPFlow, phase: str):
+    def execute_pipeline(self, flow: http.HTTPFlow, phase: str) -> None:
         """Execute actions in a deterministic pipeline order"""
         matched_rules = flow.metadata.get("_relaycraft_matched_rules", [])
         if not matched_rules:
@@ -79,11 +102,17 @@ class RuleEngine:
                 all_actions.append(a)
 
         if phase == "request":
-            # 1. Terminal Actions (Short-circuit)
+            # 1. Network Actions (Latency / Packet Loss)
+            # Must run first to ensure delay/loss applies even if the request is later mocked or blocked
+            for a in [act for act in all_actions if act.get("type") == "throttle"]:
+                self.executor.apply_throttle(flow, a, phase="request")
+
+            # 2. Terminal Actions (Short-circuit content modification)
             # Block Request
             for a in [act for act in all_actions if act.get("type") == "block_request"]:
+                from mitmproxy.http import Response
                 flow.response = Response.make(403, b"Blocked by RelayCraft Rule")
-                ctx.log.info(f"Pipeline: [BLOCK] {a.get('_rule_name')}")
+                self.logger.info(f"Pipeline: [BLOCK] {a.get('_rule_name')}")
                 flow.metadata["_relaycraft_terminated"] = True
                 return
 
@@ -96,9 +125,9 @@ class RuleEngine:
                 
                 if flow.response:
                     flow.metadata["_relaycraft_terminated"] = True
-                    return
+                    return 
 
-            # 2. Modification Actions
+            # 3. Modification Actions
             # Rewrite Header (Request)
             for a in [act for act in all_actions if act.get("type") == "rewrite_header"]:
                 headers_config = a.get("headers")
@@ -108,10 +137,6 @@ class RuleEngine:
             # Rewrite Body (Request)
             for a in [act for act in all_actions if act.get("type") == "rewrite_body" and act.get("target") == "request"]:
                 self.executor.apply_rewrite_body(flow, a, a.get("_url_match_transient") or a.get("_url_match_data"))
-
-            # 3. Network Actions (Latency / Packet Loss)
-            for a in [act for act in all_actions if act.get("type") == "throttle"]:
-                self.executor.apply_throttle(flow, a, phase="request")
 
         elif phase == "response":
             # 1. Network Actions (Bandwidth Throttling)

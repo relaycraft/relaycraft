@@ -18,11 +18,10 @@ def request(flow):
         modified = inject_tracking(source)
         
         # Verify helper is present
-        self.assertIn("def record_hit(flow):", modified)
+        self.assertIn("def __rc_record_hit(flow, script_path):", modified)
         
         # Verify call is injected into the if statement
-        # Looking for record_hit(flow) inside the if body
-        self.assertIn("record_hit(flow)", modified)
+        self.assertIn("__rc_record_hit(flow, __file__)", modified)
         
     def test_async_injection(self):
         source = """
@@ -31,8 +30,30 @@ async def response(flow):
         print("hello")
 """
         modified = inject_tracking(source)
-        self.assertIn("def record_hit(flow):", modified)
-        self.assertIn("record_hit(flow)", modified)
+        self.assertIn("def __rc_record_hit(flow, script_path):", modified)
+        self.assertIn("__rc_record_hit(flow, __file__)", modified)
+
+    def test_multi_point_injection(self):
+        source = """
+def request(flow):
+    if condition_a:
+        do_a()
+    if condition_b:
+        do_b()
+"""
+        modified = inject_tracking(source)
+        # Should appear multiple times in semantic blocks
+        self.assertEqual(modified.count("__rc_record_hit(flow, __file__)"), 2)
+
+    def test_fallback_injection(self):
+        source = """
+def request(flow):
+    do_something_always()
+"""
+        modified = inject_tracking(source)
+        # Should be at the top of the function
+        self.assertIn("__rc_record_hit(flow, __file__)", modified)
+        self.assertIn("do_something_always()", modified)
         
     def test_logging_injection(self):
         source = """

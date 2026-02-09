@@ -1,6 +1,9 @@
 {
   "identifier": "com.beta.relaycraft",
   "bundle": {
-    "resources": ["resources/addons/*.py", "resources/addons/core", "resources/engine"]
+    "resources": [
+      "resources/addons/**/*",
+      "resources/engine"
+    ]
   }
 }

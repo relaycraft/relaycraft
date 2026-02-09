@@ -16,9 +16,17 @@ from core.rules.engine import RuleEngine
 class TestRules(unittest.TestCase):
     def setUp(self):
         self.engine = RuleEngine()
-        # Mock loader to provide custom rules
-        self.engine.loader = MagicMock()
+        # Use a real loader for indexing capabilities, but mock loading from disk
+        self.engine.loader.load_rules = MagicMock()
         self.engine.loader.rules = []
+        self.engine.loader.exact_host_rules = {}
+        self.engine.loader.wildcard_host_rules = []
+        self.engine.loader.global_rules = []
+
+    def set_mock_rules(self, rules):
+        """Helper to inject rules and trigger indexing"""
+        self.engine.loader.rules = rules
+        self.engine.loader._process_and_index_rules()
 
     def test_matcher_basic(self):
         from core.rules.matcher import RuleMatcher
@@ -74,7 +82,7 @@ class TestRules(unittest.TestCase):
                 }
             ]
         }
-        self.engine.loader.rules = [rule]
+        self.set_mock_rules([rule])
         
         flow = mock_env.get_mock_flow(url="http://example.com/api/data")
         

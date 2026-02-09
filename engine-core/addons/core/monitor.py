@@ -1,15 +1,18 @@
 import time
 import base64
 from collections import deque
+from typing import Optional, Dict, Any, Tuple, List
 from mitmproxy import http, ctx
 from .debug import DebugManager
+from .utils import setup_logging
 
 class TrafficMonitor:
     def __init__(self, debug_mgr: DebugManager):
-        self.flow_buffer = deque(maxlen=1000)
+        self.logger = setup_logging()
+        self.flow_buffer: deque = deque(maxlen=1000)
         self.debug_mgr = debug_mgr
     
-    def decode_content(self, message) -> tuple[str, str]:
+    def decode_content(self, message: Any) -> Tuple[str, str]:
         if not message.content:
             return "", "text"
         content_type = ""
@@ -31,7 +34,7 @@ class TrafficMonitor:
         try: return base64.b64encode(message.content).decode('ascii'), "base64"
         except Exception as e: return f"<Error encoding content: {e}>", "text"
 
-    def process_flow(self, flow: http.HTTPFlow) -> dict:
+    def process_flow(self, flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
         """Convert flow to serializable dict"""
         try:
             req_body, req_enc = self.decode_content(flow.request)
@@ -160,14 +163,10 @@ class TrafficMonitor:
                 "bodyTruncated": req_truncated or res_truncated
             }
         except Exception as e:
-            ctx.log.error(f"Error processing flow: {e}")
+            self.logger.error(f"Error processing flow: {e}")
             return None
 
-        except Exception as e:
-            ctx.log.error(f"Error processing flow: {e}")
-            return None
-
-    def process_tls_error(self, tls_start: any):
+    def process_tls_error(self, tls_start: Any) -> None:
         """Synthesize a flow record from a TLS error"""
         import uuid
         try:
@@ -224,16 +223,16 @@ class TrafficMonitor:
             
             self.flow_buffer.append(flow_data)
         except Exception as e:
-            ctx.log.error(f"Error processing TLS error: {e}")
+            self.logger.error(f"Error processing TLS error: {e}")
 
-    def handle_websocket_message(self, flow: http.HTTPFlow):
+    def handle_websocket_message(self, flow: http.HTTPFlow) -> None:
         """Called when a new websocket message arrives"""
         flow.metadata["_relaycraft_msg_ts"] = time.time()
         flow_data = self.process_flow(flow)
         if flow_data:
             self.flow_buffer.append(flow_data)
 
-    async def handle_request(self, flow: http.HTTPFlow):
+    async def handle_request(self, flow: http.HTTPFlow) -> None:
         """Intercept polling and control requests"""
         import json
         from mitmproxy.http import Response
@@ -285,7 +284,7 @@ class TrafficMonitor:
                 tb = traceback.format_exc()
                 # Print to stdout/stderr to ensure visibility in Tauri console
                 print(f"RelayCraft Poll Error:\n{tb}")
-                ctx.log.error(f"Error in poll handler: {tb}")
+                self.logger.error(f"Error in poll handler: {tb}")
                 error_resp = {"error": str(e), "traceback": tb}
                 try:
                     safe_err = json.dumps(error_resp, default=safe_json_default)
@@ -353,7 +352,7 @@ class TrafficMonitor:
             except Exception as e:
                 flow.response = Response.make(500, str(e).encode('utf-8'), {"Access-Control-Allow-Origin": "*"})
 
-    def handle_response(self, flow: http.HTTPFlow):
+    def handle_response(self, flow: http.HTTPFlow) -> None:
         """Capture flows"""
         if flow.request.path.startswith("/_relay"): return
         flow_data = self.process_flow(flow)

@@ -1,11 +1,14 @@
 import threading
 import asyncio
+from typing import List, Dict, Any, Optional, Callable
 from mitmproxy import http, ctx
+from .utils import setup_logging
 
 class DebugManager:
     def __init__(self):
-        self.breakpoints = [] # List of regex/patterns to toggle interception
-        self.intercepted_flows = {} # flow_id -> {event: asyncio.Event, flow: HTTPFlow, action: str}
+        self.logger = setup_logging()
+        self.breakpoints: List[str] = [] # List of regex/patterns to toggle interception
+        self.intercepted_flows: Dict[str, Dict[str, Any]] = {} # flow_id -> {event: asyncio.Event, flow: HTTPFlow, action: str}
         self.lock = threading.Lock()
 
     def add_breakpoint(self, pattern: str):
@@ -15,9 +18,9 @@ class DebugManager:
         with self.lock:
             if pattern not in self.breakpoints:
                 self.breakpoints.append(pattern)
-                ctx.log.info(f"Added breakpoint pattern: {pattern}")
+                self.logger.info(f"Added breakpoint pattern: {pattern}")
 
-    def remove_breakpoint(self, pattern: str):
+    def remove_breakpoint(self, pattern: str) -> None:
         with self.lock:
             if pattern in self.breakpoints:
                 self.breakpoints.remove(pattern)
@@ -34,7 +37,7 @@ class DebugManager:
                     return True
         return False
 
-    async def wait_for_resume(self, flow: http.HTTPFlow, phase: str, on_pause=None):
+    async def wait_for_resume(self, flow: http.HTTPFlow, phase: str, on_pause: Optional[Callable[[], Any]] = None) -> None:
         """Suspend execution and wait for user signal"""
         flow_id = flow.id
         event = asyncio.Event()
@@ -47,7 +50,7 @@ class DebugManager:
                 "status": "paused"
             }
             
-        ctx.log.info(f"Flow {flow_id} INTERCEPTED at {phase}. Waiting for resume...")
+        self.logger.info(f"Flow {flow_id} INTERCEPTED at {phase}. Waiting for resume...")
         
         # Notify that we are paused (so UI can see 'intercepted: true')
         if on_pause:
@@ -56,13 +59,13 @@ class DebugManager:
         try:
             # Wait for the resume signal
             await event.wait()
-            ctx.log.info(f"Flow {flow_id} RESUMED.")
+            self.logger.info(f"Flow {flow_id} RESUMED.")
         finally:
             with self.lock:
                 if flow_id in self.intercepted_flows:
                     del self.intercepted_flows[flow_id]
 
-    def resume_flow(self, flow_id: str, modified_data: dict = None):
+    def resume_flow(self, flow_id: str, modified_data: Optional[Dict[str, Any]] = None) -> bool:
         """Signal a flow to resume, optionally applying modifications"""
         with self.lock:
             if flow_id in self.intercepted_flows:
@@ -75,7 +78,7 @@ class DebugManager:
                         # Mark as aborted for the UI
                         flow.metadata["_relaycraft_aborted"] = True
                         flow.kill()
-                        ctx.log.info(f"Flow {flow_id} ABORTED by user.")
+                        self.logger.info(f"Flow {flow_id} ABORTED by user.")
                     else:
                         # Apply modifications (Header/Body)
                         if info["phase"] == "request":
