@@ -46,6 +46,7 @@ export function CommandCenter() {
   const { setActiveTab, setDraftScriptPrompt } = useUIStore();
   const { settings: aiSettings } = useAIStore();
   const [executing, setExecuting] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const pluginPages = usePluginPageStore((state) => state.pages);
 
   // Reset state when closed (Aborts UI stream)
@@ -55,6 +56,12 @@ export function CommandCenter() {
       setStreamingMessage(null);
       setAction(null);
       setError(null); // Clear error when closing
+
+      // Abort any ongoing AI request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     }
   }, [isOpen]);
 
@@ -63,6 +70,7 @@ export function CommandCenter() {
   const [error, setError] = useState<string | null>(null); // New error state
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Feature stores for context gathering
   const activeTab = useUIStore((state) => state.activeTab);
@@ -133,6 +141,11 @@ export function CommandCenter() {
     setExecuting(true);
     setAction(null);
     setStreamingMessage("");
+    setError(null);
+
+    // Create new abort controller for this request
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
 
     try {
       const context = {
@@ -150,9 +163,15 @@ export function CommandCenter() {
         activeRule: selectedRule || draftRule || null,
       };
 
-      const result = await dispatchCommand(commandToRun, context, t, (chunk) => {
-        setStreamingMessage((prev) => (prev || "") + chunk);
-      });
+      const result = await dispatchCommand(
+        commandToRun,
+        context,
+        t,
+        (chunk) => {
+          setStreamingMessage((prev) => (prev || "") + chunk);
+        },
+        abortControllerRef.current.signal,
+      );
 
       // For CHAT and CREATE_SCRIPT with requirements, keep streamingMessage visible
       if (
@@ -193,6 +212,7 @@ export function CommandCenter() {
       setError(errorMsg);
     } finally {
       setExecuting(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -341,9 +361,23 @@ export function CommandCenter() {
                 <input
                   ref={inputRef}
                   type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleRunCommand()}
+                  defaultValue={input}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(e) => {
+                    setIsComposing(false);
+                    // Force input update on end of composition
+                    setInput((e.target as HTMLInputElement).value);
+                  }}
+                  onChange={(e) => {
+                    if (!isComposing) {
+                      setInput(e.target.value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isComposing) {
+                      handleRunCommand();
+                    }
+                  }}
                   placeholder={
                     isEditingRule
                       ? t("command_center.placeholder.editing_rule")

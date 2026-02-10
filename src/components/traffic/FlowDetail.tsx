@@ -358,7 +358,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
                     </div>
                     <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                      <span className="text-[12px] font-extrabold truncate tracking-tight">
+                      <span className="text-[11px] font-bold truncate tracking-tight">
                         {hit.name}
                       </span>
                     </Tooltip>

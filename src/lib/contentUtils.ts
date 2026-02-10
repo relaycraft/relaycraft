@@ -76,6 +76,9 @@ export function detectContentType(
 }
 
 export function formatJson(content: string): string {
+	// Skip formatting for very large content to avoid blocking main thread
+	if (content.length > 2 * 1024 * 1024) return content;
+
 	try {
 		const parsed = JSON.parse(content);
 		return JSON.stringify(parsed, null, 2);

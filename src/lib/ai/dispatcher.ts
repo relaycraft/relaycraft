@@ -85,6 +85,7 @@ export async function dispatchCommand(
 	context?: any,
 	t?: (key: string, options?: any) => string,
 	onChunk?: (content: string) => void,
+	signal?: AbortSignal,
 ): Promise<CommandAction> {
 	const language = useSettingsStore.getState().config.language;
 	const translate = t || ((s: string) => s);
@@ -202,6 +203,7 @@ export async function dispatchCommand(
 		const intentResponse = await chatCompletion(
 			[intentSystemMsg, ...history, userMsg],
 			0,
+			signal,
 		);
 		let action = extractJson(intentResponse);
 
@@ -244,6 +246,7 @@ export async function dispatchCommand(
 				language,
 				translate,
 				onChunk,
+				signal,
 			);
 		}
 
@@ -266,6 +269,7 @@ async function runTwoStageChat(
 	_language: string,
 	_translate: (key: string) => string,
 	onChunk?: (content: string) => void,
+	signal?: AbortSignal,
 ): Promise<CommandAction> {
 	const { chatCompletionStream, history, addMessage } = useAIStore.getState();
 	const activeTab = useUIStore.getState().activeTab;
@@ -291,10 +295,15 @@ async function runTwoStageChat(
 	const userMsg: AIMessage = { role: "user" as const, content: input };
 	let fullChatResponse = "";
 
-	await chatCompletionStream([chatSystemMsg, ...history, userMsg], (chunk) => {
-		fullChatResponse += chunk;
-		if (onChunk) onChunk(chunk);
-	});
+	await chatCompletionStream(
+		[chatSystemMsg, ...history, userMsg],
+		(chunk) => {
+			fullChatResponse += chunk;
+			if (onChunk) onChunk(chunk);
+		},
+		undefined,
+		signal,
+	);
 
 	addMessage("user", input);
 	addMessage("assistant", fullChatResponse);

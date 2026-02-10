@@ -10,7 +10,6 @@ import { parseCurl } from "../../lib/curlParser";
 import { cn } from "../../lib/utils";
 import { useComposerStore } from "../../stores/composerStore";
 import { Button } from "../common/Button";
-import { CodeBlock } from "../common/CodeBlock";
 import { CopyButton } from "../common/CopyButton";
 import { Editor } from "../common/Editor";
 import { EmptyState } from "../common/EmptyState";
@@ -287,9 +286,9 @@ export function ComposerView() {
                   align="right"
                   className="bg-muted/40 h-7 !text-[10px] !font-black uppercase border-border/20 min-w-[80px]"
                 >
-                  <option value="none">{t("common.none", "None")}</option>
-                  <option value="x-www-form-urlencoded">{t("composer.form_data")}</option>
-                  <option value="raw">{t("composer.raw_json")}</option>
+                  <option value="none">None</option>
+                  <option value="x-www-form-urlencoded">Form-data</option>
+                  <option value="raw">JSON</option>
                 </Select>
               </TabsContent>
             </div>
@@ -419,12 +418,20 @@ export function ComposerView() {
                   className="h-full flex flex-col"
                 >
                   <div className="flex-1 relative min-h-0 bg-transparent">
-                    <CodeBlock
-                      code={viewMode === "raw" ? lastResponse.body : formatJson(lastResponse.body)}
+                    <Editor
+                      value={
+                        viewMode === "raw"
+                          ? lastResponse.body
+                          : lastResponse.body.length > 1024 * 1024 // 1MB threshold for formatting
+                            ? lastResponse.body
+                            : formatJson(lastResponse.body)
+                      }
                       language={viewMode === "raw" ? "text" : "json"}
-                      className="h-full border-none shadow-none bg-transparent"
-                      preClassName="p-4"
-                      hideHeader
+                      options={{
+                        readOnly: true,
+                        lineWrapping: true,
+                        lineNumbers: true,
+                      }}
                     />
                   </div>
 

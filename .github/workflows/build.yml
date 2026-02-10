@@ -155,25 +155,18 @@ jobs:
           ENGINE_PATH="$APP_PATH/Contents/Resources/resources/engine"
 
           # ============================================================
+          # Step 0: Pre-signing Clean (Critical for Gatekeeper)
+          # ============================================================
+          echo "🧹 Step 0: Cleaning all attributes and old signatures..."
+          xattr -rc "$APP_PATH"
+          find "$APP_PATH" -type f -exec codesign --remove-signature {} \; 2>/dev/null || true
+
+          # ============================================================
           # Step 1: Sign ALL component binaries in engine
-          #         This includes nested bundles and Mach-O files
           # ============================================================
           echo "📦 Step 1: Sign engine components..."
 
-          # 1a. Sign any nested .app bundles (e.g., mitmproxy certificate truster)
-          find "$ENGINE_PATH" -name "*.app" -type d | while read bundle; do
-            echo "  Signing nested bundle: ${bundle#$ENGINE_PATH/}"
-            codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
-              --options runtime \
-              --timestamp \
-              "$bundle"
-          done
-
-          # 1b. Sign all Mach-O binaries
-          # Remove any existing signatures (PyInstaller ad-hoc signatures often interfere)
-          echo "  Removing existing signatures..."
-          find "$ENGINE_PATH" -type f -exec codesign --remove-signature {} \; 2>/dev/null || true
-
+          # 1a. Sign all Mach-O binaries in engine
           find "$ENGINE_PATH" -type f -exec sh -c '
             file "$1" | grep -q "Mach-O" && echo "$1"
           ' _ {} \; | while IFS= read -r file; do
@@ -182,17 +175,17 @@ jobs:
             codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
               --options runtime \
               --timestamp \
-              "$file" 2>&1 | grep -v "replacing existing signature" || true
+              "$file"
           done
 
-          # 1c. Explicitly sign the main engine binary (just in case)
-          if [ -f "$ENGINE_PATH/engine" ]; then
-            echo "  Explicitly signing engine binary..."
+          # 1b. Sign any nested .app bundles
+          find "$ENGINE_PATH" -name "*.app" -type d | while read bundle; do
+            echo "  Signing nested bundle: ${bundle#$ENGINE_PATH/}"
             codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
               --options runtime \
               --timestamp \
-              "$ENGINE_PATH/engine"
-          fi
+              "$bundle"
+          done
 
           echo "  ✅ All engine components signed"
 
@@ -201,16 +194,20 @@ jobs:
           # ============================================================
           echo "📦 Step 2: Sign Tauri components..."
 
-          find "$APP_PATH/Contents/Frameworks" -type f 2>/dev/null | while read file; do
-            if [ ! -L "$file" ] && file "$file" | grep -q "Mach-O"; then
-              echo "  Signing: ${file#$APP_PATH/}"
-              codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
-                --options runtime \
-                --timestamp \
-                "$file" 2>&1 | grep -v "replacing existing signature" || true
-            fi
-          done
+          # Sign Frameworks
+          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
+            find "$APP_PATH/Contents/Frameworks" -type f 2>/dev/null | while read file; do
+              if [ ! -L "$file" ] && file "$file" | grep -q "Mach-O"; then
+                echo "  Signing Framework: ${file#$APP_PATH/}"
+                codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                  --options runtime \
+                  --timestamp \
+                  "$file"
+              fi
+            done
+          fi
 
+          # Sign main executable with entitlements
           if [ -f "$APP_PATH/Contents/MacOS/RelayCraft" ]; then
             echo "  Signing main executable..."
             codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
@@ -230,11 +227,18 @@ jobs:
             --timestamp \
             "$APP_PATH"
 
-          echo "✅ Verifying signatures..."
-          codesign -dvv "$APP_PATH"
+          # ============================================================
+          # Step 4: Verification (Catch errors BEFORE notarization)
+          # ============================================================
+          echo "🔍 Step 4: Verifying signature integrity..."
+          codesign -vvv --deep --strict "$APP_PATH"
+          
+          echo "🔍 Assessing with Gatekeeper (spctl)..."
+          # This is what macOS does when you open the app. If this fails, the app is "damaged".
+          spctl --assess --verbose=4 --type execute "$APP_PATH"
 
           # ============================================================
-          # Step 4: Notarize
+          # Step 5: Notarize
           # ============================================================
           echo "📤 Notarizing application..."
           ditto -c -k --keepParent "$APP_PATH" "$APP_PATH.zip"

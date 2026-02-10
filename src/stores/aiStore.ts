@@ -19,11 +19,16 @@ interface AIStore {
   saveSettings: (settings: AISettings) => Promise<void>;
   testConnection: () => Promise<void>;
   getProviderKey: (provider: string) => Promise<string>;
-  chatCompletion: (messages: AIMessage[], temperature?: number) => Promise<string>;
+  chatCompletion: (
+    messages: AIMessage[],
+    temperature?: number,
+    signal?: AbortSignal,
+  ) => Promise<string>;
   chatCompletionStream: (
     messages: AIMessage[],
     onChunk: (content: string) => void,
     temperature?: number,
+    signal?: AbortSignal,
   ) => Promise<void>;
   resetConnectionStatus: () => void;
   addMessage: (role: "user" | "assistant" | "system", content: string) => void;
@@ -113,7 +118,7 @@ export const useAIStore = create<AIStore>((set, get) => {
       }
     },
 
-    chatCompletion: async (messages, temperature) => {
+    chatCompletion: async (messages, temperature, signal) => {
       const formattedMessages = messages.map((m) => [m.role, m.content]);
 
       try {
@@ -129,18 +134,26 @@ export const useAIStore = create<AIStore>((set, get) => {
           }
         }
 
+        if (signal?.aborted) throw new Error("Aborted");
+
         const response = await invoke<string>("ai_chat_completion", {
           messages: finalMessages,
           temperature: temperature ?? null, // Backend expects Option<f32>
         });
+
+        if (signal?.aborted) throw new Error("Aborted");
         return response;
       } catch (error) {
+        if (signal?.aborted || (error instanceof Error && error.message === "Aborted")) {
+          Logger.info("AI completion aborted");
+          throw new Error("Aborted");
+        }
         console.error("AI completion failed:", error);
         throw error;
       }
     },
 
-    chatCompletionStream: async (messages, onChunk, temperature) => {
+    chatCompletionStream: async (messages, onChunk, temperature, signal) => {
       const formattedMessages = messages.map((m) => [m.role, m.content]);
       const context = get().context;
       const finalMessages = [...formattedMessages];
@@ -154,8 +167,11 @@ export const useAIStore = create<AIStore>((set, get) => {
         }
       }
 
+      if (signal?.aborted) return;
+
       const on_chunk = new Channel<ChatCompletionChunk>();
       on_chunk.onmessage = (chunk) => {
+        if (signal?.aborted) return;
         const content = chunk.choices[0]?.delta?.content;
         if (content) {
           onChunk(content);
@@ -169,6 +185,10 @@ export const useAIStore = create<AIStore>((set, get) => {
           onChunk: on_chunk,
         });
       } catch (error) {
+        if (signal?.aborted) {
+          Logger.info("AI stream aborted");
+          return;
+        }
         console.error("AI streaming failed:", error);
         throw error;
       }

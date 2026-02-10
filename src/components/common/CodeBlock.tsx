@@ -48,8 +48,19 @@ export function CodeBlock({
     );
   };
 
+  // Performance thresholds for large content
+  const HIGHLIGHT_THRESHOLD = 100 * 1024; // 100KB
+  const MAX_DISPLAY_LENGTH = 1024 * 1024; // 1MB - prevent browser lag
+
   const isJson = language.toLowerCase() === "json";
-  const highlighted = isJson ? highlightJson(code) : code;
+  const isTooLarge = code.length > HIGHLIGHT_THRESHOLD;
+  const isCriticalLarge = code.length > MAX_DISPLAY_LENGTH;
+
+  // Only highlight if it's below the threshold
+  const highlighted = isJson && !isTooLarge ? highlightJson(code) : code;
+  const displayContent = isCriticalLarge
+    ? `${code.slice(0, MAX_DISPLAY_LENGTH)}\n\n--- [Content truncated due to size. Full content available via 'Copy' or 'Download'] ---`
+    : highlighted;
 
   const basePreClasses =
     "font-mono text-xs leading-relaxed m-0 scrollbar-thin scrollbar-thumb-primary/10 hover:scrollbar-thumb-primary/20 transition-colors whitespace-pre-wrap break-all";
@@ -59,7 +70,9 @@ export function CodeBlock({
       <pre
         ref={preRef}
         className={`p-3 bg-muted/20 border border-border/40 rounded-lg ${basePreClasses} ${className} ${preClassName}`}
-        {...(isJson ? { dangerouslySetInnerHTML: { __html: highlighted } } : { children: code })}
+        {...(isJson && !isTooLarge
+          ? { dangerouslySetInnerHTML: { __html: displayContent } }
+          : { children: displayContent })}
       />
     );
   }
@@ -81,7 +94,9 @@ export function CodeBlock({
         <pre
           ref={preRef}
           className={`flex-1 overflow-auto rounded-lg p-6 pr-8 ${basePreClasses} ${preClassName}`}
-          {...(isJson ? { dangerouslySetInnerHTML: { __html: highlighted } } : { children: code })}
+          {...(isJson && !isTooLarge
+            ? { dangerouslySetInnerHTML: { __html: displayContent } }
+            : { children: displayContent })}
         />
       </div>
     </div>

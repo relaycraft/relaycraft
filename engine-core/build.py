@@ -112,6 +112,10 @@ def build(sync_only=False):
             runtime_path = os.path.join(internal_dir, runtime_name)
             old_framework_name = os.path.basename(framework_path)
             
+            # This path is used both for the library ID and for updating references in other binaries
+            new_lib_name = 'libpython_rt.dylib'
+            new_replace_path = f"@executable_path/_internal/{runtime_name}/{new_lib_name}"
+            
             print(f"\nmacOS post-build: Aggressively restructuring runtime...")
             print(f"  Renaming {old_framework_name} -> {runtime_name}")
             
@@ -143,10 +147,15 @@ def build(sync_only=False):
                 print(f"  Found Python binary at: {os.path.relpath(actual_binary, runtime_path)}")
                 shutil.move(actual_binary, target_lib_path)
                 print(f"  Renamed binary -> {new_lib_name}")
+                
+                # 3. Fix the internal ID (LC_ID_DYLIB) of the renamed dylib (CRITICAL)
+                # If the ID doesn't match the load path, macOS marks it as damaged.
+                print(f"  Setting internal ID of {new_lib_name}...")
+                os.system(f'install_name_tool -id "{new_replace_path}" "{target_lib_path}"')
             else:
                 print("  ERROR: Could not find Python binary to rename!")
 
-            # 3. Clean all extended attributes and old signatures (CRITICAL)
+            # 4. Clean all extended attributes and old signatures (CRITICAL)
             print("  Cleaning extended attributes and existing signatures...")
             os.system(f"xattr -rc {dist_dir}")
             # Also remove _CodeSignature folders
@@ -154,12 +163,11 @@ def build(sync_only=False):
                 if '_CodeSignature' in dirs:
                     shutil.rmtree(os.path.join(root, '_CodeSignature'))
 
-            # 4. Universal RPATH and dependency fix
+            # 5. Universal RPATH and dependency fix
             # This is the most important part: update ALL binaries to point to the new dylib
             print("  Applying universal RPATH fixed to ALL binaries...")
             old_search_pattern = f"{old_framework_name}/Versions/3.12/Python"
             old_search_pattern_2 = f"{old_framework_name}/Python"
-            new_replace_path = f"@executable_path/_internal/{runtime_name}/{new_lib_name}"
             
             binary_count = 0
             for root, dirs, files in os.walk(dist_dir):
@@ -181,26 +189,32 @@ def build(sync_only=False):
                     if is_macho:
                         binary_count += 1
                         # Update references to the old framework
-                        # We use -change to swap out the specific library path
-                        # Since we don't know the exact string used by PyInstaller for every file,
-                        # we can try common ones or use otool. But -change is safe if it doesn't match.
                         os.system(f'install_name_tool -change "@executable_path/../Frameworks/{old_search_pattern}" "{new_replace_path}" "{p}" 2>/dev/null')
                         os.system(f'install_name_tool -change "@executable_path/../Frameworks/{old_search_pattern_2}" "{new_replace_path}" "{p}" 2>/dev/null')
                         os.system(f'install_name_tool -change "@loader_path/../../../../{old_search_pattern}" "{new_replace_path}" "{p}" 2>/dev/null')
                         os.system(f'install_name_tool -change "@loader_path/../../../../{old_search_pattern_2}" "{new_replace_path}" "{p}" 2>/dev/null')
-                        # Fallback for relative paths in _internal
                         os.system(f'install_name_tool -change "{old_search_pattern}" "{new_replace_path}" "{p}" 2>/dev/null')
             
             print(f"  ✅ Restructuring complete. Processed {binary_count} binaries.")
             
-            # 5. Finally, flatten symlinks (already using our robust logic)
+            # 6. Finally, aggressively flatten symlinks
             print("  Final symlink elimination...")
-            # (Reuse existing symlink removal logic but simple)
+            # We must be careful: if we just remove symlinks, some files might become unreachable.
+            # But in our 'onedir' setup, PyInstaller mostly uses absolute paths or rpaths to _internal.
             for root, dirs, files in os.walk(dist_dir):
                 for name in files + dirs:
                     p = os.path.join(root, name)
                     if os.path.islink(p):
-                        os.remove(p) # Just delete them, we don't want ANY links
+                        try:
+                            # Try to replace link with actual content if it's a file link
+                            target = os.path.realpath(p)
+                            if os.path.isfile(target):
+                                os.remove(p)
+                                shutil.copy2(target, p)
+                            else:
+                                os.remove(p)
+                        except:
+                            if os.path.exists(p): os.remove(p)
         else:
             print(f"  ⚠️  WARNING: Python framework folder not found in {internal_dir}")
 

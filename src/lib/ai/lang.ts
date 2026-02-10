@@ -1,5 +1,4 @@
 import i18n from "../../i18n";
-import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 
 /**
@@ -9,12 +8,16 @@ import { useUIStore } from "../../stores/uiStore";
  * provided by plugins.
  */
 export function getAILanguageInfo() {
-	const langCode = useSettingsStore.getState().config.language;
+	const langCode = i18n.language || "en";
 	const availableLanguages = useUIStore.getState().availableLanguages;
 
 	// Find the label for the current language (e.g., "English", "简体中文", "Français")
 	const langEntry = availableLanguages.find((l) => l.value === langCode);
-	const langName = langEntry?.label || langCode;
+	let langName = langEntry?.label || langCode;
+
+	// Polish language name for AI
+	if (langCode === "zh") langName = "Simplified Chinese";
+	if (langCode === "en") langName = "English";
 
 	// Get terminology from i18n to ensure consistent terms (Rules, Scripts, etc.)
 	const terminology = [
