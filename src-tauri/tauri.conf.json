@@ -14,7 +14,7 @@
       "endpoints": [
         "https://github.com/relaycraft/relaycraft/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY2NjU4MDA5QkIzNDU1Q0UKUldUT1ZUUzdDWUJsOWpka1VBeE9XVFZGRjZvYi9TMGZtZ05jc2ZxRGtJYmozUDZMQWgrWUNCL3IK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ1MDUzOEE0MkJFNzRGRjIKUldUeVQrY3JwRGdGUmE4aWwzYUZKRjMyM1BVVWM0ZHMrNDNsOG1VanlEQW1GbU9rd3NMQmRvWDYK"
     }
   },
   "app": {
