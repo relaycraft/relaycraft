@@ -7,6 +7,7 @@ use std::process::Command as StdCommand;
 pub fn preprocess_scripts(
     scripts: &[PathBuf],
     injector_path: &Path,
+    python_path: &Path,
 ) -> Result<Vec<String>, ScriptError> {
     if scripts.is_empty() {
         return Ok(Vec::new());
@@ -40,7 +41,7 @@ pub fn preprocess_scripts(
 
         // Call Python preprocessor
         let output = {
-            let mut cmd = StdCommand::new("python");
+            let mut cmd = StdCommand::new(python_path);
             cmd.arg(injector_path)
                 .arg(script_path)
                 .arg(&temp_script_path);
@@ -51,8 +52,12 @@ pub fn preprocess_scripts(
                 cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
             }
 
-            cmd.output()
-                .map_err(|e| ScriptError::Runtime(format!("Failed to run preprocessor: {}", e)))?
+            cmd.output().map_err(|e| {
+                ScriptError::Runtime(format!(
+                    "Failed to run preprocessor using {:?}: {}",
+                    python_path, e
+                ))
+            })?
         };
 
         if !output.status.success() {
@@ -77,7 +82,8 @@ mod tests {
     #[test]
     fn test_empty_scripts() {
         let injector = PathBuf::from("fake_injector.py");
-        let result = preprocess_scripts(&[], &injector).unwrap();
+        let python = PathBuf::from("python");
+        let result = preprocess_scripts(&[], &injector, &python).unwrap();
         assert!(result.is_empty());
     }
 
@@ -88,7 +94,8 @@ mod tests {
         fs::write(&script, "print(1)").unwrap();
 
         let injector = temp.path().join("missing.py");
-        let result = preprocess_scripts(&[script], &injector);
+        let python = PathBuf::from("python");
+        let result = preprocess_scripts(&[script], &injector, &python);
         assert!(result.is_err());
     }
 
@@ -99,12 +106,11 @@ mod tests {
         let script = temp.path().join("test_script.py");
         fs::write(&script, "print('original')").unwrap();
 
-        // Use a "broken" injector (one that doesn't exist but we skip that check or just use one that fails)
-        // Actually the code checks if it exists. So let's create a blank one that will probably fail if run as python script
         let injector = temp.path().join("broken_injector.py");
         fs::write(&injector, "import sys; sys.exit(1)").unwrap();
 
-        let result = preprocess_scripts(&[script], &injector).unwrap();
+        let python = PathBuf::from("python");
+        let result = preprocess_scripts(&[script], &injector, &python).unwrap();
         assert_eq!(result.len(), 1);
 
         // Verify fallback copied the file

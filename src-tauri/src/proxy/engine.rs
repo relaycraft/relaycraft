@@ -120,8 +120,10 @@ impl ProxyEngine for MitmproxyEngine {
             .get_enabled_script_paths()
             .map_err(|e| AppError::Config(e.to_string()))?;
         let injector_path = self.get_injector_path(app)?;
+        let python_path =
+            crate::proxy::paths::get_python_path(app).map_err(AppError::Config)?;
 
-        let processed_scripts = preprocess_scripts(&user_scripts, &injector_path)
+        let processed_scripts = preprocess_scripts(&user_scripts, &injector_path, &python_path)
             .map_err(|e| AppError::Config(e.to_string()))?;
 
         {
