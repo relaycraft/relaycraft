@@ -42,6 +42,8 @@ struct EngineInner {
     pub active_scripts: Mutex<Vec<String>>,
     pub last_port: Mutex<Option<u16>>,
     pub is_stopping: AtomicBool,
+    pub cached_pids: Mutex<Vec<sysinfo::Pid>>,
+    pub last_pid_refresh: Mutex<std::time::Instant>,
 }
 
 /// Current implementation using mitmproxy (via engine.exe)
@@ -57,6 +59,8 @@ impl MitmproxyEngine {
                 active_scripts: Mutex::new(Vec::new()),
                 last_port: Mutex::new(None),
                 is_stopping: AtomicBool::new(false),
+                cached_pids: Mutex::new(Vec::new()),
+                last_pid_refresh: Mutex::new(std::time::Instant::now() - std::time::Duration::from_secs(60)),
             }),
         }
     }
@@ -357,53 +361,71 @@ impl ProxyEngine for MitmproxyEngine {
     }
 
     fn get_stats(&self, sys: &mut sysinfo::System) -> Result<EngineStats, AppError> {
-        let child_lock = self.inner.child.lock().unwrap();
-        if let Some(child) = &*child_lock {
-            use sysinfo::{Pid, ProcessesToUpdate};
-            let root_pid = Pid::from(child.id() as usize);
+        use sysinfo::ProcessesToUpdate;
+        use std::time::{Duration, Instant};
 
+        let mut cached_pids_lock = self.inner.cached_pids.lock().unwrap();
+        let mut last_refresh_lock = self.inner.last_pid_refresh.lock().unwrap();
+        let now = Instant::now();
+
+        // Strategy B: Refresh PID tree cache every 30 seconds
+        if cached_pids_lock.is_empty() || now.duration_since(*last_refresh_lock) > Duration::from_secs(30) {
+            // Full refresh to discover new processes (WebView2, Proxy, etc.)
             sys.refresh_processes(ProcessesToUpdate::All, true);
-
-            let mut pids_to_sum = vec![root_pid];
-            let mut total_memory = 0;
-            let mut total_cpu = 0.0;
-            let mut uptime = 0;
-
-            let mut queue = vec![root_pid];
+            
+            // Strategy A: Find all descendants starting from the Current Process (Main App)
+            let main_pid = sysinfo::get_current_pid().unwrap();
+            let mut pids = vec![main_pid];
+            let mut queue = vec![main_pid];
+            
+            // Breadth-First Search for all descendants
             while let Some(parent_pid) = queue.pop() {
                 for (pid, process) in sys.processes() {
                     if let Some(ppid) = process.parent() {
                         if ppid == parent_pid {
                             queue.push(*pid);
-                            pids_to_sum.push(*pid);
+                            pids.push(*pid);
                         }
                     }
                 }
             }
+            
+            *cached_pids_lock = pids;
+            *last_refresh_lock = now;
+            log::debug!("Refreshed application PID tree cache: {} processes found", cached_pids_lock.len());
+        } else {
+            // Efficient targeted refresh of only the cached PIDs
+            sys.refresh_processes(ProcessesToUpdate::Some(&cached_pids_lock), true);
+        }
 
-            let mut found_any = false;
-            for pid in pids_to_sum {
-                if let Some(process) = sys.process(pid) {
-                    total_memory += process.memory();
-                    total_cpu += process.cpu_usage();
-                    if pid == root_pid {
-                        uptime = process.run_time();
-                        found_any = true;
-                    }
+        let mut total_memory = 0;
+        let mut total_cpu = 0.0;
+        let mut uptime = 0;
+        let main_pid = sysinfo::get_current_pid().unwrap();
+        let num_cpus = sys.cpus().len() as f32;
+
+        for pid in &*cached_pids_lock {
+            if let Some(process) = sys.process(*pid) {
+                total_memory += process.memory();
+                total_cpu += process.cpu_usage();
+                if *pid == main_pid {
+                    uptime = process.run_time();
                 }
             }
-
-            if found_any {
-                return Ok(EngineStats {
-                    memory_usage: total_memory,
-                    cpu_usage: total_cpu,
-                    up_time: uptime,
-                    rx_speed: 0,
-                    tx_speed: 0,
-                });
-            }
         }
-        Err(AppError::Config("Engine not running".into()))
+
+        // Normalize CPU usage to total system percentage (Windows Task Manager style)
+        if num_cpus > 0.0 {
+            total_cpu /= num_cpus;
+        }
+
+        Ok(EngineStats {
+            memory_usage: total_memory,
+            cpu_usage: total_cpu,
+            up_time: uptime,
+            rx_speed: 0,
+            tx_speed: 0,
+        })
     }
 }
 
