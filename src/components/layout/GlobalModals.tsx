@@ -1,5 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { exit } from "@tauri-apps/plugin-process";
+import { useMemo } from "react";
 import { notify } from "../../lib/notify";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
@@ -16,8 +17,12 @@ interface GlobalModalsProps {
 }
 
 export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsProps) {
-  const { flows } = useTrafficStore();
-  const interceptedFlows = flows.filter((f) => f._rc?.intercept?.intercepted);
+  // Subscribe to the Map directly, then memoize the array conversion
+  const interceptedFlowsMap = useTrafficStore((state) => state.interceptedFlows);
+  const interceptedFlows = useMemo(
+    () => Array.from(interceptedFlowsMap.values()),
+    [interceptedFlowsMap],
+  );
 
   const handleResumeBreakpoint = async (flowId: string, modifications: any) => {
     try {

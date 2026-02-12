@@ -20,7 +20,7 @@ import { useBreakpointStore } from "../../stores/breakpointStore";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { Flow } from "../../types";
+import type { FlowIndex } from "../../types";
 import { Button } from "../common/Button";
 import { ContextMenu } from "../common/ContextMenu";
 import { EmptyState } from "../common/EmptyState";
@@ -36,7 +36,7 @@ interface TrafficViewProps {
 
 export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const { t } = useTranslation();
-  const { flows, selectedFlow, selectFlow, nextSeq } = useTrafficStore();
+  const { indices, selectedFlow, selectFlow, nextSeq } = useTrafficStore();
   const { running, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
   const { breakpoints } = useBreakpointStore();
   const { setActiveTab } = useUIStore();
@@ -48,7 +48,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     contextMenuItems,
     handleContextMenu,
     handleCloseMenu,
-    pausedFlows,
+    pausedIndices,
   } = useTrafficContextMenu();
 
   // Local State
@@ -79,25 +79,28 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
   const filterCriteria = useMemo(() => parseFilter(filterText), [filterText]);
 
-  const filteredFlows = useMemo(() => {
-    return (pausedFlows || flows).filter((flow) => {
-      if (onlyMatched && (!flow._rc.hits || flow._rc.hits.length === 0)) return false;
+  // Filter indices (lightweight) instead of full flows
+  const filteredIndices = useMemo(() => {
+    const sourceIndices = pausedIndices || indices;
+    return sourceIndices.filter((idx) => {
+      if (onlyMatched && (!idx.hits || idx.hits.length === 0)) return false;
       if (!filterText) return true;
-      return matchFlow(flow, filterCriteria, isRegex, caseSensitive);
+      // Match against index fields
+      return matchFlow(idx, filterCriteria, isRegex, caseSensitive);
     });
-  }, [pausedFlows, flows, onlyMatched, filterText, filterCriteria, isRegex, caseSensitive]);
+  }, [pausedIndices, indices, onlyMatched, filterText, filterCriteria, isRegex, caseSensitive]);
 
-  const [lastBaselineCount, setLastBaselineCount] = useState(filteredFlows.length);
+  const [lastBaselineCount, setLastBaselineCount] = useState(filteredIndices.length);
 
   useEffect(() => {
     if (atBottom) {
-      setLastBaselineCount(filteredFlows.length);
+      setLastBaselineCount(filteredIndices.length);
       setNewRequestsCount(0);
     } else {
-      const diff = filteredFlows.length - lastBaselineCount;
+      const diff = filteredIndices.length - lastBaselineCount;
       setNewRequestsCount(Math.max(0, diff));
     }
-  }, [filteredFlows.length, atBottom, lastBaselineCount]);
+  }, [filteredIndices.length, atBottom, lastBaselineCount]);
 
   // Keyboard Navigation for sequential selection
   useEffect(() => {
@@ -116,23 +119,23 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
       }
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        if (filteredFlows.length === 0) return;
+        if (filteredIndices.length === 0) return;
 
         e.preventDefault();
         const currentIndex = selectedFlow
-          ? filteredFlows.findIndex((f) => f.id === selectedFlow.id)
+          ? filteredIndices.findIndex((idx) => idx.id === selectedFlow.id)
           : -1;
 
         let nextIndex = currentIndex;
         if (e.key === "ArrowDown") {
-          nextIndex = currentIndex < filteredFlows.length - 1 ? currentIndex + 1 : currentIndex;
+          nextIndex = currentIndex < filteredIndices.length - 1 ? currentIndex + 1 : currentIndex;
         } else {
           nextIndex = currentIndex > 0 ? currentIndex - 1 : 0;
         }
 
         if (nextIndex !== currentIndex && nextIndex >= 0) {
-          const nextFlow = filteredFlows[nextIndex];
-          selectFlow(nextFlow.id);
+          const nextIdx = filteredIndices[nextIndex];
+          selectFlow(nextIdx.id);
 
           // Scroll into view if needed
           virtuosoRef.current?.scrollToIndex({
@@ -146,7 +149,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [filteredFlows, selectedFlow, selectFlow]);
+  }, [filteredIndices, selectedFlow, selectFlow]);
 
   return (
     <div className="h-full flex flex-col">
@@ -202,14 +205,14 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
             setCaseSensitive={setCaseSensitive}
             onlyMatched={onlyMatched}
             setOnlyMatched={setOnlyMatched}
-            filteredCount={filteredFlows.length}
-            totalCount={flows.length}
+            filteredCount={filteredIndices.length}
+            totalCount={indices.length}
           />
 
           <div className="flex-1 relative flex flex-col min-h-0 z-0">
-            {filteredFlows.length === 0 ? (
+            {filteredIndices.length === 0 ? (
               <div className="flex-1">
-                {flows.length > 0 ? (
+                {indices.length > 0 ? (
                   <EmptyState
                     icon={Search}
                     title={t("traffic.empty_search")}
@@ -325,19 +328,19 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
               <>
                 <Virtuoso
                   ref={virtuosoRef}
-                  data={filteredFlows}
+                  data={filteredIndices}
                   style={{ height: "100%" }}
                   followOutput={"auto"}
                   atBottomStateChange={setAtBottom}
                   isScrolling={handleScrollStateChange}
-                  itemContent={(_index: number, flow: Flow) => (
+                  itemContent={(_index: number, idx: FlowIndex) => (
                     <TrafficListItem
-                      key={flow.id}
-                      flow={flow}
-                      isSelected={selectedFlow?.id === flow.id}
+                      key={idx.id}
+                      index={idx}
+                      isSelected={selectedFlow?.id === idx.id}
                       idColWidth={idColWidth}
                       breakpoints={breakpoints}
-                      onSelect={(f) => selectFlow(f.id)}
+                      onSelect={(i) => selectFlow(i.id)}
                       onContextMenu={handleContextMenu}
                     />
                   )}
@@ -355,7 +358,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                       <button
                         onClick={() => {
                           virtuosoRef.current?.scrollToIndex({
-                            index: filteredFlows.length - 1,
+                            index: filteredIndices.length - 1,
                             behavior: "smooth",
                           });
                           setAtBottom(true);

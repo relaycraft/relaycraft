@@ -362,7 +362,10 @@
     "download": "Download File",
     "no_content": "No content available",
     "view_parsed": "View Parsed",
-    "view_source": "View Source"
+    "view_source": "View Source",
+    "large_content_warning": "Large content ({{size}}). Displaying first {{max}} characters.",
+    "show_all": "Show All",
+    "collapse": "Collapse"
   },
   "copy_button": {
     "copied": "Copied",
@@ -924,6 +927,7 @@
   },
   "traffic": {
     "breakpoint_hit_tooltip": "This domain has breakpoint enabled",
+    "hit_detail": "{{name}} ({{type}})",
     "context_menu": {
       "body_truncated": "Body truncated due to size",
       "copy_curl": "Copy as cURL",

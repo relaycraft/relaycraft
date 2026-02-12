@@ -3,6 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
 import type { Session, SessionMetadata } from "../types/session";
+import { useSettingsStore } from "./settingsStore";
 import { useTrafficStore } from "./trafficStore";
 
 interface SessionStore {
@@ -23,18 +24,25 @@ export const useSessionStore = create<SessionStore>((set) => ({
   saveSession: async (name, description) => {
     set({ loading: true });
     try {
-      const flows = useTrafficStore.getState().flows;
+      // Request backend to export session (includes all flow details)
+      const port = useSettingsStore.getState().config.proxy_port;
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_session`);
+      if (!response.ok) {
+        throw new Error("Failed to export session from backend");
+      }
+      const flows = await response.json();
 
-      // Calculate metadata
+      // Calculate metadata from indices (lightweight)
+      const indices = useTrafficStore.getState().indices;
       const metadata: SessionMetadata = {
         createdAt: Date.now(),
         duration:
-          flows.length > 0
-            ? new Date(flows[flows.length - 1].startedDateTime).getTime() -
-              new Date(flows[0].startedDateTime).getTime()
+          indices.length > 0
+            ? new Date(indices[indices.length - 1].startedDateTime).getTime() -
+              new Date(indices[0].startedDateTime).getTime()
             : 0,
-        flowCount: flows.length,
-        sizeBytes: flows.reduce((acc, f) => acc + f.request.bodySize + f.response.bodySize, 0),
+        flowCount: indices.length,
+        sizeBytes: indices.reduce((acc, idx) => acc + (idx.size || 0), 0),
         clientInfo: navigator.userAgent,
       };
 
@@ -83,9 +91,42 @@ export const useSessionStore = create<SessionStore>((set) => ({
       if (path && typeof path === "string") {
         const session = await invoke<Session>("load_session", { path });
 
-        // Update Traffic Store
-        useTrafficStore.getState().setFlows(session.flows);
+        // Send flows to backend and update indices in frontend
+        const port = useSettingsStore.getState().config.proxy_port;
+        await fetch(`http://127.0.0.1:${port}/_relay/import_session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(session.flows),
+        });
 
+        // Convert flows to indices for frontend
+        const indices = session.flows.map((f: any, idx: number) => ({
+          id: f.id,
+          seq: idx + 1,
+          method: f.request?.method || "",
+          url: f.request?.url || "",
+          host: new URL(f.request?.url || "http://localhost").host,
+          path: new URL(f.request?.url || "http://localhost").pathname,
+          status: f.response?.status || 0,
+          contentType: f.response?.content?.mimeType || "",
+          startedDateTime: f.startedDateTime || new Date().toISOString(),
+          time: f.time || 0,
+          size: (f.request?.bodySize || 0) + (f.response?.bodySize || 0),
+          hasError: !!f._rc?.error,
+          hasRequestBody: (f.request?.bodySize || 0) > 0,
+          hasResponseBody: (f.response?.bodySize || 0) > 0,
+          isWebsocket: false,
+          websocketFrameCount: 0,
+          isIntercepted: false,
+          hits: (f._rc?.hits || []).map((h: any) => ({
+            id: h.id,
+            name: h.name,
+            type: h.type,
+            status: h.status,
+          })),
+        }));
+
+        useTrafficStore.getState().addIndices(indices);
         set({ currentSession: session });
       }
     } catch (error) {
@@ -98,7 +139,14 @@ export const useSessionStore = create<SessionStore>((set) => ({
   exportHar: async () => {
     set({ loading: true });
     try {
-      const flows = useTrafficStore.getState().flows;
+      // Request backend to export HAR (includes all flow details)
+      const port = useSettingsStore.getState().config.proxy_port;
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_har`);
+      if (!response.ok) {
+        throw new Error("Failed to export HAR from backend");
+      }
+      const harData = await response.json();
+
       const path = await save({
         filters: [
           {
@@ -110,7 +158,9 @@ export const useSessionStore = create<SessionStore>((set) => ({
       });
 
       if (path) {
-        await invoke("export_har", { path, flows });
+        // Write HAR file directly as JSON
+        const harContent = JSON.stringify(harData, null, 2);
+        await invoke("write_text_file", { path, content: harContent });
       }
     } catch (error) {
       console.error("Failed to export HAR:", error);
@@ -133,8 +183,22 @@ export const useSessionStore = create<SessionStore>((set) => ({
       });
 
       if (path && typeof path === "string") {
-        const flows = await invoke<any[]>("import_har", { path });
-        useTrafficStore.getState().addFlows(flows);
+        // Read HAR file content
+        const harContent = await invoke<string>("read_text_file", { path });
+        const harData = JSON.parse(harContent);
+
+        // Send to backend for processing
+        const port = useSettingsStore.getState().config.proxy_port;
+        const response = await fetch(`http://127.0.0.1:${port}/_relay/import_har`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(harData),
+        });
+
+        if (response.ok) {
+          const indices = await response.json();
+          useTrafficStore.getState().addIndices(indices);
+        }
         // Note: Importing HAR doesn't create a "Session" yet, just loads flows
         set({ currentSession: null });
       }

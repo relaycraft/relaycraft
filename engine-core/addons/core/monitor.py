@@ -26,7 +26,7 @@ class TrafficMonitor:
 
     def __init__(self, debug_mgr: DebugManager):
         self.logger = setup_logging()
-        self.flow_buffer: deque = deque(maxlen=1000)
+        self.flow_buffer: deque = deque(maxlen=10000)  # Match frontend maxIndices
         self.debug_mgr = debug_mgr
 
     # ==================== Content Processing ====================
@@ -154,19 +154,13 @@ class TrafficMonitor:
         try:
             # ========== Request Processing ==========
             req_body, req_enc, req_truncated = self.decode_content(flow.request)
-
-            # Truncate large bodies
-            if req_body and len(req_body) > 100000:
-                req_body = req_body[:100000] + "... (truncated)"
-                req_truncated = True
+            # No truncation - frontend handles large bodies with virtual scrolling
 
             # ========== Response Processing ==========
             res_body, res_enc, res_truncated = "", "text", False
             if flow.response:
                 res_body, res_enc, res_truncated = self.decode_content(flow.response)
-                if res_body and len(res_body) > 100000:
-                    res_body = res_body[:100000] + "... (truncated)"
-                    res_truncated = True
+                # No truncation - frontend handles large bodies with virtual scrolling
 
             # ========== Timing ==========
             duration = 0.0
@@ -557,7 +551,7 @@ class TrafficMonitor:
             except:
                 return "<Non-serializable>"
 
-        # Polling endpoint
+        # Polling endpoint - returns lightweight indices only
         if "/_relay/poll" in flow.request.path:
             try:
                 query = flow.request.query
@@ -569,12 +563,52 @@ class TrafficMonitor:
                 except ValueError:
                     since_ts = 0.0
 
-                updates = [
-                    f for f in list(self.flow_buffer)
-                    if f.get("msg_ts", 0) > since_ts
-                ]
+                # Return only lightweight indices for memory efficiency
+                indices = []
+                for f in list(self.flow_buffer):
+                    if f.get("msg_ts", 0) > since_ts:
+                        # Safely extract nested fields with None checks
+                        req = f.get("request") or {}
+                        res = f.get("response") or {}
+                        rc = f.get("_rc") or {}
 
-                response_data = {"flows": updates, "server_ts": time.time()}
+                        # Extract only the fields needed for list display
+                        indices.append({
+                            "id": f.get("id"),
+                            "seq": f.get("order", 0),
+                            "method": req.get("method", ""),
+                            "url": req.get("url", ""),
+                            "host": f.get("host", ""),
+                            "path": f.get("path", ""),
+                            "status": res.get("status", 0),
+                            "contentType": f.get("contentType", ""),
+                            "startedDateTime": f.get("startedDateTime", ""),
+                            "time": f.get("time", 0),
+                            "size": f.get("size", 0),
+                            "hasError": bool(rc.get("error")),
+                            "hasRequestBody": bool((req.get("postData") or {}).get("text")),
+                            "hasResponseBody": bool((res.get("content") or {}).get("text")),
+                            "isWebsocket": rc.get("isWebsocket", False),
+                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
+                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
+                            # Include hit metadata for list display
+                            "hits": [
+                                {
+                                    "id": h.get("id", ""),
+                                    "name": h.get("name", ""),
+                                    "type": h.get("type", ""),
+                                    "status": h.get("status"),
+                                }
+                                for h in rc.get("hits", [])
+                            ],
+                            "msg_ts": f.get("msg_ts"),
+                        })
+
+                response_data = {
+                    "indices": indices,
+                    "server_ts": time.time(),
+                    "buffer_ids": [f.get("id") for f in list(self.flow_buffer) if f.get("id")]
+                }
                 json_str = json.dumps(
                     response_data,
                     default=safe_json_default,
@@ -590,6 +624,75 @@ class TrafficMonitor:
                 )
                 flow.response.status_code = 200
                 flow.response.reason = b"OK"
+
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                print(f"RelayCraft Poll Error:\n{tb}")
+                self.logger.error(f"Error in poll handler: {tb}")
+                error_resp = {"error": str(e), "traceback": tb}
+                try:
+                    safe_err = json.dumps(error_resp, default=safe_json_default)
+                    flow.response = Response.make(
+                        500,
+                        safe_err.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                except:
+                    flow.response = Response.make(
+                        500,
+                        b'{"error": "Critical serialization failure"}',
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+
+        # Detail endpoint - returns full flow data on demand
+        elif "/_relay/detail" in flow.request.path:
+            try:
+                query = flow.request.query
+                flow_id = query.get("id", "")
+
+                if not flow_id:
+                    flow.response = Response.make(
+                        400,
+                        b'{"error": "Missing flow id"}',
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                    )
+                    return
+
+                # Find the flow in buffer
+                flow_data = None
+                for f in list(self.flow_buffer):
+                    if f.get("id") == flow_id:
+                        flow_data = f
+                        break
+
+                if not flow_data:
+                    flow.response = Response.make(
+                        404,
+                        b'{"error": "Flow not found"}',
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                    )
+                    return
+
+                json_str = json.dumps(
+                    flow_data,
+                    default=safe_json_default,
+                    ensure_ascii=False
+                )
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
 
             except Exception as e:
                 import traceback
@@ -652,6 +755,179 @@ class TrafficMonitor:
                     b"OK" if success else b"NOTFOUND",
                     {"Access-Control-Allow-Origin": "*"}
                 )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Export session (all flows)
+        elif "/_relay/export_session" in flow.request.path:
+            try:
+                all_flows = list(self.flow_buffer)
+                json_str = json.dumps(
+                    all_flows,
+                    default=safe_json_default,
+                    ensure_ascii=False
+                )
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Export HAR
+        elif "/_relay/export_har" in flow.request.path:
+            try:
+                all_flows = list(self.flow_buffer)
+                har_data = {
+                    "log": {
+                        "version": "1.2",
+                        "creator": {"name": "RelayCraft", "version": "1.0"},
+                        "entries": all_flows
+                    }
+                }
+                json_str = json.dumps(
+                    har_data,
+                    default=safe_json_default,
+                    ensure_ascii=False
+                )
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Import session
+        elif "/_relay/import_session" in flow.request.path:
+            try:
+                if flow.request.method == "POST":
+                    flows = json.loads(flow.request.content.decode('utf-8'))
+                    # Add flows to buffer and return indices
+                    indices = []
+                    for idx, f in enumerate(flows):
+                        f["order"] = idx + 1
+                        f["msg_ts"] = time.time() + idx * 0.001
+                        self.flow_buffer.append(f)
+                        rc = f.get("_rc", {})
+                        indices.append({
+                            "id": f.get("id"),
+                            "seq": idx + 1,
+                            "method": f.get("request", {}).get("method", ""),
+                            "url": f.get("request", {}).get("url", ""),
+                            "host": f.get("host", ""),
+                            "path": f.get("path", ""),
+                            "status": f.get("response", {}).get("status", 0),
+                            "contentType": f.get("contentType", ""),
+                            "startedDateTime": f.get("startedDateTime", ""),
+                            "time": f.get("time", 0),
+                            "size": f.get("size", 0),
+                            "hasError": bool(rc.get("error")),
+                            "hasRequestBody": bool(f.get("request", {}).get("postData", {}).get("text")),
+                            "hasResponseBody": bool(f.get("response", {}).get("content", {}).get("text")),
+                            "isWebsocket": rc.get("isWebsocket", False),
+                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
+                            "isIntercepted": bool(rc.get("intercept", {}).get("intercepted")),
+                            # Include hit metadata for list display
+                            "hits": [
+                                {
+                                    "id": h.get("id", ""),
+                                    "name": h.get("name", ""),
+                                    "type": h.get("type", ""),
+                                    "status": h.get("status"),
+                                }
+                                for h in rc.get("hits", [])
+                            ],
+                        })
+                    json_str = json.dumps(indices, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Import HAR
+        elif "/_relay/import_har" in flow.request.path:
+            try:
+                if flow.request.method == "POST":
+                    har_data = json.loads(flow.request.content.decode('utf-8'))
+                    entries = har_data.get("log", {}).get("entries", [])
+                    indices = []
+                    for idx, entry in enumerate(entries):
+                        entry["order"] = idx + 1
+                        entry["msg_ts"] = time.time() + idx * 0.001
+                        self.flow_buffer.append(entry)
+                        rc = entry.get("_rc", {})
+                        indices.append({
+                            "id": entry.get("id"),
+                            "seq": idx + 1,
+                            "method": entry.get("request", {}).get("method", ""),
+                            "url": entry.get("request", {}).get("url", ""),
+                            "host": entry.get("host", ""),
+                            "path": entry.get("path", ""),
+                            "status": entry.get("response", {}).get("status", 0),
+                            "contentType": entry.get("contentType", ""),
+                            "startedDateTime": entry.get("startedDateTime", ""),
+                            "time": entry.get("time", 0),
+                            "size": entry.get("size", 0),
+                            "hasError": bool(rc.get("error")),
+                            "hasRequestBody": bool(entry.get("request", {}).get("postData", {}).get("text")),
+                            "hasResponseBody": bool(entry.get("response", {}).get("content", {}).get("text")),
+                            "isWebsocket": rc.get("isWebsocket", False),
+                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
+                            "isIntercepted": bool(rc.get("intercept", {}).get("intercepted")),
+                            # Include hit metadata for list display
+                            "hits": [
+                                {
+                                    "id": h.get("id", ""),
+                                    "name": h.get("name", ""),
+                                    "type": h.get("type", ""),
+                                    "status": h.get("status"),
+                                }
+                                for h in rc.get("hits", [])
+                            ],
+                        })
+                    json_str = json.dumps(indices, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
             except Exception as e:
                 flow.response = Response.make(
                     500,

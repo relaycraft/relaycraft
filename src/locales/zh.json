@@ -362,7 +362,10 @@
     "download": "下载文件",
     "no_content": "暂无内容",
     "view_parsed": "查看格式化",
-    "view_source": "查看源码"
+    "view_source": "查看源码",
+    "large_content_warning": "大文件 ({{size}})。仅显示前 {{max}} 字符。",
+    "show_all": "显示全部",
+    "collapse": "收起"
   },
   "copy_button": {
     "copied": "已复制",
@@ -924,6 +927,7 @@
   },
   "traffic": {
     "breakpoint_hit_tooltip": "此域名已开启断点拦截",
+    "hit_detail": "{{name}} ({{type}})",
     "context_menu": {
       "body_truncated": "正文过大已截断",
       "copy_curl": "复制为 cURL",

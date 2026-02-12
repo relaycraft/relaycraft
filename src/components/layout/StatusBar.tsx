@@ -13,7 +13,7 @@ import { BreakpointManager } from "../traffic/BreakpointManager";
 
 export function StatusBar() {
   const { running, port } = useProxyStore();
-  const { flows } = useTrafficStore();
+  const { indices } = useTrafficStore();
   const { breakpoints } = useBreakpointStore();
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const { t } = useTranslation();
@@ -111,7 +111,7 @@ export function StatusBar() {
         <Tooltip content={t("status_bar.captured")}>
           <div className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-default">
             <Database className="w-3 h-3" />
-            <span className="font-mono text-foreground">{flows.length}</span>
+            <span className="font-mono text-foreground">{indices.length}</span>
           </div>
         </Tooltip>
 

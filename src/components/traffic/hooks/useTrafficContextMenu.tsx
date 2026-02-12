@@ -3,13 +3,14 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateCurlCommand } from "../../../lib/curl";
 import { notify } from "../../../lib/notify";
+import { fetchFlowDetail } from "../../../lib/trafficMonitor";
 import { useBreakpointStore } from "../../../stores/breakpointStore";
 import { useComposerStore } from "../../../stores/composerStore";
 import { useRuleStore } from "../../../stores/ruleStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import { useTrafficStore } from "../../../stores/trafficStore";
 import { useUIStore } from "../../../stores/uiStore";
-import type { Flow } from "../../../types";
+import type { Flow, FlowIndex } from "../../../types";
 import { getHeaderValue, harToLegacyHeaders } from "../../../types";
 import type { ContextMenuItem } from "../../common/ContextMenu";
 
@@ -18,13 +19,15 @@ export function useTrafficContextMenu() {
   const isMac = useUIStore((state) => state.isMac);
   const { setDraftRule } = useRuleStore();
   const { setActiveTab } = useUIStore();
-  const { selectFlow, flows } = useTrafficStore();
+  const { selectFlow, indices } = useTrafficStore();
   const { addBreakpoint } = useBreakpointStore();
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [menuTargetIndex, setMenuTargetIndex] = useState<FlowIndex | null>(null);
   const [menuTargetFlow, setMenuTargetFlow] = useState<Flow | null>(null);
-  const [pausedFlows, setPausedFlows] = useState<Flow[] | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [pausedIndices, setPausedIndices] = useState<FlowIndex[] | null>(null);
 
   const handleToggleBreakpoint = useCallback(
     async (pattern: string) => {
@@ -45,30 +48,47 @@ export function useTrafficContextMenu() {
   );
 
   const handleContextMenu = useCallback(
-    (e: React.MouseEvent, flow: Flow) => {
+    async (e: React.MouseEvent, index: FlowIndex) => {
       e.preventDefault();
       e.stopPropagation();
-      setMenuTargetFlow(flow);
+      setMenuTargetIndex(index);
       setMenuPosition({ x: e.clientX, y: e.clientY });
       setMenuVisible(true);
-      setPausedFlows(flows);
+      setPausedIndices(indices);
+
+      // Load full flow detail on demand
+      setIsLoadingDetail(true);
+      try {
+        const flow = await fetchFlowDetail(index.id);
+        setMenuTargetFlow(flow);
+      } catch (error) {
+        console.error("Failed to load flow detail for context menu:", error);
+        setMenuTargetFlow(null);
+      } finally {
+        setIsLoadingDetail(false);
+      }
     },
-    [flows],
+    [indices],
   );
 
   const handleCloseMenu = useCallback(() => {
     setMenuVisible(false);
-    setPausedFlows(null);
+    setPausedIndices(null);
+    setMenuTargetFlow(null);
+    setMenuTargetIndex(null);
   }, []);
 
-  const contextMenuItems: ContextMenuItem[] = menuTargetFlow
+  // Context menu items - some are disabled until flow detail loads
+  const contextMenuItems: ContextMenuItem[] = menuTargetIndex
     ? [
         {
           label: t("traffic.context_menu.copy_url"),
           icon: <Copy className="w-3.5 h-3.5" />,
           shortcut: isMac ? "⌘C" : "Ctrl+C",
+          disabled: isLoadingDetail,
           onClick: () => {
-            navigator.clipboard.writeText(menuTargetFlow.request.url);
+            // URL is available in FlowIndex
+            navigator.clipboard.writeText(menuTargetIndex.url);
             notify.success(t("traffic.context_menu.url_copied"), {
               toastOnly: true,
             });
@@ -77,18 +97,23 @@ export function useTrafficContextMenu() {
         {
           label: t("traffic.context_menu.copy_curl"),
           icon: <Terminal className="w-3.5 h-3.5" />,
+          disabled: !menuTargetFlow,
           onClick: () => {
-            navigator.clipboard.writeText(generateCurlCommand(menuTargetFlow));
-            notify.success(t("traffic.context_menu.curl_copied"), {
-              toastOnly: true,
-            });
+            if (menuTargetFlow) {
+              navigator.clipboard.writeText(generateCurlCommand(menuTargetFlow));
+              notify.success(t("traffic.context_menu.curl_copied"), {
+                toastOnly: true,
+              });
+            }
           },
         },
         { separator: true, label: "" },
         {
           label: t("traffic.context_menu.create_rule"),
           icon: <Workflow className="w-3.5 h-3.5" />,
+          disabled: !menuTargetFlow,
           onClick: () => {
+            if (!menuTargetFlow) return;
             const { isEditorDirty, selectRule } = useRuleStore.getState();
             const { showConfirm } = useUIStore.getState();
 
@@ -160,6 +185,7 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.replay"),
           icon: <RotateCcw className="w-3.5 h-3.5" />,
           shortcut: isMac ? "⌘R" : "Ctrl+R",
+          disabled: !menuTargetFlow,
           onClick: async () => {
             if (!menuTargetFlow) return;
             try {
@@ -183,7 +209,9 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.edit_composer"),
           icon: <Send className="w-3.5 h-3.5" />,
           shortcut: isMac ? "⌘E" : "Ctrl+E",
+          disabled: !menuTargetFlow,
           onClick: () => {
+            if (!menuTargetFlow) return;
             useComposerStore.getState().setComposerFromFlow(menuTargetFlow);
             setActiveTab("composer");
             handleCloseMenu();
@@ -194,7 +222,7 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.set_breakpoint"),
           icon: <AlertTriangle className="w-3.5 h-3.5" />,
           onClick: () => {
-            const url = new URL(menuTargetFlow.request.url);
+            const url = new URL(menuTargetIndex.url);
             handleToggleBreakpoint(url.host);
             handleCloseMenu();
           },
@@ -203,9 +231,9 @@ export function useTrafficContextMenu() {
         {
           label: t("traffic.context_menu.copy_req_body"),
           icon: <Code className="w-3.5 h-3.5" />,
-          disabled: !menuTargetFlow.request.postData?.text,
+          disabled: !menuTargetFlow?.request.postData?.text,
           onClick: () => {
-            if (menuTargetFlow.request.postData?.text) {
+            if (menuTargetFlow?.request.postData?.text) {
               navigator.clipboard.writeText(menuTargetFlow.request.postData.text);
               notify.success(t("traffic.context_menu.req_body_copied"), {
                 toastOnly: true,
@@ -216,9 +244,9 @@ export function useTrafficContextMenu() {
         {
           label: t("traffic.context_menu.copy_res_body"),
           icon: <Code className="w-3.5 h-3.5" />,
-          disabled: !menuTargetFlow.response.content.text,
+          disabled: !menuTargetFlow?.response.content.text,
           onClick: () => {
-            if (menuTargetFlow.response.content.text) {
+            if (menuTargetFlow?.response.content.text) {
               navigator.clipboard.writeText(menuTargetFlow.response.content.text);
               notify.success(t("traffic.context_menu.res_body_copied"), {
                 toastOnly: true,
@@ -235,6 +263,6 @@ export function useTrafficContextMenu() {
     contextMenuItems,
     handleContextMenu,
     handleCloseMenu,
-    pausedFlows,
+    pausedIndices,
   };
 }

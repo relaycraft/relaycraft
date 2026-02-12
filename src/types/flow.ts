@@ -276,7 +276,21 @@ export interface FlowIndex {
   hasResponseBody: boolean;
   isWebsocket: boolean;
   websocketFrameCount: number;
-  hitCount: number;
+  isIntercepted: boolean; // 是否被断点拦截
+
+  // 命中信息（轻量级，只包含展示所需的信息）
+  hits: FlowIndexHit[];
+}
+
+/**
+ * 流量索引中的命中信息
+ * @description 轻量级命中元数据，用于列表展示
+ */
+export interface FlowIndexHit {
+  id: string;
+  name: string;
+  type: "rule" | "script" | "breakpoint" | string;
+  status?: "success" | "warning" | "error" | "file_not_found";
 }
 
 /**

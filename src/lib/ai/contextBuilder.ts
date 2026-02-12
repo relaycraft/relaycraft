@@ -115,7 +115,7 @@ export const buildAIContext = async (
 	const { scripts } = useScriptStore.getState();
 	const { port } = useProxyStore.getState();
 	const { config } = useSettingsStore.getState();
-	const { flows, selectedFlow } = useTrafficStore.getState();
+	const { indices, selectedFlow } = useTrafficStore.getState();
 	const { activeTab } = useUIStore.getState();
 
 	// 2. Filter Active Rules
@@ -135,14 +135,14 @@ export const buildAIContext = async (
 	// 3. Filter Active Scripts
 	const activeScripts = scripts.filter((s) => s.enabled).map((s) => s.name);
 
-	// 4. Sample Recent Traffic
-	const recentTraffic = flows
+	// 4. Sample Recent Traffic (use indices for lightweight data)
+	const recentTraffic = indices
 		.slice(-maxTrafficCount)
-		.map((f) => ({
-			id: f.id,
-			method: f.request.method,
-			url: truncate(f.request.url, 150),
-			status: f.response.status,
+		.map((idx) => ({
+			id: idx.id,
+			method: idx.method,
+			url: truncate(idx.url, 150),
+			status: idx.status,
 		}))
 		.reverse();
 

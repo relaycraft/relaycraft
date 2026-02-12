@@ -12,6 +12,7 @@ export {
   type Flow,
   type FlowDetail,
   type FlowIndex,
+  type FlowIndexHit,
   // 核心结构
   type FlowRequest,
   type FlowResponse,
