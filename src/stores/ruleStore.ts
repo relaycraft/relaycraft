@@ -6,6 +6,7 @@ import type { Rule, RuleGroup } from "../types/rules";
 // sanitizeRule was removed as legacy compatibility is no longer needed
 
 interface RuleStore {
+  version: number; // Incremented on any change, used for efficient subscription
   rules: Rule[];
   groups: RuleGroup[];
   ruleGroups: Record<string, string>; // ruleId -> groupId
@@ -58,6 +59,7 @@ interface RuleStore {
 }
 
 export const useRuleStore = create<RuleStore>((set, get) => ({
+  version: 0,
   rules: [],
   groups: [],
   ruleGroups: {},
@@ -74,6 +76,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   addRule: (rule, groupId) => {
     const gid = groupId || "Default";
     set((state) => ({
+      version: state.version + 1,
       rules: [...state.rules, rule],
       ruleGroups: { ...state.ruleGroups, [rule.id]: gid },
     }));
@@ -86,6 +89,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       const newRule = { ...updatedRule, ...updates };
       set((state) => {
         const newState: any = {
+          version: state.version + 1,
           rules: state.rules.map((rule) => (rule.id === id ? newRule : rule)),
         };
         // Fix: Check for undefined specifically, allowing empty string
@@ -103,6 +107,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       const newRuleGroups = { ...state.ruleGroups };
       delete newRuleGroups[id];
       return {
+        version: state.version + 1,
         rules: state.rules.filter((rule) => rule.id !== id),
         ruleGroups: newRuleGroups,
         selectedRule: state.selectedRule?.id === id ? null : state.selectedRule,
@@ -123,6 +128,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
       const nextEnabled = !target.execution.enabled;
       const updates: Partial<RuleStore> = {
+        version: state.version + 1,
         rules: state.rules.map((rule) =>
           rule.id === id
             ? {
@@ -150,6 +156,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   },
   enableAllRules: () => {
     set((state) => ({
+      version: state.version + 1,
       rules: state.rules.map((rule) => ({
         ...rule,
         execution: { ...rule.execution, enabled: true },
@@ -159,6 +166,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   },
   disableAllRules: () => {
     set((state) => ({
+      version: state.version + 1,
       rules: state.rules.map((rule) => ({
         ...rule,
         execution: { ...rule.execution, enabled: false },
@@ -214,7 +222,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         }
       });
 
-      return { rules: updatedRules };
+      return { version: state.version + 1, rules: updatedRules };
     });
     get().saveRules();
   },
@@ -238,6 +246,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       result.splice(newIndex, 0, removed);
 
       return {
+        version: state.version + 1,
         groups: result.map((group, idx) => ({
           ...group,
           priority: idx + 1,
@@ -263,7 +272,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       id: uniqueName, // Force ID to match unique Name
       enabled: group.enabled ?? true,
     };
-    set((state) => ({ groups: [...state.groups, finalGroup] }));
+    set((state) => ({ version: state.version + 1, groups: [...state.groups, finalGroup] }));
     get().saveRules();
   },
 
@@ -294,7 +303,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         group.id === id ? { ...group, ...updates, name: finalName, id: newId } : group,
       );
 
-      const newState: any = { groups: updatedGroups };
+      const newState: any = { version: state.version + 1, groups: updatedGroups };
 
       if (isNameChanging) {
         const newRuleGroups = { ...state.ruleGroups };
@@ -321,6 +330,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         }
       });
       return {
+        version: state.version + 1,
         groups: state.groups.filter((group) => group.id !== id),
         ruleGroups: newRuleGroups,
       };
@@ -334,6 +344,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       const nextEnabled = !group?.enabled;
 
       return {
+        version: state.version + 1,
         groups: state.groups.map((g) => (g.id === id ? { ...g, enabled: nextEnabled } : g)),
         // Cascade enablement to rules in this group
         rules: state.rules.map((r) =>
@@ -348,6 +359,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
   toggleGroupCollapse: (id: string) => {
     set((state) => ({
+      version: state.version + 1,
       groups: state.groups.map((group) =>
         group.id === id ? { ...group, collapsed: !group.collapsed } : group,
       ),
@@ -377,12 +389,13 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         {} as Record<string, string>,
       );
 
-      set({
+      set((state) => ({
+        version: state.version + 1,
         rules,
         groups,
         ruleGroups,
         loadErrors: response.errors || [],
-      });
+      }));
     } catch (error) {
       console.error("Failed to load rules:", error);
     }
@@ -520,11 +533,12 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         state.ruleGroups[newRule.id] = targetGroupId;
       });
 
-      set({
+      set((state) => ({
+        version: state.version + 1,
         groups: currentGroups,
         rules: currentRules,
         ruleGroups: { ...state.ruleGroups },
-      });
+      }));
       get().saveRules();
       return { success: true, count: addedCount };
     } catch (e: any) {

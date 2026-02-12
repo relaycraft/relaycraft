@@ -9,6 +9,7 @@ export interface ScriptInfo {
 }
 
 interface ScriptStore {
+  version: number; // Incremented on any change, used for efficient subscription
   scripts: ScriptInfo[];
   selectedScript: string | null;
   loading: boolean;
@@ -31,6 +32,7 @@ interface ScriptStore {
 }
 
 export const useScriptStore = create<ScriptStore>((set, get) => ({
+  version: 0,
   scripts: [],
   selectedScript: null,
   loading: false,
@@ -48,7 +50,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
     set({ loading: true });
     try {
       const scripts = await invoke<ScriptInfo[]>("list_scripts");
-      set({ scripts });
+      set((state) => ({ version: state.version + 1, scripts }));
     } catch (error) {
       console.error("Failed to fetch scripts:", error);
     } finally {
@@ -120,8 +122,10 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
 
   toggleScript: async (name: string, enabled: boolean) => {
     // Optimistic update
-    const scripts = get().scripts.map((s) => (s.name === name ? { ...s, enabled } : s));
-    set({ scripts });
+    set((state) => ({
+      version: state.version + 1,
+      scripts: state.scripts.map((s) => (s.name === name ? { ...s, enabled } : s)),
+    }));
 
     try {
       await invoke("set_script_enabled", { name, enabled });

@@ -7,18 +7,17 @@ import { useScriptStore } from "../stores/scriptStore";
 /**
  * Reactively syncs application state to the AI Context.
  * Should be mounted once at the App root.
+ *
+ * Performance optimization: Subscribe to version numbers instead of full arrays
+ * to avoid unnecessary re-renders when array contents change but length doesn't.
  */
 export const useAIContext = () => {
   const refreshContext = useAIStore((state) => state.refreshContext);
 
-  // Subscribe to store changes
-  // We utilize the fact that zustand selectors trigger re-renders or subscription callbacks
-  // However, to avoid excessive re-renders of the root component, we can use useEffect
-  // dependent on specific versions or timestamps if available, or just leverage direct subscription.
-
-  // For simplicity in V1, we just watch the stores' robust timestamps.
-  const _ruleUpdated = useRuleStore((s) => s.rules);
-  const _scriptUpdated = useScriptStore((s) => s.scripts);
+  // Subscribe to version numbers instead of full arrays for better performance
+  // This avoids re-renders when the array reference changes but semantic content is same
+  const _ruleVersion = useRuleStore((s) => s.version);
+  const _scriptVersion = useScriptStore((s) => s.version);
   const _configUpdated = useProxyStore((s) => s.port); // Watch port as proxy associated config
 
   // Debounce ref
@@ -30,7 +29,7 @@ export const useAIContext = () => {
     }
 
     // Reactive dependencies to trigger refresh
-    [_ruleUpdated, _scriptUpdated, _configUpdated].forEach(() => {});
+    [_ruleVersion, _scriptVersion, _configUpdated].forEach(() => {});
 
     timeoutRef.current = window.setTimeout(() => {
       refreshContext();
@@ -39,5 +38,5 @@ export const useAIContext = () => {
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [refreshContext, _ruleUpdated, _scriptUpdated, _configUpdated]);
+  }, [refreshContext, _ruleVersion, _scriptVersion, _configUpdated]);
 };

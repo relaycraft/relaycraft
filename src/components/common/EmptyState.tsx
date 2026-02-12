@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "../../lib/utils";
@@ -36,22 +35,16 @@ export function EmptyState({
   const renderIcon = () => {
     switch (animation) {
       case "radar":
+        // Using CSS animations for GPU acceleration
         return (
           <div className="relative w-32 h-32 mx-auto mb-8">
-            <motion.div
-              animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-              className="absolute inset-0 bg-primary/20 rounded-full"
+            <div
+              className="absolute inset-0 bg-primary/20 rounded-full animate-radar-ping"
+              style={{ animationDelay: "0s" }}
             />
-            <motion.div
-              animate={{ scale: [1, 2], opacity: [0.3, 0] }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeOut",
-                delay: 0.5,
-              }}
-              className="absolute inset-0 bg-primary/20 rounded-full"
+            <div
+              className="absolute inset-0 bg-primary/20 rounded-full animate-radar-ping"
+              style={{ animationDelay: "0.5s" }}
             />
             <div className="relative z-10 w-full h-full bg-background border-2 border-primary/20 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]">
               <div className="relative">
@@ -84,13 +77,11 @@ export function EmptyState({
             </div>
           </div>
         );
-      default: // float
+      default: // float - using CSS animation for GPU acceleration
         return (
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          <div
             className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner",
+              "w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner animate-float",
               isDestructive ? "bg-destructive/10" : "bg-muted/30",
             )}
           >
@@ -100,7 +91,7 @@ export function EmptyState({
                 isDestructive ? "text-destructive" : "text-muted-foreground/40",
               )}
             />
-          </motion.div>
+          </div>
         );
     }
   };
@@ -116,12 +107,7 @@ export function EmptyState({
     >
       {renderIcon()}
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="max-w-md w-full"
-      >
+      <div className="max-w-md w-full animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-200">
         <h3
           className={cn(
             "text-base font-bold tracking-tight mb-2",
@@ -145,7 +131,7 @@ export function EmptyState({
             {action.label}
           </Button>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

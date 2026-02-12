@@ -58,10 +58,19 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const [showJumpBubble, setShowJumpBubble] = useState(false);
   const bubbleTimeoutRef = useRef<any>(null);
   const [filterText, setFilterText] = useState("");
+  const [debouncedFilterText, setDebouncedFilterText] = useState("");
   const [isRegex, setIsRegex] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [onlyMatched, setOnlyMatched] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  // Debounce filter text for performance (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilterText(filterText);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filterText]);
 
   // Dynamic width calculation for ID column
   const idColWidth = Math.max(20, (nextSeq?.toString().length || 1) * 7 + 4);
@@ -77,18 +86,27 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     }
   };
 
-  const filterCriteria = useMemo(() => parseFilter(filterText), [filterText]);
+  // Use debounced filter text for actual filtering (performance optimization)
+  const filterCriteria = useMemo(() => parseFilter(debouncedFilterText), [debouncedFilterText]);
 
   // Filter indices (lightweight) instead of full flows
   const filteredIndices = useMemo(() => {
     const sourceIndices = pausedIndices || indices;
     return sourceIndices.filter((idx) => {
       if (onlyMatched && (!idx.hits || idx.hits.length === 0)) return false;
-      if (!filterText) return true;
+      if (!debouncedFilterText) return true;
       // Match against index fields
       return matchFlow(idx, filterCriteria, isRegex, caseSensitive);
     });
-  }, [pausedIndices, indices, onlyMatched, filterText, filterCriteria, isRegex, caseSensitive]);
+  }, [
+    pausedIndices,
+    indices,
+    onlyMatched,
+    debouncedFilterText,
+    filterCriteria,
+    isRegex,
+    caseSensitive,
+  ]);
 
   const [lastBaselineCount, setLastBaselineCount] = useState(filteredIndices.length);
 

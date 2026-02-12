@@ -126,11 +126,11 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
 
           return (
             <motion.div
-              layout
+              layout="position"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               key={rule.id}
               className={`group relative flex items-center px-3 py-1.5 rounded-2xl border transition-all duration-300 ${
                 isSelected

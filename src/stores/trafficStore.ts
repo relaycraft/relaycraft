@@ -98,23 +98,53 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
 
   addIndices: (newIndices) => {
     set((state) => {
+      if (newIndices.length === 0) return state;
+
       const indicesMap = new Map(state.indices.map((i) => [i.id, i]));
+      const existingCount = indicesMap.size;
       let currentSeq = state.nextSeq;
+
+      // Separate updates from new items
+      const newItems: FlowIndex[] = [];
 
       newIndices.forEach((idx) => {
         const existing = indicesMap.get(idx.id);
         if (existing) {
-          // Preserve the original seq when updating
+          // Update in place, preserve seq (no sort needed for updates)
           indicesMap.set(idx.id, { ...idx, seq: existing.seq });
         } else {
-          // Use provided seq or assign new
+          // New item
           const seq = idx.seq || currentSeq;
-          indicesMap.set(idx.id, { ...idx, seq });
+          newItems.push({ ...idx, seq });
           currentSeq = Math.max(currentSeq, seq + 1);
         }
       });
 
-      let updatedIndices = Array.from(indicesMap.values()).sort((a, b) => a.seq - b.seq);
+      // If no new items, just update existing ones (no sort needed)
+      if (newItems.length === 0) {
+        return {
+          indices: Array.from(indicesMap.values()),
+          nextSeq: currentSeq,
+        };
+      }
+
+      // Check if new items can be simply appended (most common case)
+      // New items are in order if all their seq >= last existing seq
+      const lastSeq = state.indices.length > 0 ? state.indices[state.indices.length - 1].seq : 0;
+      const allInOrder = newItems.every((item) => item.seq >= lastSeq);
+
+      let updatedIndices: FlowIndex[];
+
+      if (allInOrder && existingCount > 0) {
+        // Fast path: just append new items (they're already in order)
+        // Add new items to map
+        for (const item of newItems) indicesMap.set(item.id, item);
+        updatedIndices = [...state.indices, ...newItems];
+      } else {
+        // Slow path: need full sort (rare, e.g., out-of-order seq from backend)
+        for (const item of newItems) indicesMap.set(item.id, item);
+        updatedIndices = Array.from(indicesMap.values()).sort((a, b) => a.seq - b.seq);
+      }
 
       // Enforce limit
       if (updatedIndices.length > state.config.maxIndices) {
