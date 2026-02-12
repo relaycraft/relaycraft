@@ -56,9 +56,9 @@ export function AppLogo({ size = 24, className, showText = false, animated = tru
             <g opacity="0.8">
               {/* The "Tunnel" Passing Line */}
               <motion.line
-                x1="-32"
+                x1="-28"
                 y1="-2"
-                x2="-4"
+                x2="-8"
                 y2="-2"
                 stroke="white"
                 strokeWidth="4"

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelayCraft Loading</title>
+    <style>
+        :root {
+            /* Dark Theme Defaults (Modern Charcoal) */
+            --color-background: #0b0c0f;
+            --color-vibrancy-inner: #1a1c24;
+            --color-primary: #60a5fa;
+            --color-accent: #7c3aed;
+            --color-foreground: #e6edf3;
+            --logo-shine: rgba(255, 255, 255, 0.1);
+            --loader-bg: rgba(255, 255, 255, 0.05);
+            --text-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            --muted-text: rgba(230, 237, 243, 0.4);
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                /* Light Theme Defaults (Nebula White) */
+                --color-background: #fcfcfd;
+                --color-vibrancy-inner: #f4f4f7;
+                --color-primary: #4f46e5;
+                --color-accent: #7c3aed;
+                --color-foreground: #1a1c23;
+                --logo-shine: rgba(0, 0, 0, 0.05);
+                --loader-bg: rgba(0, 0, 0, 0.05);
+                --text-gradient: linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%);
+                --muted-text: rgba(26, 28, 35, 0.4);
+            }
+        }
+
+        html {
+            background-color: var(--color-background);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-foreground);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: default;
+        }
+
+        .vibrancy-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, var(--color-vibrancy-inner) 0%, var(--color-background) 100%);
+        }
+
+        .blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
+            animation: float 10s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        @keyframes float {
+            from {
+                transform: translate(-20%, -20%) scale(1);
+            }
+
+            to {
+                transform: translate(20%, 20%) scale(1.1);
+            }
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            z-index: 10;
+        }
+
+        .logo-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            animation: logo-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes logo-entrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.2));
+        }
+
+        /* Ripple / Shine Sweep Animation */
+        .shine-sweep {
+            animation: sweep 3s infinite linear;
+        }
+
+        @keyframes sweep {
+            0% {
+                transform: translateX(-150%) skewX(-25deg);
+            }
+
+            50%,
+            100% {
+                transform: translateX(250%) skewX(-25deg);
+            }
+        }
+
+        .text-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .app-name {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: entrance 0.6s 0.3s forwards ease-out;
+            background: var(--text-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slogan {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted-text);
+            opacity: 0;
+            transform: translateY(8px);
+            animation: entrance 0.6s 0.5s forwards ease-out;
+        }
+
+        @keyframes entrance {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loader-bar {
+            width: 180px;
+            height: 2px;
+            background: var(--loader-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 12px;
+            opacity: 0;
+            animation: fade-in 0.4s 0.7s forwards;
+        }
+
+        .loader-progress {
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+            animation: loading 1.5s infinite ease-in-out;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(250%);
+            }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 32px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted-text);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0;
+            animation: fade-in 0.8s 1s forwards;
+        }
+
+        .version {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes fade-in {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+    <script>
+        // Synchronize with App Theme from localStorage before paint
+        (function () {
+            try {
+                const mode = localStorage.getItem('themeMode');
+                const themeColors = localStorage.getItem('themeColors');
+
+                if (mode === 'light') {
+                    document.documentElement.style.setProperty('--color-background', '#fcfcfd');
+                    document.documentElement.style.setProperty('--color-vibrancy-inner', '#f4f4f7');
+                    document.documentElement.style.setProperty('--color-primary', '#4f46e5');
+                    document.documentElement.style.setProperty('--color-foreground', '#1a1c23');
+                    document.documentElement.style.setProperty('--logo-shine', 'rgba(0, 0, 0, 0.05)');
+                    document.documentElement.style.setProperty('--loader-bg', 'rgba(0, 0, 0, 0.05)');
+                    document.documentElement.style.setProperty('--text-gradient', 'linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%)');
+                    document.documentElement.style.setProperty('--muted-text', 'rgba(26, 28, 35, 0.4)');
+                } else if (themeColors) {
+                    const colors = JSON.parse(themeColors);
+                    // Map basic variables if available
+                    if (colors['--color-background']) {
+                        document.documentElement.style.setProperty('--color-background', colors['--color-background']);
+                    }
+                    if (colors['--color-primary']) {
+                        document.documentElement.style.setProperty('--color-primary', colors['--color-primary']);
+                    }
+                    if (colors['--color-foreground']) {
+                        document.documentElement.style.setProperty('--color-foreground', colors['--color-foreground']);
+                        // Set muted text based on foreground
+                        document.documentElement.style.setProperty('--muted-text', colors['--color-foreground'] + '66'); // ~40% opacity
+                    }
+                    // Handle inner vibrancy if background is set
+                    if (colors['--color-background']) {
+                        // Simple estimation for inner blob glow
+                        document.documentElement.style.setProperty('--color-vibrancy-inner', colors['--color-background']);
+                    }
+                }
+            } catch (e) {
+                console.warn('Theme sync failed', e);
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="vibrancy-container">
+        <div class="blob"></div>
+    </div>
+
+    <div class="logo-container">
+        <div class="logo-wrapper">
+            <svg class="logo-svg" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#4F46E5" />
+                        <stop offset="100%" stop-color="#7C3AED" />
+                    </linearGradient>
+                    <mask id="m">
+                        <path
+                            d="M 64 0 C 106 0 128 22 128 64 C 128 106 106 128 64 128 C 22 128 0 106 0 64 C 0 22 22 0 64 0 Z"
+                            fill="white" />
+                    </mask>
+                </defs>
+
+                <path d="M 64 0 C 106 0 128 22 128 64 C 128 106 106 128 64 128 C 22 128 0 106 0 64 C 0 22 22 0 64 0 Z"
+                    fill="url(#g)" />
+
+                <!-- Ripple Sweep Layer -->
+                <g mask="url(#m)">
+                    <rect class="shine-sweep" x="0" y="0" width="100" height="128" fill="var(--logo-shine)" />
+                </g>
+
+                <g transform="translate(64, 64)">
+                    <g stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                        <line x1="-18" y1="-26" x2="-18" y2="-8" />
+                        <line x1="-18" y1="4" x2="-18" y2="26" />
+                        <path d="M -18,-26 L 0,-26 Q 18,-26 18,-12 Q 18,2 0,2 L -18,2" />
+                        <path d="M 0,2 Q 6,20 22,26" />
+                    </g>
+                    <g opacity="0.7">
+                        <line x1="-28" y1="-2" x2="-8" y2="-2" stroke="white" stroke-width="4" stroke-linecap="round" />
+                        <line x1="24" y1="-18" x2="32" y2="-18" stroke="white" stroke-width="4"
+                            stroke-linecap="round" />
+                        <line x1="26" y1="8" x2="34" y2="8" stroke="white" stroke-width="4" stroke-linecap="round" />
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <div class="text-group">
+            <div class="app-name">RelayCraft</div>
+            <div class="slogan">Intercept • Analyze • Craft</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="version">v0.99.4</div>
+        <div class="engine">Powered by mitmproxy & Relay Engine</div>
+    </div>
+</body>
+
+</html>

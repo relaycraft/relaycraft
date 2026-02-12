@@ -20,6 +20,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "RelayCraft",
         "width": 1280,
         "height": 800,
@@ -28,7 +29,20 @@
         "decorations": true,
         "transparent": false,
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "visible": false
+      },
+      {
+        "label": "splashscreen",
+        "url": "splash.html",
+        "width": 480,
+        "height": 480,
+        "decorations": false,
+        "transparent": true,
+        "center": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "visible": true
       }
     ],
     "security": {

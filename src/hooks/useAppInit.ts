@@ -1,4 +1,4 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
 import { useEffect } from "react";
 import { initPlugins } from "../plugins/pluginLoader";
@@ -85,9 +85,17 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       }
 
       // Show window after initialization is complete to avoid white screen
-      setTimeout(() => {
-        getCurrentWindow().show();
-      }, 100);
+      setTimeout(async () => {
+        const mainWin = getCurrentWindow();
+        await mainWin.show();
+
+        // Find and close the splashscreen window
+        const allWindows = await getAllWindows();
+        const splashWin = allWindows.find((w) => w.label === "splashscreen");
+        if (splashWin) {
+          await splashWin.close();
+        }
+      }, 2000);
     };
     init();
   }, [
