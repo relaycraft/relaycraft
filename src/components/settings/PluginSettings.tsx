@@ -89,7 +89,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-system truncate">{displayName}</h3>
+              <h3 className="font-bold text-[13px] truncate">{displayName}</h3>
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/60">
                 v{plugin.manifest.version}
               </span>

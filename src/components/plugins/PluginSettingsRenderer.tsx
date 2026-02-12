@@ -97,7 +97,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                   <div className="space-y-0.5">
                     <Label
                       htmlFor={key}
-                      className="text-system font-semibold text-foreground/90 cursor-pointer"
+                      className="text-[13px] font-bold text-foreground/90 cursor-pointer"
                     >
                       {displayTitle}
                     </Label>
@@ -122,7 +122,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                   <div className="space-y-0.5">
                     <Label
                       htmlFor={key}
-                      className="flex items-center gap-2 text-system font-semibold text-foreground/90"
+                      className="flex items-center gap-2 text-[13px] font-bold text-foreground/90"
                     >
                       {displayTitle}
                       {schema.required?.includes(key) && (

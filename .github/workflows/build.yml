@@ -15,10 +15,10 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
+            args: '--target aarch64-apple-darwin --config "{\"bundle\": {\"createUpdaterArtifacts\": true}}"'
             target: 'aarch64-apple-darwin' # Apple Silicon
           - platform: 'ubuntu-22.04'
-            args: ''
+            args: '--config "{\"bundle\": {\"createUpdaterArtifacts\": true}}"'
             target: 'x86_64-unknown-linux-gnu'
           - platform: 'windows-latest'
             args: ''
@@ -138,6 +138,15 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only sign on macOS and Linux. Windows will be signed locally.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
+          # For Apple signing/notarization on macOS (if not using the manual block below for everything)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'RelayCraft v__VERSION__'
@@ -364,8 +373,10 @@ jobs:
 
           # 6a. Create .dmg (Release Format)
           echo "  Creating .dmg disk image..."
-          DMG_PATH="${APP_PATH%.*}.dmg"
-          rm -f "$DMG_PATH" 2>/dev/null || true
+          VERSION=$(jq -r .version package.json)
+          DMG_NAME="RelayCraft_${VERSION}_${{ matrix.target }}.dmg"
+          DMG_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/$DMG_NAME"
+          rm -f "src-tauri/target/${{ matrix.target }}/release/bundle/macos/"*.dmg 2>/dev/null || true
 
           # Use create-dmg if available, otherwise hdiutil fallback
           if command -v create-dmg &> /dev/null; then
@@ -431,8 +442,12 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.nsis.zip
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.nsis.zip.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage.tar.gz.sig
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/msi/*.msi.zip
             src-tauri/target/release/bundle/msi/*.msi.zip.sig
@@ -440,8 +455,12 @@ jobs:
             src-tauri/target/release/bundle/nsis/*.nsis.zip
             src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
             src-tauri/target/release/bundle/macos/*.dmg
+            src-tauri/target/release/bundle/macos/*.tar.gz
+            src-tauri/target/release/bundle/macos/*.tar.gz.sig
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
           if-no-files-found: warn
 
   finalize-release:
@@ -467,7 +486,7 @@ jobs:
       - name: Flatten Bundles
         run: |
           echo "📦 Flattening nested artifact directories..."
-          find all-bundles -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.msi" -o -name "*.exe" -o -name "*.sig" \) -exec mv {} all-bundles/ \;
+          find all-bundles -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.msi" -o -name "*.exe" -o -name "*.sig" -o -name "latest.json" \) -exec mv {} all-bundles/ \;
           echo "Files in all-bundles:"
           ls -la all-bundles/
 
@@ -478,9 +497,15 @@ jobs:
           files: |
              all-bundles/*.dmg
              all-bundles/*.AppImage
+             all-bundles/*.AppImage.tar.gz
+             all-bundles/*.AppImage.tar.gz.sig
              all-bundles/*.deb
              all-bundles/*.msi
              all-bundles/*.exe
+             all-bundles/*.tar.gz
+             all-bundles/*.tar.gz.sig
+             all-bundles/*.sig
+             all-bundles/latest.json
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

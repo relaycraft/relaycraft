@@ -88,13 +88,15 @@ jobs:
 
       # Commit & Push if Changed
       - name: Commit & Push changes
+        env:
+          HUSKY: 0
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add THIRD-PARTY-LICENSES.md
+          git add THIRD-PARTY-LICENSES.md pnpm-lock.yaml
           if git diff-index --quiet HEAD; then
-            echo "No changes in licenses."
+            echo "No changes in licenses or lockfile."
           else
-            git commit -m "ci: update third-party licenses [skip ci]"
+            git commit --no-verify -m "ci: update third-party licenses [skip ci]"
             git push
           fi

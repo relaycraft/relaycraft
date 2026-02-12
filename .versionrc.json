@@ -11,6 +11,10 @@
     {
       "filename": "src-tauri/Cargo.toml",
       "updater": "scripts/cargo-updater.cjs"
+    },
+    {
+      "filename": "public/splash.html",
+      "updater": "scripts/html-updater.cjs"
     }
   ],
   "packageFiles": [
