@@ -13,16 +13,16 @@ class RuleEngine:
         self.loader = RuleLoader()
         self.matcher = RuleMatcher()
         self.executor = ActionExecutor(self)
-        
+
     def handle_request(self, flow: http.HTTPFlow) -> None:
         """Standard matching and request-phase pipeline execution"""
         self.loader.load_rules()
         matched_rules = []
-        
+
         # 1. Tiered Candidate Selection
         host = flow.request.host
         candidates = []
-        
+
         # Add Global Rules
         candidates.extend(self.loader.global_rules)
         # Add Exact Host Matches
@@ -30,7 +30,7 @@ class RuleEngine:
             candidates.extend(self.loader.exact_host_rules[host])
         # Add Wildcard/Complex Host Matches
         candidates.extend(self.loader.wildcard_host_rules)
-        
+
         # Sort candidates by priority to maintain deterministic execution
         # (Since candidates from different buckets might have interleaved priorities)
         candidates.sort(key=lambda r: (
@@ -44,7 +44,7 @@ class RuleEngine:
             # Check enabled status (should be True by default)
             if not rule.get("execution", {}).get("enabled", True):
                 continue
-            
+
             matched, url_match = self.matcher.match_rule(flow, rule)
             if matched:
                 # Store match context in rule object for this flow
@@ -58,12 +58,12 @@ class RuleEngine:
                     }
                     # Keep a transient reference for the immediate request phase
                     rc["_url_match_transient"] = url_match
-                
+
                 matched_rules.append(rc)
-                
+
                 # Record hit
                 self.record_rule_hit(flow, rule)
-                
+
                 # stopOnMatch prevents FURTHER rules from matching
                 if rule.get("execution", {}).get("stopOnMatch", False):
                     break
@@ -92,7 +92,7 @@ class RuleEngine:
         all_actions = []
         for rule in matched_rules:
             url_match = rule.get("_url_match_transient")
-            
+
             for action in rule.get("actions", []):
                 a = action.copy()
                 a["_rule_id"] = rule.get("id")
@@ -122,10 +122,10 @@ class RuleEngine:
                     self.executor.apply_map_local(flow, a, a.get("_url_match_transient") or a.get("_url_match_data"))
                 else:
                     self.executor.apply_map_remote(flow, a, a.get("_url_match_transient") or a.get("_url_match_data"))
-                
+
                 if flow.response:
                     flow.metadata["_relaycraft_terminated"] = True
-                    return 
+                    return
 
             # 3. Modification Actions
             # Rewrite Header (Request)
@@ -160,24 +160,24 @@ class RuleEngine:
             for a in [act for act in all_actions if act.get("type") == "rewrite_body" and act.get("target", "response") == "response"]:
                 self.executor.apply_rewrite_body(flow, a, a.get("_url_match_transient") or a.get("_url_match_data"))
 
-    def record_hit(self, flow: http.HTTPFlow, id: str, name: str, type: str = "rule", status: str = "success", message: str = None, ts: float = None):
+    def record_hit(self, flow: http.HTTPFlow, id: str, name: str, type: str = "rule", status: str = "success", message: str = None, timestamp: float = None):
         """Standardized hit recording (HAR-like metadata structure)"""
         if "_relaycraft_hits" not in flow.metadata:
             flow.metadata["_relaycraft_hits"] = []
-            
-        if ts is None:
-            ts = time.time()
-            
+
+        if timestamp is None:
+            timestamp = time.time()
+
         hit_info = {
             "id": id,
             "name": name,
             "type": type,
             "status": status,
-            "ts": ts
+            "timestamp": timestamp
         }
         if message:
             hit_info["message"] = message
-            
+
         # Deduplicate
         for i, h in enumerate(flow.metadata["_relaycraft_hits"]):
             if h.get("id") == id and h.get("type") == type:
@@ -186,7 +186,7 @@ class RuleEngine:
                     flow.metadata["_relaycraft_hits"][i].update(hit_info)
                     flow.metadata["_relaycraft_dirty"] = True
                 return
-                
+
         flow.metadata["_relaycraft_hits"].append(hit_info)
         flow.metadata["_relaycraft_dirty"] = True
 

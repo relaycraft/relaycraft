@@ -83,6 +83,21 @@ const sanitizeHeaders = (
 };
 
 /**
+ * Converts HarHeader[] to Record<string, string> and sanitizes.
+ */
+const sanitizeHarHeaders = (
+	headers: Array<{ name: string; value: string }> | undefined,
+): Record<string, string> => {
+	if (!headers) return {};
+	const record: Record<string, string> = {};
+	for (const h of headers) {
+		// For duplicate headers, last value wins (acceptable for AI context)
+		record[h.name] = h.value;
+	}
+	return sanitizeHeaders(record);
+};
+
+/**
  * Builds the AI Context snapshot from current stores.
  */
 export const buildAIContext = async (
@@ -125,9 +140,9 @@ export const buildAIContext = async (
 		.slice(-maxTrafficCount)
 		.map((f) => ({
 			id: f.id,
-			method: f.method,
-			url: truncate(f.url, 150),
-			status: f.statusCode,
+			method: f.request.method,
+			url: truncate(f.request.url, 150),
+			status: f.response.status,
 		}))
 		.reverse();
 
@@ -149,20 +164,20 @@ export const buildAIContext = async (
 			type: "flow",
 			id: selectedFlow.id,
 			details: {
-				method: selectedFlow.method,
-				url: selectedFlow.url,
-				statusCode: selectedFlow.statusCode,
+				method: selectedFlow.request.method,
+				url: selectedFlow.request.url,
+				statusCode: selectedFlow.response.status,
 				requestHeaders: includeHeaders
-					? sanitizeHeaders(selectedFlow.requestHeaders)
+					? sanitizeHarHeaders(selectedFlow.request.headers)
 					: undefined,
 				responseHeaders: includeHeaders
-					? sanitizeHeaders(selectedFlow.responseHeaders)
+					? sanitizeHarHeaders(selectedFlow.response.headers)
 					: undefined,
 				requestBody: includeBody
-					? truncate(selectedFlow.requestBody || "", 500)
+					? truncate(selectedFlow.request.postData?.text || "", 500)
 					: undefined,
 				responseBody: includeBody
-					? truncate(selectedFlow.responseBody || "", 500)
+					? truncate(selectedFlow.response.content.text || "", 500)
 					: undefined,
 			},
 		};
@@ -182,7 +197,7 @@ export const buildAIContext = async (
 	if (config.upstream_proxy?.enabled) {
 		summary += `Upstream: ${config.upstream_proxy.url}. `;
 	}
-	if (selectedFlow) summary += `Focused on: ${selectedFlow.url}. `;
+	if (selectedFlow) summary += `Focused on: ${selectedFlow.request.url}. `;
 
 	return {
 		summary,

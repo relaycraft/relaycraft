@@ -17,7 +17,7 @@ interface GlobalModalsProps {
 
 export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsProps) {
   const { flows } = useTrafficStore();
-  const interceptedFlows = flows.filter((f) => f.intercepted);
+  const interceptedFlows = flows.filter((f) => f._rc?.intercept?.intercepted);
 
   const handleResumeBreakpoint = async (flowId: string, modifications: any) => {
     try {

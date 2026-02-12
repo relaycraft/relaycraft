@@ -23,10 +23,10 @@ export class TrafficProvider implements SuggestionProvider {
 				suggestions.push({
 					id: "flow_analysis",
 					label: t("command_center.suggestions.traffic_analyze", {
-						method: context.selectedFlow.method,
+						method: context.selectedFlow.request.method,
 					}),
 					action: t("command_center.suggestions.traffic_analyze", {
-						method: context.selectedFlow.method,
+						method: context.selectedFlow.request.method,
 					}),
 					group: "ai",
 					score: 100,

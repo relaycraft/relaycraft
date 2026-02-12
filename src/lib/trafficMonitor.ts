@@ -1,7 +1,7 @@
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useRuleStore } from "../stores/ruleStore";
 import { useTrafficStore } from "../stores/trafficStore";
-import type { MatchedHit } from "../types";
+import type { RcMatchedHit } from "../types";
 import { Logger } from "./logger";
 
 let pollInterval: number | null = null;
@@ -68,7 +68,7 @@ async function pollTraffic() {
 						const rules = useRuleStore.getState().rules;
 						const processedFlows = data.flows.map((flow: any) => {
 							// Process Hits
-							let processedHits: MatchedHit[] = [];
+							let processedHits: RcMatchedHit[] = [];
 							if (flow.hits && Array.isArray(flow.hits)) {
 								processedHits = flow.hits.map((hit: string | any) => {
 									// Handle String Hits (Scripts or Legacy IDs)

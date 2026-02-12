@@ -153,11 +153,11 @@ export function CommandCenter() {
         selectedTraffic: selectedFlow
           ? {
               id: selectedFlow.id,
-              url: selectedFlow.url,
-              method: selectedFlow.method,
-              status: selectedFlow.statusCode,
-              requestHeaders: selectedFlow.requestHeaders,
-              responseHeaders: selectedFlow.responseHeaders,
+              url: selectedFlow.request.url,
+              method: selectedFlow.request.method,
+              status: selectedFlow.response.status,
+              requestHeaders: selectedFlow.request.headers,
+              responseHeaders: selectedFlow.response.headers,
             }
           : null,
         activeRule: selectedRule || draftRule || null,
@@ -458,7 +458,7 @@ export function CommandCenter() {
                       {selectedFlow && (
                         <span
                           className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95"
-                          title={selectedFlow.url}
+                          title={selectedFlow.request.url}
                         >
                           <FileJson className="w-3 h-3" />
                         </span>

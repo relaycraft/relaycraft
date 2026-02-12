@@ -2,7 +2,7 @@ import { AlertTriangle, Laptop, ShieldAlert, Smartphone, StopCircle, Terminal } 
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { formatProtocol, getProtocolColor } from "../../lib/utils";
-import type { Flow } from "../../types";
+import type { Flow, RcMatchedHit } from "../../types";
 import { Tooltip } from "../common/Tooltip";
 
 interface TrafficListItemProps {
@@ -24,12 +24,12 @@ export const TrafficListItem = memo(
     onContextMenu,
   }: TrafficListItemProps) => {
     const { t } = useTranslation();
-    const hasHits = flow.hits && flow.hits.length > 0;
-    const isBreakpointMatch = breakpoints.some((b) => flow.url.includes(b.pattern));
+    const hasHits = flow._rc.hits && flow._rc.hits.length > 0;
+    const isBreakpointMatch = breakpoints.some((b) => flow.request.url.includes(b.pattern));
 
     // Determine method badge style
     const getMethodBadgeClass = () => {
-      switch (flow.method) {
+      switch (flow.request.method) {
         case "GET":
           return "bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900";
         case "POST":
@@ -44,30 +44,28 @@ export const TrafficListItem = memo(
     };
 
     // Determine if flow has error
-    // Determine if this is an error state (TLS failure or connection error)
-    // We now rely on flow.error or statusCode 0, without checking for specific "tls" version
-    const isError = flow.error || String(flow.statusCode) === "0";
+    const isError = flow._rc.error || String(flow.response.status) === "0";
 
     // Determine status code color
     const getStatusCodeClass = () => {
-      if (flow.statusCode === 0) return "text-red-500/50 italic font-medium";
-      if (flow.statusCode === null) return "text-muted-foreground/60 font-bold";
-      if (flow.statusCode < 300) return "text-green-500";
-      if (flow.statusCode < 400) return "text-yellow-500";
+      if (flow.response.status === 0) return "text-red-500/50 italic font-medium";
+      if (flow.response.status === null) return "text-muted-foreground/60 font-bold";
+      if (flow.response.status < 300) return "text-green-500";
+      if (flow.response.status < 400) return "text-yellow-500";
       return "text-red-500";
     };
 
     // Determine duration badge style
     const getDurationClass = () => {
-      if (!flow.duration) return "";
-      if (flow.duration < 400) return "bg-muted/10 text-muted-foreground/50";
-      if (flow.duration < 1000) return "bg-yellow-500/5 text-yellow-500/80";
-      if (flow.duration < 3000) return "bg-orange-500/10 text-orange-500";
+      if (!flow.time) return "";
+      if (flow.time < 400) return "bg-muted/10 text-muted-foreground/50";
+      if (flow.time < 1000) return "bg-yellow-500/5 text-yellow-500/80";
+      if (flow.time < 3000) return "bg-orange-500/10 text-orange-500";
       return "bg-red-500/10 text-red-500 animate-pulse font-bold";
     };
 
     // Get hit dot color
-    const getHitDotColor = (hit: any) => {
+    const getHitDotColor = (hit: RcMatchedHit) => {
       if (hit.status === "file_not_found") return "bg-red-500";
       switch (hit.type) {
         case "rewrite_body":
@@ -114,21 +112,21 @@ export const TrafficListItem = memo(
           className="text-[10px] text-right font-mono text-muted-foreground/60 select-none mr-1 transition-all"
           style={{ minWidth: idColWidth, maxWidth: idColWidth }}
         >
-          {flow.order}
+          {flow.seq}
         </div>
 
         {/* Method Badge */}
         <div
           className={`w-16 text-[10px] font-bold text-center px-1.5 py-0.5 rounded border ${getMethodBadgeClass()}`}
         >
-          {flow.method}
+          {flow.request.method}
         </div>
 
         {/* Source Icon - Always render for alignment (Faint for Local) */}
         <div className="w-5 flex justify-center text-muted-foreground/60 flex-shrink-0">
-          {flow.clientIp && flow.clientIp !== "127.0.0.1" && flow.clientIp !== "::1" ? (
+          {flow._rc.clientIp && flow._rc.clientIp !== "127.0.0.1" && flow._rc.clientIp !== "::1" ? (
             <Tooltip
-              content={`${t("traffic.source.remote", "Remote")} (${flow.clientIp})`}
+              content={`${t("traffic.source.remote", "Remote")} (${flow._rc.clientIp})`}
               side="bottom"
             >
               <Smartphone className="w-3.5 h-3.5 text-blue-400" />
@@ -144,7 +142,7 @@ export const TrafficListItem = memo(
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <div className="text-xs font-mono font-medium truncate text-foreground/90 group-hover:text-primary transition-colors flex-1">
-              {flow.url}
+              {flow.request.url}
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -152,7 +150,7 @@ export const TrafficListItem = memo(
               {isError ? (
                 <Tooltip
                   content={(() => {
-                    const msg = flow.error?.message || "";
+                    const msg = flow._rc.error?.message || "";
                     if (msg.includes("client does not trust") || msg.includes("unknown ca")) {
                       return (
                         <div className="text-center whitespace-nowrap">
@@ -180,32 +178,32 @@ export const TrafficListItem = memo(
                     <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
                   </div>
                 </Tooltip>
-              ) : String(flow.statusCode) === "0" ? (
+              ) : String(flow.response.status) === "0" ? (
                 ""
               ) : (
-                flow.statusCode || "..."
+                flow.response.status || "..."
               )}
             </span>
             <span>•</span>
-            {flow.httpVersion && (
+            {flow.request.httpVersion && (
               <>
                 <span
-                  className={`font-mono text-[9px] px-1 rounded-sm border ${getProtocolColor(flow.httpVersion)}`}
+                  className={`font-mono text-[9px] px-1 rounded-sm border ${getProtocolColor(flow.request.httpVersion)}`}
                 >
-                  {formatProtocol(flow.httpVersion)}
+                  {formatProtocol(flow.request.httpVersion)}
                 </span>
                 <span>•</span>
               </>
             )}
-            {flow.duration ? (
+            {flow.time ? (
               <span
                 className={`px-1.5 py-0.5 rounded-[4px] font-mono transition-colors ${getDurationClass()}`}
               >
-                {flow.duration.toFixed(0)}ms
+                {flow.time.toFixed(0)}ms
               </span>
             ) : (
               (() => {
-                const errorMsg = flow.error?.message || "";
+                const errorMsg = flow._rc.error?.message || "";
                 const isSSLError =
                   errorMsg.includes("client does not trust") ||
                   errorMsg.includes("unknown ca") ||
@@ -237,7 +235,7 @@ export const TrafficListItem = memo(
 
             <span>•</span>
             <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/40 font-mono tracking-tighter">
-              {new Date(flow.timestamp).toLocaleTimeString([], {
+              {new Date(flow.startedDateTime).toLocaleTimeString([], {
                 hour12: false,
                 hour: "2-digit",
                 minute: "2-digit",
@@ -258,13 +256,13 @@ export const TrafficListItem = memo(
                 <StopCircle className="w-4 h-4 text-red-500 animate-pulse" />
               </Tooltip>
             )}
-            {flow.hits?.some((h) => h.status === "file_not_found") && (
+            {flow._rc.hits?.some((h) => h.status === "file_not_found") && (
               <Tooltip content={t("traffic.file_not_found", "File not found")} side="left">
                 <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
               </Tooltip>
             )}
             <div className="flex -space-x-1">
-              {flow.hits?.map((hit, idx) => (
+              {flow._rc.hits?.map((hit, idx) => (
                 <Tooltip
                   key={idx}
                   content={`${hit.type === "script" ? t("common.script", "Script") : t("common.rule", "Rule")}: ${hit.name}`}

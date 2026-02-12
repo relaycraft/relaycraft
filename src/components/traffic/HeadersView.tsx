@@ -1,12 +1,17 @@
 import { useTranslation } from "react-i18next";
+import type { HarHeader } from "../../types";
 
 interface HeadersViewProps {
-  headers: Record<string, string>;
+  headers: HarHeader[] | Record<string, string>;
 }
 
 export function HeadersView({ headers }: HeadersViewProps) {
   const { t } = useTranslation();
-  const entries = Object.entries(headers);
+
+  // Convert to array format for consistent rendering
+  const entries: [string, string][] = Array.isArray(headers)
+    ? headers.map((h) => [h.name, h.value])
+    : Object.entries(headers);
 
   if (entries.length === 0) {
     return (

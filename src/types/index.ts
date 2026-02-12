@@ -1,66 +1,44 @@
-export interface Timing {
-  dns?: number;
-  connect?: number;
-  ssl?: number;
-  ttfb?: number;
-  total: number;
-}
+/**
+ * RelayCraft 类型定义
+ *
+ * 设计原则：
+ * 1. 完全兼容 HAR 1.2 标准
+ * 2. 扩展字段使用 `_rc` 命名空间避免冲突
+ * 3. 支持内存优化（FlowIndex + FlowDetail 分离）
+ */
 
-export interface ErrorDetail {
-  message: string;
-  errorType: string;
-}
+// ==================== HAR 标准类型 ====================
+export {
+  type Flow,
+  type FlowDetail,
+  type FlowIndex,
+  // 核心结构
+  type FlowRequest,
+  type FlowResponse,
+  getHeaderValue,
+  getHeaderValues,
+  getQueryValue,
+  getQueryValues,
+  type HarContent,
+  type HarCookie,
+  type HarHeader,
+  type HarPostData,
+  type HarQueryString,
+  type HarTimings,
+  harToLegacyHeaders,
+  isHarHeaders,
+  isLegacyHeaders,
+  // 兼容性工具
+  type LegacyHeaders,
+  legacyToHarHeaders,
+  type RcError,
+  type RcExtension,
+  type RcIntercept,
+  // RelayCraft 扩展类型
+  type RcMatchedHit,
+  type RcParsedUrl,
+  type RcWebSocketFrame,
+} from "./flow";
 
-export interface Flow {
-  id: string;
-  order?: number; // Sequence number for UI display
-  method: string;
-  url: string;
-  host: string;
-  path: string;
-  statusCode: number;
-  timestamp: number;
-  requestHeaders: Record<string, string>;
-  responseHeaders: Record<string, string>;
-  requestBody?: string;
-  responseBody?: string;
-  contentType?: string;
-  size: number;
-  duration?: number;
-  requestBodyEncoding?: "text" | "base64";
-  responseBodyEncoding?: "text" | "base64";
-  matchedRules?: MatchedHit[];
-  hits?: MatchedHit[];
-  intercepted?: boolean;
-  interceptPhase?: "request" | "response";
-
-  // V2 Fields
-  httpVersion?: string;
-  clientIp?: string;
-  serverIp?: string;
-  error?: ErrorDetail;
-  timing?: Timing;
-  isWebsocket?: boolean;
-  websocketFrames?: WebSocketFrame[];
-  bodyTruncated?: boolean;
-  matchedScripts?: MatchedHit[];
-}
-
-export interface WebSocketFrame {
-  type: "text" | "binary" | "ping" | "pong" | "close";
-  fromClient: boolean;
-  content: string;
-  timestamp: number;
-  length: number;
-}
-
-export interface MatchedHit {
-  id: string;
-  name: string;
-  type: "rule" | "script" | "breakpoint" | string;
-  status?: "success" | "warning" | "error" | string;
-  message?: string;
-  timestamp?: number;
-}
-
+// ==================== Rules 类型 ====================
 export * from "./rules";

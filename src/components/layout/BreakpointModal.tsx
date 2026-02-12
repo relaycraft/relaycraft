@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Flow } from "../../types";
+import type { HarHeader } from "../../types/flow";
 import { HeaderListEditor } from "../composer/HeaderListEditor";
 
 interface BreakpointModalProps {
@@ -32,29 +33,31 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
   const [body, setBody] = useState("");
   const [statusCode, setStatusCode] = useState(200);
 
-  const isRequest = flow?.interceptPhase === "request";
+  const isRequest = flow?._rc?.intercept?.phase === "request";
 
   // Sync state when selection changes
   useEffect(() => {
     if (!flow) return;
 
-    const sourceHeaders = isRequest ? flow.requestHeaders : flow.responseHeaders || {};
+    const sourceHeaders: HarHeader[] = isRequest
+      ? flow.request.headers
+      : flow.response.headers || [];
     setHeaders(
-      Object.entries(sourceHeaders).map(([key, value]) => ({
-        key,
-        value,
+      sourceHeaders.map((h) => ({
+        key: h.name,
+        value: h.value,
         enabled: true,
       })),
     );
-    setBody((isRequest ? flow.requestBody : flow.responseBody) || "");
-    setStatusCode(flow.statusCode || 200);
+    setBody((isRequest ? flow.request.postData?.text : flow.response.content.text) || "");
+    setStatusCode(flow.response.status || 200);
   }, [
     flow?.id,
     isRequest,
-    flow.requestBody,
-    flow.requestHeaders,
-    flow.responseBody,
-    flow.responseHeaders,
+    flow.request.postData?.text,
+    flow.request.headers,
+    flow.response.content.text,
+    flow.response.headers,
     flow,
   ]);
 
@@ -160,12 +163,12 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                   <div className="flex items-center justify-between mb-1.5">
                     <span
                       className={`text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm border ${
-                        f.interceptPhase === "request"
+                        f._rc?.intercept?.phase === "request"
                           ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
                           : "bg-green-500/10 text-green-600 border-green-500/20"
                       }`}
                     >
-                      {f.method}
+                      {f.request.method}
                     </span>
                     <span className="text-[9px] font-mono text-muted-foreground/40">
                       #{f.id.slice(-4)}
@@ -174,7 +177,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                   <div
                     className={`text-[12px] font-mono truncate leading-tight ${selectedFlowId === f.id ? "text-primary font-bold" : "text-foreground/60 group-hover:text-foreground/80"}`}
                   >
-                    {f.url}
+                    {f.request.url}
                   </div>
                 </button>
               ))}
@@ -197,7 +200,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                       {isRequest ? t("breakpoint.request") : t("breakpoint.response")}
                     </span>
                     <span className="text-[11px] font-bold text-foreground/70 truncate font-mono">
-                      {flow.url}
+                      {flow.request.url}
                     </span>
                   </div>
                 </div>
@@ -230,9 +233,9 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                     </span>
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-[11px] font-bold">
-                    <span className="text-primary">{flow.method}</span>
+                    <span className="text-primary">{flow.request.method}</span>
                     <span className="text-muted-foreground opacity-30">|</span>
-                    <span className="text-foreground/60 uppercase">HTTP/1.1</span>
+                    <span className="text-foreground/60 uppercase">{flow.request.httpVersion}</span>
                   </div>
                 </div>
                 {!isRequest && (

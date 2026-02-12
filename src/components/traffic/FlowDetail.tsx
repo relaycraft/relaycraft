@@ -25,15 +25,14 @@ import { formatProtocol, getProtocolColor } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { Flow } from "../../types";
+import type { Flow, RcMatchedHit } from "../../types";
+import { harToLegacyHeaders } from "../../types";
 import { AIMarkdown } from "../ai/AIMarkdown";
 import { CopyButton } from "../common/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Tooltip } from "../common/Tooltip";
 import { BodyView } from "./BodyView";
 import { HeadersView } from "./HeadersView";
-
-// ... existing imports ...
 
 interface FlowDetailProps {
   flow: Flow;
@@ -81,18 +80,18 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     try {
       const { chatCompletionStream } = useAIStore.getState();
       const flowData = {
-        url: flow.url,
-        method: flow.method,
-        statusCode: flow.statusCode,
-        requestHeaders: flow.requestHeaders,
-        responseHeaders: flow.responseHeaders,
-        duration: flow.duration,
-        requestSize: flow.requestBody?.length || 0,
-        responseSize: flow.responseBody?.length || 0,
-        requestBody: flow.requestBody ? flow.requestBody.slice(0, 2000) : null,
-        responseBody: flow.responseBody ? flow.responseBody.slice(0, 2000) : null,
-        timing: flow.timing,
-        hits: flow.hits || [],
+        url: flow.request.url,
+        method: flow.request.method,
+        statusCode: flow.response.status,
+        requestHeaders: harToLegacyHeaders(flow.request.headers),
+        responseHeaders: harToLegacyHeaders(flow.response.headers),
+        duration: flow.time,
+        requestSize: flow.request.postData?.text?.length || 0,
+        responseSize: flow.response.content.text?.length || 0,
+        requestBody: flow.request.postData?.text ? flow.request.postData.text.slice(0, 2000) : null,
+        responseBody: flow.response.content.text ? flow.response.content.text.slice(0, 2000) : null,
+        timing: flow.timings,
+        hits: flow._rc.hits || [],
       };
 
       const langInfo = getAILanguageInfo();
@@ -101,8 +100,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         content: FLOW_ANALYSIS_SYSTEM_PROMPT.replace(/{{LANGUAGE}}/g, langInfo.name)
           .replace(/{{TERMINOLOGY}}/g, langInfo.terminology)
           .replace(/{{SUMMARY_TITLE}}/g, langInfo.flow.summary)
-          .replace(/{{DIAGNOSTICS_TITLE}}/g, langInfo.flow.diagnostics)
-          .replace(/{{OPTIMIZATION_TITLE}}/g, langInfo.flow.optimization),
+          .replace(/{{DIAGNOSTICS_TITLE}}/g, langInfo.flow.optimization),
       };
 
       const userMsg = {
@@ -153,10 +151,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       await Promise.all([
         invoke("replay_request", {
           req: {
-            method: flow.method,
-            url: flow.url,
-            headers: flow.requestHeaders,
-            body: flow.requestBody || null,
+            method: flow.request.method,
+            url: flow.request.url,
+            headers: harToLegacyHeaders(flow.request.headers),
+            body: flow.request.postData?.text || null,
           },
         }),
         new Promise((resolve) => setTimeout(resolve, 800)),
@@ -167,6 +165,31 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       setReplaying(false);
     }
   };
+
+  // Get hit dot color
+  const getHitColor = (hit: RcMatchedHit) => {
+    if (hit.status === "error" || hit.status === "file_not_found")
+      return "bg-yellow-500/20 text-yellow-600 border-yellow-400";
+    switch (hit.type) {
+      case "script":
+        return "bg-indigo-500/10 text-indigo-400 border-indigo-500/30";
+      case "rewrite_body":
+        return "bg-purple-500/10 text-purple-600 border-purple-200";
+      case "map_local":
+        return "bg-blue-500/10 text-blue-600 border-blue-200";
+      case "map_remote":
+        return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
+      case "rewrite_header":
+        return "bg-orange-500/10 text-orange-600 border-orange-200";
+      case "throttle":
+        return "bg-cyan-500/10 text-cyan-600 border-cyan-200";
+      case "block_request":
+        return "bg-rose-500/10 text-rose-600 border-rose-200";
+      default:
+        return "bg-gray-500/10 text-gray-600 border-gray-200";
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -180,56 +203,56 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         {/* Row 1: Status & Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {flow.httpVersion && (
+            {flow.request.httpVersion && (
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border ${getProtocolColor(flow.httpVersion)}`}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border ${getProtocolColor(flow.request.httpVersion)}`}
               >
-                {formatProtocol(flow.httpVersion)}
+                {formatProtocol(flow.request.httpVersion)}
               </span>
             )}
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                flow.method === "GET"
+                flow.request.method === "GET"
                   ? "bg-blue-500/20 text-blue-400"
-                  : flow.method === "POST"
+                  : flow.request.method === "POST"
                     ? "bg-green-500/20 text-green-400"
-                    : flow.method === "PUT"
+                    : flow.request.method === "PUT"
                       ? "bg-yellow-500/20 text-yellow-400"
-                      : flow.method === "DELETE"
+                      : flow.request.method === "DELETE"
                         ? "bg-red-500/20 text-red-400"
                         : "bg-gray-500/20 text-gray-400"
               }`}
             >
-              {flow.method}
+              {flow.request.method}
             </span>
-            {!(flow.statusCode === 0 || String(flow.statusCode) === "0") && (
+            {!(flow.response.status === 0 || String(flow.response.status) === "0") && (
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                  flow.statusCode && flow.statusCode < 300
+                  flow.response.status && flow.response.status < 300
                     ? "bg-green-500/20 text-green-400"
-                    : flow.statusCode && flow.statusCode < 400
+                    : flow.response.status && flow.response.status < 400
                       ? "bg-yellow-500/20 text-yellow-400"
-                      : flow.statusCode
+                      : flow.response.status
                         ? "bg-red-500/20 text-red-400"
                         : "bg-gray-500/20 text-gray-400"
                 }`}
               >
-                {flow.statusCode || t("traffic.status.pending")}
+                {flow.response.status || t("traffic.status.pending")}
               </span>
             )}
-            {!!flow.duration && (
+            {!!flow.time && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border transition-colors ${
-                  flow.duration < 400
+                  flow.time < 400
                     ? "bg-muted/10 text-muted-foreground/50 border-border/30"
-                    : flow.duration < 1000
+                    : flow.time < 1000
                       ? "bg-yellow-500/5 text-yellow-500/80 border-yellow-500/20"
-                      : flow.duration < 3000
+                      : flow.time < 3000
                         ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
                         : "bg-red-500/10 text-red-500 border-red-500/30 animate-pulse"
                 }`}
               >
-                {flow.duration.toFixed(0)}ms
+                {flow.time.toFixed(0)}ms
               </span>
             )}
           </div>
@@ -299,14 +322,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         {/* Row 2: URL & Matched Rules */}
         <div className="space-y-3">
           <div className="flex items-center group/url w-full overflow-hidden relative">
-            <Tooltip content={flow.url} side="bottom" className="flex-1 min-w-0">
+            <Tooltip content={flow.request.url} side="bottom" className="flex-1 min-w-0">
               <p className="text-[12px] font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-white/[0.03]">
-                {flow.url}
+                {flow.request.url}
               </p>
             </Tooltip>
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/url:opacity-100 transition-opacity flex-shrink-0 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 py-1">
               <CopyButton
-                text={flow.url}
+                text={flow.request.url}
                 label={t("traffic.context_menu.copy_url")}
                 showLabel={false}
                 className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"
@@ -322,31 +345,13 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             </div>
           </div>
 
-          {flow.hits && flow.hits.length > 0 && (
+          {flow._rc.hits && flow._rc.hits.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
-                {flow.hits.map((hit, idx) => (
+                {flow._rc.hits.map((hit, idx) => (
                   <div
                     key={idx}
-                    className={`text-[10px] px-2 py-1 rounded border flex items-center gap-2 ${
-                      hit.status === "error" || hit.status === "file_not_found"
-                        ? "bg-yellow-500/20 text-yellow-600 border-yellow-400"
-                        : hit.type === "script"
-                          ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
-                          : hit.type === "rewrite_body"
-                            ? "bg-purple-500/10 text-purple-600 border-purple-200"
-                            : hit.type === "map_local"
-                              ? "bg-blue-500/10 text-blue-600 border-blue-200"
-                              : hit.type === "map_remote"
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
-                                : hit.type === "rewrite_header"
-                                  ? "bg-orange-500/10 text-orange-600 border-orange-200"
-                                  : hit.type === "throttle"
-                                    ? "bg-cyan-500/10 text-cyan-600 border-cyan-200"
-                                    : hit.type === "block_request"
-                                      ? "bg-rose-500/10 text-rose-600 border-rose-200"
-                                      : "bg-gray-500/10 text-gray-600 border-gray-200"
-                    }`}
+                    className={`text-[10px] px-2 py-1 rounded border flex items-center gap-2 ${getHitColor(hit)}`}
                   >
                     <div className="flex-shrink-0">
                       {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
@@ -376,23 +381,23 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 ))}
               </div>
 
-              {flow.hits.some((h) => h.status === "file_not_found") && (
+              {flow._rc.hits.some((h) => h.status === "file_not_found") && (
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-1.5 flex items-start gap-2 shadow-sm">
                   <div className="p-0.5 bg-yellow-500/20 rounded flex-shrink-0">
                     <AlertTriangle className="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div className="text-[10px] space-y-0.5 min-w-0 flex-1">
+                  <div className="text-[10px] spaces-y-0.5 min-w-0 flex-1">
                     <div className="font-bold text-yellow-700 leading-tight">
                       {t("flow.map_local.file_not_found")}
                     </div>
                     <Tooltip
-                      content={flow.hits
+                      content={flow._rc.hits
                         .filter((h) => h.status === "file_not_found")
                         .map((h) => h.message)
                         .join(", ")}
                     >
                       <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-[9px]">
-                        {flow.hits
+                        {flow._rc.hits
                           .filter((h) => h.status === "file_not_found")
                           .map((h) => h.message)
                           .join(", ")}
@@ -502,7 +507,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             >
               {t("flow.tabs.response")}
             </TabsTrigger>
-            {flow.isWebsocket && (
+            {flow._rc.isWebsocket && (
               <TabsTrigger
                 value="messages"
                 className="py-1.5 px-6 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
@@ -530,7 +535,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         {t("flow.sections.request_headers")}
                       </h3>
                     </div>
-                    <HeadersView headers={flow.requestHeaders} />
+                    <HeadersView headers={flow.request.headers} />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -539,9 +544,9 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       </h3>
                     </div>
                     <BodyView
-                      content={flow.requestBody || undefined}
-                      encoding={flow.requestBodyEncoding}
-                      headers={flow.requestHeaders}
+                      content={flow.request.postData?.text || undefined}
+                      encoding={flow.request.postData?.text ? "text" : undefined}
+                      headers={flow.request.headers}
                     />
                   </div>
                 </motion.div>
@@ -563,7 +568,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         {t("flow.sections.response_headers")}
                       </h3>
                     </div>
-                    <HeadersView headers={flow.responseHeaders || {}} />
+                    <HeadersView headers={flow.response.headers} />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -572,16 +577,20 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       </h3>
                     </div>
                     <BodyView
-                      content={flow.responseBody || undefined}
-                      encoding={flow.responseBodyEncoding}
-                      headers={flow.responseHeaders}
+                      content={flow.response.content.text || undefined}
+                      encoding={
+                        flow.response.content.encoding === "base64url"
+                          ? "base64"
+                          : flow.response.content.encoding
+                      }
+                      headers={flow.response.headers}
                     />
                   </div>
                 </motion.div>
               </TabsContent>
             )}
 
-            {activeTab === "messages" && flow.isWebsocket && (
+            {activeTab === "messages" && flow._rc.isWebsocket && (
               <TabsContent
                 value="messages"
                 key="messages"
@@ -602,58 +611,17 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       </h3>
                       <span className="text-[10px] text-muted-foreground/60">
                         {t("traffic.websocket.messages_count", {
-                          count: flow.websocketFrames?.length || 0,
+                          count: flow._rc.websocketFrameCount || 0,
                         })}
                       </span>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-thin">
-                      {flow.websocketFrames && flow.websocketFrames.length > 0 ? (
+                      {flow._rc.websocketFrameCount && flow._rc.websocketFrameCount > 0 ? (
                         <div className="divide-y divide-border/20">
-                          {flow.websocketFrames.map((frame, i) => (
-                            <div
-                              key={i}
-                              className="flex items-start gap-3 p-2.5 hover:bg-muted/30 transition-colors group/frame"
-                            >
-                              <div
-                                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ${
-                                  frame.fromClient
-                                    ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                                    : "bg-green-500/10 text-green-500 border border-green-500/20"
-                                }`}
-                              >
-                                {frame.fromClient ? "↑" : "↓"}
-                              </div>
-                              <div className="flex-1 min-w-0 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border ${
-                                      frame.type === "text"
-                                        ? "bg-purple-500/5 text-purple-500/70 border-purple-500/10"
-                                        : frame.type === "binary"
-                                          ? "bg-orange-500/5 text-orange-500/70 border-orange-500/10"
-                                          : "bg-muted text-muted-foreground/60 border-border/20"
-                                    }`}
-                                  >
-                                    {frame.type}
-                                  </span>
-                                  <span className="text-[9px] text-muted-foreground/40 font-mono">
-                                    {new Date(frame.timestamp).toLocaleTimeString([], {
-                                      hour12: false,
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      second: "2-digit",
-                                    })}
-                                  </span>
-                                  <span className="text-[9px] text-muted-foreground/30 ml-auto group-hover/frame:text-muted-foreground/60 transition-colors">
-                                    {frame.length} B
-                                  </span>
-                                </div>
-                                <p className="text-[11px] font-mono leading-relaxed break-all text-foreground/80 selection:bg-primary/20">
-                                  {frame.content}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                          {/* WebSocket frames would be loaded separately */}
+                          <div className="p-4 text-center text-muted-foreground text-xs">
+                            WebSocket frames are stored separately and loaded on demand.
+                          </div>
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center p-8 text-center">

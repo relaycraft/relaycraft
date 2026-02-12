@@ -104,12 +104,17 @@ export function useAppShortcuts() {
           e.preventDefault();
           if (selectedFlow) {
             try {
+              // Convert HarHeader[] to Record<string, string> for replay
+              const headersRecord: Record<string, string> = {};
+              for (const h of selectedFlow.request.headers) {
+                headersRecord[h.name] = h.value;
+              }
               await invoke("replay_request", {
                 req: {
-                  method: selectedFlow.method,
-                  url: selectedFlow.url,
-                  headers: selectedFlow.requestHeaders,
-                  body: selectedFlow.requestBody || null,
+                  method: selectedFlow.request.method,
+                  url: selectedFlow.request.url,
+                  headers: headersRecord,
+                  body: selectedFlow.request.postData?.text || null,
                 },
               });
               notify.success(t("traffic.replay_success"), { toastOnly: true });
@@ -127,7 +132,7 @@ export function useAppShortcuts() {
           if (!selection || selection.toString().length === 0) {
             if (selectedFlow) {
               e.preventDefault();
-              await navigator.clipboard.writeText(selectedFlow.url);
+              await navigator.clipboard.writeText(selectedFlow.request.url);
               notify.success(t("traffic.context_menu.url_copied"), {
                 toastOnly: true,
               });

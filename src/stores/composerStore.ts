@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { version as APP_VERSION } from "../../package.json";
 import { Logger } from "../lib/logger";
 import type { Flow } from "../types";
+import { getHeaderValue } from "../types/flow";
 
 interface ComposerState {
   // ... same interface
@@ -97,9 +98,10 @@ export const useComposerStore = create<ComposerState>((set, get) => ({
   setLastResponse: (lastResponse) => set({ lastResponse }),
 
   setComposerFromFlow: (flow) => {
-    const headerArray = Object.entries(flow.requestHeaders).map(([key, value]) => ({
-      key,
-      value,
+    // Convert HAR headers to header array format
+    const headerArray = (flow.request.headers || []).map((h) => ({
+      key: h.name,
+      value: h.value,
       enabled: true,
     }));
 
@@ -111,28 +113,29 @@ export const useComposerStore = create<ComposerState>((set, get) => ({
       enabled: boolean;
     }> = [];
 
-    const contentType =
-      flow.requestHeaders["content-type"] || flow.requestHeaders["Content-Type"] || "";
+    const contentType = getHeaderValue(flow.request.headers, "content-type") || "";
+    const requestBody = flow.request.postData?.text || "";
+
     if (contentType.toLowerCase().includes("application/x-www-form-urlencoded")) {
       bodyType = "x-www-form-urlencoded";
       // Parse body
       try {
-        const params = new URLSearchParams(flow.requestBody || "");
+        const params = new URLSearchParams(requestBody);
         params.forEach((value, key) => {
           bodyFormData.push({ key, value, enabled: true });
         });
       } catch (e) {
         Logger.error("Failed to parse form body", e);
       }
-    } else if (!flow.requestBody) {
+    } else if (!requestBody) {
       bodyType = "none";
     }
 
     set({
-      method: flow.method,
-      url: flow.url,
+      method: flow.request.method,
+      url: flow.request.url,
       headers: headerArray.length > 0 ? headerArray : [...DEFAULT_HEADERS],
-      body: flow.requestBody || "",
+      body: requestBody,
       bodyType,
       bodyFormData,
       lastResponse: null, // Clear old response when loading new flow

@@ -10,6 +10,7 @@ import { useSettingsStore } from "../../../stores/settingsStore";
 import { useTrafficStore } from "../../../stores/trafficStore";
 import { useUIStore } from "../../../stores/uiStore";
 import type { Flow } from "../../../types";
+import { getHeaderValue, harToLegacyHeaders } from "../../../types";
 import type { ContextMenuItem } from "../../common/ContextMenu";
 
 export function useTrafficContextMenu() {
@@ -67,7 +68,7 @@ export function useTrafficContextMenu() {
           icon: <Copy className="w-3.5 h-3.5" />,
           shortcut: isMac ? "⌘C" : "Ctrl+C",
           onClick: () => {
-            navigator.clipboard.writeText(menuTargetFlow.url);
+            navigator.clipboard.writeText(menuTargetFlow.request.url);
             notify.success(t("traffic.context_menu.url_copied"), {
               toastOnly: true,
             });
@@ -93,7 +94,7 @@ export function useTrafficContextMenu() {
 
             const createNewRule = () => {
               // Truncate body if too large to prevent UI freeze
-              let bodyContent = menuTargetFlow.responseBody || "";
+              let bodyContent = menuTargetFlow.response.content.text || "";
               if (bodyContent.length > 50000) {
                 bodyContent = `${bodyContent.slice(0, 10000)}\n\n[TRUNCATED_FOR_PERFORMANCE: Content > 50KB]`;
                 notify.warning(
@@ -106,18 +107,18 @@ export function useTrafficContextMenu() {
 
               selectRule(null);
               setDraftRule({
-                name: `Mock ${new URL(menuTargetFlow.url).pathname}`,
+                name: `Mock ${new URL(menuTargetFlow.request.url).pathname}`,
                 type: "rewrite_body",
                 match: {
                   request: [
                     {
                       type: "url",
-                      value: menuTargetFlow.url,
+                      value: menuTargetFlow.request.url,
                       matchType: "exact",
                     },
                     {
                       type: "method",
-                      value: menuTargetFlow.method,
+                      value: menuTargetFlow.request.method,
                       matchType: "equals",
                     },
                   ],
@@ -129,11 +130,11 @@ export function useTrafficContextMenu() {
                     target: "response",
                     set: {
                       content: bodyContent,
-                      statusCode: menuTargetFlow.statusCode,
+                      statusCode: menuTargetFlow.response.status,
                       contentType:
-                        menuTargetFlow.contentType ||
-                        menuTargetFlow.responseHeaders?.["Content-Type"] ||
-                        menuTargetFlow.responseHeaders?.["content-type"],
+                        menuTargetFlow.response.content.mimeType ||
+                        getHeaderValue(menuTargetFlow.response.headers, "Content-Type") ||
+                        getHeaderValue(menuTargetFlow.response.headers, "content-type"),
                     },
                   },
                 ] as any,
@@ -165,10 +166,10 @@ export function useTrafficContextMenu() {
               const { invoke } = await import("@tauri-apps/api/core");
               await invoke("replay_request", {
                 req: {
-                  method: menuTargetFlow.method,
-                  url: menuTargetFlow.url,
-                  headers: menuTargetFlow.requestHeaders,
-                  body: menuTargetFlow.requestBody || null,
+                  method: menuTargetFlow.request.method,
+                  url: menuTargetFlow.request.url,
+                  headers: harToLegacyHeaders(menuTargetFlow.request.headers),
+                  body: menuTargetFlow.request.postData?.text || null,
                 },
               });
               notify.success(t("traffic.replay_success"), { toastOnly: true });
@@ -193,7 +194,8 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.set_breakpoint"),
           icon: <AlertTriangle className="w-3.5 h-3.5" />,
           onClick: () => {
-            handleToggleBreakpoint(menuTargetFlow.host);
+            const url = new URL(menuTargetFlow.request.url);
+            handleToggleBreakpoint(url.host);
             handleCloseMenu();
           },
         },
@@ -201,10 +203,10 @@ export function useTrafficContextMenu() {
         {
           label: t("traffic.context_menu.copy_req_body"),
           icon: <Code className="w-3.5 h-3.5" />,
-          disabled: !menuTargetFlow.requestBody,
+          disabled: !menuTargetFlow.request.postData?.text,
           onClick: () => {
-            if (menuTargetFlow.requestBody) {
-              navigator.clipboard.writeText(menuTargetFlow.requestBody);
+            if (menuTargetFlow.request.postData?.text) {
+              navigator.clipboard.writeText(menuTargetFlow.request.postData.text);
               notify.success(t("traffic.context_menu.req_body_copied"), {
                 toastOnly: true,
               });
@@ -214,10 +216,10 @@ export function useTrafficContextMenu() {
         {
           label: t("traffic.context_menu.copy_res_body"),
           icon: <Code className="w-3.5 h-3.5" />,
-          disabled: !menuTargetFlow.responseBody,
+          disabled: !menuTargetFlow.response.content.text,
           onClick: () => {
-            if (menuTargetFlow.responseBody) {
-              navigator.clipboard.writeText(menuTargetFlow.responseBody);
+            if (menuTargetFlow.response.content.text) {
+              navigator.clipboard.writeText(menuTargetFlow.response.content.text);
               notify.success(t("traffic.context_menu.res_body_copied"), {
                 toastOnly: true,
               });

@@ -9,6 +9,8 @@ import {
   formatXml,
   getExtensionFromHeaders,
 } from "../../lib/contentUtils";
+import type { HarHeader } from "../../types";
+import { getHeaderValue } from "../../types";
 import { CodeBlock } from "../common/CodeBlock";
 import { CopyButton } from "../common/CopyButton";
 import { Tooltip } from "../common/Tooltip";
@@ -16,22 +18,53 @@ import { Tooltip } from "../common/Tooltip";
 interface ContentPreviewProps {
   content: string | undefined; // Base64 encoded for binaries/images, plain text for text
   encoding?: "text" | "base64";
-  headers: Record<string, string> | null;
+  headers: HarHeader[] | Record<string, string> | null;
+}
+
+// Helper to get header value from either format
+function getHeaderFromAny(
+  headers: HarHeader[] | Record<string, string> | null,
+  name: string,
+): string | undefined {
+  if (!headers) return undefined;
+  if (Array.isArray(headers)) {
+    return getHeaderValue(headers, name);
+  }
+  const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase());
+  return key ? headers[key] : undefined;
+}
+
+// Convert headers to Record format for compatibility with existing utilities
+function headersToRecord(
+  headers: HarHeader[] | Record<string, string> | null,
+): Record<string, string> | null {
+  if (!headers) return null;
+  if (Array.isArray(headers)) {
+    const result: Record<string, string> = {};
+    headers.forEach((h) => {
+      result[h.name] = h.value;
+    });
+    return result;
+  }
+  return headers;
 }
 
 export function ContentPreview({ content, encoding, headers }: ContentPreviewProps) {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
 
+  // Convert headers to Record format for compatibility
+  const headersRecord = headersToRecord(headers);
+
   // Determine content type based on headers, but fallback to binary if explicit base64 encoding provided without specific type
   const contentType = useMemo(() => {
-    const type = detectContentType(headers, content || null);
+    const type = detectContentType(headersRecord, content || null);
     if (encoding === "base64" && type === "text") {
       // If detected as text but encoded as base64, assume it's binary or unknown
       return "binary";
     }
     return type;
-  }, [headers, content, encoding]);
+  }, [headersRecord, content, encoding]);
 
   if (!content) {
     return (
@@ -46,7 +79,7 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
 
   const handleDownload = async () => {
     try {
-      const extension = getExtensionFromHeaders(headers, contentType);
+      const extension = getExtensionFromHeaders(headersRecord, contentType);
       const defaultPath = `response.${extension} `;
 
       const filePath = await save({
@@ -85,10 +118,7 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
   // Render Logic
   const renderContent = () => {
     if (contentType === "image") {
-      const contentTypeKey = Object.keys(headers || {}).find(
-        (k) => k.toLowerCase() === "content-type",
-      );
-      const mimeType = contentTypeKey && headers ? headers[contentTypeKey] : "image/jpeg";
+      const mimeType = getHeaderFromAny(headers, "content-type") || "image/jpeg";
 
       const src = encoding === "base64" ? `data:${mimeType}; base64, ${content} ` : content;
 

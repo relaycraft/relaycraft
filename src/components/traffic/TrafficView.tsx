@@ -36,7 +36,7 @@ interface TrafficViewProps {
 
 export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const { t } = useTranslation();
-  const { flows, selectedFlow, selectFlow, nextOrder } = useTrafficStore();
+  const { flows, selectedFlow, selectFlow, nextSeq } = useTrafficStore();
   const { running, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
   const { breakpoints } = useBreakpointStore();
   const { setActiveTab } = useUIStore();
@@ -64,7 +64,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Dynamic width calculation for ID column
-  const idColWidth = Math.max(20, (nextOrder?.toString().length || 1) * 7 + 4);
+  const idColWidth = Math.max(20, (nextSeq?.toString().length || 1) * 7 + 4);
 
   const handleScrollStateChange = (scrolling: boolean) => {
     if (scrolling) {
@@ -81,7 +81,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
   const filteredFlows = useMemo(() => {
     return (pausedFlows || flows).filter((flow) => {
-      if (onlyMatched && (!flow.hits || flow.hits.length === 0)) return false;
+      if (onlyMatched && (!flow._rc.hits || flow._rc.hits.length === 0)) return false;
       if (!filterText) return true;
       return matchFlow(flow, filterCriteria, isRegex, caseSensitive);
     });
@@ -132,7 +132,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
         if (nextIndex !== currentIndex && nextIndex >= 0) {
           const nextFlow = filteredFlows[nextIndex];
-          selectFlow(nextFlow);
+          selectFlow(nextFlow.id);
 
           // Scroll into view if needed
           virtuosoRef.current?.scrollToIndex({
@@ -337,7 +337,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                       isSelected={selectedFlow?.id === flow.id}
                       idColWidth={idColWidth}
                       breakpoints={breakpoints}
-                      onSelect={selectFlow}
+                      onSelect={(f) => selectFlow(f.id)}
                       onContextMenu={handleContextMenu}
                     />
                   )}

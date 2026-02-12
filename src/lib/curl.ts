@@ -1,35 +1,26 @@
 import type { Flow } from "../types";
 
 export function generateCurlCommand(flow: Flow): string {
-	let command = `curl -X ${flow.method} '${flow.url}'`;
+	let command = `curl -X ${flow.request.method} '${flow.request.url}'`;
 
 	// Add headers
-	if (flow.requestHeaders) {
-		Object.entries(flow.requestHeaders).forEach(([key, value]) => {
+	if (flow.request.headers) {
+		flow.request.headers.forEach((header) => {
 			if (
-				key.toLowerCase() !== "content-length" &&
-				key.toLowerCase() !== "host"
+				header.name.toLowerCase() !== "content-length" &&
+				header.name.toLowerCase() !== "host"
 			) {
-				// Skip content-length and host usually
-				// Handle multiple values if needed, typically array or string
-				if (Array.isArray(value)) {
-					value.forEach(
-						(v) =>
-							(command += ` \\\n  -H '${key}: ${v.replace(/'/g, "'\\''")}'`),
-					);
-				} else {
-					command += ` \\\n  -H '${key}: ${value.replace(/'/g, "'\\''")}'`;
-				}
+				command += ` \\\n  -H '${header.name}: ${header.value.replace(/'/g, "'\\''")}'`;
 			}
 		});
 	}
 
 	// Add body
-	if (flow.requestBody) {
+	if (flow.request.postData?.text) {
 		// Escaping logic is complex, for simplicity we trust the content or basic escape
 		// Ideally we check content-type
 		// For now basic implementation
-		command += ` \\\n  -d '${flow.requestBody.replace(/'/g, "'\\''")}'`;
+		command += ` \\\n  -d '${flow.request.postData.text.replace(/'/g, "'\\''")}'`;
 	}
 
 	return command;

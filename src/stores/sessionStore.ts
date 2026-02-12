@@ -28,9 +28,13 @@ export const useSessionStore = create<SessionStore>((set) => ({
       // Calculate metadata
       const metadata: SessionMetadata = {
         createdAt: Date.now(),
-        duration: flows.length > 0 ? flows[flows.length - 1].timestamp - flows[0].timestamp : 0,
+        duration:
+          flows.length > 0
+            ? new Date(flows[flows.length - 1].startedDateTime).getTime() -
+              new Date(flows[0].startedDateTime).getTime()
+            : 0,
         flowCount: flows.length,
-        sizeBytes: flows.reduce((acc, f) => acc + f.size, 0),
+        sizeBytes: flows.reduce((acc, f) => acc + f.request.bodySize + f.response.bodySize, 0),
         clientInfo: navigator.userAgent,
       };
 
