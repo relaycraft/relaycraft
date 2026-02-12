@@ -212,7 +212,7 @@ export const useAIStore = create<AIStore>((set, get) => {
     abortChat: () => {
       // Note: Backend doesn't support cancellation yet,
       // but we can clear state or implement AbortController if we update invoke
-      Logger.info("Aborting AI chat (client-side only for now)");
+      Logger.debug("Aborting AI chat (client-side only for now)");
     },
   };
 });

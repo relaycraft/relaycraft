@@ -59,7 +59,7 @@ function App() {
 
   // Header Logic State
   const { activeTab } = useUIStore();
-  const { searchQuery, setSearchQuery, selectRule, setDraftRule } = useRuleStore();
+  const { searchQuery, setSearchQuery } = useRuleStore();
   const { setImportModalOpen } = useUIStore();
   const pluginPages = usePluginPageStore((state) => state.pages);
 
@@ -280,8 +280,24 @@ function App() {
                     <Button
                       size="sm"
                       onClick={() => {
-                        selectRule(null);
-                        setDraftRule({});
+                        const { isEditorDirty, selectRule, setDraftRule } = useRuleStore.getState();
+                        const { showConfirm } = useUIStore.getState();
+
+                        const createNewRule = () => {
+                          selectRule(null);
+                          setDraftRule({});
+                        };
+
+                        if (isEditorDirty) {
+                          showConfirm({
+                            title: t("rules.alerts.discard_title"),
+                            message: t("rules.alerts.discard_msg"),
+                            variant: "warning",
+                            onConfirm: createNewRule,
+                          });
+                        } else {
+                          createNewRule();
+                        }
                       }}
                       className="gap-1.5"
                     >

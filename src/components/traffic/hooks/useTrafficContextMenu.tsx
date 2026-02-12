@@ -88,53 +88,70 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.create_rule"),
           icon: <Workflow className="w-3.5 h-3.5" />,
           onClick: () => {
-            // Truncate body if too large to prevent UI freeze
-            let bodyContent = menuTargetFlow.responseBody || "";
-            if (bodyContent.length > 50000) {
-              bodyContent = `${bodyContent.slice(0, 10000)}\n\n[TRUNCATED_FOR_PERFORMANCE: Content > 50KB]`;
-              notify.warning(
-                t(
-                  "traffic.context_menu.body_truncated",
-                  'Body truncated for performance. Use "Map Local" for large files.',
-                ),
-              );
-            }
+            const { isEditorDirty, selectRule } = useRuleStore.getState();
+            const { showConfirm } = useUIStore.getState();
 
-            setDraftRule({
-              name: `Mock ${new URL(menuTargetFlow.url).pathname}`,
-              type: "rewrite_body",
-              match: {
-                request: [
-                  {
-                    type: "url",
-                    value: menuTargetFlow.url,
-                    matchType: "exact",
-                  },
-                  {
-                    type: "method",
-                    value: menuTargetFlow.method,
-                    matchType: "equals",
-                  },
-                ],
-                response: [],
-              },
-              actions: [
-                {
-                  type: "rewrite_body",
-                  target: "response",
-                  set: {
-                    content: bodyContent,
-                    statusCode: menuTargetFlow.statusCode,
-                    contentType:
-                      menuTargetFlow.contentType ||
-                      menuTargetFlow.responseHeaders?.["Content-Type"] ||
-                      menuTargetFlow.responseHeaders?.["content-type"],
-                  },
+            const createNewRule = () => {
+              // Truncate body if too large to prevent UI freeze
+              let bodyContent = menuTargetFlow.responseBody || "";
+              if (bodyContent.length > 50000) {
+                bodyContent = `${bodyContent.slice(0, 10000)}\n\n[TRUNCATED_FOR_PERFORMANCE: Content > 50KB]`;
+                notify.warning(
+                  t(
+                    "traffic.context_menu.body_truncated",
+                    'Body truncated for performance. Use "Map Local" for large files.',
+                  ),
+                );
+              }
+
+              selectRule(null);
+              setDraftRule({
+                name: `Mock ${new URL(menuTargetFlow.url).pathname}`,
+                type: "rewrite_body",
+                match: {
+                  request: [
+                    {
+                      type: "url",
+                      value: menuTargetFlow.url,
+                      matchType: "exact",
+                    },
+                    {
+                      type: "method",
+                      value: menuTargetFlow.method,
+                      matchType: "equals",
+                    },
+                  ],
+                  response: [],
                 },
-              ] as any,
-            });
-            setActiveTab("rules");
-            selectFlow(null);
+                actions: [
+                  {
+                    type: "rewrite_body",
+                    target: "response",
+                    set: {
+                      content: bodyContent,
+                      statusCode: menuTargetFlow.statusCode,
+                      contentType:
+                        menuTargetFlow.contentType ||
+                        menuTargetFlow.responseHeaders?.["Content-Type"] ||
+                        menuTargetFlow.responseHeaders?.["content-type"],
+                    },
+                  },
+                ] as any,
+              });
+              setActiveTab("rules");
+              selectFlow(null);
+            };
+
+            if (isEditorDirty) {
+              showConfirm({
+                title: t("rules.alerts.discard_title"),
+                message: t("rules.alerts.discard_msg"),
+                variant: "warning",
+                onConfirm: createNewRule,
+              });
+            } else {
+              createNewRule();
+            }
           },
         },
         { separator: true, label: "" },

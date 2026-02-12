@@ -3,6 +3,7 @@ import * as LucideIcons from "lucide-react";
 import { Braces, Layers, Package, Radar, SendHorizontal, Settings } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "../../hooks/useNavigate";
 import { usePluginPageStore } from "../../stores/pluginPageStore";
 import { useUIStore } from "../../stores/uiStore";
 import { IconWrapper } from "../common/IconWrapper";
@@ -16,7 +17,8 @@ interface SidebarProps {
 
 export function Sidebar({ isMacOS }: SidebarProps) {
   const { t } = useTranslation();
-  const { activeTab, setActiveTab } = useUIStore();
+  const { activeTab } = useUIStore();
+  const { navigate } = useNavigate();
   const pluginPages = usePluginPageStore((state) => state.pages);
 
   const menuItems = useMemo(
@@ -73,7 +75,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
           side="right"
         >
           <button
-            onClick={() => setActiveTab(item.id as any)}
+            onClick={() => navigate(item.id as any)}
             className="relative w-10 h-10 flex items-center justify-center group"
           >
             {activeTab === item.id && (
@@ -109,7 +111,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
 
       <Tooltip content={t("sidebar.settings")} side="right">
         <button
-          onClick={() => setActiveTab("settings")}
+          onClick={() => navigate("settings")}
           className="relative w-10 h-10 flex items-center justify-center group mb-2"
         >
           {activeTab === "settings" && (

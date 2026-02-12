@@ -52,14 +52,16 @@ export function AIAssistant({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const prevIsOpen = useRef(isOpen);
   // Clear state when closing
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen && prevIsOpen.current) {
       setPrompt("");
       setContent("");
       setView("input");
       abortChat();
     }
+    prevIsOpen.current = isOpen;
   }, [isOpen, abortChat]);
 
   if (!aiSettings.enabled) return null;

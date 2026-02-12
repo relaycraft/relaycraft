@@ -587,9 +587,10 @@
         "type": "重写模式"
       },
       "throttle": {
-        "bandwidth": "带宽限制",
-        "delay": "延迟时间",
-        "packet_loss": "丢包率"
+        "bandwidth": "带宽限制 (kbps)",
+        "delay": "延迟时间 (ms)",
+        "packet_loss": "丢包率 (%)",
+        "placeholders_unlimited": "不限制"
       }
     },
     "advanced_assistant": "高级规则助手",
@@ -660,8 +661,8 @@
       "label": "匹配规则",
       "test": {
         "label": "实时匹配测试",
-        "matched": "MATCHED",
-        "not_matched": "NOT MATCHED",
+        "matched": "匹配成功",
+        "not_matched": "未匹配",
         "placeholder": "输入一个测试 URL 以验证规则..."
       },
       "url_match_type": {

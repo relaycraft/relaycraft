@@ -148,7 +148,7 @@ export function MatchConfig({
                 </label>
                 {testUrl && (
                   <div
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5 transition-all duration-300 ${isMatch ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}
+                    className={`text-[10px] font-semibold px-1.5 py-0 rounded-full flex items-center gap-1 transition-all duration-300 ${isMatch ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}
                   >
                     {isMatch ? (
                       <CheckCircle2 className="w-2.5 h-2.5" />

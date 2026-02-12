@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "../hooks/useNavigate";
 import { notify } from "../lib/notify";
 import { useComposerStore } from "../stores/composerStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
@@ -13,6 +14,7 @@ export function useAppShortcuts() {
   const { selectedFlow, clearFlows } = useTrafficStore();
   const { running, startProxy, stopProxy } = useProxyStore();
   const { activeTab } = useUIStore();
+  const { navigate } = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -59,7 +61,7 @@ export function useAppShortcuts() {
 
         if (targetTab && activeTab !== targetTab) {
           e.preventDefault();
-          useUIStore.getState().setActiveTab(targetTab as any);
+          navigate(targetTab as any);
         }
         return;
       }
@@ -77,7 +79,9 @@ export function useAppShortcuts() {
         if (selectedFlow) {
           e.preventDefault();
           useComposerStore.getState().setComposerFromFlow(selectedFlow);
-          activeTab !== "composer" && useUIStore.getState().setActiveTab("composer");
+          if (activeTab !== "composer") {
+            navigate("composer");
+          }
           notify.success(t("traffic.context_menu.edit_composer"), {
             toastOnly: true,
           });
@@ -135,5 +139,5 @@ export function useAppShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedFlow, running, activeTab, t, clearFlows, startProxy, stopProxy]); // Dependencies updated
+  }, [selectedFlow, running, activeTab, t, clearFlows, startProxy, stopProxy, navigate]); // Dependencies updated
 }

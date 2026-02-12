@@ -89,7 +89,7 @@ export function ActionThrottle({
               const val = e.target.value;
               onChangeBandwidthKbps(val === "" ? 0 : parseInt(val, 10));
             }}
-            placeholder="Unlimited"
+            placeholder={t("rule_editor.action.throttle.placeholders_unlimited")}
             className="font-mono text-xs"
           />
         </div>

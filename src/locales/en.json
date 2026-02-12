@@ -589,7 +589,8 @@
       "throttle": {
         "bandwidth": "Bandwidth (kbps)",
         "delay": "Delay (ms)",
-        "packet_loss": "Packet Loss (%)"
+        "packet_loss": "Packet Loss (%)",
+        "placeholders_unlimited": "Unlimited"
       }
     },
     "advanced_assistant": "Advanced Assistant",
