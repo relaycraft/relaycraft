@@ -15,13 +15,13 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin --config "{\"bundle\": {\"createUpdaterArtifacts\": true}}"'
+            args: "--target aarch64-apple-darwin"
             target: 'aarch64-apple-darwin' # Apple Silicon
           - platform: 'ubuntu-22.04'
-            args: '--config "{\"bundle\": {\"createUpdaterArtifacts\": true}}"'
+            args: ""
             target: 'x86_64-unknown-linux-gnu'
           - platform: 'windows-latest'
-            args: ''
+            args: ""
             target: 'x86_64-pc-windows-msvc'
 
     runs-on: ${{ matrix.platform }}
@@ -141,12 +141,6 @@ jobs:
           # Only sign on macOS and Linux. Windows will be signed locally.
           TAURI_SIGNING_PRIVATE_KEY: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
-          # For Apple signing/notarization on macOS (if not using the manual block below for everything)
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'RelayCraft v__VERSION__'
@@ -448,6 +442,8 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
             src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage.tar.gz
             src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage.tar.gz.sig
+            src-tauri/target/${{ matrix.target }}/release/latest.json
+            src-tauri/target/${{ matrix.target }}/release/latest.json.sig
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/msi/*.msi.zip
             src-tauri/target/release/bundle/msi/*.msi.zip.sig
@@ -461,6 +457,8 @@ jobs:
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
             src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
+            src-tauri/target/release/latest.json
+            src-tauri/target/release/latest.json.sig
           if-no-files-found: warn
 
   finalize-release:
@@ -485,27 +483,19 @@ jobs:
 
       - name: Flatten Bundles
         run: |
-          echo "📦 Flattening nested artifact directories..."
-          find all-bundles -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.msi" -o -name "*.exe" -o -name "*.sig" -o -name "latest.json" \) -exec mv {} all-bundles/ \;
-          echo "Files in all-bundles:"
+          echo "📦 Collecting updater metadata..."
+          # Move latest.json files to a flat structure
+          find all-bundles -name "latest.json*" -exec mv -t all-bundles/ {} +
+          echo "Files collected for finalize:"
           ls -la all-bundles/
 
-      - name: Upload Artifacts to Release
+      - name: Upload Updater Metadata
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-             all-bundles/*.dmg
-             all-bundles/*.AppImage
-             all-bundles/*.AppImage.tar.gz
-             all-bundles/*.AppImage.tar.gz.sig
-             all-bundles/*.deb
-             all-bundles/*.msi
-             all-bundles/*.exe
-             all-bundles/*.tar.gz
-             all-bundles/*.tar.gz.sig
-             all-bundles/*.sig
              all-bundles/latest.json
-          draft: false
+             all-bundles/latest.json.sig
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

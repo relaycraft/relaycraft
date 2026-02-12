@@ -1,6 +1,9 @@
 {
   "identifier": "com.beta.relaycraft",
   "bundle": {
-    "externalBin": ["binaries/engine"]
+    "externalBin": [
+      "binaries/engine"
+    ],
+    "createUpdaterArtifacts": false
   }
 }

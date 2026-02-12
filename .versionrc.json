@@ -60,5 +60,8 @@
       "type": "ci",
       "hidden": true
     }
-  ]
+  ],
+  "hooks": {
+    "postbump": "cd src-tauri && cargo metadata --format-version 1 --offline && git add Cargo.lock"
+  }
 }

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.5](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.4...v0.99.5) (2026-02-12)
+
+
+### Features
+
+* implement splash screen and ui refinements ([bc743fb](https://github-relaycraft/relaycraft/relaycraft/commit/bc743fb5c29494f8ab4c8c755bcc2152c3ca23f6))
+* optimize resource monitoring and update har-based ui logic ([3f8c28c](https://github-relaycraft/relaycraft/relaycraft/commit/3f8c28c7eef2498d642a9c9148ef5ceac4c1772d))
+
+
+### Bug Fixes
+
+* rule editor navigation guard, AI abort logs and style refinements ([0965342](https://github-relaycraft/relaycraft/relaycraft/commit/096534248b9ed3d785226fc39dfd25aa2d9de3b4))
+
+
+### Performance Improvements
+
+* optimize frontend memory with flowIndex and flowDetail separation ([52845b8](https://github-relaycraft/relaycraft/relaycraft/commit/52845b81f45377e897dd1d2c2dbe724b7ed1dd18))
+* optimize frontend performance with version-based subscriptions, incremental sorting, filter debounce, and GPU-accelerated animations ([03e4ca0](https://github-relaycraft/relaycraft/relaycraft/commit/03e4ca06313be7d585d9156fa74e18f753c0db08))
+
 ### [0.99.4](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.3...v0.99.4) (2026-02-10)
 
 
