@@ -94,6 +94,10 @@ impl ProxyEngine for MitmproxyEngine {
         let rules_dir = crate::rules::get_rules_dir_path().map_err(AppError::Config)?;
         std::env::set_var("RELAYCRAFT_RULES_DIR", &rules_dir);
 
+        // Pass data directory to Python engine for database and bodies storage
+        let data_dir = crate::config::get_data_dir().map_err(|e| AppError::Config(e))?;
+        std::env::set_var("RELAYCRAFT_DATA_DIR", &data_dir);
+
         // Use our managed certs directory as confdir
         let cert_dir = crate::certificate::get_cert_dir().map_err(|e| AppError::Config(e))?;
 
@@ -141,6 +145,13 @@ impl ProxyEngine for MitmproxyEngine {
 
         for script in &processed_scripts {
             args.extend_from_slice(&["-s".to_string(), script.clone()]);
+        }
+
+        // Add anchor.py as the LAST script to capture final flow state after all user scripts
+        let addon_dir = self.get_addon_path(app)?.parent().unwrap().to_path_buf();
+        let anchor_path = addon_dir.join("anchor.py");
+        if anchor_path.exists() {
+            args.extend_from_slice(&["-s".to_string(), anchor_path.to_string_lossy().to_string()]);
         }
 
         // Spawn

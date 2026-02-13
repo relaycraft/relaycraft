@@ -88,12 +88,27 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
               : t("rules.summary.manual_mock"),
           }) + actionCount
         );
-      case "map_remote":
+      case "map_remote": {
+        // Safely parse URL, adding https:// prefix if missing
+        let hostname = primaryAction.targetUrl;
+        try {
+          const urlStr = primaryAction.targetUrl;
+          const url = new URL(
+            urlStr.startsWith("http://") || urlStr.startsWith("https://")
+              ? urlStr
+              : `https://${urlStr}`,
+          );
+          hostname = url.hostname;
+        } catch {
+          // If URL parsing fails, use the original targetUrl as fallback
+          hostname = primaryAction.targetUrl;
+        }
         return (
           t("rules.summary.map_remote", {
-            url: new URL(primaryAction.targetUrl).hostname,
+            url: hostname,
           }) + actionCount
         );
+      }
       case "rewrite_body": {
         const target = t(`rules.summary.types.${primaryAction.target}`);
         let typeKey = "set";

@@ -592,7 +592,7 @@ export function AIRuleAssistant({
                       <span className="text-[10px] font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded uppercase flex-shrink-0">
                         {preview.type
                           ? t(
-                              `rule_editor.core.types.${preview.type === "rewrite_header" ? "rewrite" : preview.type === "block_request" ? "block" : preview.type}.label`,
+                              `rule_editor.core.types.${preview.type === "rewrite_header" ? "rewrite" : preview.type === "block_request" ? "block" : preview.type}_label`,
                             )
                           : "UNKNOWN"}
                       </span>

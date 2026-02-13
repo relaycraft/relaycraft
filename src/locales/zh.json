@@ -728,7 +728,15 @@
       "map_remote": "重定向至: {{url}}",
       "rewrite_body": "重写{{target}}正文: {{type}}",
       "rewrite_header": "修改 {{req}} 请求头 / {{res}} 响应头",
-      "throttle": "网络延迟: {{delay}}ms"
+      "throttle": "网络延迟: {{delay}}ms",
+      "types": {
+        "request": "请求",
+        "response": "响应",
+        "set": "设置",
+        "replace": "替换",
+        "regex": "正则",
+        "json": "JSON"
+      }
     },
     "uncategorized": "未分组规则",
     "validation": {

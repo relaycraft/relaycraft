@@ -39,9 +39,10 @@ class Config:
     # Cleanup
     CLEANUP_INTERVAL = 300                 # Seconds between cleanup runs
 
-    # Database
-    DB_PATH = os.path.expanduser("~/.relaycraft/traffic.db")
-    BODY_DIR = os.path.expanduser("~/.relaycraft/bodies")
+    # Database - use RELAYCRAFT_DATA_DIR from Tauri if available, otherwise fallback to ~/.relaycraft
+    _data_dir = os.environ.get("RELAYCRAFT_DATA_DIR", os.path.expanduser("~/.relaycraft"))
+    DB_PATH = os.path.join(_data_dir, "traffic.db")
+    BODY_DIR = os.path.join(_data_dir, "bodies")
 
 
 # ==================== Database Schema ====================

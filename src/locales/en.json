@@ -728,7 +728,15 @@
       "map_remote": "Redirect to: {{url}}",
       "rewrite_body": "Rewrite {{target}} body: {{type}}",
       "rewrite_header": "Modify {{req}} req / {{res}} res headers",
-      "throttle": "Throttle: {{delay}}ms"
+      "throttle": "Throttle: {{delay}}ms",
+      "types": {
+        "request": "Request",
+        "response": "Response",
+        "set": "Set",
+        "replace": "Replace",
+        "regex": "Regex",
+        "json": "JSON"
+      }
     },
     "uncategorized": "Uncategorized Rules",
     "validation": {
