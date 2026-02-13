@@ -856,8 +856,6 @@
       "confirm_exit_desc": "关闭应用窗口时弹出确认对话框，防止误触导致代理中断",
       "language": "界面语言",
       "language_desc": "选择 RelayCraft 的显示语言",
-      "max_traffic": "最大流量记录",
-      "max_traffic_desc": "最大保留的请求数量。设为 0 表示无限制（注意内存占用）。",
       "title": "常规设置"
     },
     "network": {

@@ -30,6 +30,7 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
       await fetch(`http://127.0.0.1:${port}/_relay/resume`, {
         method: "POST",
         body: JSON.stringify({ id: flowId, modifications }),
+        cache: "no-store",
       });
     } catch (e) {
       console.error("Failed to resume breakpoint", e);

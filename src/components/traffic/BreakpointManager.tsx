@@ -19,6 +19,7 @@ export function BreakpointManager({ variant = "default" }: BreakpointManagerProp
       await fetch(`http://127.0.0.1:${port}/_relay/breakpoints`, {
         method: "POST",
         body: JSON.stringify({ action: "remove", pattern }),
+        cache: "no-store",
       });
       removeBreakpoint(id);
     } catch (e) {
@@ -31,6 +32,7 @@ export function BreakpointManager({ variant = "default" }: BreakpointManagerProp
       await fetch(`http://127.0.0.1:${port}/_relay/breakpoints`, {
         method: "POST",
         body: JSON.stringify({ action: "clear" }),
+        cache: "no-store",
       });
       breakpoints.forEach((b) => {
         removeBreakpoint(b.id);

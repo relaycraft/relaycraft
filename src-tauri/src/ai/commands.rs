@@ -11,7 +11,7 @@ pub struct AIState {
 pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, String> {
     let mut config = state.config.lock().unwrap().clone();
 
-    // Load API key from keyring
+    // Load API key from local storage
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
         config.api_key = key;
     }
@@ -38,9 +38,9 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
     // Validate configuration
     config.validate().map_err(|e| e.to_string())?;
 
-    // Store API key in keyring if provided
+    // Store API key in local storage if provided
     if !config.api_key.is_empty() {
-        log::info!("Storing API key in keyring...");
+        log::info!("Storing API key in local storage...");
         crypto::store_api_key(&config.provider, &config.api_key).map_err(|e| {
             log::error!("Failed to store API key: {}", e);
             format!("Failed to store API key: {}", e)
@@ -64,14 +64,14 @@ pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, Str
 
     log::info!("Testing AI connection. Provider: {}", config.provider);
 
-    // Load API key from keyring
+    // Load API key from local storage
     match crypto::retrieve_api_key(&config.provider) {
         Ok(key) => {
-            log::info!("Retrieved API key from keyring (length: {})", key.len());
+            log::info!("Retrieved API key from local storage (length: {})", key.len());
             config.api_key = key;
         }
         Err(e) => {
-            log::warn!("Failed to retrieve API key from keyring: {}", e);
+            log::info!("No API key found in local storage: {}", e);
         }
     }
 
@@ -107,7 +107,7 @@ pub async fn ai_chat_completion(
 ) -> Result<String, String> {
     let mut config = state.config.lock().unwrap().clone();
 
-    // Load API key from keyring
+    // Load API key from local storage
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
         config.api_key = key;
     }

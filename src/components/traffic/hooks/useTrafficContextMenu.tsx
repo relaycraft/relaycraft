@@ -37,6 +37,7 @@ export function useTrafficContextMenu() {
         await fetch(`http://127.0.0.1:${port}/_relay/breakpoints`, {
           method: "POST",
           body: JSON.stringify({ action: "add", pattern }),
+          cache: "no-store",
         });
         addBreakpoint(pattern);
       } catch (e) {

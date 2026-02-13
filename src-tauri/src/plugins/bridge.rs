@@ -1,6 +1,6 @@
 use crate::config;
 use crate::logging;
-use crate::plugins::resolve_plugin_path;
+use crate::plugins::{resolve_plugin_path, PluginCache};
 use serde::Deserialize;
 use tauri::{AppHandle, Manager};
 
@@ -32,13 +32,34 @@ pub async fn plugin_call(
     let _plugin_path = resolve_plugin_path(&plugins_dir, &payload.plugin_id)
         .ok_or_else(|| format!("Plugin not found: {}", payload.plugin_id))?;
 
-    // 2. Load manifest to check permissions
-    // In a real high-performance scenario, we'd cache this in state,
-    let plugins = crate::plugins::discover_plugins(&plugins_dir, &[]);
-    let plugin = plugins
-        .iter()
-        .find(|p| p.manifest.id == payload.plugin_id)
-        .ok_or_else(|| "Plugin manifest not found during bridge check".to_string())?;
+    // 2. Get plugin manifest from cache (or populate cache if empty)
+    let cache = app.state::<PluginCache>();
+    let plugin = {
+        let cached = cache.plugins.lock().unwrap();
+
+        // Try to find in cache
+        if let Some(p) = cached.iter().find(|p| p.manifest.id == payload.plugin_id) {
+            p.clone()
+        } else {
+            // Cache is empty or doesn't have this plugin, need to refresh
+            // Drop the lock before refreshing
+            drop(cached);
+
+            let config = config::load_config().unwrap_or_default();
+            let plugins = crate::plugins::discover_plugins(&plugins_dir, &config.enabled_plugins);
+            let plugin = plugins
+                .iter()
+                .find(|p| p.manifest.id == payload.plugin_id)
+                .ok_or_else(|| "Plugin manifest not found during bridge check".to_string())?
+                .clone();
+
+            // Update cache
+            let mut cached = cache.plugins.lock().unwrap();
+            *cached = plugins;
+
+            plugin
+        }
+    };
 
     let permissions = plugin.manifest.permissions.as_deref().unwrap_or(&[]);
 

@@ -36,23 +36,18 @@ pub fn run() {
     // Apply upstream proxy to environment if enabled
     apply_upstream_proxy(&app_config);
 
-    // Try to load API key from keyring on startup
-    // Try to load API key from keyring on startup
-    // We use the default provider from config, or fallback to 'openai' if not set yet (unlikely here as we have full app_config)
+    // Try to load API key from local storage on startup
     match ai::crypto::retrieve_api_key(&app_config.ai_config.provider) {
         Ok(key) => {
             if !key.is_empty() {
-                log::info!("Successfully loaded AI API key from system keyring");
+                log::info!("Successfully loaded AI API key from local storage");
                 app_config.ai_config.api_key = key;
             } else {
-                log::info!("AI API key in keyring is empty");
+                log::info!("AI API key in local storage is empty");
             }
         }
         Err(e) => {
-            log::warn!(
-                "Failed to hydrate AI API key from keyring on startup: {}",
-                e
-            );
+            log::info!("No AI API key found in local storage: {}", e);
         }
     }
 
@@ -114,6 +109,7 @@ pub fn run() {
         .manage(ai::AIState {
             config: Mutex::new(app_config.ai_config.clone()),
         })
+        .manage(plugins::PluginCache::default())
         .setup(move |app| {
             #[cfg(target_os = "macos")]
             {

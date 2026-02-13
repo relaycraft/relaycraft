@@ -23,7 +23,7 @@ jobs:
       # Setup Node.js
       - uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       # Install Dependencies
       - name: Install Dependencies
         run: |
@@ -60,18 +60,18 @@ jobs:
         run: |
           # Get last commit that modified THIRD-PARTY-LICENSES.md
           LAST_LICENSE_COMMIT=$(git log -1 --format=%H -- THIRD-PARTY-LICENSES.md 2>/dev/null || echo "")
-          
+
           if [ -z "$LAST_LICENSE_COMMIT" ]; then
             echo "No previous license file found, will generate"
             echo "changed=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           # Check if any dependency files changed since then
           CHANGED_FILES=$(git diff --name-only $LAST_LICENSE_COMMIT HEAD -- \
             Cargo.toml Cargo.lock package.json pnpm-lock.yaml engine-core/requirements.txt \
             2>/dev/null || echo "")
-          
+
           if [ -n "$CHANGED_FILES" ]; then
             echo "Dependencies changed since last license update:"
             echo "$CHANGED_FILES"

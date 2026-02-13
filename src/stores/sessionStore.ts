@@ -27,7 +27,9 @@ export const useSessionStore = create<SessionStore>((set) => ({
     try {
       // Request backend to export session (includes all flow details)
       const port = useSettingsStore.getState().config.proxy_port;
-      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_session`);
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_session`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Failed to export session from backend");
       }
@@ -98,6 +100,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(session.flows),
+          cache: "no-store",
         });
 
         // Convert flows to indices for frontend
@@ -142,7 +145,9 @@ export const useSessionStore = create<SessionStore>((set) => ({
     try {
       // Request backend to export HAR (includes all flow details)
       const port = useSettingsStore.getState().config.proxy_port;
-      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_har`);
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_har`, {
+        cache: "no-store",
+      });
       if (!response.ok) {
         throw new Error("Failed to export HAR from backend");
       }
@@ -199,6 +204,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(harData),
+          cache: "no-store",
         });
 
         if (response.ok) {

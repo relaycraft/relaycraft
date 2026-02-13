@@ -17,7 +17,6 @@ import type { Flow, FlowIndex } from "../types";
 // ==================== Type Definitions ====================
 
 interface TrafficStoreConfig {
-  maxIndices: number; // Maximum flow indices in memory (default: 10000)
   maxDetailCache: number; // Maximum cached details (default: 100)
   prefetchCount: number; // Prefetch count for visible area (default: 10)
 }
@@ -86,7 +85,6 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
   selectedFlow: null,
   selectedLoading: false,
   config: {
-    maxIndices: 10000,
     maxDetailCache: 100,
     prefetchCount: 10,
   },
@@ -117,10 +115,8 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
         updatedIndices = Array.from(indicesMap.values());
       }
 
-      // Enforce limit
-      if (updatedIndices.length > state.config.maxIndices) {
-        updatedIndices = updatedIndices.slice(-state.config.maxIndices);
-      }
+      // No limit - let database handle storage, frontend keeps all indices in memory
+      // This is acceptable because indices are lightweight (only metadata)
 
       return { indices: updatedIndices };
     });
@@ -216,6 +212,7 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
+      cache: "no-store",
     }).catch((err) => {
       console.error("Failed to clear backend session:", err);
     });

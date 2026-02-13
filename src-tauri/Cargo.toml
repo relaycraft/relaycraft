@@ -35,7 +35,6 @@ lazy_static = "1.4"
 log = "0.4"
 simplelog = "0.12"
 chrono = "0.4"
-keyring = { version = "3.6.3", features = ["windows-native", "apple-native", "sync-secret-service"] }
 reqwest = { version = "0.13.1", features = ["json", "gzip", "brotli", "deflate", "stream"] }
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }

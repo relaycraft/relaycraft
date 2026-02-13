@@ -94,14 +94,15 @@ export async function createNewSession(): Promise<string | null> {
 }
 
 /**
- * Fetch full flow detail from backend on demand
- */
-export async function fetchFlowDetail(id: string): Promise<Flow | null> {
-	try {
-		const detailUrl = `http://127.0.0.1:${currentPort}/_relay/detail?id=${id}`;
-		const response = await tauriFetch(detailUrl, {
-			method: "GET",
-		});
+	 * Fetch full flow detail from backend on demand
+	 */
+	export async function fetchFlowDetail(id: string): Promise<Flow | null> {
+		try {
+			const detailUrl = `http://127.0.0.1:${currentPort}/_relay/detail?id=${id}`;
+			const response = await tauriFetch(detailUrl, {
+				method: "GET",
+				cache: "no-store", // Prevent WebView2 from caching response in memory
+			});
 
 		if (response.ok) {
 			const flow = await response.json();
@@ -163,16 +164,17 @@ function processFlowHits(flow: any): Flow {
 	return { ...flow, hits: processedHits };
 }
 
-async function pollTraffic() {
-	if (isPolling) return;
-	isPolling = true;
+	async function pollTraffic() {
+		if (isPolling) return;
+		isPolling = true;
 
-	try {
-		const pollUrl = `http://127.0.0.1:${currentPort}/_relay/poll`;
+		try {
+			const pollUrl = `http://127.0.0.1:${currentPort}/_relay/poll`;
 
-		const response = await tauriFetch(`${pollUrl}?since=${lastTimestamp}`, {
-			method: "GET",
-		});
+			const response = await tauriFetch(`${pollUrl}?since=${lastTimestamp}`, {
+				method: "GET",
+				cache: "no-store", // Prevent WebView2 from caching response in memory
+			});
 
 		if (response.ok) {
 			const data = await response.json();

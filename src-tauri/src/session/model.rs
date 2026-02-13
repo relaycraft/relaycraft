@@ -131,6 +131,7 @@ pub struct RcMatchedHit {
 /// RelayCraft extension - WebSocket frame
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct RcWebSocketFrame {
     pub id: String,
     pub flow_id: String,
@@ -297,6 +298,7 @@ pub struct Session {
 // ==================== Helper Functions ====================
 
 /// Convert timestamp (milliseconds) to ISO 8601 string
+#[allow(dead_code)]
 pub fn format_timestamp(ts: f64) -> String {
     use chrono::{TimeZone, Utc};
 

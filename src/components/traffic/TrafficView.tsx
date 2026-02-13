@@ -390,7 +390,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                         {newRequestsCount > 0 ? (
                           <div className="flex items-center gap-1.5">
                             <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold">
-                              {Math.min(99, newRequestsCount)}
+                              {newRequestsCount > 99 ? "99+" : newRequestsCount}
                             </div>
                             <span>{t("traffic.new_requests", "New Requests")}</span>
                           </div>

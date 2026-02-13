@@ -856,8 +856,6 @@
       "confirm_exit_desc": "Show a confirmation dialog when closing the app to prevent accidental disruption",
       "language": "Language",
       "language_desc": "Select language for RelayCraft",
-      "max_traffic": "Max Traffic Entries",
-      "max_traffic_desc": "Max requests to keep. Set to 0 for unlimited (watch memory usage).",
       "title": "General"
     },
     "network": {

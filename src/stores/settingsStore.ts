@@ -21,7 +21,6 @@ export interface AppConfig {
   confirm_exit: boolean;
   auto_start_proxy: boolean;
   display_density: "compact" | "comfortable" | "relaxed";
-  max_traffic_entries: number;
   ai_config?: any;
 }
 
@@ -49,7 +48,6 @@ interface SettingsStore {
   updateConfirmExit: (value: boolean) => Promise<void>;
   updateAutoStartProxy: (value: boolean) => Promise<void>;
   updateDisplayDensity: (value: "compact" | "comfortable" | "relaxed") => Promise<void>;
-  updateMaxTrafficEntries: (value: number) => Promise<void>;
   testUpstreamConnectivity: () => Promise<void>;
   resetUpstreamStatus: () => void;
 }
@@ -73,7 +71,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     confirm_exit: false,
     auto_start_proxy: false,
     display_density: "comfortable",
-    max_traffic_entries: 10000,
   },
   loading: false,
   testingUpstream: false,
@@ -164,11 +161,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   updateDisplayDensity: async (value: "compact" | "comfortable" | "relaxed") => {
     const { config, saveConfig } = get();
     await saveConfig({ ...config, display_density: value });
-  },
-
-  updateMaxTrafficEntries: async (value: number) => {
-    const { config, saveConfig } = get();
-    await saveConfig({ ...config, max_traffic_entries: value });
   },
 
   testUpstreamConnectivity: async () => {

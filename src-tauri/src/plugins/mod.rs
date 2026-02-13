@@ -6,6 +6,26 @@ pub mod market;
 use crate::plugins::config::PluginInfo;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+/// Cache for plugin manifests to avoid repeated filesystem scanning
+pub struct PluginCache {
+    pub plugins: Mutex<Vec<PluginInfo>>,
+}
+
+impl Default for PluginCache {
+    fn default() -> Self {
+        Self {
+            plugins: Mutex::new(Vec::new()),
+        }
+    }
+}
+
+/// Refresh the plugin cache by scanning the filesystem
+pub fn refresh_plugin_cache(plugins_dir: &Path, enabled_ids: &[String]) -> Vec<PluginInfo> {
+    let plugins = discover_plugins(plugins_dir, enabled_ids);
+    plugins
+}
 
 pub fn discover_plugins(plugins_dir: &Path, enabled_ids: &[String]) -> Vec<PluginInfo> {
     let mut plugins = Vec::new();

@@ -1,22 +1,30 @@
-use keyring::Entry;
+/**
+ * API Key Storage - File-based Implementation
+ *
+ * Stores API keys in local files with XOR obfuscation.
+ * This approach avoids OS keyring prompts that can alarm users.
+ *
+ * Security note: XOR obfuscation is NOT encryption. The goal is to prevent
+ * accidental exposure (e.g., screen sharing), not to protect against
+ * determined attackers with file system access.
+ *
+ * For a local development tool, this is an acceptable trade-off:
+ * - Attackers with file system access already have significant control
+ * - Many dev tools (`.env` files, AWS credentials) use similar approaches
+ * - Better UX: no system prompts that alarm users
+ */
+
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 
-const SERVICE_NAME: &str = "com.beta.relaycraft";
-const API_KEY_NAME: &str = "ai_api_key";
-
 // Simple XOR key for obfuscation (not encryption, just masking)
 const MASK_KEY: u8 = 0x5A;
 
-fn get_secret_path(provider: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+fn get_secret_path(provider: &str) -> Result<PathBuf, Box<dyn Error>> {
     let dir =
         crate::config::get_data_dir().map_err(|e| format!("Failed to get data dir: {}", e))?;
-    let filename = if let Some(p) = provider {
-        format!("secrets_{}.dat", p)
-    } else {
-        "secrets.dat".to_string()
-    };
+    let filename = format!("secrets_{}.dat", provider);
     Ok(dir.join(filename))
 }
 
@@ -29,111 +37,59 @@ fn unmask_data(data: &[u8]) -> String {
     String::from_utf8(bytes).unwrap_or_default()
 }
 
-fn get_key_name(provider: &str) -> String {
-    if provider == "openai" {
-        // Legacy compatibility: use old key name for openai to avoid breaking existing users
-        API_KEY_NAME.to_string()
-    } else {
-        format!("{}_{}", API_KEY_NAME, provider)
-    }
-}
-
-/// Store API key securely in OS keyring (with file fallback)
+/// Store API key in local file (with XOR obfuscation)
 pub fn store_api_key(provider: &str, key: &str) -> Result<(), Box<dyn Error>> {
-    let key_name = get_key_name(provider);
-
     log::debug!(
-        "[KeyStore] Storing API Key (Service: {}, Provider: {}, Key Len: {})",
-        SERVICE_NAME,
+        "[KeyStore] Storing API Key (Provider: {}, Key Len: {})",
         provider,
         key.len()
     );
 
-    // 1. Try Keyring
-    let entry_res = Entry::new(SERVICE_NAME, &key_name);
-    match entry_res {
-        Ok(entry) => {
-            if let Err(e) = entry.set_password(key) {
-                log::error!("Keyring set_password failed: {}", e);
-            } else {
-                log::info!("Keyring store success");
-            }
-        }
-        Err(e) => log::error!("Keyring entry creation failed: {}", e),
-    }
-
-    // 2. Always save to local file as fallback (obfuscated)
-    if let Ok(path) = get_secret_path(Some(provider)) {
-        let masked = mask_data(key);
-        if let Err(e) = fs::write(&path, masked) {
-            log::error!("Failed to write fallback secret file: {}", e);
-        } else {
-            log::debug!("[KeyStore] File Fallback Write: SUCCESS");
-        }
-    }
+    let path = get_secret_path(provider)?;
+    let masked = mask_data(key);
+    fs::write(&path, masked)?;
+    log::info!("[KeyStore] API Key stored successfully for provider: {}", provider);
 
     Ok(())
 }
 
-/// Retrieve API key from OS keyring (or file fallback)
+/// Retrieve API key from local file
 pub fn retrieve_api_key(provider: &str) -> Result<String, Box<dyn Error>> {
-    let key_name = get_key_name(provider);
-    log::debug!(
-        "[KeyStore] Retrieving API Key (Service: {}, Provider: {})",
-        SERVICE_NAME,
-        provider
-    );
+    log::debug!("[KeyStore] Retrieving API Key (Provider: {})", provider);
 
-    // 1. Try Keyring first
-    let entry = Entry::new(SERVICE_NAME, &key_name);
-    if let Ok(ent) = entry {
-        if let Ok(pwd) = ent.get_password() {
-            log::debug!("[KeyStore] Keyring Retrieve: SUCCESS");
-            return Ok(pwd);
-        }
+    let path = get_secret_path(provider)?;
+    if !path.exists() {
+        return Err(format!("No API key found for provider: {}", provider).into());
     }
 
-    // 2. Try Fallback File (Provider specific)
-    if let Ok(path) = get_secret_path(Some(provider)) {
-        if path.exists() {
-            if let Ok(bytes) = fs::read(&path) {
-                let key = unmask_data(&bytes);
-                if !key.is_empty() {
-                    return Ok(key);
-                }
-            }
-        }
+    let bytes = fs::read(&path)?;
+    let key = unmask_data(&bytes);
+
+    if key.is_empty() {
+        return Err(format!("API key file is empty for provider: {}", provider).into());
     }
 
-    // 3. Fallback for OpenAI: Try loading legacy secrets.dat if specific failed
-    if provider == "openai" {
-        if let Ok(path) = get_secret_path(None) {
-            if path.exists() {
-                if let Ok(bytes) = fs::read(&path) {
-                    let key = unmask_data(&bytes);
-                    if !key.is_empty() {
-                        return Ok(key);
-                    }
-                }
-            }
-        }
-    }
-
-    Err(format!("No API key found for provider: {}", provider).into())
+    log::debug!("[KeyStore] API Key retrieved successfully for provider: {}", provider);
+    Ok(key)
 }
 
-/// Delete API key from OS keyring
-pub fn _delete_api_key() -> Result<(), Box<dyn Error>> {
-    let entry = Entry::new(SERVICE_NAME, API_KEY_NAME)?;
-    entry.delete_credential()?;
+/// Delete API key file
+#[allow(dead_code)]
+pub fn delete_api_key(provider: &str) -> Result<(), Box<dyn Error>> {
+    let path = get_secret_path(provider)?;
+    if path.exists() {
+        fs::remove_file(&path)?;
+        log::info!("[KeyStore] API Key deleted for provider: {}", provider);
+    }
     Ok(())
 }
 
-/// Check if API key exists in keyring
-pub fn _has_api_key() -> bool {
-    Entry::new(SERVICE_NAME, API_KEY_NAME)
-        .and_then(|e| e.get_password())
-        .is_ok()
+/// Check if API key exists
+#[allow(dead_code)]
+pub fn has_api_key(provider: &str) -> bool {
+    get_secret_path(provider)
+        .map(|p| p.exists())
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

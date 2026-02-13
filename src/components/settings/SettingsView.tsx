@@ -54,7 +54,6 @@ export function SettingsView() {
     upstreamStatus,
     testUpstreamConnectivity,
     resetUpstreamStatus,
-    updateMaxTrafficEntries,
   } = useSettingsStore();
 
   const [showLogViewer, setShowLogViewer] = React.useState(false);
@@ -168,30 +167,6 @@ export function SettingsView() {
                 <SettingsToggle
                   checked={config.auto_start_proxy}
                   onCheckedChange={(val) => updateAutoStartProxy(val)}
-                />
-              </SettingsRow>
-
-              <SettingsRow
-                title={t("settings.general.max_traffic")}
-                description={t("settings.general.max_traffic_desc")}
-              >
-                <SettingsInput
-                  value={config.max_traffic_entries || 10000}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d*$/.test(val))
-                      updateMaxTrafficEntries(val === "" ? 0 : parseInt(val, 10));
-                  }}
-                  onBlur={(e) => {
-                    let val = parseInt(e.target.value, 10);
-                    if (Number.isNaN(val)) val = 10000;
-                    // Allow 0 (unlimited)
-                    if (val !== 0) {
-                      val = Math.max(100, Math.min(100000, val));
-                    }
-                    updateMaxTrafficEntries(val);
-                  }}
-                  className="w-24"
                 />
               </SettingsRow>
             </SettingsSection>

@@ -33,7 +33,7 @@ class Config:
     MAX_PERSIST_SIZE = 50 * 1024 * 1024   # 50MB - skip persistence if larger
 
     # Limits
-    MAX_FLOWS_PER_SESSION = 100000        # Max flows per session
+    # MAX_FLOWS_PER_SESSION removed - no limit, let user's disk be the only constraint
     MAX_SESSIONS = 100                     # Max sessions to keep
 
     # Cleanup
@@ -811,7 +811,7 @@ class FlowDatabase:
             self._run_cleanup()
 
     def _run_cleanup(self):
-        """Clean up old data"""
+        """Clean up old data - only cleans up old sessions, no flow limit"""
         with self._lock:
             conn = self._get_conn()
 
@@ -826,32 +826,8 @@ class FlowDatabase:
             for row in old_sessions:
                 self.delete_session(row['id'])
 
-            # Clean up old flows in each session
-            sessions = conn.execute("SELECT id FROM sessions").fetchall()
-            for session in sessions:
-                session_id = session['id']
-
-                # Get flows to delete
-                old_flows = conn.execute("""
-                    SELECT id FROM flow_indices
-                    WHERE session_id = ?
-                    ORDER BY msg_ts DESC
-                    LIMIT -1 OFFSET ?
-                """, (session_id, Config.MAX_FLOWS_PER_SESSION)).fetchall()
-
-                if old_flows:
-                    flow_ids = [row['id'] for row in old_flows]
-
-                    # Delete body files
-                    self._delete_body_files(session_id, flow_ids)
-
-                    # Delete from database
-                    conn.execute("""
-                        DELETE FROM flow_indices WHERE id IN ({})
-                    """.format(','.join('?' * len(flow_ids))), flow_ids)
-
-                    # Update session stats
-                    self.update_session_stats(session_id)
+            # No flow limit - user's disk is the only constraint
+            # Flows are only deleted when their session is deleted
 
             conn.commit()
 

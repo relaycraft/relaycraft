@@ -39,8 +39,6 @@ pub struct AppConfig {
     #[serde(default = "default_theme_registry_url")]
     pub theme_registry_url: String,
     #[serde(default)]
-    pub max_traffic_entries: u32,
-    #[serde(default)]
     pub cert_warning_ignored: bool,
 }
 
@@ -64,10 +62,6 @@ fn default_density() -> String {
     "comfortable".to_string()
 }
 
-fn default_max_traffic() -> u32 {
-    10000
-}
-
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -84,7 +78,6 @@ impl Default for AppConfig {
             display_density: default_density(),
             plugin_registry_url: default_registry_url(),
             theme_registry_url: default_theme_registry_url(),
-            max_traffic_entries: default_max_traffic(),
             cert_warning_ignored: false,
         }
     }

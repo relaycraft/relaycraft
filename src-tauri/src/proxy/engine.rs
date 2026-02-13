@@ -93,10 +93,10 @@ impl ProxyEngine for MitmproxyEngine {
         let addon_file = self.get_addon_path(app)?;
         let rules_dir = crate::rules::get_rules_dir_path().map_err(AppError::Config)?;
         std::env::set_var("RELAYCRAFT_RULES_DIR", &rules_dir);
-        
+
         // Use our managed certs directory as confdir
         let cert_dir = crate::certificate::get_cert_dir().map_err(|e| AppError::Config(e))?;
-        
+
         let mut args = vec![
             "--flow-detail".to_string(),
             "0".to_string(),
@@ -145,7 +145,7 @@ impl ProxyEngine for MitmproxyEngine {
 
         // Spawn
         let mut cmd = StdCommand::new(&engine_path);
-        
+
         // Use standard MITMPROXY_CONFDIR env var to point to our certs directory.
         // This makes mitmproxy look for mitmproxy-ca.pem in this directory.
         cmd.env("MITMPROXY_CONFDIR", &cert_dir);
@@ -184,7 +184,7 @@ impl ProxyEngine for MitmproxyEngine {
         let mut last_log_time = std::time::Instant::now();
         let timeout = Duration::from_secs(120); // Extended to 120s for macOS Gatekeeper verification (first run)
         let mut ready = false;
-        
+
         log::info!("Waiting for proxy port {} to be ready...", port);
 
         while start_time.elapsed() < timeout {
@@ -193,7 +193,7 @@ impl ProxyEngine for MitmproxyEngine {
                 log::info!("Proxy port {} is ready (took {}ms)", port, start_time.elapsed().as_millis());
                 break;
             }
-            
+
             // Check if process crashed while waiting
             if let Some(child) = child_lock.as_mut() {
                 if let Ok(Some(status)) = child.try_wait() {
@@ -204,20 +204,20 @@ impl ProxyEngine for MitmproxyEngine {
                     return Err(AppError::Config(err_msg));
                 }
             }
-            
+
             // Periodic logging every 2 seconds
             if last_log_time.elapsed().as_secs() >= 2 {
                 let elapsed = start_time.elapsed().as_secs();
                 log::info!("Still waiting for proxy engine... ({}s elapsed)", elapsed);
-                
+
                 #[cfg(target_os = "macos")]
                 if elapsed == 10 {
-                   log::warn!("Startup is taking longer than usual. macOS might be scanning the application (Gatekeeper). Please wait..."); 
+                   log::warn!("Startup is taking longer than usual. macOS might be scanning the application (Gatekeeper). Please wait...");
                 }
 
                 last_log_time = std::time::Instant::now();
             }
-            
+
             std::thread::sleep(Duration::from_millis(200));
         }
 
@@ -250,7 +250,7 @@ impl ProxyEngine for MitmproxyEngine {
             .child
             .lock()
             .map_err(|_| AppError::Config("Lock poisoned".into()))?;
-        
+
         let port = self.inner.last_port.lock().ok().and_then(|p| *p);
 
         if let Some(mut child) = child_lock.take() {
@@ -306,7 +306,7 @@ impl ProxyEngine for MitmproxyEngine {
             .child
             .lock()
             .map_err(|_| AppError::Config("Lock poisoned".into()))?;
-        
+
         // NO PORT WAIT: Immediate kill and return
         if let Some(mut child) = child_lock.take() {
             #[cfg(target_os = "windows")]
@@ -325,7 +325,7 @@ impl ProxyEngine for MitmproxyEngine {
             {
                 let _ = child.kill();
             }
-            // Don't even wait for the child process to finish if we are in a hurry, 
+            // Don't even wait for the child process to finish if we are in a hurry,
             // but waiting on a killed process should be fast.
             let _ = child.wait();
         }
@@ -336,7 +336,7 @@ impl ProxyEngine for MitmproxyEngine {
 
         // Skip temp dir cleanup or do it? It's fs operation, might be slow?
         // Let's skip it for maximum speed on exit, OS clears temp eventually or we clean on next start.
-        
+
         Ok(())
     }
 
@@ -372,12 +372,12 @@ impl ProxyEngine for MitmproxyEngine {
         if cached_pids_lock.is_empty() || now.duration_since(*last_refresh_lock) > Duration::from_secs(30) {
             // Full refresh to discover new processes (WebView2, Proxy, etc.)
             sys.refresh_processes(ProcessesToUpdate::All, true);
-            
+
             // Strategy A: Find all descendants starting from the Current Process (Main App)
             let main_pid = sysinfo::get_current_pid().unwrap();
             let mut pids = vec![main_pid];
             let mut queue = vec![main_pid];
-            
+
             // Breadth-First Search for all descendants
             while let Some(parent_pid) = queue.pop() {
                 for (pid, process) in sys.processes() {
@@ -389,7 +389,7 @@ impl ProxyEngine for MitmproxyEngine {
                     }
                 }
             }
-            
+
             *cached_pids_lock = pids;
             *last_refresh_lock = now;
             log::debug!("Refreshed application PID tree cache: {} processes found", cached_pids_lock.len());
@@ -533,8 +533,8 @@ impl MitmproxyEngine {
                             // Process exited
                             if !inner.is_stopping.load(Ordering::SeqCst) {
                                 let msg = format!(
-                                    "CRASH: Proxy engine (PID {}) exited unexpectedly with status: {}. Check engine.log for details.", 
-                                    child.id(), 
+                                    "CRASH: Proxy engine (PID {}) exited unexpectedly with status: {}. Check engine.log for details.",
+                                    child.id(),
                                     status
                                 );
                                 log::error!("{}", msg);

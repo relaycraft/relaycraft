@@ -1,16 +1,22 @@
 use crate::config;
 use crate::logging;
-use crate::plugins::{config::PluginInfo, discover_plugins};
-use tauri::AppHandle;
+use crate::plugins::{config::PluginInfo, discover_plugins, PluginCache};
+use tauri::{AppHandle, Manager};
 
 #[tauri::command]
-pub async fn get_plugins(_app: AppHandle) -> Result<Vec<PluginInfo>, String> {
+pub async fn get_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, String> {
     let app_dir = config::get_data_dir()?;
     let plugins_dir = app_dir.join("plugins");
 
     let config = config::load_config().unwrap_or_default();
+    let plugins = discover_plugins(&plugins_dir, &config.enabled_plugins);
 
-    Ok(discover_plugins(&plugins_dir, &config.enabled_plugins))
+    // Update cache
+    let cache = app.state::<PluginCache>();
+    let mut cached = cache.plugins.lock().unwrap();
+    *cached = plugins.clone();
+
+    Ok(plugins)
 }
 
 #[tauri::command]
