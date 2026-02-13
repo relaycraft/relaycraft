@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
 import type { Session, SessionMetadata } from "../types/session";
@@ -147,6 +148,11 @@ export const useSessionStore = create<SessionStore>((set) => ({
       }
       const harData = await response.json();
 
+      // Generate filename with timestamp
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const defaultFilename = `traffic-${timestamp}.har`;
+
       const path = await save({
         filters: [
           {
@@ -154,13 +160,13 @@ export const useSessionStore = create<SessionStore>((set) => ({
             extensions: ["har"],
           },
         ],
-        defaultPath: "traffic.har",
+        defaultPath: defaultFilename,
       });
 
       if (path) {
         // Write HAR file directly as JSON
         const harContent = JSON.stringify(harData, null, 2);
-        await invoke("write_text_file", { path, content: harContent });
+        await writeTextFile(path, harContent);
       }
     } catch (error) {
       console.error("Failed to export HAR:", error);
@@ -183,8 +189,8 @@ export const useSessionStore = create<SessionStore>((set) => ({
       });
 
       if (path && typeof path === "string") {
-        // Read HAR file content
-        const harContent = await invoke<string>("read_text_file", { path });
+        // Read HAR file content using Tauri fs plugin
+        const harContent = await readTextFile(path);
         const harData = JSON.parse(harContent);
 
         // Send to backend for processing

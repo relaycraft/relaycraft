@@ -1,9 +1,14 @@
 """
-Traffic Monitor - HAR-Compatible Data Processing
+Traffic Monitor - HAR-Compatible Data Processing with SQLite Persistence
 
 This module converts mitmproxy flows to HAR-compatible format.
 All headers, cookies, and query parameters are preserved as arrays
 to support multiple values with the same name (e.g., Set-Cookie).
+
+Features:
+- SQLite persistence for all flow data
+- Session management
+- Tiered body storage (inline/compressed/file)
 
 @see https://w3c.github.io/web-performance/specs/HAR/Overview.html
 """
@@ -11,7 +16,7 @@ to support multiple values with the same name (e.g., Set-Cookie).
 import time
 import base64
 import uuid
-from collections import deque
+import json
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple, List
 
@@ -19,15 +24,22 @@ from mitmproxy import http, ctx
 
 from .debug import DebugManager
 from .utils import setup_logging
+from .flow_database import FlowDatabase
 
 
 class TrafficMonitor:
-    """Converts mitmproxy flows to HAR-compatible format."""
+    """Converts mitmproxy flows to HAR-compatible format with SQLite persistence."""
 
     def __init__(self, debug_mgr: DebugManager):
         self.logger = setup_logging()
-        self.flow_buffer: deque = deque(maxlen=10000)  # Match frontend maxIndices
         self.debug_mgr = debug_mgr
+
+        # Initialize SQLite database
+        self.db = FlowDatabase()
+        self.logger.info("FlowDatabase initialized for traffic persistence")
+
+        # Note: seq is no longer tracked in backend
+        # Frontend calculates display seq from array index (seq = index + 1)
 
     # ==================== Content Processing ====================
 
@@ -513,7 +525,7 @@ class TrafficMonitor:
                 "bodyTruncated": False,
             }
 
-            self.flow_buffer.append(flow_data)
+            self._store_flow(flow_data)
 
         except Exception as e:
             self.logger.error(f"Error processing TLS error: {e}")
@@ -525,7 +537,7 @@ class TrafficMonitor:
         flow.metadata["_relaycraft_msg_ts"] = time.time()
         flow_data = self.process_flow(flow)
         if flow_data:
-            self.flow_buffer.append(flow_data)
+            self._store_flow(flow_data)
 
     # ==================== HTTP Handlers ====================
 
@@ -563,51 +575,48 @@ class TrafficMonitor:
                 except ValueError:
                     since_ts = 0.0
 
-                # Return only lightweight indices for memory efficiency
-                indices = []
-                for f in list(self.flow_buffer):
-                    if f.get("msg_ts", 0) > since_ts:
-                        # Safely extract nested fields with None checks
-                        req = f.get("request") or {}
-                        res = f.get("response") or {}
-                        rc = f.get("_rc") or {}
+                # Get indices from database
+                db_indices = self.db.get_indices(since=since_ts)
 
-                        # Extract only the fields needed for list display
-                        indices.append({
-                            "id": f.get("id"),
-                            "seq": f.get("order", 0),
-                            "method": req.get("method", ""),
-                            "url": req.get("url", ""),
-                            "host": f.get("host", ""),
-                            "path": f.get("path", ""),
-                            "status": res.get("status", 0),
-                            "contentType": f.get("contentType", ""),
-                            "startedDateTime": f.get("startedDateTime", ""),
-                            "time": f.get("time", 0),
-                            "size": f.get("size", 0),
-                            "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool((req.get("postData") or {}).get("text")),
-                            "hasResponseBody": bool((res.get("content") or {}).get("text")),
-                            "isWebsocket": rc.get("isWebsocket", False),
-                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
-                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
-                            # Include hit metadata for list display
-                            "hits": [
-                                {
-                                    "id": h.get("id", ""),
-                                    "name": h.get("name", ""),
-                                    "type": h.get("type", ""),
-                                    "status": h.get("status"),
-                                }
-                                for h in rc.get("hits", [])
-                            ],
-                            "msg_ts": f.get("msg_ts"),
-                        })
+                # Transform to frontend format
+                # Note: seq is not included - frontend calculates from array index
+                indices = []
+                for idx in db_indices:
+                    indices.append({
+                        "id": idx.get("id"),
+                        "method": idx.get("method", ""),
+                        "url": idx.get("url", ""),
+                        "host": idx.get("host", ""),
+                        "path": idx.get("path", ""),
+                        "status": idx.get("status", 0),
+                        "contentType": idx.get("content_type", ""),
+                        "startedDateTime": idx.get("started_datetime", ""),
+                        "time": idx.get("time", 0),
+                        "size": idx.get("size", 0),
+                        "hasError": bool(idx.get("has_error")),
+                        "hasRequestBody": bool(idx.get("has_request_body")),
+                        "hasResponseBody": bool(idx.get("has_response_body")),
+                        "isWebsocket": bool(idx.get("is_websocket")),
+                        "websocketFrameCount": idx.get("websocket_frame_count", 0),
+                        "isIntercepted": bool(idx.get("is_intercepted")),
+                        "hits": idx.get("hits", []),
+                        "msg_ts": idx.get("msg_ts"),
+                    })
+
+                # Get all flow IDs for buffer_ids
+                all_indices = self.db.get_indices(since=0)
+                buffer_ids = [idx.get("id") for idx in all_indices if idx.get("id")]
+
+                # Return max msg_ts from returned indices (not current time!)
+                # This ensures we don't skip records with earlier timestamps
+                max_msg_ts = 0
+                if indices:
+                    max_msg_ts = max(idx.get("msg_ts", 0) for idx in indices)
 
                 response_data = {
                     "indices": indices,
-                    "server_ts": time.time(),
-                    "buffer_ids": [f.get("id") for f in list(self.flow_buffer) if f.get("id")]
+                    "server_ts": max_msg_ts if max_msg_ts > 0 else time.time(),
+                    "buffer_ids": buffer_ids
                 }
                 json_str = json.dumps(
                     response_data,
@@ -665,12 +674,8 @@ class TrafficMonitor:
                     )
                     return
 
-                # Find the flow in buffer
-                flow_data = None
-                for f in list(self.flow_buffer):
-                    if f.get("id") == flow_id:
-                        flow_data = f
-                        break
+                # Get flow from database
+                flow_data = self.db.get_detail(flow_id)
 
                 if not flow_data:
                     flow.response = Response.make(
@@ -697,8 +702,8 @@ class TrafficMonitor:
             except Exception as e:
                 import traceback
                 tb = traceback.format_exc()
-                print(f"RelayCraft Poll Error:\n{tb}")
-                self.logger.error(f"Error in poll handler: {tb}")
+                print(f"RelayCraft Detail Error:\n{tb}")
+                self.logger.error(f"Error in detail handler: {tb}")
                 error_resp = {"error": str(e), "traceback": tb}
                 try:
                     safe_err = json.dumps(error_resp, default=safe_json_default)
@@ -762,10 +767,164 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
+        # ==================== Session API ====================
+
+        # List sessions
+        elif "/_relay/sessions" in flow.request.path and flow.request.method == "GET":
+            try:
+                sessions = self.db.list_sessions()
+                json_str = json.dumps(sessions, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Create session
+        elif "/_relay/sessions" in flow.request.path and flow.request.method == "POST":
+            try:
+                data = json.loads(flow.request.content.decode('utf-8'))
+                session_id = self.db.create_session(
+                    name=data.get("name", "New Session"),
+                    description=data.get("description"),
+                    metadata=data.get("metadata")
+                )
+                json_str = json.dumps({"id": session_id}, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Create new session for app start (called by frontend on app launch)
+        elif "/_relay/session/new" in flow.request.path and flow.request.method == "POST":
+            try:
+                session_id = self.db.create_new_session_for_app_start()
+                json_str = json.dumps({"id": session_id}, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Switch session
+        elif "/_relay/session/activate" in flow.request.path:
+            try:
+                data = json.loads(flow.request.content.decode('utf-8'))
+                session_id = data.get("id")
+                success = self.db.switch_session(session_id)
+                json_str = json.dumps({"success": success}, ensure_ascii=False)
+                flow.response = Response.make(
+                    200 if success else 404,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Delete session
+        elif "/_relay/session/delete" in flow.request.path:
+            try:
+                data = json.loads(flow.request.content.decode('utf-8'))
+                session_id = data.get("id")
+                success = self.db.delete_session(session_id)
+                json_str = json.dumps({"success": success}, ensure_ascii=False)
+                flow.response = Response.make(
+                    200 if success else 400,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Clear session
+        elif "/_relay/session/clear" in flow.request.path:
+            try:
+                data = json.loads(flow.request.content.decode('utf-8')) if flow.request.content else {}
+                session_id = data.get("id")
+                self.db.clear_session(session_id)
+                # Reset sequence counter when clearing
+                self.reset_seq_counter()
+                flow.response = Response.make(
+                    200,
+                    b'{"success": true}',
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Get database stats
+        elif "/_relay/stats" in flow.request.path:
+            try:
+                stats = self.db.get_stats()
+                json_str = json.dumps(stats, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
         # Export session (all flows)
         elif "/_relay/export_session" in flow.request.path:
             try:
-                all_flows = list(self.flow_buffer)
+                all_flows = self.db.get_all_flows()
                 json_str = json.dumps(
                     all_flows,
                     default=safe_json_default,
@@ -789,7 +948,7 @@ class TrafficMonitor:
         # Export HAR
         elif "/_relay/export_har" in flow.request.path:
             try:
-                all_flows = list(self.flow_buffer)
+                all_flows = self.db.get_all_flows()
                 har_data = {
                     "log": {
                         "version": "1.2",
@@ -822,40 +981,38 @@ class TrafficMonitor:
             try:
                 if flow.request.method == "POST":
                     flows = json.loads(flow.request.content.decode('utf-8'))
-                    # Add flows to buffer and return indices
+                    # Import flows to database and return indices
                     indices = []
                     for idx, f in enumerate(flows):
-                        f["order"] = idx + 1
                         f["msg_ts"] = time.time() + idx * 0.001
-                        self.flow_buffer.append(f)
-                        rc = f.get("_rc", {})
+                        self.db.store_flow(f)
+                        rc = f.get("_rc", {}) or {}
                         indices.append({
                             "id": f.get("id"),
-                            "seq": idx + 1,
-                            "method": f.get("request", {}).get("method", ""),
-                            "url": f.get("request", {}).get("url", ""),
-                            "host": f.get("host", ""),
-                            "path": f.get("path", ""),
-                            "status": f.get("response", {}).get("status", 0),
-                            "contentType": f.get("contentType", ""),
-                            "startedDateTime": f.get("startedDateTime", ""),
-                            "time": f.get("time", 0),
-                            "size": f.get("size", 0),
+                            "msg_ts": f["msg_ts"],
+                            "method": (f.get("request") or {}).get("method", "") or "",
+                            "url": (f.get("request") or {}).get("url", "") or "",
+                            "host": f.get("host", "") or "",
+                            "path": f.get("path", "") or "",
+                            "status": (f.get("response") or {}).get("status", 0) or 0,
+                            "contentType": f.get("contentType", "") or "",
+                            "startedDateTime": f.get("startedDateTime", "") or "",
+                            "time": f.get("time", 0) or 0,
+                            "size": f.get("size", 0) or 0,
                             "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool(f.get("request", {}).get("postData", {}).get("text")),
-                            "hasResponseBody": bool(f.get("response", {}).get("content", {}).get("text")),
-                            "isWebsocket": rc.get("isWebsocket", False),
-                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
-                            "isIntercepted": bool(rc.get("intercept", {}).get("intercepted")),
-                            # Include hit metadata for list display
+                            "hasRequestBody": bool((f.get("request") or {}).get("postData", {}).get("text")),
+                            "hasResponseBody": bool((f.get("response") or {}).get("content", {}).get("text")),
+                            "isWebsocket": rc.get("isWebsocket", False) or False,
+                            "websocketFrameCount": rc.get("websocketFrameCount", 0) or 0,
+                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
                             "hits": [
                                 {
-                                    "id": h.get("id", ""),
-                                    "name": h.get("name", ""),
-                                    "type": h.get("type", ""),
+                                    "id": h.get("id", "") or "",
+                                    "name": h.get("name", "") or "",
+                                    "type": h.get("type", "") or "",
                                     "status": h.get("status"),
                                 }
-                                for h in rc.get("hits", [])
+                                for h in rc.get("hits", []) or []
                             ],
                         })
                     json_str = json.dumps(indices, ensure_ascii=False)
@@ -870,6 +1027,9 @@ class TrafficMonitor:
                 else:
                     flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
             except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                self.logger.error(f"Import session error: {tb}")
                 flow.response = Response.make(
                     500,
                     str(e).encode('utf-8'),
@@ -880,33 +1040,58 @@ class TrafficMonitor:
         elif "/_relay/import_har" in flow.request.path:
             try:
                 if flow.request.method == "POST":
+                    import uuid
+                    from urllib.parse import urlparse
+
                     har_data = json.loads(flow.request.content.decode('utf-8'))
                     entries = har_data.get("log", {}).get("entries", [])
                     indices = []
                     for idx, entry in enumerate(entries):
-                        entry["order"] = idx + 1
-                        entry["msg_ts"] = time.time() + idx * 0.001
-                        self.flow_buffer.append(entry)
+                        # Generate unique ID for HAR entry
+                        flow_id = str(uuid.uuid4())
+
+                        # Parse URL to extract host and path
+                        req = entry.get("request", {}) or {}
+                        url = req.get("url", "") or ""
+                        parsed = urlparse(url) if url else None
+
+                        # Transform HAR entry to internal format
+                        flow_data = {
+                            "id": flow_id,
+                            "msg_ts": time.time() + idx * 0.001,
+                            "request": req,
+                            "response": entry.get("response", {}) or {},
+                            "host": (parsed.hostname if parsed else "") or "",
+                            "path": (parsed.path if parsed else "") or "",
+                            "contentType": ((entry.get("response") or {}).get("content") or {}).get("mimeType", "") or "",
+                            "startedDateTime": entry.get("startedDateTime", "") or "",
+                            "time": entry.get("time", 0) or 0,
+                            "size": ((entry.get("response") or {}).get("content") or {}).get("size", 0) or 0,
+                            "_rc": entry.get("_rc", {}) or {},
+                        }
+
+                        self.db.store_flow(flow_data)
+
+                        # Build index for response
                         rc = entry.get("_rc", {})
                         indices.append({
-                            "id": entry.get("id"),
-                            "seq": idx + 1,
-                            "method": entry.get("request", {}).get("method", ""),
-                            "url": entry.get("request", {}).get("url", ""),
-                            "host": entry.get("host", ""),
-                            "path": entry.get("path", ""),
+                            "id": flow_id,
+                            "msg_ts": flow_data["msg_ts"],
+                            "method": req.get("method", ""),
+                            "url": url,
+                            "host": flow_data["host"],
+                            "path": flow_data["path"],
                             "status": entry.get("response", {}).get("status", 0),
-                            "contentType": entry.get("contentType", ""),
-                            "startedDateTime": entry.get("startedDateTime", ""),
-                            "time": entry.get("time", 0),
-                            "size": entry.get("size", 0),
+                            "contentType": flow_data["contentType"],
+                            "startedDateTime": flow_data["startedDateTime"],
+                            "time": flow_data["time"],
+                            "size": flow_data["size"],
                             "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool(entry.get("request", {}).get("postData", {}).get("text")),
+                            "hasRequestBody": bool(req.get("postData", {}).get("text")),
                             "hasResponseBody": bool(entry.get("response", {}).get("content", {}).get("text")),
                             "isWebsocket": rc.get("isWebsocket", False),
                             "websocketFrameCount": rc.get("websocketFrameCount", 0),
                             "isIntercepted": bool(rc.get("intercept", {}).get("intercepted")),
-                            # Include hit metadata for list display
                             "hits": [
                                 {
                                     "id": h.get("id", ""),
@@ -929,6 +1114,9 @@ class TrafficMonitor:
                 else:
                     flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
             except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                self.logger.error(f"Import HAR error: {tb}")
                 flow.response = Response.make(
                     500,
                     str(e).encode('utf-8'),
@@ -977,10 +1165,23 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
+    def _store_flow(self, flow_data: Dict) -> None:
+        """Store flow data to database.
+
+        Note: seq is no longer tracked in backend.
+        Frontend calculates display seq from array index (seq = index + 1).
+        """
+        try:
+            self.db.store_flow(flow_data)
+        except Exception as e:
+            import traceback
+            self.logger.error(f"Error storing flow to database: {e}")
+            self.logger.error(traceback.format_exc())
+
     def handle_response(self, flow: http.HTTPFlow) -> None:
         """Capture flows on response."""
         if flow.request.path.startswith("/_relay"):
             return
         flow_data = self.process_flow(flow)
         if flow_data:
-            self.flow_buffer.append(flow_data)
+            self._store_flow(flow_data)

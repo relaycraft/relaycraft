@@ -49,20 +49,20 @@ class CoreAddon:
 
             # 1. Rule Engine (Automated) - Synchronous
             self.rule_engine.handle_request(flow)
-            
+
             # We don't capture here anymore; anchor.py will handle it in the response phase.
             # EXCEPT if we are mocking a response immediately, then we should still capture.
             if flow.response:
                 flow_data = self.traffic_monitor.process_flow(flow)
                 if flow_data:
-                    self.traffic_monitor.flow_buffer.append(flow_data)
+                    self.traffic_monitor._store_flow(flow_data)
 
             # 2. Interception (Manual/Breakpoint) - Asynchronous
             if self.debug_mgr.should_intercept(flow):
                 def push_paused():
                     f_data = self.traffic_monitor.process_flow(flow)
                     if f_data:
-                        self.traffic_monitor.flow_buffer.append(f_data)
+                        self.traffic_monitor._store_flow(f_data)
 
                 coro = self.debug_mgr.wait_for_resume(flow, "request", on_pause=push_paused)
                 import inspect
@@ -75,13 +75,13 @@ class CoreAddon:
         try:
             # 1. Rule Engine response handling - Synchronous
             self.rule_engine.handle_response(flow)
-            
+
             # 2. Interception (Manual/Breakpoint) - Asynchronous
             if self.debug_mgr.should_intercept(flow):
                 def push_paused_res():
                     f_data = self.traffic_monitor.process_flow(flow)
                     if f_data:
-                        self.traffic_monitor.flow_buffer.append(f_data)
+                        self.traffic_monitor._store_flow(f_data)
 
                 coro = self.debug_mgr.wait_for_resume(flow, "response", on_pause=push_paused_res)
                 import inspect
@@ -89,7 +89,7 @@ class CoreAddon:
                     await coro
         except Exception as e:
             self.logger.error(f"Critical error in CoreAddon.response hook processing: {e}")
-        
+
         # 3. Baseline Capture - Synchronous
         # This records the state BEFORE user scripts process it (or AFTER rules)
         try:
@@ -114,17 +114,17 @@ class CoreAddon:
             path = flow.request.path or ""
             host = flow.request.host or ""
             port = flow.request.port
-            
+
             # Robust Check: Any path containing /_relay is internal
             if "/_relay" in path or path == "/cert":
                 return True
-                
+
             # Secondary check for localhost on proxy port
             is_localhost = host in ["127.0.0.1", "localhost", "::1"]
             # Dynamically check against the actual running port
             current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
             is_proxy_port = port == current_port
-            
+
             return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path == "/cert")
         except:
             return False
@@ -133,10 +133,10 @@ class CoreAddon:
         """Handle errors (e.g. connection failures)"""
         if self.is_internal_request(flow):
             return
-        
+
         err_msg = str(flow.error)
         self.logger.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
-        
+
         # Capture the error flow for the UI so it doesn't just disappear
         try:
             # Mark it as an error for the monitor
@@ -147,7 +147,7 @@ class CoreAddon:
                     "message": err_msg,
                     "errorType": "connection"
                 }
-                self.traffic_monitor.flow_buffer.append(flow_data)
+                self.traffic_monitor._store_flow(flow_data)
         except Exception as e:
             self.logger.error(f"Error capturing error flow: {e}")
 
@@ -169,12 +169,12 @@ class CoreAddon:
         try:
             count = 0
             potential_scripts = []
-            
+
             for addon in ctx.master.addons.chain:
                 # Is it a direct script?
                 if hasattr(addon, "path"):
                     potential_scripts.append(addon)
-                
+
                 # Is it a ScriptLoader? (Mitmproxy 10+)
                 a_type = type(addon).__name__
                 if "ScriptLoader" in a_type:
@@ -183,19 +183,19 @@ class CoreAddon:
                         subs = getattr(addon, attr, [])
                         if subs:
                             potential_scripts.extend(list(subs))
-            
+
             for script in potential_scripts:
                 if script is self: continue
-                
+
                 path = getattr(script, "path", None)
                 if not path: path = getattr(script, "filename", None)
-                
+
                 if path:
                     spath = str(path).lower().replace("\\", "/")
                     if "core" not in spath and "anchor.py" not in spath and "entry.py" not in spath:
                         self.wrap_script_addon(script)
                         count += 1
-                                    
+
             if count > 0:
                 self.logger.info(f"RelayCraft: Initialized tracking for {count} user scripts")
             else:

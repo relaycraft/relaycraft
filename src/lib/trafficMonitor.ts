@@ -15,8 +15,13 @@ let pollInterval: number | null = null;
 let lastTimestamp = 0;
 let isPolling = false;
 let currentPort = 9090;
+let sessionCreatedForAppStart = false; // Track if we created session for this app start
 
-export function startTrafficMonitor(port: number = 9090) {
+export function getBackendPort(): number {
+	return currentPort;
+}
+
+export async function startTrafficMonitor(port: number = 9090) {
 	if (pollInterval) {
 		Logger.debug("Traffic monitor already running, stopping existing one...");
 		clearInterval(pollInterval);
@@ -25,6 +30,23 @@ export function startTrafficMonitor(port: number = 9090) {
 
 	currentPort = port;
 	Logger.debug(`Starting traffic monitor (polling on port ${port})...`);
+
+	// Create new session on first start (app start), not on proxy restart
+	if (!sessionCreatedForAppStart) {
+		sessionCreatedForAppStart = true;
+		// Clear frontend data immediately for new session
+		// This must be done before polling starts
+		useTrafficStore.getState().clearAll();
+		lastTimestamp = 0;
+
+		// Wait for backend to be ready, then create new session
+		try {
+			await new Promise(resolve => setTimeout(resolve, 1000));
+			await createNewSession();
+		} catch (err) {
+			Logger.error("Failed to create new session on app start:", err);
+		}
+	}
 
 	// Initial poll
 	pollTraffic();
@@ -38,6 +60,36 @@ export function stopTrafficMonitor() {
 		clearInterval(pollInterval);
 		pollInterval = null;
 		Logger.debug("Traffic monitor stopped");
+	}
+}
+
+/**
+ * Create a new session for this app start
+ * Should be called once when app starts (not when proxy restarts)
+ * Note: Frontend data should be cleared BEFORE calling this function
+ */
+export async function createNewSession(): Promise<string | null> {
+	try {
+		const url = `http://127.0.0.1:${currentPort}/_relay/session/new`;
+		const response = await tauriFetch(url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: "{}",
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			Logger.info(`Created new session: ${data.id}`);
+			return data.id;
+		} else {
+			Logger.error(`Failed to create new session: ${response.status}`);
+			return null;
+		}
+	} catch (error) {
+		Logger.error("Error creating new session:", error);
+		return null;
 	}
 }
 
@@ -130,7 +182,7 @@ async function pollTraffic() {
 				if (data.indices && Array.isArray(data.indices) && data.indices.length > 0) {
 					const indices: FlowIndex[] = data.indices.map((idx: any) => ({
 						id: idx.id,
-						seq: idx.seq || 0,
+						msg_ts: idx.msg_ts || 0,
 						method: idx.method,
 						url: idx.url,
 						host: idx.host,

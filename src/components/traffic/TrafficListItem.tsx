@@ -7,6 +7,7 @@ import { Tooltip } from "../common/Tooltip";
 
 interface TrafficListItemProps {
   index: FlowIndex;
+  seq: number; // Display sequence number (calculated from array index)
   isSelected: boolean;
   idColWidth: number;
   breakpoints: Array<{ pattern: string }>;
@@ -38,6 +39,7 @@ const getHitDotColor = (hit: FlowIndexHit) => {
 export const TrafficListItem = memo(
   ({
     index,
+    seq,
     isSelected,
     idColWidth,
     breakpoints,
@@ -114,7 +116,7 @@ export const TrafficListItem = memo(
           className="text-[10px] text-right font-mono text-muted-foreground/60 select-none mr-1 transition-all"
           style={{ minWidth: idColWidth, maxWidth: idColWidth }}
         >
-          {index.seq}
+          {seq}
         </div>
 
         {/* Method Badge */}

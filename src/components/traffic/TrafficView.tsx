@@ -36,7 +36,7 @@ interface TrafficViewProps {
 
 export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const { t } = useTranslation();
-  const { indices, selectedFlow, selectFlow, nextSeq } = useTrafficStore();
+  const { indices, selectedFlow, selectFlow } = useTrafficStore();
   const { running, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
   const { breakpoints } = useBreakpointStore();
   const { setActiveTab } = useUIStore();
@@ -72,8 +72,8 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     return () => clearTimeout(timer);
   }, [filterText]);
 
-  // Dynamic width calculation for ID column
-  const idColWidth = Math.max(20, (nextSeq?.toString().length || 1) * 7 + 4);
+  // Dynamic width calculation for ID column (based on indices count)
+  const idColWidth = Math.max(20, (indices.length?.toString().length || 1) * 7 + 4);
 
   const handleScrollStateChange = (scrolling: boolean) => {
     if (scrolling) {
@@ -351,10 +351,11 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                   followOutput={"auto"}
                   atBottomStateChange={setAtBottom}
                   isScrolling={handleScrollStateChange}
-                  itemContent={(_index: number, idx: FlowIndex) => (
+                  itemContent={(index: number, idx: FlowIndex) => (
                     <TrafficListItem
                       key={idx.id}
                       index={idx}
+                      seq={index + 1}
                       isSelected={selectedFlow?.id === idx.id}
                       idColWidth={idColWidth}
                       breakpoints={breakpoints}

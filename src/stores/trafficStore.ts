@@ -9,8 +9,9 @@
  * @see src/types/flow.ts for type definitions
  */
 
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
-import { fetchFlowDetail } from "../lib/trafficMonitor";
+import { fetchFlowDetail, getBackendPort } from "../lib/trafficMonitor";
 import type { Flow, FlowIndex } from "../types";
 
 // ==================== Type Definitions ====================
@@ -40,9 +41,6 @@ interface TrafficStore {
 
   /** Configuration */
   config: TrafficStoreConfig;
-
-  /** Next sequence number for new flows */
-  nextSeq: number;
 
   // ========== Actions ==========
 
@@ -92,7 +90,6 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     maxDetailCache: 100,
     prefetchCount: 10,
   },
-  nextSeq: 1,
 
   // ========== Actions ==========
 
@@ -101,49 +98,23 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
       if (newIndices.length === 0) return state;
 
       const indicesMap = new Map(state.indices.map((i) => [i.id, i]));
-      const existingCount = indicesMap.size;
-      let currentSeq = state.nextSeq;
+      const hasNewItems = newIndices.some((idx) => !indicesMap.has(idx.id));
 
-      // Separate updates from new items
-      const newItems: FlowIndex[] = [];
-
+      // Update or add items
       newIndices.forEach((idx) => {
-        const existing = indicesMap.get(idx.id);
-        if (existing) {
-          // Update in place, preserve seq (no sort needed for updates)
-          indicesMap.set(idx.id, { ...idx, seq: existing.seq });
-        } else {
-          // New item
-          const seq = idx.seq || currentSeq;
-          newItems.push({ ...idx, seq });
-          currentSeq = Math.max(currentSeq, seq + 1);
-        }
+        indicesMap.set(idx.id, idx);
       });
-
-      // If no new items, just update existing ones (no sort needed)
-      if (newItems.length === 0) {
-        return {
-          indices: Array.from(indicesMap.values()),
-          nextSeq: currentSeq,
-        };
-      }
-
-      // Check if new items can be simply appended (most common case)
-      // New items are in order if all their seq >= last existing seq
-      const lastSeq = state.indices.length > 0 ? state.indices[state.indices.length - 1].seq : 0;
-      const allInOrder = newItems.every((item) => item.seq >= lastSeq);
 
       let updatedIndices: FlowIndex[];
 
-      if (allInOrder && existingCount > 0) {
-        // Fast path: just append new items (they're already in order)
-        // Add new items to map
-        for (const item of newItems) indicesMap.set(item.id, item);
-        updatedIndices = [...state.indices, ...newItems];
+      if (hasNewItems) {
+        // Sort by msg_ts (ascending) when new items are added
+        updatedIndices = Array.from(indicesMap.values()).sort(
+          (a, b) => (a.msg_ts || 0) - (b.msg_ts || 0),
+        );
       } else {
-        // Slow path: need full sort (rare, e.g., out-of-order seq from backend)
-        for (const item of newItems) indicesMap.set(item.id, item);
-        updatedIndices = Array.from(indicesMap.values()).sort((a, b) => a.seq - b.seq);
+        // No new items, just return updated values
+        updatedIndices = Array.from(indicesMap.values());
       }
 
       // Enforce limit
@@ -151,10 +122,7 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
         updatedIndices = updatedIndices.slice(-state.config.maxIndices);
       }
 
-      return {
-        indices: updatedIndices,
-        nextSeq: currentSeq,
-      };
+      return { indices: updatedIndices };
     });
   },
 
@@ -233,13 +201,23 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
   },
 
   clearAll: () => {
+    // Clear frontend state
     set({
       indices: [],
       detailCache: new Map(),
       cacheOrder: [],
       interceptedFlows: new Map(),
       selectedFlow: null,
-      nextSeq: 1,
+    });
+
+    // Also clear backend database
+    const port = getBackendPort();
+    tauriFetch(`http://127.0.0.1:${port}/_relay/session/clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }).catch((err) => {
+      console.error("Failed to clear backend session:", err);
     });
   },
 

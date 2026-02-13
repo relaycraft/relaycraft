@@ -96,7 +96,6 @@ pub fn har_entry_to_flow(entry: &HarEntry) -> Flow {
 
     Flow {
         id: uuid::Uuid::new_v4().to_string(),
-        seq: 0,
         started_date_time: entry.startedDateTime.clone(),
         time: entry.time,
         request: FlowRequest {
@@ -237,7 +236,6 @@ mod tests {
     fn test_flow_to_har_conversion() {
         let flow = Flow {
             id: "test-id".to_string(),
-            seq: 1,
             started_date_time: "2024-01-01T00:00:00Z".to_string(),
             time: 150.0,
             request: FlowRequest {
@@ -297,7 +295,6 @@ mod tests {
     fn test_multiple_headers_preserved() {
         let flow = Flow {
             id: "test".to_string(),
-            seq: 0,
             started_date_time: "2024-01-01T00:00:00Z".to_string(),
             time: 0.0,
             request: FlowRequest {

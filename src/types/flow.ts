@@ -253,7 +253,7 @@ export interface Flow {
  */
 export interface FlowIndex {
   id: string;
-  seq: number; // 自增序列号，用于默认排序
+  msg_ts?: number; // Timestamp for sorting (from backend)
 
   // 请求摘要
   method: string;

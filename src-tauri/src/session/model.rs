@@ -252,7 +252,6 @@ pub struct FlowResponse {
 pub struct Flow {
     // Identity
     pub id: String,
-    pub seq: i32, // Auto-increment sequence number for default sorting
 
     // HAR standard fields
     pub started_date_time: String,
@@ -319,7 +318,6 @@ mod tests {
     fn test_flow_structure() {
         let flow = Flow {
             id: "test-id".to_string(),
-            seq: 1,
             started_date_time: "2024-01-01T00:00:00Z".to_string(),
             time: 100.0,
             request: FlowRequest {
@@ -366,7 +364,6 @@ mod tests {
         };
 
         assert_eq!(flow.id, "test-id");
-        assert_eq!(flow.seq, 1);
         assert_eq!(flow.request.method, "GET");
         assert_eq!(flow.request.headers.len(), 1);
         assert_eq!(flow.request.headers[0].name, "Host");
