@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.6](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.5...v0.99.6) (2026-02-13)
+
+
+### Features
+
+* add SQLite persistence for traffic data with session management ([ff912f3](https://github-relaycraft/relaycraft/relaycraft/commit/ff912f30eb721cdd7f88e2c723b7e21887deb4d0))
+
+
+### Bug Fixes
+
+* URL parsing and i18n path issues, unify data storage directory ([1650705](https://github-relaycraft/relaycraft/relaycraft/commit/1650705dc595d684643dda4dbbbe905be2894bdf))
+
 ### [0.99.5](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.4...v0.99.5) (2026-02-12)
 
 
