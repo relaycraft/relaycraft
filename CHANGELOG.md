@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.7](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.6...v0.99.7) (2026-02-14)
+
 ### [0.99.6](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.5...v0.99.6) (2026-02-13)
 
 

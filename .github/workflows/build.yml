@@ -40,7 +40,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+
+      - name: Configure pnpm store
+        shell: bash
+        run: pnpm config set store-dir .pnpm-store
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: ${{ runner.os }}-pnpm-local-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-local-store-
 
       - name: Install Frontend Dependencies
         run: pnpm install
@@ -66,15 +77,44 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: 'engine-core/requirements.txt'
+
+      - name: Get Pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          # Robust check for pip cache dir
+          DIR=$(python -m pip cache dir 2>/dev/null || echo "")
+          if [ -z "$DIR" ]; then
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              DIR="${LOCALAPPDATA//\\//}/pip/Cache"
+            elif [[ "$RUNNER_OS" == "macOS" ]]; then
+              DIR="$HOME/Library/Caches/pip"
+            else
+              DIR="$HOME/.cache/pip"
+            fi
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Setup Pip cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-v4-${{ hashFiles('engine-core/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-v4-
 
       - name: Install Python Dependencies
+        shell: bash
         run: |
-          pip install -r engine-core/requirements.txt
+          # Minimal recovery for corrupted Windows toolcache
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python -m ensurepip --upgrade || true
+            python -m pip install --upgrade pip || true
+          fi
+          python -m pip install -r engine-core/requirements.txt
 
       - name: Install Linux Dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev \
@@ -94,7 +134,7 @@ jobs:
           python engine-core/build.py
 
       - name: Prepare Sidecar (Windows)
-        if: matrix.platform == 'windows-latest'
+        if: runner.os == 'Windows'
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path src-tauri/binaries
@@ -102,7 +142,7 @@ jobs:
           ls src-tauri/binaries
 
       - name: Prepare Sidecar (Linux)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: runner.os == 'Linux'
         run: |
           mkdir -p src-tauri/binaries
           mv engine-core/dist/engine src-tauri/binaries/engine-${{ matrix.target }}
@@ -110,7 +150,7 @@ jobs:
           ls -l src-tauri/binaries
 
       - name: Prepare Sidecar (macOS)
-        if: matrix.platform == 'macos-latest'
+        if: runner.os == 'macOS'
         run: |
           mkdir -p src-tauri/resources/engine
           # macOS build.py output is 'onedir' in engine-core/dist/engine (folder)
@@ -124,7 +164,7 @@ jobs:
 
       # --- macOS Code Signing ---
       - name: Import Code-Signing Certificates (macOS)
-        if: matrix.platform == 'macos-latest'
+        if: runner.os == 'macOS'
         uses: apple-actions/import-codesign-certs@v2
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
@@ -157,23 +197,23 @@ jobs:
           $VERSION = (Get-Content package.json | ConvertFrom-Json).version
           $NSIS_PATH = "src-tauri/target/release/bundle/nsis"
           $MSI_PATH = "src-tauri/target/release/bundle/msi"
-          
+
           # Find the actual files (using wildcards to handle potential architecture naming)
           $EXE = Get-ChildItem "$NSIS_PATH/*.exe" | Select-Object -First 1
           $MSI = Get-ChildItem "$MSI_PATH/*.msi" | Select-Object -First 1
-          
+
           if ($EXE -and $MSI) {
             echo "🔍 Authenticode Signing: $($EXE.Name) and $($MSI.Name)"
             # 1. Authenticode Sign
             signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
             signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
-            
+
             echo "🔍 Regenerating Tauri Updater Signatures (.sig)"
             # 2. Regenerate Tauri Updater Signatures (.sig)
             # The binaries have been modified by signtool, so we MUST re-sign for the updater.
             npx tauri signer sign -w $EXE.FullName
             npx tauri signer sign -w $MSI.FullName
-            
+
             echo "✅ Windows signing and signature regeneration complete!"
           } else {
             echo "❌ ERROR: Could not find EXE or MSI to sign!"
@@ -182,7 +222,7 @@ jobs:
 
       # --- Post-Build macOS Signing & Notarization ---
       - name: Sign and Notarize macOS App
-        if: matrix.platform == 'macos-latest'
+        if: runner.os == 'macOS'
         run: |
           # ============================================================
           # DETERMINISTIC PATH RELOCATION (Fix for CI confusion)
@@ -517,11 +557,11 @@ jobs:
           echo "📦 Collecting all bundles and metadata..."
           # Move all files from subdirectories (created by download-artifact pattern) to the root of all-bundles
           find all-bundles -type f -mindepth 2 -exec mv -t all-bundles/ {} +
-          
+
           # Use the helper script to generate a unified latest.json
           VERSION=$(node -p "require('./package.json').version")
           node scripts/generate-update-json.cjs all-bundles $VERSION
-          
+
           echo "Files collected and metadata generated:"
           ls -la all-bundles/
 
