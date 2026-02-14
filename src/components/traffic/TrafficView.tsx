@@ -37,7 +37,8 @@ interface TrafficViewProps {
 export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const { t } = useTranslation();
   const { indices, selectedFlow, selectFlow } = useTrafficStore();
-  const { running, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
+  const { running, active, certTrusted, certWarningIgnored, setCertWarningIgnored } =
+    useProxyStore();
   const { breakpoints } = useBreakpointStore();
   const { setActiveTab } = useUIStore();
 
@@ -259,7 +260,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                     }}
                     animation="pulse"
                   />
-                ) : !running ? (
+                ) : !active ? (
                   <EmptyState
                     icon={Activity}
                     title={t("traffic.proxy_stopped")}

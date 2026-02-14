@@ -7,6 +7,7 @@
 
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useRuleStore } from "../stores/ruleStore";
+import { useSessionStore } from "../stores/sessionStore";
 import { useTrafficStore } from "../stores/trafficStore";
 import type { FlowIndex, Flow, RcMatchedHit } from "../types";
 import { Logger } from "./logger";
@@ -31,20 +32,21 @@ export async function startTrafficMonitor(port: number = 9090) {
 	currentPort = port;
 	Logger.debug(`Starting traffic monitor (polling on port ${port})...`);
 
-	// Create new session on first start (app start), not on proxy restart
+	// Don't call clearAll() on startup! That was wiping the backend.
+	// Only clear frontend state if this is the first time we're starting monitoring
 	if (!sessionCreatedForAppStart) {
 		sessionCreatedForAppStart = true;
-		// Clear frontend data immediately for new session
-		// This must be done before polling starts
-		useTrafficStore.getState().clearAll();
+		useTrafficStore.getState().clearLocal();
 		lastTimestamp = 0;
 
-		// Wait for backend to be ready, then create new session
+		// Create session immediately (don't wait)
 		try {
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			await createNewSession();
+			const newSessionId = await createNewSession();
+			if (newSessionId) {
+				Logger.info(`Created new session: ${newSessionId}`);
+			}
 		} catch (err) {
-			Logger.error("Failed to create new session on app start:", err);
+			Logger.error("Failed to create new session on proxy start:", err);
 		}
 	}
 
@@ -64,8 +66,15 @@ export function stopTrafficMonitor() {
 }
 
 /**
- * Create a new session for this app start
- * Should be called once when app starts (not when proxy restarts)
+ * Reset the session creation flag (called when app fully restarts)
+ */
+export function resetSessionFlag() {
+	sessionCreatedForAppStart = false;
+}
+
+/**
+ * Create a new session for this proxy start
+ * Should be called once when proxy starts (not when app starts)
  * Note: Frontend data should be cleared BEFORE calling this function
  */
 export async function createNewSession(): Promise<string | null> {
@@ -81,8 +90,13 @@ export async function createNewSession(): Promise<string | null> {
 
 		if (response.ok) {
 			const data = await response.json();
-			Logger.info(`Created new session: ${data.id}`);
-			return data.id;
+			const newSessionId = data.id;
+			Logger.info(`Created new session: ${newSessionId}`);
+			// Update sessionStore with the new session
+			await useSessionStore.getState().fetchDbSessions();
+			// Switch to the new session
+			useSessionStore.setState({ showSessionId: newSessionId });
+			return newSessionId;
 		} else {
 			Logger.error(`Failed to create new session: ${response.status}`);
 			return null;
@@ -96,13 +110,13 @@ export async function createNewSession(): Promise<string | null> {
 /**
 	 * Fetch full flow detail from backend on demand
 	 */
-	export async function fetchFlowDetail(id: string): Promise<Flow | null> {
-		try {
-			const detailUrl = `http://127.0.0.1:${currentPort}/_relay/detail?id=${id}`;
-			const response = await tauriFetch(detailUrl, {
-				method: "GET",
-				cache: "no-store", // Prevent WebView2 from caching response in memory
-			});
+export async function fetchFlowDetail(id: string): Promise<Flow | null> {
+	try {
+		const detailUrl = `http://127.0.0.1:${currentPort}/_relay/detail?id=${id}`;
+		const response = await tauriFetch(detailUrl, {
+			method: "GET",
+			cache: "no-store", // Prevent WebView2 from caching response in memory
+		});
 
 		if (response.ok) {
 			const flow = await response.json();
@@ -164,17 +178,19 @@ function processFlowHits(flow: any): Flow {
 	return { ...flow, hits: processedHits };
 }
 
-	async function pollTraffic() {
-		if (isPolling) return;
-		isPolling = true;
+async function pollTraffic() {
+	if (isPolling) return;
+	isPolling = true;
 
-		try {
-			const pollUrl = `http://127.0.0.1:${currentPort}/_relay/poll`;
+	try {
+		// Always poll the current (writing) session
+		// The frontend decides what to display based on showSessionId
+		const pollUrl = `http://127.0.0.1:${currentPort}/_relay/poll`;
 
-			const response = await tauriFetch(`${pollUrl}?since=${lastTimestamp}`, {
-				method: "GET",
-				cache: "no-store", // Prevent WebView2 from caching response in memory
-			});
+		const response = await tauriFetch(`${pollUrl}?since=${lastTimestamp}`, {
+			method: "GET",
+			cache: "no-store", // Prevent WebView2 from caching response in memory
+		});
 
 		if (response.ok) {
 			const data = await response.json();
@@ -209,7 +225,14 @@ function processFlowHits(flow: any): Flow {
 						})),
 					}));
 
-					useTrafficStore.getState().addIndices(indices);
+					// Only update UI if we're viewing the current (writing) session
+					const { dbSessions, showSessionId } = useSessionStore.getState();
+					const writingSession = dbSessions.find(s => s.is_active === 1);
+					const isViewingCurrent = !writingSession || writingSession.id === showSessionId;
+
+					if (isViewingCurrent) {
+						useTrafficStore.getState().addIndices(indices);
+					}
 				}
 
 				// Update timestamp

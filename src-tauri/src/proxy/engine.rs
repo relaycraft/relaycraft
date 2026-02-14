@@ -15,6 +15,7 @@ use tauri::{AppHandle, Manager};
 /// Summary of proxy status
 pub struct ProxyStatus {
     pub running: bool,
+    pub active: bool,  // Whether traffic is being processed
     pub active_scripts: Vec<String>,
 }
 
@@ -35,6 +36,7 @@ pub trait ProxyEngine: Send + Sync {
     fn terminate(&self) -> Result<(), AppError>;
     fn get_status(&self) -> ProxyStatus;
     fn get_stats(&self, system: &mut sysinfo::System) -> Result<EngineStats, AppError>;
+    fn set_active(&self, active: bool) -> Result<(), AppError>;
 }
 
 struct EngineInner {
@@ -44,6 +46,8 @@ struct EngineInner {
     pub is_stopping: AtomicBool,
     pub cached_pids: Mutex<Vec<sysinfo::Pid>>,
     pub last_pid_refresh: Mutex<std::time::Instant>,
+    /// Whether traffic should be processed (vs just dropped)
+    pub traffic_active: AtomicBool,
 }
 
 /// Current implementation using mitmproxy (via engine.exe)
@@ -61,6 +65,7 @@ impl MitmproxyEngine {
                 is_stopping: AtomicBool::new(false),
                 cached_pids: Mutex::new(Vec::new()),
                 last_pid_refresh: Mutex::new(std::time::Instant::now() - std::time::Duration::from_secs(60)),
+                traffic_active: AtomicBool::new(false),  // Start inactive
             }),
         }
     }
@@ -365,10 +370,45 @@ impl ProxyEngine for MitmproxyEngine {
             *child_lock = None;
         }
 
+        let active = self.inner.traffic_active.load(Ordering::SeqCst);
+
         ProxyStatus {
             running,
+            active,
             active_scripts: if running { active_lock.clone() } else { vec![] },
         }
+    }
+
+    fn set_active(&self, active: bool) -> Result<(), AppError> {
+        self.inner.traffic_active.store(active, Ordering::SeqCst);
+        log::info!("Traffic active state changed to: {}", active);
+
+        // Notify Python engine via HTTP API
+        let port = self.inner.last_port.lock().map_err(|_| AppError::Config("Lock poisoned".into()))?;
+        if let Some(port) = *port {
+            let url = format!("http://127.0.0.1:{}/_relay/traffic_active", port);
+            let body = serde_json::json!({"active": active}).to_string();
+
+            // Use reqwest in a spawned task (async)
+            let url_clone = url.clone();
+            let body_clone = body.clone();
+            tokio::spawn(async move {
+                let client = reqwest::Client::new();
+                match client
+                    .post(&url_clone)
+                    .header("Content-Type", "application/json")
+                    .body(body_clone)
+                    .timeout(std::time::Duration::from_secs(5))
+                    .send()
+                    .await
+                {
+                    Ok(resp) => log::debug!("Traffic active API response: {:?}", resp.status()),
+                    Err(e) => log::warn!("Failed to notify Python about traffic active state: {}", e),
+                }
+            });
+        }
+
+        Ok(())
     }
 
     fn get_stats(&self, sys: &mut sysinfo::System) -> Result<EngineStats, AppError> {

@@ -40,9 +40,11 @@ class Config:
     CLEANUP_INTERVAL = 300                 # Seconds between cleanup runs
 
     # Database - use RELAYCRAFT_DATA_DIR from Tauri if available, otherwise fallback to ~/.relaycraft
+    # All traffic-related data (database and bodies) is stored in a dedicated 'traffic' subdirectory
     _data_dir = os.environ.get("RELAYCRAFT_DATA_DIR", os.path.expanduser("~/.relaycraft"))
-    DB_PATH = os.path.join(_data_dir, "traffic.db")
-    BODY_DIR = os.path.join(_data_dir, "bodies")
+    _traffic_dir = os.path.join(_data_dir, "traffic")
+    DB_PATH = os.path.join(_traffic_dir, "traffic.db")
+    BODY_DIR = os.path.join(_traffic_dir, "bodies")
 
 
 # ==================== Database Schema ====================
@@ -120,6 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_indices_session_ts ON flow_indices(session_id, ms
 CREATE INDEX IF NOT EXISTS idx_indices_session_host ON flow_indices(session_id, host);
 CREATE INDEX IF NOT EXISTS idx_indices_session_status ON flow_indices(session_id, status);
 CREATE INDEX IF NOT EXISTS idx_details_session ON flow_details(session_id);
+CREATE INDEX IF NOT EXISTS idx_details_id ON flow_details(id);
 CREATE INDEX IF NOT EXISTS idx_bodies_flow ON flow_bodies(flow_id);
 """
 
@@ -148,10 +151,9 @@ class FlowDatabase:
         # Initialize database
         self._init_db()
 
-        # Get or create active session
-        # Frontend decides when to create new session via API
-        # Backend just uses whatever session is currently active
-        self._current_session_id = self._get_active_session_id()
+        # Get or reuse active session (don't create new one here)
+        # Frontend calls create_new_session_for_app_start() on app launch
+        self._current_session_id = self._get_or_reuse_session_id()
 
         # Cleanup old sessions (keep 5 most recent, delete after 7 days)
         self._cleanup_old_sessions(keep_count=5, max_age_days=7)
@@ -159,25 +161,24 @@ class FlowDatabase:
         # Last cleanup time
         self._last_cleanup = time.time()
 
-    def _get_active_session_id(self) -> str:
-        """Get current active session ID, or create default if none exists.
+    def _get_or_reuse_session_id(self) -> str:
+        """Get or reuse session ID without creating new one.
 
-        Backend always reuses existing active session.
-        Frontend calls create_new_session_for_app_start() on app launch to create new session.
-        This gives clear semantics:
-        - App restart (close & reopen) = new session (frontend triggers)
-        - Proxy restart (stop & start) = same session (backend reuses)
+        Called during backend initialization. Will return existing active session
+        if available, otherwise returns None (frontend will create one).
         """
         conn = self._get_conn()
+
+        # Check for active session
         row = conn.execute("""
             SELECT id FROM sessions WHERE is_active = 1 LIMIT 1
         """).fetchone()
 
         if row:
             return row[0]
-        else:
-            # No active session - create default
-            return self._create_new_session()
+
+        # No active session - return None, frontend will create one
+        return None
 
     def create_new_session_for_app_start(self) -> str:
         """Create a new session when app starts (called from frontend).
@@ -199,6 +200,12 @@ class FlowDatabase:
             self._local.conn.execute("PRAGMA journal_mode=WAL")
             self._local.conn.execute("PRAGMA synchronous=NORMAL")
             self._local.conn.execute("PRAGMA foreign_keys=ON")
+            # Performance optimizations for large databases
+            self._local.conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+            self._local.conn.execute("PRAGMA mmap_size=268435456")  # 256MB memory-mapped I/O
+            self._local.conn.execute("PRAGMA temp_store=MEMORY")  # Store temp tables in memory
+            # Optimize WAL checkpoint - auto-checkpoint every 1000 pages
+            self._local.conn.execute("PRAGMA wal_autocheckpoint=1000")
         return self._local.conn
 
     def _init_db(self):
@@ -285,23 +292,27 @@ class FlowDatabase:
         """
         from datetime import datetime
 
-        conn = self._get_conn()
-        now = time.time()
+        with self._lock:
+            conn = self._get_conn()
+            now = time.time()
 
-        # Generate session name with timestamp
-        dt = datetime.fromtimestamp(now)
-        session_name = f"Session {dt.strftime('%Y-%m-%d %H:%M')}"
-        session_id = f"s_{int(now * 1000)}"
+            # Generate session name with timestamp
+            dt = datetime.fromtimestamp(now)
+            session_name = f"Session {dt.strftime('%Y-%m-%d %H:%M')}"
+            session_id = f"s_{int(now * 1000)}"
 
-        # Deactivate all existing sessions
-        conn.execute("UPDATE sessions SET is_active = 0")
+            # Deactivate all existing sessions
+            conn.execute("UPDATE sessions SET is_active = 0")
 
-        # Create new active session
-        conn.execute("""
-            INSERT INTO sessions (id, name, created_at, updated_at, is_active)
-            VALUES (?, ?, ?, ?, 1)
-        """, (session_id, session_name, now, now))
-        conn.commit()
+            # Create new active session
+            conn.execute("""
+                INSERT INTO sessions (id, name, created_at, updated_at, is_active)
+                VALUES (?, ?, ?, ?, 1)
+            """, (session_id, session_name, now, now))
+            conn.commit()
+
+            # Update cached session ID
+            self._current_session_id = session_id
 
         return session_id
 
@@ -354,22 +365,6 @@ class FlowDatabase:
 
         return deleted_count
 
-    def _ensure_default_session(self):
-        """Ensure default session exists and is active"""
-        conn = self._get_conn()
-        cursor = conn.execute("SELECT id FROM sessions WHERE id = 'default'")
-        if not cursor.fetchone():
-            now = time.time()
-            conn.execute("""
-                INSERT INTO sessions (id, name, created_at, updated_at, is_active)
-                VALUES ('default', 'Default Session', ?, ?, 1)
-            """, (now, now))
-        else:
-            # Ensure default session is active
-            conn.execute("UPDATE sessions SET is_active = 0")
-            conn.execute("UPDATE sessions SET is_active = 1 WHERE id = 'default'")
-        conn.commit()
-
     # ==================== Session Management ====================
 
     def _get_session_id(self, session_id: str = None) -> str:
@@ -380,10 +375,12 @@ class FlowDatabase:
         if hasattr(self, '_current_session_id') and self._current_session_id:
             return self._current_session_id
         active_session = self.get_active_session()
-        if not active_session:
-            self._ensure_default_session()
-            active_session = self.get_active_session()
-        return active_session['id']
+        if active_session:
+            self._current_session_id = active_session['id']
+            return self._current_session_id
+        # No active session - return None, let frontend create one
+        # Frontend calls create_new_session_for_app_start() on app launch
+        return None
 
     def create_session(self, name: str, description: str = None, metadata: dict = None) -> str:
         """Create a new session"""
@@ -433,20 +430,43 @@ class FlowDatabase:
         return True
 
     def list_sessions(self) -> List[Dict]:
-        """List all sessions"""
+        """List all sessions with real-time flow counts"""
         conn = self._get_conn()
         rows = conn.execute("""
-            SELECT * FROM sessions ORDER BY updated_at DESC
+            SELECT
+                s.id, s.name, s.description, s.created_at, s.updated_at,
+                s.metadata, s.is_active,
+                COALESCE(f.flow_count, 0) as flow_count,
+                COALESCE(f.total_size, 0) as total_size
+            FROM sessions s
+            LEFT JOIN (
+                SELECT session_id, COUNT(*) as flow_count, SUM(size) as total_size
+                FROM flow_indices
+                GROUP BY session_id
+            ) f ON s.id = f.session_id
+            ORDER BY s.created_at DESC
         """).fetchall()
         return [dict(row) for row in rows]
 
     def delete_session(self, session_id: str) -> bool:
-        """Delete a session and all its flows"""
+        """Delete a session and all its flows.
+
+        Cannot delete the currently active session (is_active = 1).
+        """
         if session_id == 'default':
             return False
 
         with self._lock:
             conn = self._get_conn()
+
+            # Check if this is the active session
+            active_row = conn.execute(
+                "SELECT id FROM sessions WHERE id = ? AND is_active = 1",
+                (session_id,)
+            ).fetchone()
+            if active_row:
+                # Cannot delete active session
+                return False
 
             # Get flow IDs for file cleanup
             flow_ids = [
@@ -471,10 +491,9 @@ class FlowDatabase:
             conn.execute("""
                 UPDATE sessions SET
                     flow_count = (SELECT COUNT(*) FROM flow_indices WHERE session_id = ?),
-                    total_size = (SELECT COALESCE(SUM(size), 0) FROM flow_indices WHERE session_id = ?),
-                    updated_at = ?
+                    total_size = (SELECT COALESCE(SUM(size), 0) FROM flow_indices WHERE session_id = ?)
                 WHERE id = ?
-            """, (session_id, session_id, time.time(), session_id))
+            """, (session_id, session_id, session_id))
             conn.commit()
 
     # ==================== Flow Storage ====================
@@ -486,6 +505,10 @@ class FlowDatabase:
         Returns True if successful.
         """
         session_id = self._get_session_id(session_id)
+
+        # If no session exists, skip storing (frontend will create one)
+        if not session_id:
+            return False
 
         flow_id = flow_data.get('id')
         if not flow_id:
@@ -679,8 +702,18 @@ class FlowDatabase:
 
         Seq numbers are NOT included - frontend calculates them based on array position.
         Ordering is by msg_ts ascending (oldest first).
+
+        Args:
+            session_id: If provided, query this specific session. Otherwise use current active session.
+            since: Only return flows with msg_ts >= since
+            limit: Maximum number of results
         """
-        session_id = self._get_session_id(session_id)
+        # Only use _get_session_id if no session_id is provided
+        if session_id is None:
+            session_id = self._get_session_id(session_id)
+            if session_id is None:
+                # No active session, return empty
+                return []
 
         conn = self._get_conn()
 
@@ -726,8 +759,10 @@ class FlowDatabase:
         """Get full flow detail, loading bodies as needed"""
         conn = self._get_conn()
 
+        # Only select needed columns for better performance
         row = conn.execute("""
-            SELECT * FROM flow_details WHERE id = ?
+            SELECT id, session_id, data, request_body_ref, response_body_ref
+            FROM flow_details WHERE id = ?
         """, (flow_id,)).fetchone()
 
         if not row:
@@ -735,29 +770,52 @@ class FlowDatabase:
 
         flow_data = json.loads(row['data'])
         session_id = row['session_id']
+        req_ref = row['request_body_ref']
+        res_ref = row['response_body_ref']
+
+        # Batch load compressed bodies in a single query for better performance
+        compressed_bodies = {}
+        if (req_ref == 'compressed' or res_ref == 'compressed'):
+            body_rows = conn.execute("""
+                SELECT type, data FROM flow_bodies WHERE flow_id = ?
+            """, (flow_id,)).fetchall()
+            for body_row in body_rows:
+                compressed_bodies[body_row['type']] = body_row['data']
 
         # Restore request body
-        req_ref = row['request_body_ref']
         if req_ref and req_ref != 'inline':
-            body = self._load_body(conn, flow_id, session_id, req_ref, 'request')
+            body = self._load_body(conn, flow_id, session_id, req_ref, 'request', compressed_bodies)
             if body and flow_data.get('request', {}).get('postData'):
                 flow_data['request']['postData']['text'] = body
 
         # Restore response body
-        res_ref = row['response_body_ref']
         if res_ref and res_ref != 'inline':
-            body = self._load_body(conn, flow_id, session_id, res_ref, 'response')
+            body = self._load_body(conn, flow_id, session_id, res_ref, 'response', compressed_bodies)
             if body and flow_data.get('response', {}).get('content'):
                 flow_data['response']['content']['text'] = body
 
         return flow_data
 
-    def _load_body(self, conn, flow_id: str, session_id: str, ref: str, body_type: str) -> Optional[str]:
-        """Load body from appropriate storage"""
+    def _load_body(self, conn, flow_id: str, session_id: str, ref: str, body_type: str,
+                   compressed_bodies: Dict = None) -> Optional[str]:
+        """Load body from appropriate storage
+
+        Args:
+            conn: Database connection
+            flow_id: Flow ID
+            session_id: Session ID
+            ref: Body reference (inline, compressed, file:xxx, skipped:xxx)
+            body_type: 'request' or 'response'
+            compressed_bodies: Pre-loaded compressed bodies dict (for batch optimization)
+        """
         if ref == 'inline':
             return None
 
         if ref == 'compressed':
+            # Use pre-loaded bodies if available, otherwise query individually
+            if compressed_bodies and body_type in compressed_bodies:
+                return gzip.decompress(compressed_bodies[body_type]).decode('utf-8')
+
             row = conn.execute("""
                 SELECT data FROM flow_bodies
                 WHERE flow_id = ? AND type = ?
@@ -783,24 +841,174 @@ class FlowDatabase:
         return None
 
     def get_all_flows(self, session_id: str = None) -> List[Dict]:
-        """Get all flows for export"""
+        """Get all flows for export - optimized batch loading
+
+        WARNING: For large sessions, use export_to_file_iter() instead to avoid memory issues.
+        """
         session_id = self._get_session_id(session_id)
 
         conn = self._get_conn()
 
-        flow_ids = [
-            row[0] for row in conn.execute(
-                "SELECT id FROM flow_indices WHERE session_id = ? ORDER BY msg_ts", (session_id,)
-            )
-        ]
+        # Batch load all flow data in a single query (much faster than individual queries)
+        rows = conn.execute("""
+            SELECT fd.id, fd.data, fd.request_body_ref, fd.response_body_ref
+            FROM flow_details fd
+            JOIN flow_indices fi ON fd.id = fi.id
+            WHERE fd.session_id = ?
+            ORDER BY fi.msg_ts
+        """, (session_id,)).fetchall()
+
+        # Batch load all compressed bodies for this session
+        body_cache = {}
+        body_rows = conn.execute("""
+            SELECT flow_id, type, data FROM flow_bodies WHERE session_id = ?
+        """, (session_id,)).fetchall()
+        for row in body_rows:
+            key = (row['flow_id'], row['type'])
+            body_cache[key] = row['data']
 
         flows = []
-        for flow_id in flow_ids:
-            flow = self.get_detail(flow_id)
-            if flow:
-                flows.append(flow)
+        for row in rows:
+            try:
+                flow_data = json.loads(row['data'])
+                flow_id = row['id']
+                req_ref = row['request_body_ref']
+                res_ref = row['response_body_ref']
+
+                # Restore request body
+                if req_ref and req_ref == 'compressed':
+                    cache_key = (flow_id, 'request')
+                    if cache_key in body_cache:
+                        body = gzip.decompress(body_cache[cache_key]).decode('utf-8')
+                        if flow_data.get('request', {}).get('postData'):
+                            flow_data['request']['postData']['text'] = body
+
+                # Restore response body
+                if res_ref and res_ref == 'compressed':
+                    cache_key = (flow_id, 'response')
+                    if cache_key in body_cache:
+                        body = gzip.decompress(body_cache[cache_key]).decode('utf-8')
+                        if flow_data.get('response', {}).get('content'):
+                            flow_data['response']['content']['text'] = body
+
+                flows.append(flow_data)
+            except Exception as e:
+                # Skip corrupted entries
+                pass
 
         return flows
+
+    def export_to_file_iter(self, file_path: str, session_id: str = None,
+                            format: str = 'har', metadata: Dict = None,
+                            progress_callback=None):
+        """Stream export flows to file to avoid memory issues with large sessions.
+
+        Args:
+            file_path: Output file path
+            session_id: Session to export (default: current session)
+            format: 'har' or 'session'
+            metadata: Optional metadata dict (for session format)
+            progress_callback: Optional callback(current, total) for progress
+
+        Yields progress as (current, total) tuples.
+        """
+        import gzip as gzip_module
+
+        session_id = self._get_session_id(session_id)
+        conn = self._get_conn()
+
+        # Get total count for progress
+        total = conn.execute(
+            "SELECT COUNT(*) FROM flow_indices WHERE session_id = ?", (session_id,)
+        ).fetchone()[0]
+
+        if total == 0:
+            # Write empty file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                if format == 'har':
+                    json.dump({"log": {"version": "1.2", "creator": {"name": "RelayCraft", "version": "1.0"}, "entries": []}}, f)
+                else:
+                    json.dump({"flows": [], "metadata": metadata or {}}, f)
+            return
+
+        # Load all compressed bodies into memory (they're smaller when compressed)
+        body_cache = {}
+        body_rows = conn.execute("""
+            SELECT flow_id, type, data FROM flow_bodies WHERE session_id = ?
+        """, (session_id,)).fetchall()
+        for row in body_rows:
+            key = (row['flow_id'], row['type'])
+            body_cache[key] = row['data']
+
+        # Use cursor for memory-efficient iteration
+        cursor = conn.execute("""
+            SELECT fd.id, fd.data, fd.request_body_ref, fd.response_body_ref
+            FROM flow_details fd
+            JOIN flow_indices fi ON fd.id = fi.id
+            WHERE fd.session_id = ?
+            ORDER BY fi.msg_ts
+        """, (session_id,))
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            if format == 'har':
+                f.write('{"log":{"version":"1.2","creator":{"name":"RelayCraft","version":"1.0"},"entries":[')
+            else:
+                f.write('{"metadata":' + json.dumps(metadata or {}) + ',"flows":[')
+
+            first = True
+            current = 0
+
+            for row in cursor:
+                try:
+                    flow_data = json.loads(row['data'])
+                    flow_id = row['id']
+                    req_ref = row['request_body_ref']
+                    res_ref = row['response_body_ref']
+
+                    # Restore request body
+                    if req_ref and req_ref == 'compressed':
+                        cache_key = (flow_id, 'request')
+                        if cache_key in body_cache:
+                            body = gzip_module.decompress(body_cache[cache_key]).decode('utf-8')
+                            if flow_data.get('request', {}).get('postData'):
+                                flow_data['request']['postData']['text'] = body
+
+                    # Restore response body
+                    if res_ref and res_ref == 'compressed':
+                        cache_key = (flow_id, 'response')
+                        if cache_key in body_cache:
+                            body = gzip_module.decompress(body_cache[cache_key]).decode('utf-8')
+                            if flow_data.get('response', {}).get('content'):
+                                flow_data['response']['content']['text'] = body
+
+                    if not first:
+                        f.write(',')
+                    first = False
+
+                    f.write(json.dumps(flow_data, ensure_ascii=False))
+                    current += 1
+
+                    # Report progress every 1000 items
+                    if progress_callback and current % 1000 == 0:
+                        progress_callback(current, total)
+
+                except Exception as e:
+                    pass  # Skip corrupted entries
+
+            f.write(']}}')
+
+        # Final progress callback
+        if progress_callback:
+            progress_callback(total, total)
+
+    def get_flow_count(self, session_id: str = None) -> int:
+        """Get total flow count for a session"""
+        session_id = self._get_session_id(session_id)
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT COUNT(*) FROM flow_indices WHERE session_id = ?", (session_id,)
+        ).fetchone()
+        return row[0] if row else 0
 
     # ==================== Cleanup ====================
 
@@ -829,6 +1037,13 @@ class FlowDatabase:
 
             # No flow limit - user's disk is the only constraint
             # Flows are only deleted when their session is deleted
+
+            # Perform WAL checkpoint to merge WAL file into main database
+            # This helps keep the WAL file size under control
+            try:
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            except Exception as e:
+                pass  # Ignore checkpoint errors
 
             conn.commit()
 

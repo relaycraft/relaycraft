@@ -12,7 +12,7 @@ import { Tooltip } from "../common/Tooltip";
 import { BreakpointManager } from "../traffic/BreakpointManager";
 
 export function StatusBar() {
-  const { running, port } = useProxyStore();
+  const { active, port } = useProxyStore();
   const { indices } = useTrafficStore();
   const { breakpoints } = useBreakpointStore();
   const [showBreakpoints, setShowBreakpoints] = useState(false);
@@ -53,10 +53,10 @@ export function StatusBar() {
         {renderSlot(PLUGIN_SLOTS.STATUS_BAR_LEFT)}
 
         {/* Proxy Status Icon */}
-        <Tooltip content={running ? t("status_bar.listening") : t("status_bar.stopped")}>
+        <Tooltip content={active ? t("status_bar.listening") : t("status_bar.stopped")}>
           <div className="flex items-center justify-center w-6 overflow-visible">
             <AnimatePresence mode="wait">
-              {running ? (
+              {active ? (
                 <motion.div
                   key="running"
                   initial={{ opacity: 0 }}

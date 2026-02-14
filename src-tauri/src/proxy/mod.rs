@@ -43,12 +43,26 @@ pub async fn get_proxy_status(
 
     Ok(ProxyStatusResponse {
         running: status.running,
+        active: status.active,
         active_scripts: status.active_scripts,
     })
+}
+
+#[tauri::command]
+pub async fn set_proxy_active(
+    state: tauri::State<'_, ProxyState>,
+    active: bool,
+) -> Result<(), String> {
+    state
+        .engine
+        .set_active(active)
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[derive(serde::Serialize)]
 pub struct ProxyStatusResponse {
     pub running: bool,
+    pub active: bool,
     pub active_scripts: Vec<String>,
 }

@@ -758,6 +758,23 @@
     "saving": "Saving...",
     "title": "Save Current Session"
   },
+  "session": {
+    "current": "Current",
+    "delete_confirm": "Delete this session?",
+    "delete_confirm_msg": "Are you sure you want to delete session \"{{name}}\"? This action cannot be undone.",
+    "delete_title": "Delete Session",
+    "flow_count": "{{count}} flows",
+    "historical_mode": "Viewing historical session - new data continues in background",
+    "history": "Session History",
+    "latest": "LATEST",
+    "switch_hint": "Switch to historical session",
+    "time": {
+      "just_now": "Just now",
+      "minutes_ago": "{{count}}m ago",
+      "hours_ago": "{{count}}h ago",
+      "days_ago": "{{count}}d ago"
+    }
+  },
   "script_editor": {
     "ai": {
       "chip_create": "Create Script",

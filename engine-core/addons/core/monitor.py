@@ -575,8 +575,11 @@ class TrafficMonitor:
                 except ValueError:
                     since_ts = 0.0
 
+                # Support session_id parameter for historical session viewing
+                session_id_param = query.get("session_id", None)
+
                 # Get indices from database
-                db_indices = self.db.get_indices(since=since_ts)
+                db_indices = self.db.get_indices(session_id=session_id_param, since=since_ts)
 
                 # Transform to frontend format
                 # Note: seq is not included - frontend calculates from array index
@@ -603,8 +606,8 @@ class TrafficMonitor:
                         "msg_ts": idx.get("msg_ts"),
                     })
 
-                # Get all flow IDs for buffer_ids
-                all_indices = self.db.get_indices(since=0)
+                # Get all flow IDs for buffer_ids (use same session_id)
+                all_indices = self.db.get_indices(session_id=session_id_param, since=0)
                 buffer_ids = [idx.get("id") for idx in all_indices if idx.get("id")]
 
                 # Return max msg_ts from returned indices (not current time!)
@@ -883,9 +886,21 @@ class TrafficMonitor:
             try:
                 data = json.loads(flow.request.content.decode('utf-8')) if flow.request.content else {}
                 session_id = data.get("id")
-                self.db.clear_session(session_id)
-                # Reset sequence counter when clearing
+                
+                # If it's a historical session, delete it instead of clearing
+                # (unless no session_id provided, then clear active)
+                if session_id:
+                    active = self.db.get_active_session()
+                    if active and session_id != active.get('id'):
+                        self.db.delete_session(session_id)
+                    else:
+                        self.db.clear_session(session_id)
+                else:
+                    self.db.clear_session()
+                
+                # Reset sequence counter when clearing active session
                 self.reset_seq_counter()
+                
                 flow.response = Response.make(
                     200,
                     b'{"success": true}',
@@ -921,23 +936,97 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
+        # Traffic active state - GET to check, POST to set
+        elif "/_relay/traffic_active" in flow.request.path:
+            try:
+                from .main import is_traffic_active, set_traffic_active
+                if flow.request.method == "GET":
+                    result = {"active": is_traffic_active()}
+                    json_str = json.dumps(result, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                elif flow.request.method == "POST":
+                    data = json.loads(flow.request.content.decode('utf-8'))
+                    active = data.get("active", False)
+                    set_traffic_active(active)
+                    self.logger.info(f"Traffic active state changed to: {active}")
+                    result = {"success": True, "active": active}
+                    json_str = json.dumps(result, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    flow.response = Response.make(
+                        405,
+                        b"Method Not Allowed",
+                        {"Access-Control-Allow-Origin": "*"}
+                    )
+            except Exception as e:
+                self.logger.error(f"Error handling traffic_active: {e}")
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
         # Export session (all flows)
         elif "/_relay/export_session" in flow.request.path:
             try:
-                all_flows = self.db.get_all_flows()
-                json_str = json.dumps(
-                    all_flows,
-                    default=safe_json_default,
-                    ensure_ascii=False
-                )
-                flow.response = Response.make(
-                    200,
-                    json_str.encode("utf-8"),
-                    {
-                        "Content-Type": "application/json",
-                        "Access-Control-Allow-Origin": "*"
-                    }
-                )
+                import urllib.parse
+                query_params = urllib.parse.parse_qs(flow.request.query)
+                export_path = query_params.get('path', [None])[0]
+
+                if export_path:
+                    # Parse metadata from request body
+                    metadata = {}
+                    try:
+                        if flow.request.content:
+                            body_data = json.loads(flow.request.content.decode('utf-8'))
+                            metadata = body_data if isinstance(body_data, dict) else {}
+                    except:
+                        pass
+
+                    # Use streaming export to avoid memory issues
+                    self.db.export_to_file_iter(
+                        export_path,
+                        format='session',
+                        metadata=metadata
+                    )
+                    flow.response = Response.make(
+                        200,
+                        json.dumps({"success": True, "path": export_path}).encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    # Return as response (for small exports only - use with caution)
+                    all_flows = self.db.get_all_flows()
+                    json_str = json.dumps(
+                        all_flows,
+                        default=safe_json_default,
+                        ensure_ascii=False
+                    )
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
             except Exception as e:
                 flow.response = Response.make(
                     500,
@@ -948,22 +1037,61 @@ class TrafficMonitor:
         # Export HAR
         elif "/_relay/export_har" in flow.request.path:
             try:
-                all_flows = self.db.get_all_flows()
-                har_data = {
-                    "log": {
-                        "version": "1.2",
-                        "creator": {"name": "RelayCraft", "version": "1.0"},
-                        "entries": all_flows
+                import urllib.parse
+                query_params = urllib.parse.parse_qs(flow.request.query)
+                export_path = query_params.get('path', [None])[0]
+
+                if export_path:
+                    # Use streaming export to avoid memory issues
+                    self.db.export_to_file_iter(
+                        export_path,
+                        format='har'
+                    )
+                    flow.response = Response.make(
+                        200,
+                        json.dumps({"success": True, "path": export_path}).encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+                else:
+                    # Return as response (for small exports only - use with caution)
+                    all_flows = self.db.get_all_flows()
+                    har_data = {
+                        "log": {
+                            "version": "1.2",
+                            "creator": {"name": "RelayCraft", "version": "1.0"},
+                            "entries": all_flows
+                        }
                     }
-                }
-                json_str = json.dumps(
-                    har_data,
-                    default=safe_json_default,
-                    ensure_ascii=False
+                    json_str = json.dumps(
+                        har_data,
+                        default=safe_json_default,
+                        ensure_ascii=False
+                    )
+                    flow.response = Response.make(
+                        200,
+                        json_str.encode("utf-8"),
+                        {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*"
+                        }
+                    )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
                 )
+
+        # Export progress (for large exports)
+        elif "/_relay/export_progress" in flow.request.path:
+            try:
+                total = self.db.get_flow_count()
                 flow.response = Response.make(
                     200,
-                    json_str.encode("utf-8"),
+                    json.dumps({"total": total}).encode("utf-8"),
                     {
                         "Content-Type": "application/json",
                         "Access-Control-Allow-Origin": "*"

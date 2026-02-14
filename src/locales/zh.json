@@ -758,6 +758,23 @@
     "saving": "保存中...",
     "title": "保存当前会话"
   },
+  "session": {
+    "current": "当前",
+    "delete_confirm": "确定删除此会话？",
+    "delete_confirm_msg": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
+    "delete_title": "删除会话",
+    "flow_count": "{{count}} 条请求",
+    "historical_mode": "查看历史会话 - 新数据继续在后台记录",
+    "history": "会话历史",
+    "latest": "最新",
+    "switch_hint": "切换到历史会话",
+    "time": {
+      "just_now": "刚刚",
+      "minutes_ago": "{{count}}分钟前",
+      "hours_ago": "{{count}}小时前",
+      "days_ago": "{{count}}天前"
+    }
+  },
   "script_editor": {
     "ai": {
       "chip_create": "创建脚本",

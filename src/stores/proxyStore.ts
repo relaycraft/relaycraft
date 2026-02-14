@@ -6,7 +6,8 @@ import { startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
 import { useScriptStore } from "./scriptStore";
 
 interface ProxyStore {
-  running: boolean;
+  running: boolean; // Engine process is running
+  active: boolean; // Traffic processing is active
   port: number;
   ipAddress: string | null;
   requestCount: number;
@@ -16,8 +17,8 @@ interface ProxyStore {
   activeScripts: string[]; // Scripts that were enabled when proxy started
   setRunning: (running: boolean) => void;
   incrementRequestCount: () => void;
-  startProxy: () => Promise<void>;
-  stopProxy: () => Promise<void>;
+  startProxy: () => Promise<void>; // Now sets active=true
+  stopProxy: () => Promise<void>; // Now sets active=false
   checkStatus: () => Promise<void>;
   checkCertTrust: () => Promise<void>;
   setCertWarningIgnored: (ignored: boolean) => Promise<void>;
@@ -25,6 +26,7 @@ interface ProxyStore {
 
 export const useProxyStore = create<ProxyStore>((set) => ({
   running: false,
+  active: false,
   port: 9090,
   ipAddress: null,
   requestCount: 0,
@@ -44,40 +46,34 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     try {
       set({ error: null });
 
-      // Check if already running to prevent double-start errors
+      // Get current status
       const status = await invoke<{
         running: boolean;
+        active: boolean;
         active_scripts: string[];
       }>("get_proxy_status");
-      if (status.running) {
-        Logger.info("Proxy is already running, syncing state...");
-        const config = await invoke<{ proxy_port: number }>("load_config");
-        const ipAddress = await invoke<string>("get_local_ip");
-        set({
-          running: true,
-          activeScripts: status.active_scripts,
-          ipAddress,
-          port: config.proxy_port,
-        });
+
+      // If engine is not running, something is wrong (it should auto-start with app)
+      if (!status.running) {
+        Logger.warn("Proxy engine not running, this should not happen with auto-start");
+        set({ running: false, active: false });
         return;
       }
 
-      const result = await invoke<string>("start_proxy");
-      Logger.debug("Proxy started:", result);
-
       // Load config to get the port
       const config = await invoke<{ proxy_port: number }>("load_config");
+
+      // Start Traffic Monitor first (creates session before traffic starts)
+      await startTrafficMonitor(config.proxy_port);
+
+      // Set traffic processing to active AFTER session is created
+      await invoke("set_proxy_active", { active: true });
 
       // Capture currently enabled scripts as "active"
       const scripts = useScriptStore.getState().scripts;
       const activeScripts = scripts.filter((s) => s.enabled).map((s) => s.name);
 
-      set({ running: true, port: config.proxy_port, activeScripts });
-
-      // Wait a bit for mitmproxy to start, then connect Traffic Monitor with correct port
-      setTimeout(() => {
-        startTrafficMonitor(config.proxy_port);
-      }, 2000);
+      set({ running: true, active: true, port: config.proxy_port, activeScripts });
 
       // 添加成功通知
       const { useNotificationStore } = await import("./notificationStore");
@@ -91,36 +87,8 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       });
     } catch (error) {
       const errorMsg = error as string;
-
-      // Handle "Proxy is already running" error gracefully
-      if (errorMsg.includes("Proxy is already running")) {
-        Logger.info("Proxy is already running (caught error), syncing state...");
-        try {
-          const status = await invoke<{
-            running: boolean;
-            active_scripts: string[];
-          }>("get_proxy_status");
-          const config = await invoke<{ proxy_port: number }>("load_config");
-          const ipAddress = await invoke<string>("get_local_ip");
-
-          set({
-            running: true,
-            activeScripts: status.active_scripts,
-            ipAddress,
-            port: config.proxy_port,
-            error: null, // Clear any error
-          });
-
-          // Don't show success notification for auto-recovery to avoid noise
-          return;
-        } catch (syncError) {
-          console.error("Failed to sync state after running error:", syncError);
-          // Fall through to error handling
-        }
-      }
-
       console.error("Failed to start proxy:", errorMsg);
-      set({ error: errorMsg, running: false });
+      set({ error: errorMsg, active: false });
 
       // 添加错误通知
       const { useNotificationStore } = await import("./notificationStore");
@@ -144,8 +112,10 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       // Stop Traffic Monitor first
       stopTrafficMonitor();
 
-      await invoke<string>("stop_proxy");
-      set({ running: false, requestCount: 0 });
+      // Set traffic processing to inactive (but engine keeps running)
+      await invoke("set_proxy_active", { active: false });
+
+      set({ active: false, requestCount: 0 });
 
       // 添加成功通知
       const { useNotificationStore } = await import("./notificationStore");
@@ -181,6 +151,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     try {
       const status = await invoke<{
         running: boolean;
+        active: boolean;
         active_scripts: string[];
       }>("get_proxy_status");
       const currentState = useProxyStore.getState();
@@ -188,6 +159,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       // If status hasn't changed and we already have the basic info, skip expensive calls
       if (
         status.running === currentState.running &&
+        status.active === currentState.active &&
         currentState.ipAddress &&
         currentState.port !== 9090
       ) {
@@ -208,6 +180,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
 
       set({
         running: status.running,
+        active: status.active,
         activeScripts: status.active_scripts,
         ipAddress,
         port: config.proxy_port,

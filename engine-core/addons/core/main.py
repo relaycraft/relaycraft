@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
@@ -6,6 +7,21 @@ from .monitor import TrafficMonitor
 from .debug import DebugManager
 from .proxy import ProxyManager
 from .utils import setup_logging, RelayCraftLogger
+
+# Global traffic active state (in-memory, controlled via HTTP API)
+_traffic_active: bool = False
+
+
+def is_traffic_active() -> bool:
+    """Check if traffic processing is active."""
+    return _traffic_active
+
+
+def set_traffic_active(active: bool) -> None:
+    """Set traffic processing active state."""
+    global _traffic_active
+    _traffic_active = active
+
 
 class CoreAddon:
     def __init__(self):
@@ -40,6 +56,13 @@ class CoreAddon:
                         await coro
             except Exception as e:
                 self.logger.error(f"Error handling relay request: {e}")
+            return
+
+        # 2. Check if traffic processing is active
+        # If not active, kill the connection (simulate proxy off)
+        if not is_traffic_active():
+            # Kill the connection to simulate proxy being off
+            flow.kill()
             return
 
         try:

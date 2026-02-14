@@ -22,6 +22,7 @@ import { ScriptManager } from "./components/scripts/ScriptManager";
 import { CertificateSettings } from "./components/settings/CertificateSettings";
 import { PluginSettings } from "./components/settings/PluginSettings";
 import { SettingsView } from "./components/settings/SettingsView";
+import { SessionSwitcher } from "./components/traffic/SessionSwitcher";
 import { TrafficView } from "./components/traffic/TrafficView";
 // Hooks
 import { useAppInit } from "./hooks/useAppInit";
@@ -55,7 +56,7 @@ function App() {
   // Proxy Control State
   const [loading, setLoading] = useState(false);
   const toggleLock = useRef(false);
-  const { running, startProxy, stopProxy } = useProxyStore();
+  const { active, startProxy, stopProxy } = useProxyStore();
 
   // Header Logic State
   const { activeTab } = useUIStore();
@@ -69,7 +70,7 @@ function App() {
     toggleLock.current = true;
     setLoading(true);
     try {
-      if (running) {
+      if (active) {
         await stopProxy();
         notify.success(t("titlebar.stopped"), {
           title: t("sidebar.traffic"),
@@ -164,7 +165,7 @@ function App() {
 
       <NotificationCenter />
       <CommandCenter />
-      <TitleBar running={running} loading={loading} onToggle={handleToggleProxy} />
+      <TitleBar running={active} loading={loading} onToggle={handleToggleProxy} />
 
       <div className="flex-1 flex pt-10 overflow-hidden relative">
         <Sidebar isMacOS={isMacOS} />
@@ -261,6 +262,9 @@ function App() {
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </Tooltip>
+
+                    {/* Session Switcher */}
+                    <SessionSwitcher />
                   </div>
                 )}
 

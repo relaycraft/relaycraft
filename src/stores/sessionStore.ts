@@ -1,39 +1,171 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
 import type { Session, SessionMetadata } from "../types/session";
 import { useSettingsStore } from "./settingsStore";
 import { useTrafficStore } from "./trafficStore";
 
+// Database session type (from backend)
+export interface DbSession {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: number;
+  updated_at: number;
+  flow_count: number;
+  total_size: number;
+  is_active: number;
+}
+
 interface SessionStore {
   currentSession: Session | null;
   loading: boolean;
+  // Database sessions
+  dbSessions: DbSession[];
+  showSessionId: string | null; // Which session to display (can be different from writing session)
+  loadingSessions: boolean;
 
   saveSession: (name: string, description?: string) => Promise<void>;
   loadSession: () => Promise<void>;
   exportHar: () => Promise<void>;
   importHar: () => Promise<void>;
   closeSession: () => void;
+  // Database session management
+  fetchDbSessions: () => Promise<void>;
+  switchDbSession: (sessionId: string) => Promise<void>;
+  deleteDbSession: (sessionId: string) => Promise<void>;
 }
 
-export const useSessionStore = create<SessionStore>((set) => ({
+export const useSessionStore = create<SessionStore>((set, get) => ({
   currentSession: null,
   loading: false,
+  // Database sessions
+  dbSessions: [],
+  showSessionId: null, // Initially null, will be set to writing session on first fetch
+  loadingSessions: false,
+
+  // Fetch database sessions from backend
+  fetchDbSessions: async () => {
+    // Only show loading for the very first fetch
+    if (get().dbSessions.length === 0) {
+      set({ loadingSessions: true });
+    }
+    try {
+      const port = useSettingsStore.getState().config.proxy_port;
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/sessions`, {
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const sessions: DbSession[] = await response.json();
+        const currentShowId = get().showSessionId;
+
+        // If no current selection, don't auto-set it on initial load
+        // This avoids showing a session ID when the traffic list is empty
+        const newShowId = currentShowId || null;
+
+        set({
+          dbSessions: sessions,
+          showSessionId: newShowId,
+        });
+      }
+    } catch (error) {
+      Logger.error("Failed to fetch sessions:", error);
+    } finally {
+      set({ loadingSessions: false });
+    }
+  },
+
+  // Switch to a different database session (view only, backend continues writing to active session)
+  switchDbSession: async (sessionId: string) => {
+    set({ loading: true });
+    try {
+      const port = useSettingsStore.getState().config.proxy_port;
+
+      // Load the session data for viewing
+      const response = await fetch(
+        `http://127.0.0.1:${port}/_relay/poll?session_id=${sessionId}&since=0`,
+        {
+          cache: "no-store",
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // Clear frontend data and load session indices
+        // Use clearLocal instead of clearAll to avoid deleting backend data!
+        useTrafficStore.getState().clearLocal();
+        if (data.indices && data.indices.length > 0) {
+          useTrafficStore.getState().addIndices(data.indices);
+        }
+        // Update which session we're viewing
+        set({ showSessionId: sessionId });
+        Logger.info(`Switched to view session: ${sessionId}`);
+      }
+
+      // Re-fetch session list to update counts
+      get().fetchDbSessions();
+    } catch (error) {
+      Logger.error("Failed to switch session:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Delete a database session
+  deleteDbSession: async (sessionId: string) => {
+    try {
+      const port = useSettingsStore.getState().config.proxy_port;
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/session/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: sessionId }),
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        // If we were viewing the deleted session, switch to the nearest one
+        if (get().showSessionId === sessionId) {
+          const sessions = get().dbSessions;
+          const index = sessions.findIndex((s) => s.id === sessionId);
+          // Try to find next session, or previous, or null
+          const nextSession = sessions[index + 1] || sessions[index - 1] || null;
+          if (nextSession) {
+            await get().switchDbSession(nextSession.id);
+          } else {
+            set({ showSessionId: null });
+          }
+        }
+
+        // Remove from local list
+        set((state) => ({
+          dbSessions: state.dbSessions.filter((s) => s.id !== sessionId),
+        }));
+      }
+    } catch (error) {
+      Logger.error("Failed to delete session:", error);
+    }
+  },
 
   saveSession: async (name, description) => {
     set({ loading: true });
     try {
-      // Request backend to export session (includes all flow details)
-      const port = useSettingsStore.getState().config.proxy_port;
-      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_session`, {
-        cache: "no-store",
+      // Ask user for file path first
+      const path = await save({
+        filters: [
+          {
+            name: "RelayCraft Session",
+            extensions: ["relay"],
+          },
+        ],
+        defaultPath: `${name}.relay`,
       });
-      if (!response.ok) {
-        throw new Error("Failed to export session from backend");
+
+      if (!path) {
+        set({ loading: false });
+        return;
       }
-      const flows = await response.json();
 
       // Calculate metadata from indices (lightweight)
       const indices = useTrafficStore.getState().indices;
@@ -49,28 +181,43 @@ export const useSessionStore = create<SessionStore>((set) => ({
         clientInfo: navigator.userAgent,
       };
 
+      // Send metadata to backend and let it write directly to file
+      const port = useSettingsStore.getState().config.proxy_port;
+      const encodedPath = encodeURIComponent(path);
+      const response = await fetch(
+        `http://127.0.0.1:${port}/_relay/export_session?path=${encodedPath}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            metadata,
+          }),
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export session from backend");
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error("Export failed");
+      }
+
+      // Update current session
       const session: Session = {
         id: crypto.randomUUID(),
         name,
         description,
         metadata,
-        flows,
+        flows: [], // Flows are in the file, not in memory
       };
-
-      const path = await save({
-        filters: [
-          {
-            name: "RelayCraft Session",
-            extensions: ["relay"],
-          },
-        ],
-        defaultPath: `${name}.relay`,
-      });
-
-      if (path) {
-        await invoke("save_session", { path, session });
-        set({ currentSession: session });
-      }
+      set({ currentSession: session });
     } catch (error) {
       Logger.error("Failed to save session:", error);
     } finally {
@@ -143,21 +290,12 @@ export const useSessionStore = create<SessionStore>((set) => ({
   exportHar: async () => {
     set({ loading: true });
     try {
-      // Request backend to export HAR (includes all flow details)
-      const port = useSettingsStore.getState().config.proxy_port;
-      const response = await fetch(`http://127.0.0.1:${port}/_relay/export_har`, {
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to export HAR from backend");
-      }
-      const harData = await response.json();
-
       // Generate filename with timestamp
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
       const defaultFilename = `traffic-${timestamp}.har`;
 
+      // Ask user for file path first
       const path = await save({
         filters: [
           {
@@ -168,10 +306,28 @@ export const useSessionStore = create<SessionStore>((set) => ({
         defaultPath: defaultFilename,
       });
 
-      if (path) {
-        // Write HAR file directly as JSON
-        const harContent = JSON.stringify(harData, null, 2);
-        await writeTextFile(path, harContent);
+      if (!path) {
+        set({ loading: false });
+        return;
+      }
+
+      // Request backend to export HAR directly to file (avoids memory issues with large exports)
+      const port = useSettingsStore.getState().config.proxy_port;
+      const encodedPath = encodeURIComponent(path);
+      const response = await fetch(
+        `http://127.0.0.1:${port}/_relay/export_har?path=${encodedPath}`,
+        {
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to export HAR from backend");
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error("Export failed");
       }
     } catch (error) {
       console.error("Failed to export HAR:", error);

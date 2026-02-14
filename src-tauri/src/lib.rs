@@ -166,12 +166,26 @@ pub fn run() {
                 log::info!("Allowed themes directory in asset scope: {:?}", themes_dir);
             }
 
+            // Auto-start proxy engine on app launch (as background service)
+            // The engine starts but traffic processing is inactive by default
+            let proxy_state = app.state::<proxy::ProxyState>();
+            let app_handle: tauri::AppHandle = app.handle().clone();
+            match proxy_state.engine.start(&app_handle, &app_config) {
+                Ok(()) => {
+                    log::info!("Proxy engine started as background service (traffic inactive)");
+                }
+                Err(e) => {
+                    log::error!("Failed to start proxy engine on app launch: {:?}", e);
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             proxy::start_proxy,
             proxy::stop_proxy,
             proxy::get_proxy_status,
+            proxy::set_proxy_active,
             proxy::get_process_stats,
             common::utils::get_local_ip,
             certificate::get_cert_path,

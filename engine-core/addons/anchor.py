@@ -43,7 +43,8 @@ def response(flow: http.HTTPFlow) -> None:
         try:
             flow_data = main.traffic_monitor.process_flow(flow)
             if flow_data:
-                main.traffic_monitor.flow_buffer.append(flow_data)
+                # Use _store_flow instead of flow_buffer (which no longer exists)
+                main.traffic_monitor._store_flow(flow_data)
                 # Clear dirty flag after successful sync
                 flow.metadata["_relaycraft_dirty"] = False
                 # Clear script hits to avoid duplicate syncs
@@ -60,6 +61,7 @@ def error(flow: http.HTTPFlow) -> None:
             flow_data = main.traffic_monitor.process_flow(flow)
             if flow_data:
                 flow_data["error"] = str(flow.error)
-                main.traffic_monitor.flow_buffer.append(flow_data)
+                # Use _store_flow instead of flow_buffer (which no longer exists)
+                main.traffic_monitor._store_flow(flow_data)
         except:
             pass
