@@ -20,9 +20,12 @@ jobs:
           - platform: 'ubuntu-22.04'
             args: ""
             target: 'x86_64-unknown-linux-gnu'
-          - platform: 'windows-latest'
+          - platform: 'self-hosted'
             args: ""
             target: 'x86_64-pc-windows-msvc'
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -31,7 +34,7 @@ jobs:
       # --- Cache & Setup Node ---
       - uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -138,9 +141,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Only sign on macOS and Linux. Windows will be signed locally.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ matrix.platform != 'windows-latest' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
+          # Enable signing for all platforms, including self-hosted Windows
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'RelayCraft v__VERSION__'
@@ -148,6 +149,36 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Sign Windows Binaries
+        if: matrix.platform == 'self-hosted'
+        shell: powershell
+        run: |
+          $VERSION = (Get-Content package.json | ConvertFrom-Json).version
+          $NSIS_PATH = "src-tauri/target/release/bundle/nsis"
+          $MSI_PATH = "src-tauri/target/release/bundle/msi"
+          
+          # Find the actual files (using wildcards to handle potential architecture naming)
+          $EXE = Get-ChildItem "$NSIS_PATH/*.exe" | Select-Object -First 1
+          $MSI = Get-ChildItem "$MSI_PATH/*.msi" | Select-Object -First 1
+          
+          if ($EXE -and $MSI) {
+            echo "🔍 Authenticode Signing: $($EXE.Name) and $($MSI.Name)"
+            # 1. Authenticode Sign
+            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
+            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
+            
+            echo "🔍 Regenerating Tauri Updater Signatures (.sig)"
+            # 2. Regenerate Tauri Updater Signatures (.sig)
+            # The binaries have been modified by signtool, so we MUST re-sign for the updater.
+            npx tauri signer sign -w $EXE.FullName
+            npx tauri signer sign -w $MSI.FullName
+            
+            echo "✅ Windows signing and signature regeneration complete!"
+          } else {
+            echo "❌ ERROR: Could not find EXE or MSI to sign!"
+            exit 1
+          }
 
       # --- Post-Build macOS Signing & Notarization ---
       - name: Sign and Notarize macOS App
@@ -483,19 +514,30 @@ jobs:
 
       - name: Flatten Bundles
         run: |
-          echo "📦 Collecting updater metadata..."
-          # Move latest.json files to a flat structure
-          find all-bundles -name "latest.json*" -exec mv -t all-bundles/ {} +
-          echo "Files collected for finalize:"
+          echo "📦 Collecting all bundles and metadata..."
+          # Move all files from subdirectories (created by download-artifact pattern) to the root of all-bundles
+          find all-bundles -type f -mindepth 2 -exec mv -t all-bundles/ {} +
+          
+          # Use the helper script to generate a unified latest.json
+          VERSION=$(node -p "require('./package.json').version")
+          node scripts/generate-update-json.cjs all-bundles $VERSION
+          
+          echo "Files collected and metadata generated:"
           ls -la all-bundles/
 
-      - name: Upload Updater Metadata
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
+             all-bundles/*.dmg
+             all-bundles/*.tar.gz
+             all-bundles/*.msi
+             all-bundles/*.exe
+             all-bundles/*.deb
+             all-bundles/*.AppImage
+             all-bundles/*.sig
              all-bundles/latest.json
-             all-bundles/latest.json.sig
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

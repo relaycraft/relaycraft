@@ -3,7 +3,6 @@
   "bundle": {
     "externalBin": [
       "binaries/engine"
-    ],
-    "createUpdaterArtifacts": false
+    ]
   }
 }
