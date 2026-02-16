@@ -178,7 +178,7 @@ export function ComposerView() {
             <Select
               value={method}
               onChange={(val) => setMethod(val)}
-              className="bg-primary/10 border-none text-primary font-bold h-8 text-system tracking-wider"
+              className="bg-primary/10 border-none text-primary font-bold h-8 text-ui tracking-wider"
             >
               {["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"].map((m) => (
                 <option key={m} value={m}>
@@ -284,7 +284,7 @@ export function ComposerView() {
                   value={bodyType}
                   onChange={(val) => setBodyType(val as any)}
                   align="right"
-                  className="bg-muted/40 h-7 !text-[10px] !font-black uppercase border-border/20 min-w-[80px]"
+                  className="bg-muted/40 h-7 !text-caption !font-black uppercase border-border/20 min-w-[80px]"
                 >
                   <option value="none">None</option>
                   <option value="x-www-form-urlencoded">Form-data</option>
@@ -308,7 +308,7 @@ export function ComposerView() {
                 {bodyType === "none" ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/30">
                     <Eraser className="w-10 h-10 mb-3 opacity-10" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">
+                    <p className="text-caption font-bold uppercase tracking-widest">
                       {t("composer.body_none")}
                     </p>
                   </div>
@@ -364,7 +364,7 @@ export function ComposerView() {
                     : "bg-muted-foreground/30",
                 )}
               />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+              <span className="text-caption font-black uppercase tracking-[0.2em] text-foreground/60">
                 {t("composer.response")}
               </span>
             </div>
@@ -373,7 +373,7 @@ export function ComposerView() {
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
-                    "px-2 py-0.5 rounded-md text-[10px] font-black border",
+                    "px-2 py-0.5 rounded-md text-caption font-black border",
                     getStatusColor(lastResponse.status || 0),
                   )}
                 >
@@ -383,7 +383,7 @@ export function ComposerView() {
                   <button
                     onClick={() => setViewMode("preview")}
                     className={cn(
-                      "px-2 py-0.5 text-[9px] font-bold rounded-md transition-all",
+                      "px-2 py-0.5 text-caption font-bold rounded-md transition-all",
                       viewMode === "preview"
                         ? "bg-background text-primary shadow-sm"
                         : "text-muted-foreground",
@@ -394,7 +394,7 @@ export function ComposerView() {
                   <button
                     onClick={() => setViewMode("raw")}
                     className={cn(
-                      "px-2 py-0.5 text-[9px] font-bold rounded-md transition-all",
+                      "px-2 py-0.5 text-caption font-bold rounded-md transition-all",
                       viewMode === "raw"
                         ? "bg-background text-primary shadow-sm"
                         : "text-muted-foreground",
@@ -521,7 +521,7 @@ export function ComposerView() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-[11px] text-muted-foreground/80 leading-relaxed font-medium">
+              <p className="text-small text-muted-foreground/80 leading-relaxed font-medium">
                 {t("composer.curl_modal.desc")}
               </p>
               <div className="relative group">
@@ -534,14 +534,14 @@ export function ComposerView() {
                   placeholder={t("composer.curl_modal.placeholder")}
                   rows={10}
                   className={cn(
-                    "w-full p-4 bg-muted/10 border rounded-2xl text-[11px] font-mono focus:outline-none focus:ring-2 transition-all resize-none shadow-inner",
+                    "w-full p-4 bg-muted/10 border rounded-2xl text-small font-mono focus:outline-none focus:ring-2 transition-all resize-none shadow-inner",
                     parseError
                       ? "border-red-500/50 focus:ring-red-500/20"
                       : "border-white/5 focus:ring-primary/20",
                   )}
                 />
                 {parseError && (
-                  <div className="absolute top-4 right-4 text-[10px] text-red-400 font-bold bg-background/90 backdrop-blur px-2 py-1 rounded-lg border border-red-500/20 shadow-sm flex items-center gap-1.5 animate-in slide-in-from-top-1">
+                  <div className="absolute top-4 right-4 text-caption text-red-400 font-bold bg-background/90 backdrop-blur px-2 py-1 rounded-lg border border-red-500/20 shadow-sm flex items-center gap-1.5 animate-in slide-in-from-top-1">
                     <AlertCircle className="w-3 h-3" /> {parseError}
                   </div>
                 )}

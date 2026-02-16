@@ -15,7 +15,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-[10px] text-muted-foreground/40 italic px-2 py-4">
+      <div className="text-caption text-muted-foreground/40 italic px-2 py-4">
         {t("common.no_content")}
       </div>
     );

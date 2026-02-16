@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from contextlib import contextmanager
 from datetime import datetime
+from .utils import setup_logging
 
 
 # ==================== Configuration ====================
@@ -33,11 +34,13 @@ class Config:
     MAX_PERSIST_SIZE = 50 * 1024 * 1024   # 50MB - skip persistence if larger
 
     # Limits
-    # MAX_FLOWS_PER_SESSION removed - no limit, let user's disk be the only constraint
-    MAX_SESSIONS = 100                     # Max sessions to keep
+    MAX_TOTAL_FLOWS = 1000000              # Max total flows across all sessions (1M)
+    MAX_SESSIONS = 20                      # Max sessions to keep
+    MAX_FLOW_AGE_DAYS = 30                 # Delete flows older than this many days
 
     # Cleanup
     CLEANUP_INTERVAL = 300                 # Seconds between cleanup runs
+    MAX_DB_SIZE_MB = 2000                  # Warn if database exceeds this size (MB)
 
     # Database - use RELAYCRAFT_DATA_DIR from Tauri if available, otherwise fallback to ~/.relaycraft
     # All traffic-related data (database and bodies) is stored in a dedicated 'traffic' subdirectory
@@ -139,6 +142,7 @@ class FlowDatabase:
     def __init__(self, db_path: str = None, body_dir: str = None):
         self.db_path = db_path or Config.DB_PATH
         self.body_dir = body_dir or Config.BODY_DIR
+        self.logger = setup_logging()
 
         # Ensure directories exist
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -382,27 +386,57 @@ class FlowDatabase:
         # Frontend calls create_new_session_for_app_start() on app launch
         return None
 
-    def create_session(self, name: str, description: str = None, metadata: dict = None) -> str:
-        """Create a new session"""
+    def create_session(self, name: str, description: str = None, metadata: dict = None,
+                       is_active: bool = True, created_at: float = None) -> str:
+        """Create a new session
+        
+        Args:
+            name: Session name
+            description: Optional description
+            metadata: Optional metadata dict
+            is_active: Whether this session should be active (default True)
+                       Set to False for imported historical sessions
+            created_at: Optional created timestamp (for imported sessions)
+        """
         session_id = str(uuid.uuid4())[:8]
         now = time.time()
+        # Use provided created_at or current time
+        session_created_at = created_at if created_at is not None else now
 
         with self._lock:
             conn = self._get_conn()
+            
+            # If this session should be active, deactivate others first
+            if is_active:
+                conn.execute("UPDATE sessions SET is_active = 0")
+            
             conn.execute("""
-                INSERT INTO sessions (id, name, description, created_at, updated_at, metadata)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO sessions (id, name, description, created_at, updated_at, metadata, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 session_id,
                 name,
                 description,
-                now,
-                now,
-                json.dumps(metadata) if metadata else None
+                session_created_at,
+                now,  # updated_at is always now
+                json.dumps(metadata) if metadata else None,
+                1 if is_active else 0
             ))
             conn.commit()
 
         return session_id
+    
+    def update_session_flow_count(self, session_id: str) -> None:
+        """Update the flow_count for a session after importing flows"""
+        with self._lock:
+            conn = self._get_conn()
+            conn.execute("""
+                UPDATE sessions SET flow_count = (
+                    SELECT COUNT(*) FROM flow_indices WHERE session_id = ?
+                )
+                WHERE id = ?
+            """, (session_id, session_id))
+            conn.commit()
 
     def get_active_session(self) -> Optional[Dict]:
         """Get current active session"""
@@ -708,6 +742,9 @@ class FlowDatabase:
             since: Only return flows with msg_ts >= since
             limit: Maximum number of results
         """
+        import time as time_module
+        t0 = time_module.time()
+        
         # Only use _get_session_id if no session_id is provided
         if session_id is None:
             session_id = self._get_session_id(session_id)
@@ -716,6 +753,7 @@ class FlowDatabase:
                 return []
 
         conn = self._get_conn()
+        t1 = time_module.time()
 
         query = """
             SELECT * FROM flow_indices
@@ -729,6 +767,7 @@ class FlowDatabase:
             params.append(limit)
 
         rows = conn.execute(query, params).fetchall()
+        t2 = time_module.time()
 
         result = []
         for row in rows:
@@ -742,6 +781,17 @@ class FlowDatabase:
             else:
                 item['hits'] = []
             result.append(item)
+        t3 = time_module.time()
+        
+        # Log if slow (>100ms) or returning many rows
+        total_ms = (t3 - t0) * 1000
+        if total_ms > 100 or len(result) > 100:
+            self.logger.info(
+                f"get_indices ({total_ms:.0f}ms, {len(result)} rows): "
+                f"session={(t1-t0)*1000:.0f}ms, "
+                f"query={(t2-t1)*1000:.0f}ms, "
+                f"parse={(t3-t2)*1000:.0f}ms"
+            )
 
         return result
 
@@ -757,13 +807,18 @@ class FlowDatabase:
 
     def get_detail(self, flow_id: str) -> Optional[Dict]:
         """Get full flow detail, loading bodies as needed"""
+        import time as time_module
+        t0 = time_module.time()
+        
         conn = self._get_conn()
 
         # Only select needed columns for better performance
+        t1 = time_module.time()
         row = conn.execute("""
             SELECT id, session_id, data, request_body_ref, response_body_ref
             FROM flow_details WHERE id = ?
         """, (flow_id,)).fetchone()
+        t2 = time_module.time()
 
         if not row:
             return None
@@ -772,6 +827,7 @@ class FlowDatabase:
         session_id = row['session_id']
         req_ref = row['request_body_ref']
         res_ref = row['response_body_ref']
+        t3 = time_module.time()
 
         # Batch load compressed bodies in a single query for better performance
         compressed_bodies = {}
@@ -781,6 +837,7 @@ class FlowDatabase:
             """, (flow_id,)).fetchall()
             for body_row in body_rows:
                 compressed_bodies[body_row['type']] = body_row['data']
+        t4 = time_module.time()
 
         # Restore request body
         if req_ref and req_ref != 'inline':
@@ -793,6 +850,19 @@ class FlowDatabase:
             body = self._load_body(conn, flow_id, session_id, res_ref, 'response', compressed_bodies)
             if body and flow_data.get('response', {}).get('content'):
                 flow_data['response']['content']['text'] = body
+        t5 = time_module.time()
+        
+        # Log if slow (>100ms)
+        total_ms = (t5 - t0) * 1000
+        if total_ms > 100:
+            self.logger.info(
+                f"get_detail SLOW ({total_ms:.0f}ms): "
+                f"conn={(t1-t0)*1000:.0f}ms, "
+                f"query={(t2-t1)*1000:.0f}ms, "
+                f"json={(t3-t2)*1000:.0f}ms, "
+                f"bodies={(t4-t3)*1000:.0f}ms, "
+                f"restore={(t5-t4)*1000:.0f}ms"
+            )
 
         return flow_data
 
@@ -923,12 +993,31 @@ class FlowDatabase:
         ).fetchone()[0]
 
         if total == 0:
-            # Write empty file
+            # Write empty file with correct Session structure
             with open(file_path, 'w', encoding='utf-8') as f:
                 if format == 'har':
                     json.dump({"log": {"version": "1.2", "creator": {"name": "RelayCraft", "version": "1.0"}, "entries": []}}, f)
                 else:
-                    json.dump({"flows": [], "metadata": metadata or {}}, f)
+                    # Session format must match Rust Session struct
+                    # Ensure metadata has all required fields with defaults
+                    inner_meta = metadata.get("metadata", {}) if metadata else {}
+                    session_metadata = {
+                        "createdAt": inner_meta.get("createdAt", int(time.time() * 1000)),
+                        "duration": inner_meta.get("duration", 0),
+                        "flowCount": inner_meta.get("flowCount", 0),
+                        "sizeBytes": inner_meta.get("sizeBytes", 0),
+                        "clientInfo": inner_meta.get("clientInfo"),
+                        "networkCondition": inner_meta.get("networkCondition"),
+                        "viewState": inner_meta.get("viewState"),
+                    }
+                    session_obj = {
+                        "id": metadata.get("id", "") if metadata else "",
+                        "name": metadata.get("name", "") if metadata else "",
+                        "description": metadata.get("description") if metadata else None,
+                        "metadata": session_metadata,
+                        "flows": []
+                    }
+                    json.dump(session_obj, f, ensure_ascii=False)
             return
 
         # Load all compressed bodies into memory (they're smaller when compressed)
@@ -953,7 +1042,32 @@ class FlowDatabase:
             if format == 'har':
                 f.write('{"log":{"version":"1.2","creator":{"name":"RelayCraft","version":"1.0"},"entries":[')
             else:
-                f.write('{"metadata":' + json.dumps(metadata or {}) + ',"flows":[')
+                # Session format must match Rust Session struct:
+                # { id, name, description?, metadata, flows }
+                # Ensure metadata has all required fields with defaults
+                inner_meta = metadata.get("metadata", {}) if metadata else {}
+                session_metadata = {
+                    "createdAt": inner_meta.get("createdAt", int(time.time() * 1000)),
+                    "duration": inner_meta.get("duration", 0),
+                    "flowCount": inner_meta.get("flowCount", 0),
+                    "sizeBytes": inner_meta.get("sizeBytes", 0),
+                    "clientInfo": inner_meta.get("clientInfo"),
+                    "networkCondition": inner_meta.get("networkCondition"),
+                    "viewState": inner_meta.get("viewState"),
+                }
+                session_obj = {
+                    "id": metadata.get("id", "") if metadata else "",
+                    "name": metadata.get("name", "") if metadata else "",
+                    "description": metadata.get("description") if metadata else None,
+                    "metadata": session_metadata,
+                }
+                # Write session header (without flows yet)
+                # Remove the closing brace to add flows array
+                header = json.dumps(session_obj, ensure_ascii=False)
+                # header ends with }, we need to replace it with ,"flows":[
+                if header.endswith('}'):
+                    header = header[:-1] + ',"flows":['
+                f.write(header)
 
             first = True
             current = 0
@@ -1023,32 +1137,148 @@ class FlowDatabase:
             self._run_cleanup()
 
     def _run_cleanup(self):
-        """Clean up old data - only cleans up old sessions, no flow limit"""
+        """Clean up old data and enforce total flow limit
+        
+        This runs periodically (every CLEANUP_INTERVAL seconds) and performs:
+        1. Delete flows older than MAX_FLOW_AGE_DAYS
+        2. Enforce total flow limit (delete oldest if exceeds MAX_TOTAL_FLOWS)
+        3. Clean up empty sessions (0 flows)
+        4. Clean up old sessions (keep MAX_SESSIONS)
+        5. Database size check and warning
+        6. WAL checkpoint
+        7. Index optimization (PRAGMA optimize)
+        8. Integrity check (quick)
+        """
         with self._lock:
             conn = self._get_conn()
+            cleanup_start = time.time()
+            deleted_flows = 0
+            deleted_sessions = 0
 
-            # Clean up old sessions (keep MAX_SESSIONS)
-            old_sessions = conn.execute("""
+            # 1. Delete flows older than MAX_FLOW_AGE_DAYS (按天清理)
+            if Config.MAX_FLOW_AGE_DAYS > 0:
+                age_threshold = time.time() - (Config.MAX_FLOW_AGE_DAYS * 24 * 60 * 60)
+                old_flows = conn.execute("""
+                    SELECT id, session_id FROM flow_indices
+                    WHERE msg_ts < ?
+                """, (age_threshold,)).fetchall()
+                
+                if old_flows:
+                    self.logger.info(
+                        f"Deleting {len(old_flows)} flows older than {Config.MAX_FLOW_AGE_DAYS} days"
+                    )
+                    for row in old_flows:
+                        flow_id = row['id']
+                        session_id = row['session_id']
+                        self._delete_body_files(session_id, [flow_id])
+                        conn.execute("DELETE FROM flow_bodies WHERE flow_id = ?", (flow_id,))
+                        conn.execute("DELETE FROM flow_details WHERE id = ?", (flow_id,))
+                        conn.execute("DELETE FROM flow_indices WHERE id = ?", (flow_id,))
+                        deleted_flows += 1
+
+            # 2. Enforce TOTAL flow limit (SQLite performance depends on total records)
+            total_count = conn.execute("SELECT COUNT(*) FROM flow_indices").fetchone()[0]
+
+            if total_count > Config.MAX_TOTAL_FLOWS:
+                excess = total_count - Config.MAX_TOTAL_FLOWS
+                self.logger.info(
+                    f"Total flows ({total_count}) exceeds limit ({Config.MAX_TOTAL_FLOWS}), "
+                    f"deleting {excess} oldest flows"
+                )
+                # Delete oldest flows across ALL sessions
+                old_flows = conn.execute("""
+                    SELECT id, session_id FROM flow_indices
+                    ORDER BY msg_ts ASC
+                    LIMIT ?
+                """, (excess,)).fetchall()
+
+                for row in old_flows:
+                    flow_id = row['id']
+                    session_id = row['session_id']
+                    # Delete body files
+                    self._delete_body_files(session_id, [flow_id])
+                    # Delete from database
+                    conn.execute("DELETE FROM flow_bodies WHERE flow_id = ?", (flow_id,))
+                    conn.execute("DELETE FROM flow_details WHERE id = ?", (flow_id,))
+                    conn.execute("DELETE FROM flow_indices WHERE id = ?", (flow_id,))
+                    deleted_flows += 1
+
+            # 3. Update session flow counts and clean up empty sessions
+            conn.execute("""
+                UPDATE sessions SET flow_count = (
+                    SELECT COUNT(*) FROM flow_indices WHERE session_id = sessions.id
+                )
+            """)
+            
+            # Delete empty sessions (except default and active sessions)
+            empty_sessions = conn.execute("""
                 SELECT id FROM sessions
-                WHERE id != 'default' AND is_active = 0
-                ORDER BY updated_at DESC
-                LIMIT -1 OFFSET ?
-            """, (Config.MAX_SESSIONS - 1,)).fetchall()
-
-            for row in old_sessions:
+                WHERE id != 'default'
+                AND is_active = 0
+                AND flow_count = 0
+            """).fetchall()
+            
+            for row in empty_sessions:
                 self.delete_session(row['id'])
+                deleted_sessions += 1
 
-            # No flow limit - user's disk is the only constraint
-            # Flows are only deleted when their session is deleted
-
-            # Perform WAL checkpoint to merge WAL file into main database
-            # This helps keep the WAL file size under control
+            # 4. Check database size and warn if too large
+            db_size_mb = 0
             try:
-                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                db_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
+                if db_size_mb > Config.MAX_DB_SIZE_MB:
+                    self.logger.warn(
+                        f"Database size ({db_size_mb:.1f}MB) exceeds limit ({Config.MAX_DB_SIZE_MB}MB). "
+                        f"Consider deleting old sessions."
+                    )
+            except Exception:
+                pass
+
+            # 6. Perform WAL checkpoint to merge WAL file into main database
+            checkpoint_result = None
+            try:
+                checkpoint_result = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
             except Exception as e:
                 pass  # Ignore checkpoint errors
 
+            # 7. Optimize indexes (analyzes tables and updates statistics)
+            try:
+                conn.execute("PRAGMA optimize")
+            except Exception:
+                pass
+
+            # 8. Quick integrity check (only if database is small enough)
+            integrity_ok = True
+            if db_size_mb < 1000:  # Skip for very large databases
+                try:
+                    result = conn.execute("PRAGMA quick_check").fetchone()
+                    integrity_ok = result[0] == 'ok' if result else False
+                    if not integrity_ok:
+                        self.logger.error(f"Database integrity check failed: {result}")
+                except Exception:
+                    pass
+
             conn.commit()
+            
+            # 9. Conditional VACUUM if we deleted a lot of data
+            # Only run if we deleted more than 10% of total flows or more than 1000 flows
+            if deleted_flows > max(1000, total_count * 0.1):
+                self.logger.info(f"Running VACUUM after deleting {deleted_flows} flows...")
+                try:
+                    # Release lock temporarily to avoid blocking
+                    conn.execute("VACUUM")
+                    conn.commit()
+                except Exception as e:
+                    self.logger.error(f"VACUUM failed: {e}")
+            
+            # Log cleanup summary
+            cleanup_time = (time.time() - cleanup_start) * 1000
+            if deleted_sessions > 0 or deleted_flows > 0 or cleanup_time > 1000:
+                self.logger.info(
+                    f"Cleanup completed in {cleanup_time:.0f}ms: "
+                    f"deleted {deleted_sessions} sessions, {deleted_flows} flows, "
+                    f"db_size={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'}"
+                )
 
     def _delete_body_files(self, session_id: str, flow_ids: List[str]):
         """Delete body files for given flows"""
@@ -1128,12 +1358,60 @@ class FlowDatabase:
             'disk_usage': db_size + body_size,
         }
 
-    def vacuum(self):
-        """Run VACUUM to reclaim space"""
+    def vacuum(self, full: bool = False):
+        """Run VACUUM to reclaim space and defragment database.
+        
+        Args:
+            full: If True, always run VACUUM. If False, only run if beneficial.
+        
+        Note: VACUUM can be slow on large databases (copies entire database).
+        """
         with self._lock:
             conn = self._get_conn()
-            conn.execute("VACUUM")
-            conn.commit()
+            
+            # Check if VACUUM would be beneficial
+            if not full:
+                # Get free page count and total page count
+                try:
+                    result = conn.execute("PRAGMA freelist_count").fetchone()
+                    free_pages = result[0] if result else 0
+                    result = conn.execute("PRAGMA page_count").fetchone()
+                    total_pages = result[0] if result else 1
+                    
+                    # Only VACUUM if more than 20% of pages are free
+                    if free_pages / total_pages < 0.2:
+                        self.logger.info(f"VACUUM skipped: only {free_pages}/{total_pages} pages free")
+                        return
+                except Exception:
+                    pass  # Proceed with VACUUM if check fails
+            
+            self.logger.info("Starting VACUUM...")
+            start_time = time.time()
+            
+            try:
+                conn.execute("VACUUM")
+                conn.commit()
+                
+                elapsed = time.time() - start_time
+                new_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
+                self.logger.info(f"VACUUM completed in {elapsed:.1f}s, database size: {new_size_mb:.1f}MB")
+            except Exception as e:
+                self.logger.error(f"VACUUM failed: {e}")
+
+    def reindex(self):
+        """Rebuild all indexes to fix potential corruption and improve performance"""
+        with self._lock:
+            conn = self._get_conn()
+            self.logger.info("Starting REINDEX...")
+            start_time = time.time()
+            
+            try:
+                conn.execute("REINDEX")
+                conn.commit()
+                elapsed = time.time() - start_time
+                self.logger.info(f"REINDEX completed in {elapsed:.1f}s")
+            except Exception as e:
+                self.logger.error(f"REINDEX failed: {e}")
 
     def close(self):
         """Close database connection"""

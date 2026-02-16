@@ -604,13 +604,9 @@ class TrafficMonitor:
                         "isIntercepted": bool(idx.get("is_intercepted")),
                         "hits": idx.get("hits", []),
                         "msg_ts": idx.get("msg_ts"),
-                    })
-
-                # Get all flow IDs for buffer_ids (use same session_id)
-                all_indices = self.db.get_indices(session_id=session_id_param, since=0)
-                buffer_ids = [idx.get("id") for idx in all_indices if idx.get("id")]
-
-                # Return max msg_ts from returned indices (not current time!)
+                            })
+        
+                        # Return max msg_ts from returned indices (not current time!)
                 # This ensures we don't skip records with earlier timestamps
                 max_msg_ts = 0
                 if indices:
@@ -619,7 +615,6 @@ class TrafficMonitor:
                 response_data = {
                     "indices": indices,
                     "server_ts": max_msg_ts if max_msg_ts > 0 else since_ts,
-                    "buffer_ids": buffer_ids
                 }
                 json_str = json.dumps(
                     response_data,
@@ -1109,41 +1104,93 @@ class TrafficMonitor:
         elif "/_relay/import_session" in flow.request.path:
             try:
                 if flow.request.method == "POST":
-                    flows = json.loads(flow.request.content.decode('utf-8'))
+                    data = json.loads(flow.request.content.decode('utf-8'))
+                    
+                    # Handle both old format (array of flows) and new format (object with metadata)
+                    if isinstance(data, list):
+                        flows = data
+                        session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                        session_description = "Imported from session file"
+                        session_metadata = {"type": "session_import"}
+                        session_created_at = None
+                    else:
+                        flows = data.get("flows", [])
+                        # Use original session name and metadata
+                        session_name = data.get("name") or f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                        session_description = data.get("description") or "Imported from session file"
+                        session_metadata = data.get("metadata") or {}
+                        session_metadata["type"] = "session_import"
+                        # Use original createdAt from metadata (it's in milliseconds)
+                        metadata_created = (session_metadata or {}).get("createdAt")
+                        if metadata_created:
+                            session_created_at = metadata_created / 1000.0  # Convert ms to seconds
+                        else:
+                            session_created_at = None
+                    
+                    # Create a new session for this import (as historical/inactive)
+                    session_id = self.db.create_session(
+                        name=session_name,
+                        description=session_description,
+                        metadata=session_metadata,
+                        is_active=False,  # Import as historical session
+                        created_at=session_created_at  # Use original created_at
+                    )
+                    
                     # Import flows to database and return indices
                     indices = []
                     for idx, f in enumerate(flows):
-                        f["msg_ts"] = time.time() + idx * 0.001
-                        self.db.store_flow(f)
-                        rc = f.get("_rc", {}) or {}
+                        # Preserve original msg_ts if available, otherwise use startedDateTime
+                        if f.get("msg_ts"):
+                            msg_ts = f["msg_ts"]
+                        elif f.get("startedDateTime"):
+                            try:
+                                from datetime import datetime as dt
+                                # Parse ISO format datetime
+                                dt_str = f["startedDateTime"].replace("Z", "+00:00")
+                                msg_ts = dt.fromisoformat(dt_str).timestamp()
+                            except:
+                                msg_ts = time.time() + idx * 0.001
+                        else:
+                            msg_ts = time.time() + idx * 0.001
+                        
+                        f["msg_ts"] = msg_ts
+                        self.db.store_flow(f, session_id=session_id)
+                        
+                        rc = f.get("_rc") or {}
+                        req = f.get("request") or {}
+                        resp = f.get("response") or {}
+                        
                         indices.append({
                             "id": f.get("id"),
-                            "msg_ts": f["msg_ts"],
-                            "method": (f.get("request") or {}).get("method", "") or "",
-                            "url": (f.get("request") or {}).get("url", "") or "",
-                            "host": f.get("host", "") or "",
-                            "path": f.get("path", "") or "",
-                            "status": (f.get("response") or {}).get("status", 0) or 0,
-                            "contentType": f.get("contentType", "") or "",
-                            "startedDateTime": f.get("startedDateTime", "") or "",
-                            "time": f.get("time", 0) or 0,
-                            "size": f.get("size", 0) or 0,
+                            "msg_ts": msg_ts,
+                            "method": req.get("method") or "",
+                            "url": req.get("url") or "",
+                            "host": f.get("host") or "",
+                            "path": f.get("path") or "",
+                            "status": resp.get("status") or 0,
+                            "contentType": f.get("contentType") or "",
+                            "startedDateTime": f.get("startedDateTime") or "",
+                            "time": f.get("time") or 0,
+                            "size": f.get("size") or 0,
                             "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool((f.get("request") or {}).get("postData", {}).get("text")),
-                            "hasResponseBody": bool((f.get("response") or {}).get("content", {}).get("text")),
-                            "isWebsocket": rc.get("isWebsocket", False) or False,
-                            "websocketFrameCount": rc.get("websocketFrameCount", 0) or 0,
+                            "hasRequestBody": bool((req.get("postData") or {}).get("text")),
+                            "hasResponseBody": bool((resp.get("content") or {}).get("text")),
+                            "isWebsocket": bool(rc.get("isWebsocket")),
+                            "websocketFrameCount": rc.get("websocketFrameCount") or 0,
                             "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
                             "hits": [
                                 {
-                                    "id": h.get("id", "") or "",
-                                    "name": h.get("name", "") or "",
-                                    "type": h.get("type", "") or "",
-                                    "status": h.get("status"),
+                                    "id": (h or {}).get("id") or "",
+                                    "name": (h or {}).get("name") or "",
+                                    "type": (h or {}).get("type") or "",
+                                    "status": (h or {}).get("status"),
                                 }
-                                for h in rc.get("hits", []) or []
+                                for h in (rc.get("hits") or [])
                             ],
                         })
+                    
+                    # Update session flow count after import
+                    self.db.update_session_flow_count(session_id)
                     
                     # Return session_id so frontend can switch to it
                     json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
@@ -1175,76 +1222,96 @@ class TrafficMonitor:
                     from urllib.parse import urlparse
 
                     har_data = json.loads(flow.request.content.decode('utf-8'))
-                    entries = har_data.get("log", {}).get("entries", [])
+                    entries = har_data.get("log", {}).get("entries", []) or []
                     
                     # Create a new session for this HAR import
                     import os
                     from pathlib import Path
-                    filename = "Imported HAR"
                     session_id = self.db.create_session(
-                        name=f"Import: {filename} ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
-                        description=f"Imported from HAR on {datetime.now()}",
+                        name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
+                        description=f"Imported from HAR file with {len(entries)} entries",
                         metadata={"type": "har_import"}
                     )
 
                     indices = []
                     for idx, entry in enumerate(entries):
+                        if not entry:
+                            continue
+                        
                         # Generate unique ID for HAR entry
                         flow_id = str(uuid.uuid4())
 
                         # Parse URL to extract host and path
-                        req = entry.get("request", {}) or {}
-                        url = req.get("url", "") or ""
+                        req = entry.get("request") or {}
+                        url = req.get("url") or ""
                         parsed = urlparse(url) if url else None
+                        
+                        # Get response safely
+                        resp = entry.get("response") or {}
+                        resp_content = resp.get("content") or {}
+                        
+                        # Get _rc safely
+                        rc = entry.get("_rc") or {}
 
                         # Transform HAR entry to internal format
                         flow_data = {
                             "id": flow_id,
                             "msg_ts": time.time() + idx * 0.001,
                             "request": req,
-                            "response": entry.get("response", {}) or {},
+                            "response": resp,
                             "host": (parsed.hostname if parsed else "") or "",
                             "path": (parsed.path if parsed else "") or "",
-                            "contentType": ((entry.get("response") or {}).get("content") or {}).get("mimeType", "") or "",
-                            "startedDateTime": entry.get("startedDateTime", "") or "",
-                            "time": entry.get("time", 0) or 0,
-                            "size": ((entry.get("response") or {}).get("content") or {}).get("size", 0) or 0,
-                            "_rc": entry.get("_rc", {}) or {},
+                            "contentType": resp_content.get("mimeType") or "",
+                            "startedDateTime": entry.get("startedDateTime") or "",
+                            "time": entry.get("time") or 0,
+                            "size": resp_content.get("size") or 0,
+                            "_rc": rc,
                         }
 
                         self.db.store_flow(flow_data, session_id=session_id)
 
                         # Build index for response
-                        rc = entry.get("_rc", {})
+                        req_postdata = req.get("postData") or {}
+                        resp_content_text = resp_content.get("text")
+                        
                         indices.append({
                             "id": flow_id,
                             "msg_ts": flow_data["msg_ts"],
-                            "method": req.get("method", ""),
+                            "method": req.get("method") or "",
                             "url": url,
                             "host": flow_data["host"],
                             "path": flow_data["path"],
-                            "status": entry.get("response", {}).get("status", 0),
+                            "status": resp.get("status") or 0,
                             "contentType": flow_data["contentType"],
                             "startedDateTime": flow_data["startedDateTime"],
                             "time": flow_data["time"],
                             "size": flow_data["size"],
                             "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool(req.get("postData", {}).get("text")),
-                            "hasResponseBody": bool(entry.get("response", {}).get("content", {}).get("text")),
-                            "isWebsocket": rc.get("isWebsocket", False),
-                            "websocketFrameCount": rc.get("websocketFrameCount", 0),
-                            "isIntercepted": bool(rc.get("intercept", {}).get("intercepted")),
+                            "hasRequestBody": bool(req_postdata.get("text")),
+                            "hasResponseBody": bool(resp_content_text),
+                            "isWebsocket": bool(rc.get("isWebsocket")),
+                            "websocketFrameCount": rc.get("websocketFrameCount") or 0,
+                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
                             "hits": [
                                 {
-                                    "id": h.get("id", ""),
-                                    "name": h.get("name", ""),
-                                    "type": h.get("type", ""),
-                                    "status": h.get("status"),
+                                    "id": (h or {}).get("id") or "",
+                                    "name": (h or {}).get("name") or "",
+                                    "type": (h or {}).get("type") or "",
+                                    "status": (h or {}).get("status"),
                                 }
-                                for h in rc.get("hits", [])
+                                for h in (rc.get("hits") or [])
                             ],
                         })
-                    json_str = json.dumps(indices, ensure_ascii=False)
+
+                    # Update session flow count after import
+                    self.db.update_session_flow_count(session_id)
+
+                    # Return response with session_id and indices
+                    response_data = {
+                        "session_id": session_id,
+                        "indices": indices
+                    }
+                    json_str = json.dumps(response_data, ensure_ascii=False)
                     flow.response = Response.make(
                         200,
                         json_str.encode("utf-8"),

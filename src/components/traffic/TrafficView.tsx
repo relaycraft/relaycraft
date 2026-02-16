@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from "framer-motion";
-import * as LucideIcons from "lucide-react";
 import {
   Activity,
   AlertTriangle,
@@ -18,6 +17,7 @@ import { Virtuoso } from "react-virtuoso";
 import { matchFlow, parseFilter } from "../../lib/filterParser";
 import { useBreakpointStore } from "../../stores/breakpointStore";
 import { useProxyStore } from "../../stores/proxyStore";
+import { useSessionStore } from "../../stores/sessionStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { FlowIndex } from "../../types";
@@ -40,6 +40,23 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   const { active, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
   const { breakpoints } = useBreakpointStore();
   const { setActiveTab } = useUIStore();
+  const { showSessionId, dbSessions } = useSessionStore();
+
+  // Check if viewing historical session (not the one currently being written)
+  // A session is historical if:
+  // 1. Proxy is running and viewing a different session than the active one, OR
+  // 2. Proxy is not running (all sessions are historical in this case)
+  const isHistoricalSession = useMemo(() => {
+    const activeSession = dbSessions.find((s) => s.is_active === 1);
+
+    // If proxy is not running, all sessions are historical
+    if (!active) {
+      return true;
+    }
+
+    // If proxy is running, check if viewing a different session
+    return activeSession && showSessionId && activeSession.id !== showSessionId;
+  }, [active, dbSessions, showSessionId]);
 
   // Custom Hooks
   const {
@@ -107,7 +124,65 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     caseSensitive,
   ]);
 
-  const [lastBaselineCount, setLastBaselineCount] = useState(filteredIndices.length);
+  const [lastBaselineCount, setLastBaselineCount] = useState(0);
+  const prevSessionIdRef = useRef<string | null>(null);
+  const prevIndicesLengthRef = useRef(0);
+
+  // Handle new requests count based on scroll position and data changes
+  useEffect(() => {
+    // In historical session or auto-scroll mode, never show new requests count
+    if (isHistoricalSession || autoScroll) {
+      setNewRequestsCount(0);
+      setLastBaselineCount(filteredIndices.length);
+      prevIndicesLengthRef.current = filteredIndices.length;
+      return;
+    }
+
+    // Session changed - reset everything
+    if (prevSessionIdRef.current !== showSessionId) {
+      prevSessionIdRef.current = showSessionId;
+      setLastBaselineCount(filteredIndices.length);
+      setNewRequestsCount(0);
+      prevIndicesLengthRef.current = filteredIndices.length;
+      return;
+    }
+
+    // Data was cleared (e.g., clearLocal was called)
+    if (filteredIndices.length === 0 && prevIndicesLengthRef.current > 0) {
+      setLastBaselineCount(0);
+      setNewRequestsCount(0);
+      prevIndicesLengthRef.current = 0;
+      return;
+    }
+
+    // Data just loaded after clear
+    if (filteredIndices.length > 0 && lastBaselineCount === 0) {
+      setLastBaselineCount(filteredIndices.length);
+      setNewRequestsCount(0);
+      prevIndicesLengthRef.current = filteredIndices.length;
+      return;
+    }
+
+    // Normal operation: update bubble count based on scroll position
+    if (atBottom) {
+      // User is at bottom - update baseline to current and reset count
+      setLastBaselineCount(filteredIndices.length);
+      setNewRequestsCount(0);
+    } else {
+      // User scrolled up - show difference from baseline
+      const diff = filteredIndices.length - lastBaselineCount;
+      setNewRequestsCount(Math.max(0, diff));
+    }
+
+    prevIndicesLengthRef.current = filteredIndices.length;
+  }, [
+    filteredIndices.length,
+    atBottom,
+    autoScroll,
+    lastBaselineCount,
+    isHistoricalSession,
+    showSessionId,
+  ]);
 
   // Use refs to mirror state for the stable keyboard listener.
   // This prevents the listener from re-binding on every traffic update.
@@ -116,17 +191,6 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   useEffect(() => {
     filteredIndicesRef.current = filteredIndices;
   }, [filteredIndices]);
-
-  useEffect(() => {
-    // Only update bubble count if autoScroll is OFF or we're not at bottom
-    if (atBottom && autoScroll) {
-      setLastBaselineCount(filteredIndices.length);
-      setNewRequestsCount(0);
-    } else {
-      const diff = filteredIndices.length - lastBaselineCount;
-      setNewRequestsCount(Math.max(0, diff));
-    }
-  }, [filteredIndices.length, atBottom, autoScroll, lastBaselineCount]);
 
   // Manual "Sticky" Auto-scroll logic:
   // We rely on native followOutput for persistent tracking.
@@ -232,7 +296,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
               <p className="text-xs font-bold text-amber-500 leading-tight">
                 {t("traffic.security.untrusted_title")}
               </p>
-              <p className="text-[11px] text-amber-500/80 leading-tight mt-0.5">
+              <p className="text-small text-amber-500/80 leading-tight mt-0.5">
                 {t("traffic.security.untrusted_desc")}
               </p>
             </div>
@@ -241,7 +305,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[11px] px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 font-bold"
+              className="h-7 text-small px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 font-bold"
               onClick={() => {
                 useUIStore.getState().setSettingsTab("certificate");
                 setActiveTab("settings");
@@ -338,7 +402,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                     title={t("traffic.listening")}
                     description={
                       <div className="space-y-6">
-                        <div className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground mt-1">
+                        <div className="flex items-center justify-center gap-2 text-small text-muted-foreground mt-1">
                           <span className="px-1.5 py-0.5 bg-muted rounded border border-border/50 font-mono">
                             127.0.0.1:9090
                           </span>
@@ -354,11 +418,11 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               <div className="p-1 bg-blue-500/10 rounded text-blue-500">
                                 <Terminal className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-[11px] font-bold">
+                              <span className="text-small font-bold">
                                 {t("traffic.setup.system")}
                               </span>
                             </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            <p className="text-small text-muted-foreground leading-relaxed">
                               {t("traffic.setup.system_desc")}
                             </p>
                           </div>
@@ -367,11 +431,11 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               <div className="p-1 bg-purple-500/10 rounded text-purple-500">
                                 <QrCode className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-[11px] font-bold">
+                              <span className="text-small font-bold">
                                 {t("traffic.setup.mobile")}
                               </span>
                             </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            <p className="text-small text-muted-foreground leading-relaxed">
                               {t("traffic.setup.mobile_desc")}
                             </p>
                           </div>
@@ -380,7 +444,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                         <div className="flex items-center justify-center gap-4 pt-2">
                           <button
                             onClick={() => setIsGuideOpen(true)}
-                            className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                            className="text-small text-primary hover:underline flex items-center gap-1"
                           >
                             <Info className="w-3 h-3" />
                             {t("traffic.setup.guide")}
@@ -390,7 +454,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               useUIStore.getState().setSettingsTab("certificate");
                               setActiveTab("settings");
                             }}
-                            className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                            className="text-small text-muted-foreground hover:text-foreground flex items-center gap-1"
                           >
                             <Lock className="w-3 h-3" />
                             {t("traffic.setup.cert")}
@@ -412,7 +476,8 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                   // their positions accurately even as the list grows rapidly.
                   computeItemKey={(_, item) => item.id}
                   // Increase buffer to stabilize height calculations during high traffic
-                  increaseViewportBy={500}
+                  // and reduce blank space during fast scrolling
+                  increaseViewportBy={{ top: 500, bottom: 500 }}
                   // Relax the threshold for "at bottom" significantly to ensure stickiness.
                   atBottomThreshold={100}
                   // Native followOutput={true} handles "if at bottom, stay at bottom".
@@ -434,43 +499,43 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                 />
 
                 {/* Jump to Bottom Bubble */}
+                {/* Rules:
+                    - Historical session: NEVER show (no new data coming in)
+                    - Active session with auto-scroll ON: NEVER show (already tracking latest)
+                    - Active session with auto-scroll OFF: show when scrolled up AND there are new requests
+                */}
                 <AnimatePresence>
-                  {(!atBottom || (newRequestsCount > 0 && !atBottom)) && showJumpBubble && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, y: 4 }}
-                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto"
-                    >
-                      <button
-                        onClick={() => {
-                          virtuosoRef.current?.scrollToIndex({
-                            index: filteredIndices.length - 1,
-                            behavior: "smooth",
-                          });
-                          setAtBottom(true);
-                          setNewRequestsCount(0);
-                          setShowJumpBubble(false);
-                          if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-[11px] font-medium backdrop-blur-xl ring-1 ring-white/5"
+                  {!(isHistoricalSession || autoScroll || atBottom) &&
+                    newRequestsCount > 0 &&
+                    showJumpBubble && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 4 }}
+                        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto"
                       >
-                        {newRequestsCount > 0 ? (
+                        <button
+                          onClick={() => {
+                            virtuosoRef.current?.scrollToIndex({
+                              index: filteredIndices.length - 1,
+                              behavior: "smooth",
+                            });
+                            setAtBottom(true);
+                            setNewRequestsCount(0);
+                            setShowJumpBubble(false);
+                            if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-small font-medium backdrop-blur-xl ring-1 ring-white/5"
+                        >
                           <div className="flex items-center gap-1.5">
-                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold">
+                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-caption font-bold">
                               {newRequestsCount > 99 ? "99+" : newRequestsCount}
                             </div>
                             <span>{t("traffic.new_requests", "New Requests")}</span>
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5">
-                            <LucideIcons.ChevronDown className="w-3 h-3 opacity-70" />
-                            <span>{t("traffic.jump_to_latest", "Jump to Latest")}</span>
-                          </div>
-                        )}
-                      </button>
-                    </motion.div>
-                  )}
+                        </button>
+                      </motion.div>
+                    )}
                 </AnimatePresence>
               </>
             )}

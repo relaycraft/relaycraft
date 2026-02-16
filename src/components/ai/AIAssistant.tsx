@@ -224,7 +224,7 @@ export function AIAssistant({
                     <div className="p-1 bg-primary/20 rounded-md">
                       <Bot className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                    <span className="text-caption font-bold text-primary uppercase tracking-widest">
                       {view === "input"
                         ? config.title
                         : loading
@@ -252,7 +252,7 @@ export function AIAssistant({
                         onChange={(e) => setPrompt(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                         placeholder={config.placeholder}
-                        className="w-full pl-3.5 pr-10 h-8 bg-muted/30 border border-border/20 rounded-xl text-xs placeholder:text-[10px] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 font-sans transition-all disabled:opacity-50"
+                        className="w-full pl-3.5 pr-10 h-8 bg-muted/30 border border-border/20 rounded-xl text-xs placeholder:text-caption focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 font-sans transition-all disabled:opacity-50"
                         disabled={loading}
                       />
                       <button
@@ -277,7 +277,7 @@ export function AIAssistant({
                           setPrompt(s);
                           setTimeout(handleGenerate, 50);
                         }}
-                        className="text-[10px] font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all cursor-pointer whitespace-nowrap"
+                        className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all cursor-pointer whitespace-nowrap"
                       >
                         {s}
                       </button>
@@ -288,7 +288,7 @@ export function AIAssistant({
                     <button
                       onClick={handleExplain}
                       disabled={loading}
-                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-[10px] font-bold mt-1 px-1"
+                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-caption font-bold mt-1 px-1"
                     >
                       <BookOpen className="w-3 h-3" />
                       {t("ai_assistant.regex.explain_btn")}
@@ -298,11 +298,11 @@ export function AIAssistant({
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="max-h-[260px] overflow-y-auto no-scrollbar pr-1 bg-muted/20 border border-border/10 rounded-xl p-3 min-h-[80px] relative">
-                    <div className="text-[12px] leading-relaxed text-foreground/90 font-medium">
+                    <div className="text-xs leading-relaxed text-foreground/90 font-medium">
                       {loading && !content ? (
                         <div className="flex items-center gap-2 text-muted-foreground animate-pulse py-1 text-center justify-center h-full">
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          <span className="text-[10px] uppercase tracking-wider font-bold">
+                          <span className="text-caption uppercase tracking-wider font-bold">
                             {t("ai_assistant.analyzing")}
                           </span>
                         </div>

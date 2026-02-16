@@ -32,13 +32,13 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <label className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">
+        <label className="text-caption font-extrabold text-muted-foreground uppercase tracking-widest">
           {t("common.headers")}
         </label>
         <button
           type="button"
           onClick={addItem}
-          className="text-[10px] flex items-center gap-1.5 text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-all font-bold uppercase tracking-wider"
+          className="text-caption flex items-center gap-1.5 text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-all font-bold uppercase tracking-wider"
         >
           <Plus className="w-3 h-3" />
           {t("composer.headers_list.add")}
@@ -82,7 +82,7 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
           </div>
         ))}
         {headers.length === 0 && (
-          <div className="text-[11px] text-muted-foreground border border-dashed border-border/60 rounded-xl py-4 text-center bg-muted/5 font-medium">
+          <div className="text-small text-muted-foreground border border-dashed border-border/60 rounded-xl py-4 text-center bg-muted/5 font-medium">
             {t("composer.headers_list.empty")}
           </div>
         )}

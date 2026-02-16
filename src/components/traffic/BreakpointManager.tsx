@@ -62,7 +62,7 @@ export function BreakpointManager({ variant = "default" }: BreakpointManagerProp
         </div>
         <button
           onClick={handleClearAll}
-          className="text-[10px] font-bold text-red-500/60 hover:text-red-500 hover:bg-red-500/10 px-2 py-1 rounded transition-all uppercase tracking-tighter"
+          className="text-caption font-bold text-red-500/60 hover:text-red-500 hover:bg-red-500/10 px-2 py-1 rounded transition-all uppercase tracking-tighter"
         >
           {t("breakpoint.clear_all")}
         </button>
@@ -87,7 +87,7 @@ export function BreakpointManager({ variant = "default" }: BreakpointManagerProp
         ))}
       </div>
 
-      <p className="text-[10px] text-red-500/40 italic font-medium pt-1">{t("breakpoint.hint")}</p>
+      <p className="text-caption text-red-500/40 italic font-medium pt-1">{t("breakpoint.hint")}</p>
     </div>
   );
 }

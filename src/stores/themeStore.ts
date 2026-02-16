@@ -61,6 +61,21 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--color-info-foreground": "#ffffff",
         "--color-ring": "#3b82f6",
 
+        /* Rule Type Specific Colors - Dark */
+        "--color-rule-script": "#818cf8",
+        "--color-rule-rewrite-body": "#a855f7",
+        "--color-rule-map-local": "#3b82f6",
+        "--color-rule-map-remote": "#10b981",
+        "--color-rule-rewrite-header": "#f97316",
+        "--color-rule-throttle": "#06b6d4",
+        "--color-rule-block": "#f43f5e",
+
+        /* Method Colors - Dark */
+        "--color-method-get": "#3b82f6",
+        "--color-method-post": "#10b981",
+        "--color-method-put": "#f59e0b",
+        "--color-method-delete": "#f43f5e",
+
         /* Semantic Syntax Palette - Dark (One Dark Inspired) */
         "--syntax-keyword": "#c678dd",
         "--syntax-string": "#98c379",
@@ -71,6 +86,23 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--syntax-property": "#e06c75",
         "--syntax-operator": "#56b6c2",
         "--syntax-gutter": "rgba(255, 255, 255, 0.1)",
+
+        /* Surface & Glass Effects */
+        "--surface-opacity-subtle": "0.1",
+        "--surface-opacity-glass": "0.4",
+        "--surface-opacity-solid": "0.95",
+        "--blur-sm": "4px",
+        "--blur-md": "12px",
+        "--blur-lg": "40px",
+
+        /* Borders - Dark */
+        "--color-border-subtle": "rgba(255, 255, 255, 0.04)",
+        "--color-border-muted": "rgba(255, 255, 255, 0.12)",
+
+        /* Typography */
+        "--text-caption": "0.625rem",
+        "--text-small": "0.6875rem",
+        "--text-ui": "0.8125rem",
       },
       pluginId: "system",
     },
@@ -105,6 +137,21 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--color-info-foreground": "#ffffff",
         "--color-ring": "#4f46e5",
 
+        /* Rule Type Specific Colors - Light */
+        "--color-rule-script": "#4f46e5",
+        "--color-rule-rewrite-body": "#7c3aed",
+        "--color-rule-map-local": "#2563eb",
+        "--color-rule-map-remote": "#059669",
+        "--color-rule-rewrite-header": "#ea580c",
+        "--color-rule-throttle": "#0891b2",
+        "--color-rule-block": "#e11d48",
+
+        /* Method Colors - Light */
+        "--color-method-get": "#2563eb",
+        "--color-method-post": "#059669",
+        "--color-method-put": "#d97706",
+        "--color-method-delete": "#dc2626",
+
         /* Semantic Syntax Palette - Light (GitHub Light Inspired) */
         "--syntax-keyword": "#d73a49",
         "--syntax-string": "#032f62",
@@ -115,6 +162,23 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--syntax-property": "#005cc5",
         "--syntax-operator": "#d73a49",
         "--syntax-gutter": "rgba(0, 0, 0, 0.1)",
+
+        /* Surface & Glass Effects */
+        "--surface-opacity-subtle": "0.05",
+        "--surface-opacity-glass": "0.6",
+        "--surface-opacity-solid": "0.98",
+        "--blur-sm": "4px",
+        "--blur-md": "12px",
+        "--blur-lg": "40px",
+
+        /* Borders - Light */
+        "--color-border-subtle": "rgba(0, 0, 0, 0.02)",
+        "--color-border-muted": "rgba(0, 0, 0, 0.06)",
+
+        /* Typography */
+        "--text-caption": "0.625rem",
+        "--text-small": "0.6875rem",
+        "--text-ui": "0.8125rem",
       },
       pluginId: "system",
     },

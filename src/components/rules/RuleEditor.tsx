@@ -126,7 +126,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
               <Plus className="w-4 h-4 text-primary" />
             )}
           </div>
-          <h3 className="text-system font-semibold text-foreground">
+          <h3 className="text-ui font-semibold text-foreground">
             {rule?.id ? t("rule_editor.title_edit") : t("rule_editor.title_create")}
           </h3>
         </div>
@@ -212,7 +212,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
           <section className="space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]" />
-              <span className="text-[12px] font-bold text-foreground/90 uppercase tracking-widest">
+              <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest">
                 {t("rule_editor.sections.action")}
               </span>
             </div>
@@ -302,7 +302,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
           <section className="space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-0.5 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
-              <span className="text-[11px] font-semibold text-foreground/80 uppercase tracking-widest py-1">
+              <span className="text-small font-semibold text-foreground/80 uppercase tracking-widest py-1">
                 {t("rule_editor.sections.action")}
               </span>
             </div>

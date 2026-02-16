@@ -93,7 +93,7 @@ export const Select = ({
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex h-8 items-center justify-between w-full px-3 py-1 pr-8 bg-background hover:bg-muted/30 border border-border hover:border-border/80 rounded-lg text-system font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm",
+          "flex h-8 items-center justify-between w-full px-3 py-1 pr-8 bg-background hover:bg-muted/30 border border-border hover:border-border/80 rounded-lg text-ui font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm",
           className,
         )}
       >

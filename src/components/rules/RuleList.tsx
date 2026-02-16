@@ -205,7 +205,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                           <p className="font-semibold text-red-400">
                             {t("rules.conflict.shadowed")}
                           </p>
-                          <p className="text-[10px] opacity-80 leading-tight">
+                          <p className="text-caption opacity-80 leading-tight">
                             {t("rules.conflict.shadowed_desc", {
                               name: allRules.find((r) => r.id === conflict.byRuleId)?.name,
                             })}
@@ -215,19 +215,19 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                     >
                       <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full border border-destructive/20 shadow-sm animate-pulse cursor-help pointer-events-auto">
                         <AlertTriangle className="w-2.5 h-2.5" />
-                        <span className="text-[9px] uppercase font-semibold leading-none">
+                        <span className="text-caption uppercase font-semibold leading-none">
                           {t("rules.conflict.overridden")}
                         </span>
                       </div>
                     </Tooltip>
                   )}
                   {!rule.execution.enabled && (
-                    <span className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-lg bg-muted text-muted-foreground/80 leading-none">
+                    <span className="text-caption uppercase font-semibold px-1.5 py-0.5 rounded-lg bg-muted text-muted-foreground/80 leading-none">
                       {t("common.disabled")}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-[12px] text-muted-foreground/80">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
                   <span
                     className={`truncate opacity-100 ${conflict && rule.execution.enabled ? "line-through decoration-destructive/40" : ""} ${isSelected ? "text-primary/90" : ""}`}
                   >
@@ -236,8 +236,8 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                   </span>
                   {belowLabel(rule) && (
                     <>
-                      <span className="opacity-30 text-[10px]">•</span>
-                      <span className="truncate text-[11px] text-muted-foreground/70">
+                      <span className="opacity-30 text-caption">•</span>
+                      <span className="truncate text-small text-muted-foreground/70">
                         {belowLabel(rule)}
                       </span>
                     </>

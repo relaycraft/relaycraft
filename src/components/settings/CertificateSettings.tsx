@@ -193,7 +193,7 @@ export function CertificateSettings() {
                           <h3 className="text-lg font-bold text-foreground">{t("cert.ca_name")}</h3>
                           <span
                             className={cn(
-                              "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border",
+                              "text-caption px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border",
                               isInstalled
                                 ? "bg-green-500/10 text-green-600 border-green-500/20"
                                 : "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -202,7 +202,7 @@ export function CertificateSettings() {
                             {isInstalled ? t("cert.status.trusted") : t("cert.status.untrusted")}
                           </span>
                         </div>
-                        <p className="text-system text-muted-foreground leading-relaxed max-w-2xl">
+                        <p className="text-ui text-muted-foreground leading-relaxed max-w-2xl">
                           {isInstalled
                             ? t("cert.state.trusted_desc")
                             : t("cert.state.untrusted_desc")}
@@ -212,7 +212,7 @@ export function CertificateSettings() {
                       {/* Info Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-muted/30 border border-border/40">
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          <div className="flex items-center gap-2 text-caption font-bold text-muted-foreground uppercase tracking-wider">
                             <Clock className="w-3 h-3" />
                             {t("cert.info.expires")}
                           </div>
@@ -222,14 +222,14 @@ export function CertificateSettings() {
                         </div>
 
                         <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-muted/30 border border-border/40">
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          <div className="flex items-center gap-2 text-caption font-bold text-muted-foreground uppercase tracking-wider">
                             <Fingerprint className="w-3 h-3" />
                             {t("cert.info.fingerprint")}{" "}
                             <span className="text-muted-foreground/50 font-normal normal-case ml-1">
                               (SHA256)
                             </span>
                           </div>
-                          <div className="font-mono text-[10px] text-muted-foreground break-all leading-normal pl-1">
+                          <div className="font-mono text-caption text-muted-foreground break-all leading-normal pl-1">
                             {certInfo?.fingerprint || t("common.not_loaded")}
                           </div>
                         </div>
@@ -312,7 +312,7 @@ export function CertificateSettings() {
               <div className="text-xs font-bold text-foreground mb-1">
                 {t("cert.storage.title")}
               </div>
-              <div className="text-[11px] text-muted-foreground/70 truncate font-mono">
+              <div className="text-small text-muted-foreground/70 truncate font-mono">
                 {certPath || "—"}
               </div>
             </div>
@@ -322,7 +322,7 @@ export function CertificateSettings() {
                 onClick={handleOpenCertDir}
                 variant="outline"
                 size="sm"
-                className="h-8 text-[11px] font-bold px-3 gap-1.5"
+                className="h-8 text-small font-bold px-3 gap-1.5"
               >
                 {t("cert.storage.open")}
               </Button>

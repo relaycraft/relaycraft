@@ -62,10 +62,10 @@ export function StatusBar() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-green-500 filter drop-shadow-[0_0_2px_rgba(34,197,94,0.6)]"
+                  className="text-success filter drop-shadow-[0_0_2px_rgba(16,185,129,0.6)]"
                 >
                   <div className="relative">
-                    <div className="absolute inset-0 bg-green-500 rounded-full blur-[4px] opacity-20 animate-pulse" />
+                    <div className="absolute inset-0 bg-success rounded-full blur-[4px] opacity-20 animate-pulse" />
                     <Activity className="w-3.5 h-3.5 relative z-10" />
                   </div>
                 </motion.div>
@@ -123,7 +123,7 @@ export function StatusBar() {
               <div className="relative">
                 <div
                   onClick={() => setShowBreakpoints(!showBreakpoints)}
-                  className={`breakpoint-manager-trigger flex items-center gap-1.5 transition-colors cursor-pointer select-none rounded-[6px] px-2 py-0.5 ${showBreakpoints ? "bg-red-500/10 text-red-500 ring-1 ring-red-500/20" : "text-red-500/80 hover:text-red-500 hover:bg-red-500/5"}`}
+                  className={`breakpoint-manager-trigger flex items-center gap-1.5 transition-colors cursor-pointer select-none rounded-[6px] px-2 py-0.5 ${showBreakpoints ? "bg-error/10 text-error ring-1 ring-error/20" : "text-error/80 hover:text-error hover:bg-error/5"}`}
                 >
                   <Octagon className="w-3 h-3 fill-current opacity-20" />
                   <span className="font-bold font-mono">{breakpoints.length}</span>
@@ -135,7 +135,7 @@ export function StatusBar() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 z-[60] shadow-2xl rounded-2xl overflow-hidden border border-red-500/20 bg-background/95 backdrop-blur-xl"
+                      className="breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 z-[60] shadow-2xl rounded-2xl overflow-hidden border border-error/20 bg-background/95 backdrop-blur-xl"
                     >
                       <BreakpointManager variant="minimal" />
                     </motion.div>
@@ -174,7 +174,7 @@ export function StatusBar() {
                 <Bell className="w-3 h-3" />
               )}
               {unread > 0 && !dnd && (
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full ring-1 ring-background" />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-error rounded-full ring-1 ring-background" />
               )}
               {unread > 0 && dnd && (
                 <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-muted-foreground/50 rounded-full ring-1 ring-background" />

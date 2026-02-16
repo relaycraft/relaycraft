@@ -89,12 +89,12 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-[13px] truncate">{displayName}</h3>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/60">
+              <h3 className="font-bold text-ui truncate">{displayName}</h3>
+              <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/60">
                 v{plugin.manifest.version}
               </span>
               {plugin.enabled && (
-                <span className="flex items-center gap-1 text-[9px] font-bold text-green-500 uppercase tracking-widest ml-1">
+                <span className="flex items-center gap-1 text-caption font-bold text-green-500 uppercase tracking-widest ml-1">
                   <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
                   {t("plugins.running")}
                 </span>
@@ -146,13 +146,13 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
             </div>
           </div>
 
-          <p className="text-[11px] text-muted-foreground/80 line-clamp-2 leading-relaxed mb-2 pr-2">
+          <p className="text-small text-muted-foreground/80 line-clamp-2 leading-relaxed mb-2 pr-2">
             {displayDescription}
           </p>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {plugin.manifest.author && (
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 font-medium">
+              <div className="flex items-center gap-1 text-caption text-muted-foreground/60 font-medium">
                 <User className="w-3 h-3" />
                 <span>
                   {typeof plugin.manifest.author === "string"
@@ -161,7 +161,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 font-medium">
+            <div className="flex items-center gap-1 text-caption text-muted-foreground/60 font-medium">
               <Code className="w-3 h-3" />
               <span className="flex gap-1">
                 {isPython && (
@@ -181,7 +181,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
                 href={plugin.manifest.homepage}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-[10px] text-primary hover:underline font-medium"
+                className="flex items-center gap-1 text-caption text-primary hover:underline font-medium"
               >
                 <ExternalLink className="w-3 h-3" />
                 <span>{t("plugins.redesign.homepage")}</span>
@@ -284,7 +284,7 @@ export const PluginSettings: React.FC = () => {
             <Button
               variant="ghost"
               size="xs"
-              className="h-7 text-[10px] gap-1.5"
+              className="h-7 text-caption gap-1.5"
               onClick={() => fetchPlugins()}
               disabled={loading}
             >
@@ -322,7 +322,7 @@ export const PluginSettings: React.FC = () => {
                 <h4 className="text-sm font-bold text-muted-foreground/80">
                   {searchQuery ? t("common.no_results") : t("plugins.empty.title")}
                 </h4>
-                <p className="text-[11px] text-muted-foreground/50 max-w-[200px] mx-auto leading-relaxed">
+                <p className="text-small text-muted-foreground/50 max-w-[200px] mx-auto leading-relaxed">
                   {searchQuery ? t("common.try_another_search") : t("plugins.empty.desc")}
                 </p>
               </div>
@@ -340,10 +340,10 @@ export const PluginSettings: React.FC = () => {
           <div className="mt-4 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex gap-3">
             <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <h5 className="text-[11px] text-primary font-bold uppercase tracking-widest">
+              <h5 className="text-small text-primary font-bold uppercase tracking-widest">
                 {t("plugins.guide.title")}
               </h5>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <p className="text-small text-muted-foreground leading-relaxed">
                 <Trans
                   i18nKey="plugins.guide.desc"
                   components={{

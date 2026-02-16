@@ -11,7 +11,7 @@ interface ActionThrottleProps {
 }
 
 const LABEL_STYLE =
-  "text-[11px] font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
 
 export function ActionThrottle({
   delayMs,
@@ -31,7 +31,7 @@ export function ActionThrottle({
             <label htmlFor="throttle-delay" className={LABEL_STYLE}>
               {t("rule_editor.action.throttle.delay")}
             </label>
-            <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+            <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
               {t("common.optional")}
             </span>
           </div>
@@ -53,7 +53,7 @@ export function ActionThrottle({
             <label htmlFor="throttle-loss" className={LABEL_STYLE}>
               {t("rule_editor.action.throttle.packet_loss")}
             </label>
-            <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+            <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
               {t("common.optional")}
             </span>
           </div>
@@ -76,7 +76,7 @@ export function ActionThrottle({
             <label htmlFor="throttle-bandwidth" className={LABEL_STYLE}>
               {t("rule_editor.action.throttle.bandwidth")}
             </label>
-            <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+            <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
               {t("common.optional")}
             </span>
           </div>

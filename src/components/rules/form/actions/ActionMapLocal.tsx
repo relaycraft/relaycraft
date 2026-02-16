@@ -20,7 +20,7 @@ interface ActionMapLocalProps {
 }
 
 const LABEL_STYLE =
-  "text-[11px] font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
 
 export function ActionMapLocal({
   source,
@@ -105,7 +105,7 @@ export function ActionMapLocal({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className={LABEL_STYLE}>{t("rule_editor.action.map_local.status_code")}</label>
-              <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+              <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
                 {t("common.optional")}
               </span>
             </div>
@@ -124,7 +124,7 @@ export function ActionMapLocal({
               <label className={LABEL_STYLE}>
                 {t("rule_editor.action.map_local.content_type")}
               </label>
-              <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+              <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
                 {t("common.optional")}
               </span>
             </div>

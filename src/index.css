@@ -74,8 +74,8 @@
     */
   /* Custom Fonts */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
   /* Optimized Monospace Stack: JetBrains Mono (Best for Code) -> Fira Code -> Roboto Mono -> System Fallbacks */
   --font-mono:
     "JetBrains Mono", "Fira Code", "Roboto Mono", Menlo, Monaco, Consolas, "Liberation Mono",
@@ -120,12 +120,56 @@
   --color-info: #3b82f6;
   --color-info-foreground: #ffffff;
 
-  --color-border: rgba(255, 255, 255, 0.08);
-  /* Defining edges without harshness */
-  --color-input: #0d0f14;
-  --color-ring: #3b82f6;
   --color-popover: #161b22;
   --color-popover-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  /* Semantic Theme Variables */
+  --color-success: #10b981;
+  /* Emerald-500 */
+  --color-warning: #f59e0b;
+  /* Amber-500 */
+  --color-destructive: #f43f5e;
+  /* Rose-500 */
+  --color-info: #3b82f6;
+  /* Blue-500 */
+
+  /* Rule Type Specific Colors */
+  --color-rule-script: #818cf8;
+  /* Indigo-400 */
+  --color-rule-rewrite-body: #a855f7;
+  /* Purple-500 */
+  --color-rule-map-local: #3b82f6;
+  /* Blue-500 */
+  --color-rule-map-remote: #10b981;
+  /* Emerald-500 */
+  --color-rule-rewrite-header: #f97316;
+  /* Orange-500 */
+  --color-rule-throttle: #06b6d4;
+  /* Cyan-500 */
+  --color-rule-block: #f43f5e;
+  /* Rose-500 */
+
+  --color-method-delete: #f43f5e;
+
+  /* Surface & Glass Effects */
+  --surface-opacity-subtle: 0.1;
+  --surface-opacity-glass: 0.4;
+  --surface-opacity-solid: 0.95;
+
+  --blur-sm: 4px;
+  --blur-md: 12px;
+  --blur-lg: 40px;
+  --blur-xl: 64px;
+
+  /* Standardized Border Palette */
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-muted: rgba(255, 255, 255, 0.12);
+
+  /* Typography Scale */
+  --text-caption: 0.625rem;
+  --text-small: 0.6875rem;
+  --text-ui: 0.8125rem;
 
   /* Custom Variables for Personalization */
   --density-p: 8px;
@@ -136,7 +180,8 @@
 
 /* High-DPI (2K/4K) Premium Visual Enhancements */
 /* biome-ignore lint/correctness/noUnknownMediaFeatureName: Vendor specific prefix for device pixel ratio */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
   :root {
     /* Finer borders and deeper, multi-layered shadows for high-res displays */
     --color-border: rgba(255, 255, 255, 0.06);
@@ -190,9 +235,10 @@ body {
   line-height: 1.5;
 }
 
-/* Specific optimization for macOS + Chinese: Increase base font size */
+/* Specific optimization for macOS + Chinese: Increase base font size via rem-base adjustment */
 html.platform-mac.lang-zh {
-  font-size: 17px;
+  font-size: 106.25%;
+  /* Scales 16px to 17px equivalent in rem */
 }
 
 /* Typography Hierarchy */
@@ -237,11 +283,9 @@ html.lang-zh .font-bold {
   z-index: -10;
   overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(
-    circle at 50% 50%,
-    var(--color-input) 0%,
-    var(--color-background) 100%
-  );
+  background: radial-gradient(circle at 50% 50%,
+      var(--color-input) 0%,
+      var(--color-background) 100%);
 }
 
 .vibrancy-blob {
@@ -299,6 +343,7 @@ html.lang-zh .font-bold {
     transform: scale(1);
     opacity: 0.5;
   }
+
   100% {
     transform: scale(2.5);
     opacity: 0;
@@ -311,9 +356,12 @@ html.lang-zh .font-bold {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -363,9 +411,11 @@ button:disabled {
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-size: 13px;
+  font-size: var(--text-ui);
   line-height: 1.6;
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   /* Extreme Font Rendering Optimizations */
   text-rendering: optimizeLegibility;
@@ -425,6 +475,7 @@ html.platform-mac ::-webkit-scrollbar {
   height: 10px;
 }
 
+/* 2. Mac thumb: thinner visual appearance via border+background-clip */
 html.platform-mac ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   /* Results in 6px visible thumb with 10px track */
@@ -432,12 +483,13 @@ html.platform-mac ::-webkit-scrollbar-thumb {
   background-color: color-mix(in srgb, var(--color-foreground), transparent 90%);
 }
 
-/* 2. Specific Visibility for macOS */
+/* 3. Darker on container hover or during scroll */
 html.platform-mac :hover::-webkit-scrollbar-thumb,
 html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
   background-color: color-mix(in srgb, var(--color-foreground), transparent 75%);
 }
 
+/* 4. Even darker when hovering the thumb itself */
 html.platform-mac ::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--color-foreground), transparent 50%);
 }
@@ -567,7 +619,7 @@ select option:hover {
 }
 
 .relaycraft-toast-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.01em;
@@ -575,7 +627,7 @@ select option:hover {
 }
 
 .relaycraft-toast-description {
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: var(--color-muted-foreground);
   margin-top: 2px;
@@ -633,4 +685,190 @@ select option:hover {
 
 [data-type="info"] [data-icon] {
   color: var(--color-info);
+}
+
+@layer utilities {
+
+  /* Semantic Utilities */
+  .text-success {
+    color: var(--color-success);
+  }
+
+  .text-warning {
+    color: var(--color-warning);
+  }
+
+  .text-error {
+    color: var(--color-destructive);
+  }
+
+  .text-info {
+    color: var(--color-info);
+  }
+
+  .bg-success {
+    background-color: var(--color-success);
+  }
+
+  .bg-warning {
+    background-color: var(--color-warning);
+  }
+
+  .bg-error {
+    background-color: var(--color-destructive);
+  }
+
+  .bg-info {
+    background-color: var(--color-info);
+  }
+
+  .border-success {
+    border-color: var(--color-success);
+  }
+
+  .border-warning {
+    border-color: var(--color-warning);
+  }
+
+  .border-error {
+    border-color: var(--color-destructive);
+  }
+
+  .border-info {
+    border-color: var(--color-info);
+  }
+
+  /* Rule Type Utilities */
+  .text-rule-script {
+    color: var(--color-rule-script);
+  }
+
+  .text-rule-rewrite-body {
+    color: var(--color-rule-rewrite-body);
+  }
+
+  .text-rule-map-local {
+    color: var(--color-rule-map-local);
+  }
+
+  .text-rule-map-remote {
+    color: var(--color-rule-map-remote);
+  }
+
+  .text-rule-rewrite-header {
+    color: var(--color-rule-rewrite-header);
+  }
+
+  .text-rule-throttle {
+    color: var(--color-rule-throttle);
+  }
+
+  .text-rule-block {
+    color: var(--color-rule-block);
+  }
+
+  .bg-rule-script {
+    background-color: var(--color-rule-script);
+  }
+
+  .bg-rule-rewrite-body {
+    background-color: var(--color-rule-rewrite-body);
+  }
+
+  .bg-rule-map-local {
+    background-color: var(--color-rule-map-local);
+  }
+
+  .bg-rule-map-remote {
+    background-color: var(--color-rule-map-remote);
+  }
+
+  .bg-rule-rewrite-header {
+    background-color: var(--color-rule-rewrite-header);
+  }
+
+  .bg-rule-throttle {
+    background-color: var(--color-rule-throttle);
+  }
+
+  .bg-rule-block {
+    background-color: var(--color-rule-block);
+  }
+
+  .border-rule-script {
+    border-color: var(--color-rule-script);
+  }
+
+  .border-rule-rewrite-body {
+    border-color: var(--color-rule-rewrite-body);
+  }
+
+  .border-rule-map-local {
+    border-color: var(--color-rule-map-local);
+  }
+
+  .border-rule-map-remote {
+    border-color: var(--color-rule-map-remote);
+  }
+
+  .border-rule-rewrite-header {
+    border-color: var(--color-rule-rewrite-header);
+  }
+
+  .border-rule-throttle {
+    border-color: var(--color-rule-throttle);
+  }
+
+  .border-rule-block {
+    border-color: var(--color-rule-block);
+  }
+
+  /* Method Utilities */
+  .text-method-get {
+    color: var(--color-method-get);
+  }
+
+  .text-method-post {
+    color: var(--color-method-post);
+  }
+
+  .text-method-put {
+    color: var(--color-method-put);
+  }
+
+  .text-method-delete {
+    color: var(--color-method-delete);
+  }
+
+  .bg-method-get {
+    background-color: var(--color-method-get);
+  }
+
+  .bg-method-post {
+    background-color: var(--color-method-post);
+  }
+
+  .bg-method-put {
+    background-color: var(--color-method-put);
+  }
+
+  .bg-method-delete {
+    background-color: var(--color-method-delete);
+  }
+
+  .border-method-get {
+    border-color: var(--color-method-get);
+  }
+
+  .border-method-post {
+    border-color: var(--color-method-post);
+  }
+
+  .border-method-put {
+    border-color: var(--color-method-put);
+  }
+
+  .border-method-delete {
+    border-color: var(--color-method-delete);
+  }
 }

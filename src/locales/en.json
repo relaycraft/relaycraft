@@ -92,7 +92,7 @@
       "regenerate": "Regenerate Root CA",
       "remove": "Remove Trust from System"
     },
-    "ca_name": "根证书",
+    "ca_name": "Root Certificate",
     "info": {
       "expires": "Expires",
       "fingerprint": "Fingerprint (SHA256)",
@@ -186,7 +186,7 @@
     "confirm_action": "Confirm Action",
     "confirm_required": "Confirmation Required",
     "default_explanation": "This action requires your confirmation to proceed.",
-    "error_generic": "指令执行遇到错误",
+    "error_generic": "Command execution error",
     "explanations": {
       "clear": "Clearing traffic list...",
       "nav_composer": "Navigating to Request Composer...",
@@ -253,7 +253,7 @@
     "delete": "Delete",
     "disable": "Disable",
     "disabled": "Disabled",
-    "dismiss": "不再提示",
+    "dismiss": "Don't show again",
     "double_click_rename": "Double click to rename",
     "edit": "Edit",
     "enable": "Enable",
@@ -291,16 +291,16 @@
     "settings": "Settings",
     "success": "Success",
     "terminology": {
-      "block_request": "请求阻断",
+      "block_request": "Block Request",
       "map_local": "Map Local",
       "map_remote": "Map Remote",
       "proxy": "Proxy",
       "rewrite": "Rewrite",
-      "rewrite_body": "内容重写",
-      "rewrite_header": "头部重写",
+      "rewrite_body": "Rewrite Body",
+      "rewrite_header": "Rewrite Header",
       "rules": "Rules",
       "scripts": "Scripts",
-      "throttle": "弱网模拟",
+      "throttle": "Throttling",
       "traffic": "Traffic"
     },
     "try_another_search": "Try another search term",
@@ -986,11 +986,11 @@
       "regex_tooltip": "Regex"
     },
     "headers_list": {
-      "add": "添加 Header",
-      "encrypted": "加密 (HTTPS)",
-      "failed": "失败",
-      "key": "键名",
-      "pending": "等待中"
+      "add": "Add Header",
+      "encrypted": "Encrypted (HTTPS)",
+      "failed": "Failed",
+      "key": "Key",
+      "pending": "Pending"
     },
     "jump_to_latest": "Jump to latest",
     "list_cleared": "Traffic list cleared",

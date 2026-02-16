@@ -17,10 +17,15 @@ export function SaveSessionModal() {
 
   useEffect(() => {
     if (saveSessionModalOpen) {
+      // Format: session-YYYY-MM-DD-HH-mm-ss
       const date = new Date();
-      setName(
-        `Session ${date.toLocaleDateString().replace(/\//g, "-")} ${date.toLocaleTimeString().replace(/:/g, "-")}`,
-      );
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      setName(`session-${year}-${month}-${day}-${hours}-${minutes}-${seconds}`);
       setDescription("");
     }
   }, [saveSessionModalOpen]);
@@ -45,7 +50,7 @@ export function SaveSessionModal() {
         <div className="space-y-2">
           <label
             htmlFor="session-name"
-            className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
+            className="text-small font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <Type className="w-3 h-3 opacity-70" />
             {t("save_session.name")} <span className="text-destructive/80">*</span>
@@ -63,7 +68,7 @@ export function SaveSessionModal() {
         <div className="space-y-2">
           <label
             htmlFor="session-desc"
-            className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
+            className="text-small font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <AlignLeft className="w-3 h-3 opacity-70" />
             {t("save_session.desc")}

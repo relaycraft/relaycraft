@@ -44,9 +44,6 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      fontSize: {
-        system: ["0.8125rem", "1.5"],
-      },
     },
   },
   plugins: [],

@@ -30,7 +30,7 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[11px] font-bold text-foreground/50 uppercase tracking-widest">
+        <span className="text-small font-bold text-foreground/50 uppercase tracking-widest">
           {label || t("header_editor.title")}
         </span>
       </div>
@@ -45,13 +45,13 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
               value={op.key}
               onChange={(e) => updateOperation(index, "key", e.target.value)}
               placeholder="Header Key"
-              className="font-mono text-[11px] h-8 placeholder:text-[10px] w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
+              className="font-mono text-small h-8 placeholder:text-caption w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
             />
 
             <Select
               value={op.operation}
               onChange={(val) => updateOperation(index, "operation", val)}
-              className="h-8 py-1 text-[11px] w-full bg-muted/20 border-border/40"
+              className="h-8 py-1 text-small w-full bg-muted/20 border-border/40"
               containerClassName="w-full"
             >
               <option value="add">{t("header_editor.op_add")}</option>
@@ -65,7 +65,7 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
                 value={op.value || ""}
                 onChange={(e) => updateOperation(index, "value", e.target.value)}
                 placeholder="Value"
-                className="font-mono text-[11px] h-8 placeholder:text-[10px] w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
+                className="font-mono text-small h-8 placeholder:text-caption w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
               />
             ) : (
               <div />

@@ -228,11 +228,11 @@ addons = [Addon()]
               title={t("common.double_click_rename")}
             >
               {!scriptName && <Plus className="w-3.5 h-3.5 text-primary" />}
-              <span className="truncate max-w-[300px] text-[11px] font-bold">
+              <span className="truncate max-w-[300px] text-small font-bold">
                 {scriptName || draftScript?.name}
               </span>
               {!scriptName && (
-                <span className="text-[9px] bg-primary/10 text-primary px-1 rounded uppercase font-sans font-black">
+                <span className="text-caption bg-primary/10 text-primary px-1 rounded uppercase font-sans font-black">
                   {t("scripts.status.draft")}
                 </span>
               )}

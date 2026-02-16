@@ -69,7 +69,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {schema.description && (
-        <p className="text-[11px] text-muted-foreground/60 mb-2 leading-relaxed px-1">
+        <p className="text-small text-muted-foreground/60 mb-2 leading-relaxed px-1">
           {schema.description}
         </p>
       )}
@@ -97,12 +97,12 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                   <div className="space-y-0.5">
                     <Label
                       htmlFor={key}
-                      className="text-[13px] font-bold text-foreground/90 cursor-pointer"
+                      className="text-ui font-bold text-foreground/90 cursor-pointer"
                     >
                       {displayTitle}
                     </Label>
                     {displayDesc && (
-                      <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+                      <p className="text-caption text-muted-foreground/60 leading-relaxed">
                         {displayDesc}
                       </p>
                     )}
@@ -122,7 +122,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                   <div className="space-y-0.5">
                     <Label
                       htmlFor={key}
-                      className="flex items-center gap-2 text-[13px] font-bold text-foreground/90"
+                      className="flex items-center gap-2 text-ui font-bold text-foreground/90"
                     >
                       {displayTitle}
                       {schema.required?.includes(key) && (
@@ -130,7 +130,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                       )}
                     </Label>
                     {displayDesc && (
-                      <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+                      <p className="text-caption text-muted-foreground/50 leading-relaxed">
                         {displayDesc}
                       </p>
                     )}
@@ -147,7 +147,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                         label: String(opt),
                         value: String(opt),
                       }))}
-                      className="bg-background shadow-sm h-9 text-[12px]"
+                      className="bg-background shadow-sm h-9 text-xs"
                     />
                   ) : (
                     <Input
@@ -166,7 +166,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                       placeholder={prop.default ? String(prop.default) : undefined}
                       min={prop.minimum}
                       max={prop.maximum}
-                      className="h-9 text-[12px] bg-background border-border/50 shadow-sm focus:border-primary/50 transition-all rounded-lg"
+                      className="h-9 text-xs bg-background border-border/50 shadow-sm focus:border-primary/50 transition-all rounded-lg"
                     />
                   )}
                 </div>

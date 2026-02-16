@@ -226,7 +226,7 @@ export function AISettingsPanel() {
               {/* Connection Status */}
               {connectionStatus !== "idle" && (
                 <div
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium ${
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-small font-medium ${
                     connectionStatus === "success"
                       ? "text-green-600 bg-green-500/10"
                       : "text-destructive bg-destructive/10"
@@ -246,7 +246,7 @@ export function AISettingsPanel() {
                 connectionMessage &&
                 !connectionMessage.toLowerCase().includes("success") && (
                   <div
-                    className="text-[10px] text-muted-foreground/60 max-w-[200px] truncate"
+                    className="text-caption text-muted-foreground/60 max-w-[200px] truncate"
                     title={connectionMessage}
                   >
                     {connectionMessage}

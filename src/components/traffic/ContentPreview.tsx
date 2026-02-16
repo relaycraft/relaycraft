@@ -95,7 +95,7 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
     return (
       <div className="flex flex-col items-center justify-center p-6 text-muted-foreground/50 bg-muted/5 rounded-lg border border-border/30 mt-2 h-24">
         <FileText className="w-4 h-4 opacity-30 mb-1" />
-        <span className="text-[10px] font-medium opacity-60">
+        <span className="text-caption font-medium opacity-60">
           {t("content_preview.no_content")}
         </span>
       </div>
@@ -200,10 +200,10 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
     <div className="flex flex-col gap-2 h-full">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="px-2 py-1 rounded-md bg-muted text-caption font-bold uppercase tracking-wider text-muted-foreground">
             {contentType}
           </span>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             {actualByteSize > 1024
               ? `${(actualByteSize / 1024).toFixed(2)} KB`
               : `${actualByteSize} B`}
@@ -262,7 +262,7 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
           {!showFullContent && (
             <button
               onClick={() => setShowFullContent(true)}
-              className="ml-auto px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 rounded text-[10px] font-medium transition"
+              className="ml-auto px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 rounded text-caption font-medium transition"
             >
               {t("content_preview.show_all", "Show All")}
             </button>
@@ -270,7 +270,7 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
           {showFullContent && (
             <button
               onClick={() => setShowFullContent(false)}
-              className="ml-auto px-2 py-0.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded text-[10px] font-medium transition"
+              className="ml-auto px-2 py-0.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded text-caption font-medium transition"
             >
               {t("content_preview.collapse", "Collapse")}
             </button>

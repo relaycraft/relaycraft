@@ -112,7 +112,7 @@ export function NotificationCenter() {
                 </Tooltip>
                 <div>
                   <h2 className="font-bold text-sm">{t("notifications.title", "Notifications")}</h2>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     {t("notifications.count", { count: notifications.length })}
                   </p>
                 </div>
@@ -170,7 +170,7 @@ export function NotificationCenter() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("common.search", "Search...")}
-                  className="w-full h-8 pl-8 pr-3 bg-muted/40 border border-border/40 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50 hover:bg-muted/60 hover:border-border/60 focus:bg-background focus:border-primary/30"
+                  className="w-full h-8 pl-8 pr-3 bg-muted/40 border border-border/40 rounded-md text-ui focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50 hover:bg-muted/60 hover:border-border/60 focus:bg-background focus:border-primary/30"
                 />
               </div>
             </div>
@@ -184,10 +184,10 @@ export function NotificationCenter() {
                     <div className="absolute top-0 right-0 w-3 h-3 bg-primary/20 rounded-full blur-sm animate-pulse" />
                   </div>
                   <div className="text-center">
-                    <p className="text-system font-semibold text-muted-foreground/50 tracking-tight">
+                    <p className="text-ui font-semibold text-muted-foreground/50 tracking-tight">
                       {t("notifications.empty", "No notifications")}
                     </p>
-                    <p className="text-[11px] mt-1 opacity-60">
+                    <p className="text-small mt-1 opacity-60">
                       {t("notifications.all_processed", "You are all caught up")}
                     </p>
                   </div>

@@ -151,7 +151,7 @@ export function AppLogo({ size = 24, className, showText = false, animated = tru
       </div>
 
       {showText && (
-        <span className="font-semibold tracking-[-0.01em] text-foreground/90 text-system select-none">
+        <span className="font-semibold tracking-[-0.01em] text-foreground/90 text-ui select-none">
           RelayCraft
         </span>
       )}

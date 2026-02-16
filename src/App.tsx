@@ -63,14 +63,19 @@ function App() {
   const pluginPages = usePluginPageStore((state) => state.pages);
 
   // Check if current viewing session is historical (not the one currently being written)
+  // A session is historical if:
+  // 1. Proxy is running and viewing a different session than the active one, OR
+  // 2. Proxy is not running (all sessions are historical in this case)
   const isHistoricalSession = useSessionStore((state) => {
     const activeSession = state.dbSessions.find((s) => s.is_active === 1);
-    return !!(
-      active &&
-      activeSession &&
-      state.showSessionId &&
-      activeSession.id !== state.showSessionId
-    );
+
+    // If proxy is not running, all sessions are historical
+    if (!active) {
+      return true;
+    }
+
+    // If proxy is running, check if viewing a different session
+    return !!(activeSession && state.showSessionId && activeSession.id !== state.showSessionId);
   });
 
   const handleToggleProxy = async () => {
@@ -193,7 +198,7 @@ function App() {
               {/* Context Header - Glassy */}
               <div className="h-11 px-4 border-b border-border/40 flex items-center justify-between bg-muted/20 backdrop-blur-xl flex-shrink-0">
                 <div>
-                  <h1 className="text-system font-bold tracking-tight text-foreground/90">
+                  <h1 className="text-ui font-bold tracking-tight text-foreground/90">
                     {activeTab === "traffic" && t("sidebar.traffic")}
                     {activeTab === "composer" && t("composer.title")}
                     {activeTab === "rules" && t("sidebar.rules")}
@@ -253,16 +258,18 @@ function App() {
                             <FileUp className="w-3.5 h-3.5" />
                           </Button>
                         </Tooltip>
-                        <Tooltip content={t("common.import_har_hint")} side="bottom">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => useSessionStore.getState().importHar()}
-                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                          </Button>
-                        </Tooltip>
+                        {!isHistoricalSession && (
+                          <Tooltip content={t("common.import_har_hint")} side="bottom">
+                            <Button
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => useSessionStore.getState().importHar()}
+                              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                            >
+                              <FileDown className="w-3.5 h-3.5" />
+                            </Button>
+                          </Tooltip>
+                        )}
                       </div>
                     </div>
 
@@ -275,7 +282,7 @@ function App() {
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => useTrafficStore.getState().clearFlows()}
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md border border-border/20 shadow-sm"
+                          className="h-7 w-7 text-muted-foreground hover:text-error hover:bg-error/10 rounded-md border border-border/20 shadow-sm"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -301,7 +308,7 @@ function App() {
                         placeholder={t("common.search")}
                         value={useRuleStore.getState().searchQuery}
                         onChange={(e) => useRuleStore.getState().setSearchQuery(e.target.value)}
-                        className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-system placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
+                        className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-ui placeholder:text-caption placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
                       />
                     </div>
                     <Button

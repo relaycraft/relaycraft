@@ -18,7 +18,7 @@ interface ActionMapRemoteProps {
 }
 
 const LABEL_STYLE =
-  "text-[11px] font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
 
 export function ActionMapRemote({
   targetUrl,
@@ -57,7 +57,7 @@ export function ActionMapRemote({
             >
               {t("rule_editor.action.map_remote.preserve_path")}
             </label>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {t("rule_editor.action.map_remote.preserve_path_desc")}
             </p>
           </div>

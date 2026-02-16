@@ -25,7 +25,7 @@ const LogLine = memo(
   }) => {
     return (
       <div className="whitespace-pre-wrap break-all hover:bg-foreground/5 px-1 rounded flex gap-3 border-l-2 border-transparent hover:border-primary/20">
-        <span className="text-muted-foreground/30 select-none w-10 text-right shrink-0 font-mono text-[10px]">
+        <span className="text-muted-foreground/30 select-none w-10 text-right shrink-0 font-mono text-caption">
           {index + 1}
         </span>
         <span className="flex-1 leading-relaxed">{colorize(line)}</span>
@@ -82,7 +82,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
       // 2. Highlight Time [HH:MM:SS]
       html = html.replace(
         /(\[\d{2}:\d{2}:\d{2}(?:\.\d+)?\])/g,
-        '<span class="text-muted-foreground font-mono text-[11px]">$1</span>',
+        '<span class="text-muted-foreground font-mono text-small">$1</span>',
       );
 
       // 3. Highlight Keywords
@@ -163,7 +163,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
                 <button
                   key={tab.id}
                   onClick={() => setLogType(tab.id as any)}
-                  className={`px-4 py-1.5 text-[11px] rounded-lg transition-all duration-200 whitespace-nowrap uppercase tracking-wider ${
+                  className={`px-4 py-1.5 text-small rounded-lg transition-all duration-200 whitespace-nowrap uppercase tracking-wider ${
                     logType === tab.id
                       ? "bg-background text-primary shadow-sm font-black"
                       : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5 font-bold"
@@ -204,7 +204,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-3">
                 <RefreshCw className="w-8 h-8 animate-spin text-primary/40" />
-                <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/40">
+                <span className="text-caption uppercase font-black tracking-widest text-muted-foreground/40">
                   {t("common.loading")}
                 </span>
               </div>
@@ -221,7 +221,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
               />
             </div>
           ) : (
-            <div className="h-full relative font-mono text-[12px] bg-background/80">
+            <div className="h-full relative font-mono text-xs bg-background/80">
               <Virtuoso
                 data={filteredLogs}
                 followOutput="auto"

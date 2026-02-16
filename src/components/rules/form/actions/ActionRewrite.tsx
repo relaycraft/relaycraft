@@ -32,7 +32,7 @@ interface ActionRewriteProps {
 }
 
 const LABEL_STYLE =
-  "text-[11px] font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
 
 export function ActionRewrite({
   target,
@@ -91,7 +91,7 @@ export function ActionRewrite({
                 <label className={LABEL_STYLE}>
                   {t("rule_editor.action.map_local.content_type")}
                 </label>
-                <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+                <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
                   {t("common.optional")}
                 </span>
               </div>
@@ -106,7 +106,7 @@ export function ActionRewrite({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.status_code")}</label>
-                <span className="text-[10px] text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+                <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
                   {t("common.optional")}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export function ActionRewrite({
           <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-2">
               <div className="px-1 py-1.5 mb-2">
-                <p className="text-[10px] text-muted-foreground/70">
+                <p className="text-caption text-muted-foreground/70">
                   {t("rule_editor.action.rewrite.jsonpath_hint")}
                 </p>
               </div>
@@ -228,12 +228,12 @@ export function ActionRewrite({
                       value={mod.path}
                       onChange={(e) => updateJsonMod(i, "path", e.target.value)}
                       placeholder="$.store.book[0].title"
-                      className="flex-1 h-7 text-[11px] font-mono px-2"
+                      className="flex-1 h-7 text-small font-mono px-2"
                     />
                     <Select
                       value={mod.operation || "set"}
                       onChange={(val) => updateJsonMod(i, "operation", val)}
-                      className="w-24 text-[10px] h-7 min-h-0 py-0"
+                      className="w-24 text-caption h-7 min-h-0 py-0"
                       containerClassName="w-24 shrink-0"
                     >
                       <option value="set">
@@ -256,7 +256,7 @@ export function ActionRewrite({
                           "rule_editor.action.rewrite.json_value_placeholder",
                           "Value (JSON)",
                         )}
-                        className="flex-1 h-7 text-[11px] font-mono px-2"
+                        className="flex-1 h-7 text-small font-mono px-2"
                       />
                     )}
                   </div>
@@ -272,7 +272,7 @@ export function ActionRewrite({
               <Button
                 variant="outline"
                 onClick={addJsonMod}
-                className="w-full h-auto py-3 text-[11px] border-dashed border-border/60 hover:bg-muted/50 text-muted-foreground mt-2 flex items-center justify-center gap-2"
+                className="w-full h-auto py-3 text-small border-dashed border-border/60 hover:bg-muted/50 text-muted-foreground mt-2 flex items-center justify-center gap-2"
               >
                 <span className="text-lg leading-none">+</span>
                 {t("common.add")}

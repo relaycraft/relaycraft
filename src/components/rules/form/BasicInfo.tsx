@@ -99,7 +99,7 @@ export function BasicInfo({
     <section className="space-y-4 relative z-10">
       <div className="flex items-center gap-2.5 mb-2">
         <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
-        <span className="text-[12px] font-bold text-foreground/90 uppercase tracking-widest py-1">
+        <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest py-1">
           {t("rule_editor.sections.core")}
         </span>
       </div>
@@ -239,7 +239,7 @@ export function BasicInfo({
                   />
                 </div>
                 <div
-                  className={`text-[12px] font-semibold tracking-wide ${ruleType === type.id ? "text-foreground" : "text-muted-foreground/80"}`}
+                  className={`text-xs font-semibold tracking-wide ${ruleType === type.id ? "text-foreground" : "text-muted-foreground/80"}`}
                 >
                   {type.label}
                 </div>
@@ -259,7 +259,7 @@ export function BasicInfo({
           }`}
         >
           <Info className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-[11px] font-medium leading-tight">
+          <span className="text-small font-medium leading-tight">
             {ruleType === "block_request"
               ? t("rule_editor.core.hints.terminal")
               : ruleType === "map_local"

@@ -86,7 +86,7 @@ export function CodeBlock({
         <div className="h-8 bg-muted/20 border-b border-border/40 flex items-center px-4 justify-between shrink-0">
           <div className="flex items-center gap-2 text-muted-foreground/30">
             <Code className="w-3.5 h-3.5" />
-            <span className="text-[10px] uppercase font-bold tracking-widest">{language}</span>
+            <span className="text-caption uppercase font-bold tracking-widest">{language}</span>
           </div>
         </div>
       )}

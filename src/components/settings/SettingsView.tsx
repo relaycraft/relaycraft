@@ -254,7 +254,7 @@ export function SettingsView() {
                         {/* Connectivity Status Badge */}
                         {upstreamStatus !== "idle" && (
                           <div
-                            className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium ${
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded text-caption font-medium ${
                               upstreamStatus === "success"
                                 ? "text-green-600 bg-green-500/10"
                                 : "text-destructive bg-destructive/10"
@@ -273,7 +273,7 @@ export function SettingsView() {
                         <Button
                           variant="outline"
                           size="xs"
-                          className="text-[10px] h-7 px-2 gap-1.5"
+                          className="text-caption h-7 px-2 gap-1.5"
                           onClick={testUpstreamConnectivity}
                           disabled={testingUpstream || !config.upstream_proxy?.url}
                         >
@@ -292,7 +292,7 @@ export function SettingsView() {
                 </div>
               )}
 
-              <div className="bg-muted/10 p-3 text-[11px] text-muted-foreground/60 text-center border-t border-border/40">
+              <div className="bg-muted/10 p-3 text-small text-muted-foreground/60 text-center border-t border-border/40">
                 {t("settings.network.restart_hint")}
               </div>
             </SettingsSection>
@@ -316,10 +316,10 @@ export function SettingsView() {
               <SettingsSection title={t("settings.about.title")}>
                 <div className="px-4 py-3 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-system font-medium text-foreground">
+                    <span className="text-ui font-medium text-foreground">
                       RelayCraft v{systemInfo?.version}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-small text-muted-foreground">
                       {t("settings.about.checking_updates")}
                     </span>
                   </div>

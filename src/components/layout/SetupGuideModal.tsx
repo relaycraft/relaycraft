@@ -44,7 +44,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
         {/* Left: General Info */}
         <div className="space-y-6">
           <div className="bg-primary/5 rounded-xl p-3 border border-primary/10">
-            <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest">
+            <p className="text-caption font-black text-primary/70 uppercase tracking-widest">
               {t("setup_guide.current_proxy")}
             </p>
             <div className="mt-1.5 flex items-center justify-between">
@@ -69,7 +69,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                   <Globe className="w-3 h-3 inline mr-1.5 -mt-0.5 text-primary/80" />
                   <span className="font-bold">{t("setup_guide.switchy_omega")}</span>
                   <p
-                    className="mt-1 text-[11px] text-muted-foreground/70 leading-relaxed"
+                    className="mt-1 text-small text-muted-foreground/70 leading-relaxed"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
                     dangerouslySetInnerHTML={{
                       __html: t("setup_guide.switchy_omega_desc", {
@@ -85,7 +85,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <span>
                   <Settings className="w-3 h-3 inline mr-1.5 -mt-0.5 text-primary/80" />
                   <span className="font-bold">{t("setup_guide.system_proxy")}</span>
-                  <p className="mt-1 text-[11px] text-muted-foreground/70 leading-relaxed">
+                  <p className="mt-1 text-small text-muted-foreground/70 leading-relaxed">
                     {t("setup_guide.system_proxy_desc")}
                   </p>
                 </span>
@@ -109,7 +109,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <Wifi className="w-3 h-3 inline mr-1.5 -mt-0.5 text-purple-400" />
                 <span className="font-bold">{t("setup_guide.wifi_manual")}</span>
                 <p
-                  className="mt-1 text-[11px] text-muted-foreground/70 leading-relaxed"
+                  className="mt-1 text-small text-muted-foreground/70 leading-relaxed"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
                   dangerouslySetInnerHTML={{
                     __html: t("setup_guide.wifi_manual_desc"),
@@ -123,7 +123,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <Shield className="w-3 h-3 inline mr-1.5 -mt-0.5 text-rose-400" />
                 <span className="font-bold">{t("setup_guide.install_cert")}</span>
                 <p
-                  className="mt-1 text-[11px] text-muted-foreground/70 leading-relaxed"
+                  className="mt-1 text-small text-muted-foreground/70 leading-relaxed"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
                   dangerouslySetInnerHTML={{
                     __html: t("setup_guide.install_cert_desc"),
@@ -139,10 +139,10 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
               <AlertTriangle className="w-3.5 h-3.5" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-tight text-yellow-500/70">
+              <p className="text-caption font-black uppercase tracking-tight text-yellow-500/70">
                 {t("setup_guide.trouble")}
               </p>
-              <p className="text-[10px] text-muted-foreground/60 leading-normal mt-0.5">
+              <p className="text-caption text-muted-foreground/60 leading-normal mt-0.5">
                 {t("setup_guide.trouble_desc", { port: proxyPort })}
               </p>
             </div>

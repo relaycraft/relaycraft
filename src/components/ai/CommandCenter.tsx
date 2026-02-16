@@ -345,7 +345,7 @@ export function CommandCenter() {
               stiffness: 300,
               mass: 0.8,
             }}
-            className="w-full max-w-2xl bg-popover/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-border/40"
+            className="w-full max-w-2xl bg-popover/98 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-border/40"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input Area */}
@@ -385,12 +385,12 @@ export function CommandCenter() {
                         ? t("command_center.placeholder.ai")
                         : t("command_center.placeholder.default")
                   }
-                  className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/40 font-medium"
+                  className="flex-1 bg-transparent border-none outline-none text-ui placeholder:text-muted-foreground/40 font-medium"
                 />
                 {isEditingRule && (
                   <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 animate-in zoom-in-95">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-tight">
+                    <span className="text-caption font-bold text-primary uppercase tracking-tight">
                       {t("command_center.status.editing")}
                     </span>
                   </div>
@@ -412,7 +412,7 @@ export function CommandCenter() {
                   <div className="px-2 py-1.5 flex items-center justify-between min-h-[32px]">
                     <div className="flex flex-wrap gap-1 items-center">
                       {/* Tab Context */}
-                      <span className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold">
+                      <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold">
                         {(() => {
                           const page = pluginPages.find(
                             (p) => p.id === activeTab || p.route === activeTab,
@@ -457,7 +457,7 @@ export function CommandCenter() {
                       {/* Flow Context */}
                       {selectedFlow && (
                         <span
-                          className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95"
+                          className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95"
                           title={selectedFlow.request.url}
                         >
                           <FileJson className="w-3 h-3" />
@@ -466,14 +466,14 @@ export function CommandCenter() {
 
                       {/* Active Rules Count */}
                       {activeRulesCount > 0 && (
-                        <span className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
+                        <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
                           <Layers className="w-3 h-3" /> {activeRulesCount}
                         </span>
                       )}
 
                       {/* Active Scripts Count */}
                       {activeScriptsCount > 0 && (
-                        <span className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
+                        <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
                           <Braces className="w-3 h-3" /> {activeScriptsCount}
                         </span>
                       )}
@@ -487,7 +487,7 @@ export function CommandCenter() {
                               e.stopPropagation();
                               useAIStore.getState().clearHistory();
                             }}
-                            className="text-[9px] bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all cursor-pointer"
+                            className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all cursor-pointer"
                           >
                             <MessageSquare className="w-3 h-3" />
                             {Math.ceil(useAIStore.getState().history.length / 2)}
@@ -532,7 +532,7 @@ export function CommandCenter() {
                           {s.label}
                         </div>
                         {s.description && (
-                          <div className="text-[10px] text-muted-foreground/50 group-hover:text-muted-foreground/70">
+                          <div className="text-caption text-muted-foreground/50 group-hover:text-muted-foreground/70">
                             {s.description}
                           </div>
                         )}
@@ -555,11 +555,11 @@ export function CommandCenter() {
                           <h3 className="text-xs font-bold text-destructive flex items-center gap-2">
                             {t("command_center.error_generic")}
                           </h3>
-                          <p className="text-[11px] leading-relaxed text-muted-foreground/80 font-medium">
+                          <p className="text-small leading-relaxed text-muted-foreground/80 font-medium">
                             {error}
                           </p>
                           <div
-                            className="pt-1 flex items-center gap-1.5 cursor-pointer text-[10px] text-muted-foreground/60 hover:text-primary transition-colors"
+                            className="pt-1 flex items-center gap-1.5 cursor-pointer text-caption text-muted-foreground/60 hover:text-primary transition-colors"
                             onClick={() => {
                               useUIStore.getState().setSettingsTab("general"); // Use 'general' or specific AI tab if available, but 'settings' tab navigate is common
                               setActiveTab("settings");
@@ -583,7 +583,7 @@ export function CommandCenter() {
                   {streamingMessage && (
                     <div className="space-y-2">
                       <div className="p-3 bg-muted/30 border border-border/50 rounded-xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-1 duration-300">
-                        <div className="text-system leading-relaxed text-foreground/90 font-medium px-1 prose-compact">
+                        <div className="text-ui leading-relaxed text-foreground/90 font-medium px-1 prose-compact">
                           <AIMarkdown
                             content={streamingMessage.replace(/```(?:python)?\s*$/i, "")}
                           />
@@ -638,7 +638,7 @@ export function CommandCenter() {
                             <h3 className="text-sm font-bold text-foreground tracking-tight">
                               {getIntentLabel(action.intent)}
                             </h3>
-                            <p className="text-[11px] text-muted-foreground font-medium mt-0.5 opacity-80">
+                            <p className="text-small text-muted-foreground font-medium mt-0.5 opacity-80">
                               {t("command_center.confirm_required")}
                             </p>
                           </div>
@@ -657,7 +657,7 @@ export function CommandCenter() {
                           <div className="shrink-0 mt-0.5">
                             <CornerDownLeft className="w-3.5 h-3.5 text-muted-foreground/50" />
                           </div>
-                          <p className="text-[12px] leading-relaxed text-muted-foreground/90 font-medium">
+                          <p className="text-xs leading-relaxed text-muted-foreground/90 font-medium">
                             {action.explanation || t("command_center.default_explanation")}
                           </p>
                         </div>
@@ -666,7 +666,7 @@ export function CommandCenter() {
                       {/* Action Button */}
                       <button
                         onClick={() => executeAction()}
-                        className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-system font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all"
+                        className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-ui font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all"
                       >
                         <span>{t("command_center.confirm_action")}</span>
                         <ArrowRight className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
@@ -679,7 +679,7 @@ export function CommandCenter() {
 
             {/* Footer */}
             <div className="px-4 py-2 border-t border-border/40 bg-muted/10 flex items-center justify-end">
-              <div className="text-[9px] text-muted-foreground/30 font-black uppercase tracking-widest flex items-center gap-1.5 opacity-60">
+              <div className="text-caption text-muted-foreground/30 font-black uppercase tracking-widest flex items-center gap-1.5 opacity-60">
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>{t("command_center.ai_integrated")}</span>
               </div>

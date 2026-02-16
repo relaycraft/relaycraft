@@ -75,11 +75,11 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
         ) : (
           <div className="flex items-center gap-2 truncate">
             <span
-              className={`text-system font-bold tracking-tight ${group.enabled ? "text-foreground" : "text-muted-foreground"}`}
+              className={`text-ui font-bold tracking-tight ${group.enabled ? "text-foreground" : "text-muted-foreground"}`}
             >
               {group.name}
             </span>
-            <span className="text-[10px] font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
+            <span className="text-caption font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
               {ruleCount}
             </span>
           </div>

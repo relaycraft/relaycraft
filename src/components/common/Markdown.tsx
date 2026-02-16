@@ -14,7 +14,7 @@ export function Markdown({ content, className = "" }: MarkdownProps) {
   if (!content) return null;
 
   return (
-    <div className={`overflow-y-auto h-full p-4 text-system bg-card/5 ${className}`}>
+    <div className={`overflow-y-auto h-full p-4 text-ui bg-card/5 ${className}`}>
       <ReactMarkdown
         components={{
           // Smart Code Rendering
@@ -42,7 +42,7 @@ export function Markdown({ content, className = "" }: MarkdownProps) {
             // Inline or short single-line code
             return (
               <code
-                className="bg-primary/10 px-1.5 py-0.5 rounded text-[11px] font-mono text-primary font-bold mx-0.5"
+                className="bg-primary/10 px-1.5 py-0.5 rounded text-small font-mono text-primary font-bold mx-0.5"
                 {...props}
               >
                 {children}
@@ -68,21 +68,21 @@ export function Markdown({ content, className = "" }: MarkdownProps) {
           li: ({ children }) => <li className="mb-0.5">{children}</li>,
           // Subtle Quotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-primary/30 pl-3 py-0.5 italic my-2 bg-primary/5 text-muted-foreground text-[12px]">
+            <blockquote className="border-l-2 border-primary/30 pl-3 py-0.5 italic my-2 bg-primary/5 text-muted-foreground text-xs">
               {children}
             </blockquote>
           ),
           // Compact Tables
           table: ({ children }) => (
             <div className="overflow-x-auto my-3 border border-border/30 rounded-lg">
-              <table className="w-full text-left border-collapse text-[12px]">{children}</table>
+              <table className="w-full text-left border-collapse text-xs">{children}</table>
             </div>
           ),
           thead: ({ children }) => (
             <thead className="bg-muted/40 border-b border-border/30">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-1.5 font-bold uppercase text-[10px] tracking-wider opacity-60">
+            <th className="px-3 py-1.5 font-bold uppercase text-caption tracking-wider opacity-60">
               {children}
             </th>
           ),

@@ -21,11 +21,18 @@ import { useTranslation } from "react-i18next";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
-import { formatProtocol, getProtocolColor } from "../../lib/utils";
+import {
+  formatProtocol,
+  getDurationBadgeClass,
+  getHttpMethodBadgeClass,
+  getHttpStatusCodeClass,
+  getProtocolColor,
+  getRuleTypeBadgeClass,
+} from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { Flow, RcMatchedHit } from "../../types";
+import type { Flow } from "../../types";
 import { harToLegacyHeaders } from "../../types";
 import { AIMarkdown } from "../ai/AIMarkdown";
 import { CopyButton } from "../common/CopyButton";
@@ -100,7 +107,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         content: FLOW_ANALYSIS_SYSTEM_PROMPT.replace(/{{LANGUAGE}}/g, langInfo.name)
           .replace(/{{TERMINOLOGY}}/g, langInfo.terminology)
           .replace(/{{SUMMARY_TITLE}}/g, langInfo.flow.summary)
-          .replace(/{{DIAGNOSTICS_TITLE}}/g, langInfo.flow.optimization),
+          .replace(/{{DIAGNOSTICS_TITLE}}/g, langInfo.flow.diagnostics)
+          .replace(/{{OPTIMIZATION_TITLE}}/g, langInfo.flow.optimization),
       };
 
       const userMsg = {
@@ -166,91 +174,41 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     }
   };
 
-  // Get hit dot color
-  const getHitColor = (hit: RcMatchedHit) => {
-    if (hit.status === "error" || hit.status === "file_not_found")
-      return "bg-yellow-500/20 text-yellow-600 border-yellow-400";
-    switch (hit.type) {
-      case "script":
-        return "bg-indigo-500/10 text-indigo-400 border-indigo-500/30";
-      case "rewrite_body":
-        return "bg-purple-500/10 text-purple-600 border-purple-200";
-      case "map_local":
-        return "bg-blue-500/10 text-blue-600 border-blue-200";
-      case "map_remote":
-        return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
-      case "rewrite_header":
-        return "bg-orange-500/10 text-orange-600 border-orange-200";
-      case "throttle":
-        return "bg-cyan-500/10 text-cyan-600 border-cyan-200";
-      case "block_request":
-        return "bg-rose-500/10 text-rose-600 border-rose-200";
-      default:
-        return "bg-gray-500/10 text-gray-600 border-gray-200";
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className="h-full flex flex-col bg-card/40 backdrop-blur-2xl border-l border-white/10 overflow-hidden"
+      className="h-full flex flex-col bg-card/60 backdrop-blur-lg border-l border-subtle overflow-hidden"
     >
       {/* Header - Glassy Sub-surface */}
-      <div className="flex flex-col p-4 border-b border-white/10 bg-muted/20 backdrop-blur-md flex-shrink-0 gap-3">
+      <div className="flex flex-col p-4 border-b border-subtle bg-muted/20 backdrop-blur-md flex-shrink-0 gap-3">
         {/* Row 1: Status & Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {flow.request.httpVersion && (
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border ${getProtocolColor(flow.request.httpVersion)}`}
+                className={`px-1.5 py-0.5 rounded text-caption font-bold font-mono border ${getProtocolColor(flow.request.httpVersion)}`}
               >
                 {formatProtocol(flow.request.httpVersion)}
               </span>
             )}
             <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                flow.request.method === "GET"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : flow.request.method === "POST"
-                    ? "bg-green-500/20 text-green-400"
-                    : flow.request.method === "PUT"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : flow.request.method === "DELETE"
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-gray-500/20 text-gray-400"
-              }`}
+              className={`px-2 py-0.5 rounded text-caption font-bold font-mono border ${getHttpMethodBadgeClass(flow.request.method)}`}
             >
               {flow.request.method}
             </span>
             {!(flow.response.status === 0 || String(flow.response.status) === "0") && (
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                  flow.response.status && flow.response.status < 300
-                    ? "bg-green-500/20 text-green-400"
-                    : flow.response.status && flow.response.status < 400
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : flow.response.status
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-gray-500/20 text-gray-400"
-                }`}
+                className={`px-2 py-0.5 rounded text-caption font-bold font-mono ${getHttpStatusCodeClass(flow.response.status)}`}
               >
                 {flow.response.status || t("traffic.status.pending")}
               </span>
             )}
             {!!flow.time && (
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border transition-colors ${
-                  flow.time < 400
-                    ? "bg-muted/10 text-muted-foreground/50 border-border/30"
-                    : flow.time < 1000
-                      ? "bg-yellow-500/5 text-yellow-500/80 border-yellow-500/20"
-                      : flow.time < 3000
-                        ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
-                        : "bg-red-500/10 text-red-500 border-red-500/30 animate-pulse"
-                }`}
+                className={`px-1.5 py-0.5 rounded text-caption font-bold font-mono border transition-colors ${getDurationBadgeClass(flow.time)}`}
               >
                 {flow.time.toFixed(0)}ms
               </span>
@@ -272,7 +230,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   ) : (
                     <Sparkles className="w-3.5 h-3.5" />
                   )}
-                  <span className="text-[11px] font-bold tracking-tight">
+                  <span className="text-small font-bold tracking-tight">
                     {t("flow.analysis.btn")}
                   </span>
                 </button>
@@ -294,7 +252,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 }`}
               >
                 <RotateCw className={`w-3.5 h-3.5 ${replaying ? "animate-spin" : ""}`} />
-                <span className="text-[11px] font-bold tracking-tight">{t("flow.replay_btn")}</span>
+                <span className="text-small font-bold tracking-tight">{t("flow.replay_btn")}</span>
               </button>
             </Tooltip>
             <Tooltip content={t("traffic.context_menu.edit_composer")}>
@@ -306,7 +264,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-bold tracking-tight">{t("common.edit")}</span>
+                <span className="text-small font-bold tracking-tight">{t("common.edit")}</span>
               </button>
             </Tooltip>
             <button
@@ -323,7 +281,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         <div className="space-y-3">
           <div className="flex items-center group/url w-full overflow-hidden relative">
             <Tooltip content={flow.request.url} side="bottom" className="flex-1 min-w-0">
-              <p className="text-[12px] font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-white/[0.03]">
+              <p className="text-small font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-subtle">
                 {flow.request.url}
               </p>
             </Tooltip>
@@ -351,7 +309,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 {flow._rc.hits.map((hit, idx) => (
                   <div
                     key={idx}
-                    className={`text-[10px] px-2 py-1 rounded border flex items-center gap-2 ${getHitColor(hit)}`}
+                    className={`text-caption px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
                   >
                     <div className="flex-shrink-0">
                       {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
@@ -363,7 +321,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
                     </div>
                     <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                      <span className="text-[11px] font-bold truncate tracking-tight">
+                      <span className="text-small font-bold truncate tracking-tight">
                         {hit.name}
                       </span>
                     </Tooltip>
@@ -372,7 +330,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         content={hit.message}
                         className="ml-auto flex-shrink truncate max-w-[60%] text-right"
                       >
-                        <span className="text-[10px] opacity-60 italic truncate font-mono">
+                        <span className="text-caption opacity-60 italic truncate font-mono">
                           {hit.message}
                         </span>
                       </Tooltip>
@@ -386,7 +344,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <div className="p-0.5 bg-yellow-500/20 rounded flex-shrink-0">
                     <AlertTriangle className="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div className="text-[10px] spaces-y-0.5 min-w-0 flex-1">
+                  <div className="text-caption spaces-y-0.5 min-w-0 flex-1">
                     <div className="font-bold text-yellow-700 leading-tight">
                       {t("flow.map_local.file_not_found")}
                     </div>
@@ -396,14 +354,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         .map((h) => h.message)
                         .join(", ")}
                     >
-                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-[9px]">
+                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-caption">
                         {flow._rc.hits
                           .filter((h) => h.status === "file_not_found")
                           .map((h) => h.message)
                           .join(", ")}
                       </div>
                     </Tooltip>
-                    <div className="text-yellow-600/70 text-[8px] italic flex items-center gap-1">
+                    <div className="text-yellow-600/70 text-caption italic flex items-center gap-1">
                       <Globe className="w-2 h-2" />
                       {t("flow.map_local.fallback_hint")}
                     </div>
@@ -419,27 +377,27 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       {(analysis || error) && (
         <div className="mx-4 mt-3 p-0 bg-transparent animate-in slide-in-from-bottom-2 duration-300 max-h-[40vh] flex flex-col relative overflow-hidden">
           {error && (
-            <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-xl relative overflow-hidden shadow-sm">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/5 blur-3xl -mr-12 -mt-12 pointer-events-none" />
+            <div className="p-3 bg-error/5 border border-error/20 rounded-xl relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-error/5 blur-3xl -mr-12 -mt-12 pointer-events-none" />
               <div className="flex items-start gap-3 relative z-10">
-                <div className="p-2 bg-destructive/10 rounded-lg shrink-0">
-                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                <div className="p-2 bg-error/10 rounded-lg shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-error" />
                 </div>
                 <div className="space-y-1 pt-0.5 flex-1">
-                  <h3 className="text-xs font-bold text-destructive flex items-center justify-between">
+                  <h3 className="text-small font-bold text-error flex items-center justify-between">
                     <span>{t("flow.analysis.error")}</span>
                     <button
                       onClick={() => setError(null)}
-                      className="p-1 hover:bg-destructive/10 rounded-full transition-colors text-destructive/60 hover:text-destructive"
+                      className="p-1 hover:bg-error/10 rounded-full transition-colors text-error/60 hover:text-error"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </h3>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground/80 font-medium">
+                  <p className="text-caption leading-relaxed text-muted-foreground/80 font-medium">
                     {error}
                   </p>
                   <div
-                    className="pt-1 flex items-center gap-1.5 cursor-pointer text-[10px] text-muted-foreground/60 hover:text-primary transition-colors"
+                    className="pt-1 flex items-center gap-1.5 cursor-pointer text-caption text-muted-foreground/60 hover:text-primary transition-colors"
                     onClick={() => {
                       useUIStore.getState().setSettingsTab("general");
                       useUIStore.getState().setActiveTab("settings");
@@ -461,7 +419,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <div className="p-1.5 bg-primary/20 rounded-lg">
                     <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
                   </div>
-                  <span className="text-[10px] font-bold text-primary tracking-widest uppercase">
+                  <span className="text-caption font-bold text-primary tracking-widest uppercase">
                     {t("flow.analysis.title")}
                   </span>
                 </div>
@@ -531,7 +489,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
                         {t("flow.sections.request_headers")}
                       </h3>
                     </div>
@@ -539,7 +497,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
                         {t("flow.sections.request_body")}
                       </h3>
                     </div>
@@ -564,7 +522,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
                         {t("flow.sections.response_headers")}
                       </h3>
                     </div>
@@ -572,7 +530,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
                         {t("flow.sections.response_body")}
                       </h3>
                     </div>
@@ -606,10 +564,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-xl border border-border/40 overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20">
-                      <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
+                      <h3 className="text-caption font-bold text-muted-foreground uppercase tracking-[0.15em]">
                         {t("traffic.websocket.frames")}
                       </h3>
-                      <span className="text-[10px] text-muted-foreground/60">
+                      <span className="text-caption text-muted-foreground/60">
                         {t("traffic.websocket.messages_count", {
                           count: flow._rc.websocketFrameCount || 0,
                         })}

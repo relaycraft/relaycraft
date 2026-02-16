@@ -38,7 +38,7 @@ export function SettingsTabButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-system font-semibold transition-all ${
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-ui font-semibold transition-all ${
         active
           ? "bg-primary/15 text-primary shadow-[0_0_15px_rgba(59,130,246,0.1)] border border-primary/20"
           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
@@ -114,12 +114,12 @@ export function SettingsRow({
         )}
         <div>
           <div
-            className={`text-system font-semibold ${danger ? "text-destructive" : "text-foreground"}`}
+            className={`text-ui font-semibold ${danger ? "text-destructive" : "text-foreground"}`}
           >
             {title}
           </div>
           {description && (
-            <div className="text-[11px] text-muted-foreground/80 mt-0.5 leading-relaxed">
+            <div className="text-small text-muted-foreground/80 mt-0.5 leading-relaxed">
               {description}
             </div>
           )}
@@ -150,7 +150,7 @@ export function SettingsInput({
   return (
     <Input
       {...props}
-      className={`w-auto bg-muted/30 text-right focus:bg-background font-mono text-[12px] ${className}`}
+      className={`w-auto bg-muted/30 text-right focus:bg-background font-mono text-xs ${className}`}
     />
   );
 }

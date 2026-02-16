@@ -167,7 +167,7 @@ export function ScriptManager() {
             </div>
           </div>
 
-          <p className="text-[11px] text-muted-foreground leading-relaxed opacity-70">
+          <p className="text-small text-muted-foreground leading-relaxed opacity-70">
             {t("scripts.subtitle")}
           </p>
         </div>
@@ -201,7 +201,7 @@ export function ScriptManager() {
           {draftScript && (
             <div
               onClick={() => selectScript(null)}
-              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-system transition-all border bg-primary/5 border-primary/20 text-primary font-medium ${!selectedScript ? "ring-1 ring-primary/30" : ""}`}
+              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border bg-primary/5 border-primary/20 text-primary font-medium ${!selectedScript ? "ring-1 ring-primary/30" : ""}`}
             >
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
               <Plus className="w-4 h-4 flex-shrink-0" />
@@ -241,7 +241,7 @@ export function ScriptManager() {
               <div
                 key={script.name}
                 onClick={() => selectScript(script.name)}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-system transition-all border ${
+                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border ${
                   selectedScript === script.name
                     ? "bg-primary/10 border-primary/20 text-primary font-medium"
                     : "border-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"

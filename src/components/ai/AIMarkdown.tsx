@@ -44,7 +44,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
 
   return (
     <div
-      className={`text-system leading-relaxed text-foreground/90 font-medium prose-compact ${className}`}
+      className={`text-ui leading-relaxed text-foreground/90 font-medium prose-compact ${className}`}
     >
       <AnimatePresence>
         {thoughts && (
@@ -84,7 +84,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 pt-1 text-[11px] leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
+              <div className="px-4 pb-4 pt-1 text-small leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{thoughts}</ReactMarkdown>
                 {isThinking && (
                   <motion.span
@@ -114,7 +114,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               </h2>
             ),
             h3: ({ children }: any) => (
-              <h3 className="text-system font-bold text-foreground/90 mb-1.5 mt-3">{children}</h3>
+              <h3 className="text-ui font-bold text-foreground/90 mb-1.5 mt-3">{children}</h3>
             ),
             p: ({ children }: any) => (
               <p className="mb-2 last:mb-0 leading-relaxed overflow-hidden text-foreground/80">
@@ -122,12 +122,12 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               </p>
             ),
             code: ({ children }: any) => (
-              <code className="bg-primary/10 px-1.5 py-0.5 rounded text-[11px] font-mono border border-primary/20 text-primary font-medium">
+              <code className="bg-primary/10 px-1.5 py-0.5 rounded text-small font-mono border border-primary/20 text-primary font-medium">
                 {children}
               </code>
             ),
             pre: ({ children }: any) => (
-              <pre className="bg-muted/50 p-4 rounded-xl border border-border/40 my-3 overflow-x-auto no-scrollbar font-mono text-[11px] leading-relaxed select-all shadow-inner">
+              <pre className="bg-muted/50 p-4 rounded-xl border border-border/40 my-3 overflow-x-auto no-scrollbar font-mono text-small leading-relaxed select-all shadow-inner">
                 {children}
               </pre>
             ),
@@ -142,7 +142,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               <strong className="font-bold text-foreground">{children}</strong>
             ),
             blockquote: ({ children }: any) => (
-              <div className="border-l-4 border-primary/30 bg-primary/5 p-4 rounded-r-xl my-4 italic shadow-sm flex flex-col gap-2 relative overflow-hidden text-[12px]">
+              <div className="border-l-4 border-primary/30 bg-primary/5 p-4 rounded-r-xl my-4 italic shadow-sm flex flex-col gap-2 relative overflow-hidden text-xs">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-2xl -mr-8 -mt-8" />
                 <div className="relative z-10 text-foreground/90 leading-relaxed">{children}</div>
               </div>
@@ -150,7 +150,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
             hr: () => <hr className="my-6 border-border/40" />,
             table: ({ children }: any) => (
               <div className="my-4 overflow-x-auto rounded-xl border border-border/40 bg-white/[0.02]">
-                <table className="w-full border-collapse text-[11px] font-sans">{children}</table>
+                <table className="w-full border-collapse text-small font-sans">{children}</table>
               </div>
             ),
             thead: ({ children }: any) => <thead className="bg-muted/30">{children}</thead>,

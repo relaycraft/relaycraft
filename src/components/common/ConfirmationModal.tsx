@@ -127,8 +127,8 @@ export function ConfirmationModal({
             {customIcon ? customIcon : <IconComponent className="w-6 h-6" />}
           </div>
           <div className="flex-1 pt-1">
-            <h4 className="text-[14px] font-bold text-foreground/90 mb-1.5">{title}</h4>
-            <p className="text-system text-muted-foreground leading-relaxed whitespace-pre-line">
+            <h4 className="text-sm font-bold text-foreground/90 mb-1.5">{title}</h4>
+            <p className="text-ui text-muted-foreground leading-relaxed whitespace-pre-line">
               {message}
             </p>
           </div>

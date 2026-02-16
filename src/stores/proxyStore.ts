@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import i18n from "../i18n";
 import { Logger } from "../lib/logger";
-import { startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
+import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
 import { useScriptStore } from "./scriptStore";
 
 interface ProxyStore {
@@ -109,11 +109,11 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     try {
       set({ error: null });
 
-      // Stop Traffic Monitor first
-      stopTrafficMonitor();
-
-      // Set traffic processing to inactive (but engine keeps running)
+      // Set traffic processing to inactive first (stops accepting new requests)
       await invoke("set_proxy_active", { active: false });
+
+      // Final poll to capture any remaining data, then stop monitor
+      await finalPollAndStop();
 
       set({ active: false, requestCount: 0 });
 

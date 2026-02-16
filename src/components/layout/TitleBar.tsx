@@ -57,7 +57,7 @@ export function TitleBar({ running, loading, onToggle }: TitleBarProps) {
     <div
       onDoubleClick={handleMaximize}
       data-tauri-drag-region
-      className="h-10 bg-background/95 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-3 select-none fixed top-0 left-0 right-0 z-50 cursor-default"
+      className="h-10 bg-background/95 backdrop-blur-md border-b border-subtle flex items-center justify-between px-3 select-none fixed top-0 left-0 right-0 z-50 cursor-default"
     >
       {!isMacOS && (
         <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
@@ -109,7 +109,7 @@ export function TitleBar({ running, loading, onToggle }: TitleBarProps) {
                 size="xs"
                 className={`gap-1.5 h-7 min-w-[72px] relative overflow-hidden transition-all duration-300 rounded-lg ${
                   running
-                    ? "bg-green-500/10 hover:bg-destructive/10 text-green-500 hover:text-destructive border-green-500/20 hover:border-destructive/30 border shadow-sm"
+                    ? "bg-success/10 hover:bg-error/10 text-success hover:text-error border-success/20 hover:border-error/30 border shadow-sm"
                     : "font-bold px-3 opacity-80 hover:opacity-100"
                 }`}
               >

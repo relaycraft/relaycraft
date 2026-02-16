@@ -154,7 +154,7 @@ export function SessionSwitcher() {
         }
         className={`h-7 px-2.5 gap-2 border border-border/40 bg-background/40 shadow-sm transition-all hover:bg-background/60 hover:border-border/60 ${
           isHistoricalMode
-            ? "text-amber-600 hover:text-amber-700 ring-1 ring-amber-500/20"
+            ? "text-warning hover:text-warning/80 ring-1 ring-warning/20"
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
@@ -164,7 +164,7 @@ export function SessionSwitcher() {
           ) : (
             <History className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
           )}
-          <span className="truncate text-[11px] font-medium tracking-tight tabular-nums">
+          <span className="truncate text-small font-medium tracking-tight tabular-nums">
             {viewingSession ? formatDateTime(viewingSession.created_at) : "---"}
           </span>
         </div>
@@ -186,16 +186,16 @@ export function SessionSwitcher() {
               width: 260,
             }}
           >
-            <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground tracking-wider uppercase border-b border-border/40 bg-muted/20">
+            <div className="px-3 py-2 text-caption font-bold text-muted-foreground tracking-wider uppercase border-b border-border/40 bg-muted/20">
               {t("session.history", { defaultValue: "History Records" })}
-              <span className="ml-2 py-0.5 px-1.5 rounded-full bg-border/40 text-[9px] font-mono">
+              <span className="ml-2 py-0.5 px-1.5 rounded-full bg-border/40 text-caption font-mono">
                 {dbSessions.length}
               </span>
             </div>
 
             <div className="max-h-48 overflow-y-auto">
               {loadingSessions ? (
-                <div className="px-4 py-3 text-center text-muted-foreground text-[11px]">
+                <div className="px-4 py-3 text-center text-muted-foreground text-small">
                   {t("common.loading", { defaultValue: "Loading..." })}
                 </div>
               ) : (
@@ -216,21 +216,21 @@ export function SessionSwitcher() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-[11px] font-semibold tabular-nums ${isViewing ? "text-primary" : ""}`}
+                            className={`text-small font-semibold tabular-nums ${isViewing ? "text-primary" : ""}`}
                           >
                             {formatDateTime(session.created_at)}
                           </span>
                           {isWriting && (
                             <span className="flex h-2 w-2 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
                             </span>
                           )}
                           {isViewing && !isWriting && (
                             <Check className="w-3 h-3 text-primary flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5 opacity-70">
+                        <div className="flex items-center gap-2 text-caption text-muted-foreground mt-0.5 opacity-70">
                           <div className="flex items-center gap-1">
                             {session.flow_count > 0 ? session.flow_count : 0} flows
                           </div>
@@ -245,7 +245,7 @@ export function SessionSwitcher() {
                           variant="ghost"
                           size="icon-xs"
                           onClick={(e) => handleDelete(e, session)}
-                          className="opacity-0 group-hover:opacity-100 hover:text-destructive h-5 w-5"
+                          className="opacity-0 group-hover:opacity-100 hover:text-error h-5 w-5"
                         >
                           <Trash2 className="w-2.5 h-2.5" />
                         </Button>

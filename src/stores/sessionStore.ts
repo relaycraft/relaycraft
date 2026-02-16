@@ -201,6 +201,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          id: crypto.randomUUID(),
           name,
           description,
           metadata,
@@ -247,46 +248,52 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       });
 
       if (path && typeof path === "string") {
-        const session = await invoke<Session>("load_session", { path });
+        Logger.info(`Loading session from: ${path}`);
 
-        // Send flows to backend and update indices in frontend
+        const session = await invoke<Session>("load_session", { path });
+        Logger.info(`Session loaded: ${session.id}, flows count: ${session.flows?.length || 0}`);
+
+        // Send session metadata and flows to backend
         const port = useSettingsStore.getState().config.proxy_port;
-        await fetch(`http://127.0.0.1:${port}/_relay/import_session`, {
+        Logger.info(`Sending flows to backend at port ${port}...`);
+
+        const response = await fetch(`http://127.0.0.1:${port}/_relay/import_session`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(session.flows),
+          body: JSON.stringify({
+            id: session.id,
+            name: session.name,
+            description: session.description,
+            metadata: session.metadata,
+            flows: session.flows,
+          }),
           cache: "no-store",
         });
 
-        // Convert flows to indices for frontend
-        const indices = session.flows.map((f: any, idx: number) => ({
-          id: f.id,
-          seq: idx + 1,
-          method: f.request?.method || "",
-          url: f.request?.url || "",
-          host: new URL(f.request?.url || "http://localhost").host,
-          path: new URL(f.request?.url || "http://localhost").pathname,
-          status: f.response?.status || 0,
-          contentType: f.response?.content?.mimeType || "",
-          startedDateTime: f.startedDateTime || new Date().toISOString(),
-          time: f.time || 0,
-          size: (f.request?.bodySize || 0) + (f.response?.bodySize || 0),
-          hasError: !!f._rc?.error,
-          hasRequestBody: (f.request?.bodySize || 0) > 0,
-          hasResponseBody: (f.response?.bodySize || 0) > 0,
-          isWebsocket: false,
-          websocketFrameCount: 0,
-          isIntercepted: false,
-          hits: (f._rc?.hits || []).map((h: any) => ({
-            id: h.id,
-            name: h.name,
-            type: h.type,
-            status: h.status,
-          })),
-        }));
+        Logger.info(`Import session response: ${response.status}`);
 
-        useTrafficStore.getState().addIndices(indices);
-        set({ currentSession: session });
+        if (response.ok) {
+          const data = await response.json();
+          const { session_id, indices } = data;
+
+          Logger.info(
+            `Session imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
+          );
+
+          // Don't call clearFlows() - it would clear the backend database!
+          // Just clear local state and set the imported indices
+          useTrafficStore.getState().clearLocal();
+          useTrafficStore.getState().addIndices(indices);
+
+          // Switch to the imported session (it's a historical session)
+          if (session_id) {
+            set({ showSessionId: session_id });
+            await get().fetchDbSessions();
+          }
+        } else {
+          const errorText = await response.text();
+          Logger.error(`Session import failed: ${response.status} - ${errorText}`);
+        }
       }
     } catch (error) {
       Logger.error("Failed to load session:", error);
@@ -298,10 +305,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   exportHar: async () => {
     set({ loading: true });
     try {
-      // Generate filename with timestamp
+      // Generate filename with timestamp (local time, consistent with session format)
+      // Format: har-YYYY-MM-DD-HH-mm-ss
       const now = new Date();
-      const timestamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      const defaultFilename = `traffic-${timestamp}.har`;
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const defaultFilename = `har-${year}-${month}-${day}-${hours}-${minutes}-${seconds}.har`;
 
       // Ask user for file path first
       const path = await save({
@@ -361,12 +374,18 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       });
 
       if (path && typeof path === "string") {
+        Logger.info(`Importing HAR from: ${path}`);
+
         // Read HAR file content using Tauri fs plugin
         const harContent = await readTextFile(path);
         const harData = JSON.parse(harContent);
 
+        Logger.info(`HAR file parsed, entries count: ${harData?.log?.entries?.length || 0}`);
+
         // Send to backend for processing
         const port = useSettingsStore.getState().config.proxy_port;
+        Logger.info(`Sending HAR to backend at port ${port}...`);
+
         const response = await fetch(`http://127.0.0.1:${port}/_relay/import_har`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -374,9 +393,15 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           cache: "no-store",
         });
 
+        Logger.info(`HAR import response status: ${response.status}`);
+
         if (response.ok) {
           const data = await response.json();
           const { session_id, indices } = data;
+
+          Logger.info(
+            `HAR imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
+          );
 
           // Add indices to traffic store (for immediate view)
           useTrafficStore.getState().addIndices(indices);
@@ -388,10 +413,13 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
           }
+        } else {
+          const errorText = await response.text();
+          Logger.error(`HAR import failed: ${response.status} - ${errorText}`);
         }
       }
     } catch (error) {
-      console.error("Failed to import HAR:", error);
+      Logger.error("Failed to import HAR:", error);
     } finally {
       set({ loading: false });
     }
