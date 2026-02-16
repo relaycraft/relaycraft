@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { HelpCircle, ListFilter, Regex as RegexIcon, Search, X } from "lucide-react";
+import { Activity, HelpCircle, ListFilter, Regex as RegexIcon, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AIAssistant } from "../ai/AIAssistant";
@@ -18,6 +18,8 @@ interface FilterBarProps {
   setOnlyMatched: (val: boolean) => void;
   filteredCount: number;
   totalCount: number;
+  autoScroll: boolean;
+  onToggleAutoScroll: () => void;
 }
 // Props definition for FilterBar
 
@@ -32,6 +34,8 @@ export function FilterBar({
   setOnlyMatched,
   filteredCount,
   totalCount,
+  autoScroll,
+  onToggleAutoScroll,
 }: FilterBarProps) {
   const { t } = useTranslation();
   const [showHelp, setShowHelp] = useState(false);
@@ -102,7 +106,7 @@ export function FilterBar({
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => setShowHelp(!showHelp)}
-                className={`h-6 w-6 rounded-md ${showHelp ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                className={`h-6 w-6 rounded-lg ${showHelp ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <HelpCircle className="w-3.5 h-3.5" />
               </Button>
@@ -117,7 +121,7 @@ export function FilterBar({
               variant="ghost"
               size="icon-xs"
               onClick={() => setIsRegex(!isRegex)}
-              className={`h-7 w-7 rounded-md ${
+              className={`h-7 w-7 rounded-lg ${
                 isRegex
                   ? "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -132,7 +136,7 @@ export function FilterBar({
               variant="ghost"
               size="icon-xs"
               onClick={() => setCaseSensitive(!caseSensitive)}
-              className={`h-7 w-7 rounded-md ${
+              className={`h-7 w-7 rounded-lg ${
                 caseSensitive
                   ? "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -149,13 +153,28 @@ export function FilterBar({
               variant="ghost"
               size="icon-xs"
               onClick={() => setOnlyMatched(!onlyMatched)}
-              className={`h-7 w-7 rounded-md ${
+              className={`h-7 w-7 rounded-lg ${
                 onlyMatched
                   ? "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 hover:text-purple-700"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               <ListFilter className="w-3.5 h-3.5" />
+            </Button>
+          </Tooltip>
+          <div className="w-px h-3 bg-border mx-0.5" />
+          <Tooltip content={t("traffic.filter.autoscroll")} side="bottom">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={onToggleAutoScroll}
+              className={`h-7 w-7 rounded-lg transition-colors ${
+                autoScroll
+                  ? "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
             </Button>
           </Tooltip>
         </div>

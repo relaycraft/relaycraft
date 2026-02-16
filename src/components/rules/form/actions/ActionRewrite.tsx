@@ -158,7 +158,7 @@ export function ActionRewrite({
               <textarea
                 value={content}
                 onChange={(e) => onChangeContent(e.target.value)}
-                className="w-full h-40 bg-background border border-input rounded-md px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all resize-none"
+                className="w-full h-40 bg-background border border-input rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all resize-none"
                 placeholder={t("rule_editor.action.rewrite.placeholders_content")}
               />
             </div>
@@ -215,7 +215,7 @@ export function ActionRewrite({
                 >
                   <button
                     onClick={() => updateJsonMod(i, "enabled", mod.enabled === false)}
-                    className={`p-1 rounded-md transition-colors ${mod.enabled !== false ? "text-primary" : "text-muted-foreground/30"}`}
+                    className={`p-1 rounded-lg transition-colors ${mod.enabled !== false ? "text-primary" : "text-muted-foreground/30"}`}
                   >
                     {mod.enabled !== false ? (
                       <CheckCircle2 className="w-4 h-4" />

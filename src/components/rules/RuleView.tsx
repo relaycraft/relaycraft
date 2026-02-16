@@ -250,7 +250,7 @@ export function RuleView() {
               <div className="p-8 flex justify-center">
                 <button
                   onClick={handleAddGroup}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-dashed border-border/40 text-muted-foreground/60 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all text-xs font-bold"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-lg border-2 border-dashed border-border/40 text-muted-foreground/60 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all text-xs font-bold"
                 >
                   <Plus className="w-4 h-4" />
                   {t("rules.add_group")}

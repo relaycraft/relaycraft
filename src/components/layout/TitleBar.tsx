@@ -76,7 +76,7 @@ export function TitleBar({ running, loading, onToggle }: TitleBarProps) {
         <button
           onClick={() => useCommandStore.getState().setIsOpen(true)}
           onMouseDown={(e) => e.stopPropagation()}
-          className="group relative w-full h-7 flex items-center gap-3 px-3 rounded-md bg-muted/40 hover:bg-muted/60 border border-border/40 hover:border-border transition-all duration-200"
+          className="group relative w-full h-7 flex items-center gap-3 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 border border-border/40 hover:border-border transition-all duration-200"
         >
           <Search className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
           <div className="flex-1 text-left text-xs text-muted-foreground/60 group-hover:text-foreground/80 transition-colors font-medium">

@@ -195,7 +195,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border shrink-0 ${isRequest ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
+                      className={`px-1.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border shrink-0 ${isRequest ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
                     >
                       {isRequest ? t("breakpoint.request") : t("breakpoint.response")}
                     </span>

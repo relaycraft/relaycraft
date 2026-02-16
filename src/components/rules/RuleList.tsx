@@ -222,7 +222,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                     </Tooltip>
                   )}
                   {!rule.execution.enabled && (
-                    <span className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground/80 leading-none">
+                    <span className="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded-lg bg-muted text-muted-foreground/80 leading-none">
                       {t("common.disabled")}
                     </span>
                   )}

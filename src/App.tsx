@@ -59,10 +59,19 @@ function App() {
   const { active, startProxy, stopProxy } = useProxyStore();
 
   // Header Logic State
-  const { activeTab } = useUIStore();
-  const { searchQuery, setSearchQuery } = useRuleStore();
-  const { setImportModalOpen } = useUIStore();
+  const { setImportModalOpen, activeTab } = useUIStore();
   const pluginPages = usePluginPageStore((state) => state.pages);
+
+  // Check if current viewing session is historical (not the one currently being written)
+  const isHistoricalSession = useSessionStore((state) => {
+    const activeSession = state.dbSessions.find((s) => s.is_active === 1);
+    return !!(
+      active &&
+      activeSession &&
+      state.showSessionId &&
+      activeSession.id !== state.showSessionId
+    );
+  });
 
   const handleToggleProxy = async () => {
     if (loading || toggleLock.current) return;
@@ -206,65 +215,79 @@ function App() {
                 {/* Traffic Actions */}
                 {activeTab === "traffic" && (
                   <div className="flex items-center gap-2">
+                    {/* Session Persistence Group */}
                     <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
-                      <Tooltip content={t("common.save")} side="bottom">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => useUIStore.getState().setSaveSessionModalOpen(true)}
-                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                        >
-                          <Save className="w-3.5 h-3.5" />
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content={t("common.open")} side="bottom">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => useSessionStore.getState().loadSession()}
-                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                        >
-                          <FolderOpen className="w-3.5 h-3.5" />
-                        </Button>
-                      </Tooltip>
-                      <div className="w-px h-3 bg-border/40 mx-0.5" />
-                      <Tooltip content={t("common.export_har")} side="bottom">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => useSessionStore.getState().exportHar()}
-                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                        >
-                          <FileUp className="w-3.5 h-3.5" />
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content={t("common.import_har_hint")} side="bottom">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => useSessionStore.getState().importHar()}
-                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                        </Button>
-                      </Tooltip>
+                      <div className="flex items-center gap-0.5 px-0.5">
+                        <Tooltip content={t("common.save")} side="bottom">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => useUIStore.getState().setSaveSessionModalOpen(true)}
+                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content={t("common.open")} side="bottom">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => useSessionStore.getState().loadSession()}
+                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                          >
+                            <FolderOpen className="w-3.5 h-3.5" />
+                          </Button>
+                        </Tooltip>
+                      </div>
+
+                      <div className="w-px h-3.5 bg-border/40 mx-1" />
+
+                      <div className="flex items-center gap-0.5 px-0.5">
+                        <Tooltip content={t("common.export_har")} side="bottom">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => useSessionStore.getState().exportHar()}
+                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                          >
+                            <FileUp className="w-3.5 h-3.5" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content={t("common.import_har_hint")} side="bottom">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => useSessionStore.getState().importHar()}
+                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                          </Button>
+                        </Tooltip>
+                      </div>
                     </div>
 
-                    <div className="w-px h-4 bg-border/40 mx-1" />
+                    <div className="w-px h-4 bg-border/40 mx-0.5" />
 
-                    <Tooltip content={t("common.clear")} side="bottom">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => useTrafficStore.getState().clearFlows()}
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </Tooltip>
+                    {/* State Actions */}
+                    {!isHistoricalSession && (
+                      <Tooltip content={t("common.clear")} side="bottom">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => useTrafficStore.getState().clearFlows()}
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md border border-border/20 shadow-sm"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </Tooltip>
+                    )}
 
-                    {/* Session Switcher */}
-                    <SessionSwitcher />
+                    <div className="w-px h-4 bg-border/40 mx-0.5" />
+
+                    {/* Session Switcher (History) */}
+                    <div className="flex items-center gap-1.5 px-0.5">
+                      <SessionSwitcher />
+                    </div>
                   </div>
                 )}
 
@@ -276,9 +299,9 @@ function App() {
                       <Input
                         type="text"
                         placeholder={t("common.search")}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-48 pl-8 pr-3 h-8 bg-background border border-border rounded text-system placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
+                        value={useRuleStore.getState().searchQuery}
+                        onChange={(e) => useRuleStore.getState().setSearchQuery(e.target.value)}
+                        className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-system placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
                       />
                     </div>
                     <Button

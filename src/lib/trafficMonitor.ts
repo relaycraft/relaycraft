@@ -66,6 +66,13 @@ export function stopTrafficMonitor() {
 }
 
 /**
+ * Force update the poll timestamp (useful when switching sessions)
+ */
+export function setPollTimestamp(ts: number) {
+	lastTimestamp = ts;
+}
+
+/**
  * Reset the session creation flag (called when app fully restarts)
  */
 export function resetSessionFlag() {

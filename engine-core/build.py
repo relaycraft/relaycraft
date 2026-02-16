@@ -261,10 +261,10 @@ def build(sync_only=False):
                     except:
                         if os.path.exists(p): os.remove(p)
 
-        # 8. Signature stripping for CI (Enforces fresh sign)
-        print("  Ensuring clean state for CI signing...")
-        os.system(f"codesign --remove-signature {dist_dir} 2>/dev/null || true")
-        os.system(f"find {dist_dir} -type f -exec codesign --remove-signature {{}} \\; 2>/dev/null || true")
+        # 8. Ad-hoc signing (Required for ARM64 Macs)
+        print("  Ad-hoc signing binaries for local execution...")
+        os.system(f"find {dist_dir} -type f \( -name '*.so' -o -name '*.dylib' -o -perm +111 -o -name 'engine' -o -name 'Python' \) -exec codesign --force --sign - {{}} \\; 2>/dev/null || true")
+        os.system(f"codesign --force --sign - {dist_dir} 2>/dev/null || true")
         os.system(f"xattr -rc {dist_dir}")
 
 if __name__ == '__main__':

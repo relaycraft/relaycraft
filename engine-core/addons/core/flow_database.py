@@ -995,7 +995,10 @@ class FlowDatabase:
                 except Exception as e:
                     pass  # Skip corrupted entries
 
-            f.write(']}}')
+            if format == 'har':
+                f.write(']}}')
+            else:
+                f.write(']}')
 
         # Final progress callback
         if progress_callback:

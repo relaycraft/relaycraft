@@ -973,6 +973,7 @@
       "and_desc": "不同类型取交集",
       "body": "正文查询",
       "case_tooltip": "区分大小写",
+      "autoscroll": "跟踪最新数据",
       "compare": "数值比较",
       "current": "当前过滤条件:",
       "headers": "头部查询",

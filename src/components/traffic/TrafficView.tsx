@@ -53,8 +53,10 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
   // Local State
   const virtuosoRef = useRef<any>(null);
+  const [autoScroll, setAutoScroll] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
   const [newRequestsCount, setNewRequestsCount] = useState(0);
+  const [idColWidth, setIdColWidth] = useState(40); // Fixed base width to prevent layout shifts
   const [showJumpBubble, setShowJumpBubble] = useState(false);
   const bubbleTimeoutRef = useRef<any>(null);
   const [filterText, setFilterText] = useState("");
@@ -71,9 +73,6 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     }, 300);
     return () => clearTimeout(timer);
   }, [filterText]);
-
-  // Dynamic width calculation for ID column (based on indices count)
-  const idColWidth = Math.max(20, (indices.length?.toString().length || 1) * 7 + 4);
 
   const handleScrollStateChange = (scrolling: boolean) => {
     if (scrolling) {
@@ -110,17 +109,53 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
   const [lastBaselineCount, setLastBaselineCount] = useState(filteredIndices.length);
 
+  // Use refs to mirror state for the stable keyboard listener.
+  // This prevents the listener from re-binding on every traffic update.
+  const filteredIndicesRef = useRef(filteredIndices);
+
   useEffect(() => {
-    if (atBottom) {
+    filteredIndicesRef.current = filteredIndices;
+  }, [filteredIndices]);
+
+  useEffect(() => {
+    // Only update bubble count if autoScroll is OFF or we're not at bottom
+    if (atBottom && autoScroll) {
       setLastBaselineCount(filteredIndices.length);
       setNewRequestsCount(0);
     } else {
       const diff = filteredIndices.length - lastBaselineCount;
       setNewRequestsCount(Math.max(0, diff));
     }
-  }, [filteredIndices.length, atBottom, lastBaselineCount]);
+  }, [filteredIndices.length, atBottom, autoScroll, lastBaselineCount]);
 
-  // Keyboard Navigation for sequential selection
+  // Manual "Sticky" Auto-scroll logic:
+  // We rely on native followOutput for persistent tracking.
+  // This effector now ONLY handles the initial "docking" when toggling ON.
+  // Note: We use a 100px threshold in the Virtuoso component below to account for
+  // sub-pixel rendering jitter and dynamic layout shifts during high-traffic throughput.
+  useEffect(() => {
+    if (autoScroll && atBottom && filteredIndices.length > 0) {
+      virtuosoRef.current?.scrollToIndex({
+        index: filteredIndices.length - 1,
+        behavior: "auto",
+        align: "end",
+      });
+    }
+  }, [autoScroll, atBottom, filteredIndices.length]);
+
+  // Adjust ID column width based on digit count magnitude to minimize layout shifts.
+  // Instead of exact calculation, we jump in larger steps (e.g., 40px, 50px, 60px).
+  useEffect(() => {
+    const maxId = filteredIndices.length;
+    const digits = maxId.toString().length;
+    const newWidth = Math.max(40, digits * 10 + 4);
+    if (Math.abs(newWidth - idColWidth) > 8) {
+      // Only update if magnitude changes significantly
+      setIdColWidth(newWidth);
+    }
+  }, [filteredIndices.length, idColWidth]);
+
+  // Keyboard Navigation for sequential selection (Zero-Latency Version)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing in inputs
@@ -137,29 +172,42 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
       }
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        if (filteredIndices.length === 0) return;
+        // Direct access to store state ensures zero latency and perfect synchronization
+        // even during high-frequency traffic updates.
+        const store = useTrafficStore.getState();
+        const { selectedFlow: currentSelected } = store;
+
+        // Use the debounced/filtered logic if applicable, or fallback to current state indices
+        // In TrafficView, filteredIndices is derived, so we should actually use the same logic
+        // if we want to bypass React rendering cycle, but for now we'll use the refs
+        // or just rely on the fact that this listener is stable.
+        const currentFiltered = filteredIndicesRef.current;
+
+        if (currentFiltered.length === 0) return;
 
         e.preventDefault();
-        const currentIndex = selectedFlow
-          ? filteredIndices.findIndex((idx) => idx.id === selectedFlow.id)
+        const currentIndex = currentSelected
+          ? currentFiltered.findIndex((idx: FlowIndex) => idx.id === currentSelected.id)
           : -1;
 
         let nextIndex = currentIndex;
         if (e.key === "ArrowDown") {
-          nextIndex = currentIndex < filteredIndices.length - 1 ? currentIndex + 1 : currentIndex;
+          nextIndex = currentIndex < currentFiltered.length - 1 ? currentIndex + 1 : currentIndex;
         } else {
           nextIndex = currentIndex > 0 ? currentIndex - 1 : 0;
         }
 
         if (nextIndex !== currentIndex && nextIndex >= 0) {
-          const nextIdx = filteredIndices[nextIndex];
-          selectFlow(nextIdx.id);
+          const nextIdx = currentFiltered[nextIndex];
+          store.selectFlow(nextIdx.id);
 
-          // Scroll into view if needed
-          virtuosoRef.current?.scrollToIndex({
-            index: nextIndex,
-            behavior: "auto",
-            align: "center",
+          // Atomic coordination: scroll immediately
+          requestAnimationFrame(() => {
+            // scrollIntoView is more elegant than scrollToIndex as it only moves the view
+            // if the item is not already fully visible, and doesn't force a specific alignment.
+            virtuosoRef.current?.scrollIntoView({
+              index: nextIndex,
+            });
           });
         }
       }
@@ -167,13 +215,13 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [filteredIndices, selectedFlow, selectFlow]);
+  }, []); // Empty dependency array ensures this listener is bound only once
 
   return (
     <div className="h-full flex flex-col">
       {!(certTrusted || certWarningIgnored) && (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
+          initial={false}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between group overflow-hidden"
@@ -225,6 +273,18 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
             setOnlyMatched={setOnlyMatched}
             filteredCount={filteredIndices.length}
             totalCount={indices.length}
+            autoScroll={autoScroll}
+            onToggleAutoScroll={() => {
+              const nextValue = !autoScroll;
+              setAutoScroll(nextValue);
+              if (nextValue && filteredIndices.length > 0) {
+                virtuosoRef.current?.scrollToIndex({
+                  index: filteredIndices.length - 1,
+                  behavior: "auto",
+                  align: "end",
+                });
+              }
+            }}
           />
 
           <div className="flex-1 relative flex flex-col min-h-0 z-0">
@@ -348,7 +408,15 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                   ref={virtuosoRef}
                   data={filteredIndices}
                   style={{ height: "100%" }}
-                  followOutput={"auto"}
+                  // Crucial: use a unique key for each item so Virtuoso can track
+                  // their positions accurately even as the list grows rapidly.
+                  computeItemKey={(_, item) => item.id}
+                  // Increase buffer to stabilize height calculations during high traffic
+                  increaseViewportBy={500}
+                  // Relax the threshold for "at bottom" significantly to ensure stickiness.
+                  atBottomThreshold={100}
+                  // Native followOutput={true} handles "if at bottom, stay at bottom".
+                  followOutput={autoScroll}
                   atBottomStateChange={setAtBottom}
                   isScrolling={handleScrollStateChange}
                   itemContent={(index: number, idx: FlowIndex) => (

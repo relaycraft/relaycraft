@@ -3,6 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
+import { setPollTimestamp } from "../lib/trafficMonitor";
 import type { Session, SessionMetadata } from "../types/session";
 import { useSettingsStore } from "./settingsStore";
 import { useTrafficStore } from "./trafficStore";
@@ -101,6 +102,10 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         }
         // Update which session we're viewing
         set({ showSessionId: sessionId });
+
+        // Reset the poll monitor timestamp so it fetches all items for the new session
+        setPollTimestamp(0);
+
         Logger.info(`Switched to view session: ${sessionId}`);
       }
 
@@ -183,22 +188,25 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       // Send metadata to backend and let it write directly to file
       const port = useSettingsStore.getState().config.proxy_port;
-      const encodedPath = encodeURIComponent(path);
-      const response = await fetch(
-        `http://127.0.0.1:${port}/_relay/export_session?path=${encodedPath}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            metadata,
-          }),
-          cache: "no-store",
+      const sessionId = get().showSessionId;
+      const url = new URL(`http://127.0.0.1:${port}/_relay/export_session`);
+      url.searchParams.append("path", path); // fetch handles encoding
+      if (sessionId) {
+        url.searchParams.append("session_id", sessionId);
+      }
+
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          name,
+          description,
+          metadata,
+        }),
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to export session from backend");
@@ -313,13 +321,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       // Request backend to export HAR directly to file (avoids memory issues with large exports)
       const port = useSettingsStore.getState().config.proxy_port;
-      const encodedPath = encodeURIComponent(path);
-      const response = await fetch(
-        `http://127.0.0.1:${port}/_relay/export_har?path=${encodedPath}`,
-        {
-          cache: "no-store",
-        },
-      );
+      const sessionId = get().showSessionId;
+      const url = new URL(`http://127.0.0.1:${port}/_relay/export_har`);
+      url.searchParams.append("path", path);
+      if (sessionId) {
+        url.searchParams.append("session_id", sessionId);
+      }
+
+      const response = await fetch(url.toString(), {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to export HAR from backend");
@@ -364,11 +375,20 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         });
 
         if (response.ok) {
-          const indices = await response.json();
+          const data = await response.json();
+          const { session_id, indices } = data;
+
+          // Add indices to traffic store (for immediate view)
           useTrafficStore.getState().addIndices(indices);
+
+          // Update showSessionId to the new session
+          if (session_id) {
+            set({ showSessionId: session_id });
+            // Refresh session list to include the newly created one
+            await get().fetchDbSessions();
+            Logger.info(`Imported HAR into new session: ${session_id}`);
+          }
         }
-        // Note: Importing HAR doesn't create a "Session" yet, just loads flows
-        set({ currentSession: null });
       }
     } catch (error) {
       console.error("Failed to import HAR:", error);

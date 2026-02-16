@@ -55,7 +55,7 @@ export function CopyButton({
         type="button"
         onClick={handleCopy}
         className={cn(
-          "group inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-muted-foreground transition-all relative",
+          "group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-muted-foreground transition-all relative",
           variantClasses[variant],
           className,
         )}

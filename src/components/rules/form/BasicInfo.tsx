@@ -122,7 +122,7 @@ export function BasicInfo({
                   <button
                     onClick={handleAutoName}
                     disabled={isGeneratingName}
-                    className={`p-1.5 rounded-md transition-all ${
+                    className={`p-1.5 rounded-lg transition-all ${
                       isGeneratingName
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground/40 hover:text-primary hover:bg-primary/10"

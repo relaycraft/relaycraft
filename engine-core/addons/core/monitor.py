@@ -618,7 +618,7 @@ class TrafficMonitor:
 
                 response_data = {
                     "indices": indices,
-                    "server_ts": max_msg_ts if max_msg_ts > 0 else time.time(),
+                    "server_ts": max_msg_ts if max_msg_ts > 0 else since_ts,
                     "buffer_ids": buffer_ids
                 }
                 json_str = json.dumps(
@@ -980,12 +980,11 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
-        # Export session (all flows)
         elif "/_relay/export_session" in flow.request.path:
             try:
-                import urllib.parse
-                query_params = urllib.parse.parse_qs(flow.request.query)
-                export_path = query_params.get('path', [None])[0]
+                # Use query.get directly instead of parse_qs
+                export_path = flow.request.query.get('path')
+                session_id = flow.request.query.get('session_id')
 
                 if export_path:
                     # Parse metadata from request body
@@ -1000,6 +999,7 @@ class TrafficMonitor:
                     # Use streaming export to avoid memory issues
                     self.db.export_to_file_iter(
                         export_path,
+                        session_id=session_id,
                         format='session',
                         metadata=metadata
                     )
@@ -1013,7 +1013,7 @@ class TrafficMonitor:
                     )
                 else:
                     # Return as response (for small exports only - use with caution)
-                    all_flows = self.db.get_all_flows()
+                    all_flows = self.db.get_all_flows(session_id=session_id)
                     json_str = json.dumps(
                         all_flows,
                         default=safe_json_default,
@@ -1037,14 +1037,15 @@ class TrafficMonitor:
         # Export HAR
         elif "/_relay/export_har" in flow.request.path:
             try:
-                import urllib.parse
-                query_params = urllib.parse.parse_qs(flow.request.query)
-                export_path = query_params.get('path', [None])[0]
+                # Use query.get directly instead of parse_qs
+                export_path = flow.request.query.get('path')
+                session_id = flow.request.query.get('session_id')
 
                 if export_path:
                     # Use streaming export to avoid memory issues
                     self.db.export_to_file_iter(
                         export_path,
+                        session_id=session_id,
                         format='har'
                     )
                     flow.response = Response.make(
@@ -1057,7 +1058,7 @@ class TrafficMonitor:
                     )
                 else:
                     # Return as response (for small exports only - use with caution)
-                    all_flows = self.db.get_all_flows()
+                    all_flows = self.db.get_all_flows(session_id=session_id)
                     har_data = {
                         "log": {
                             "version": "1.2",
@@ -1143,7 +1144,9 @@ class TrafficMonitor:
                                 for h in rc.get("hits", []) or []
                             ],
                         })
-                    json_str = json.dumps(indices, ensure_ascii=False)
+                    
+                    # Return session_id so frontend can switch to it
+                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
                     flow.response = Response.make(
                         200,
                         json_str.encode("utf-8"),
@@ -1173,6 +1176,17 @@ class TrafficMonitor:
 
                     har_data = json.loads(flow.request.content.decode('utf-8'))
                     entries = har_data.get("log", {}).get("entries", [])
+                    
+                    # Create a new session for this HAR import
+                    import os
+                    from pathlib import Path
+                    filename = "Imported HAR"
+                    session_id = self.db.create_session(
+                        name=f"Import: {filename} ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
+                        description=f"Imported from HAR on {datetime.now()}",
+                        metadata={"type": "har_import"}
+                    )
+
                     indices = []
                     for idx, entry in enumerate(entries):
                         # Generate unique ID for HAR entry
@@ -1198,7 +1212,7 @@ class TrafficMonitor:
                             "_rc": entry.get("_rc", {}) or {},
                         }
 
-                        self.db.store_flow(flow_data)
+                        self.db.store_flow(flow_data, session_id=session_id)
 
                         # Build index for response
                         rc = entry.get("_rc", {})

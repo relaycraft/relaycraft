@@ -275,7 +275,7 @@ export function MatchConfig({
                     <button
                       type="button"
                       onClick={() => onChangeHeaders(requiredHeaders.filter((_, i) => i !== index))}
-                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -392,26 +392,25 @@ pre,
 
 /* Global Dynamic Scrollbar Profile - v2 (Centralized) */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Base State: Invisible but present */
+/* Base State: Subtle but visible thumb */
 ::-webkit-scrollbar-thumb {
-  background-color: transparent;
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 92%);
   border-radius: 10px;
   transition: background-color 0.2s ease;
 }
 
 /* Global Visibility: Show on Hover or Scrolling */
-/* Using :hover on the element itself to trigger thumb visibility */
 :hover::-webkit-scrollbar-thumb,
 .is-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 80%);
 }
 
 /* Hovering the thumb itself makes it darker */
@@ -420,22 +419,27 @@ pre,
 }
 
 /* macOS Specific Overrides */
-/* 1. Reset to standard Mac overlay feel (transparent base) */
-html.platform-mac ::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  /* Increases hit area */
-  background-clip: content-box;
-  background-color: transparent;
+/* 1. Reset to standard Mac overlay feel (wider track for padding) */
+html.platform-mac ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-/* 2. Specific Visibility for macOS (Higher specificity than base) */
+html.platform-mac ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  /* Results in 6px visible thumb with 10px track */
+  background-clip: content-box;
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 90%);
+}
+
+/* 2. Specific Visibility for macOS */
 html.platform-mac :hover::-webkit-scrollbar-thumb,
 html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 85%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 75%);
 }
 
 html.platform-mac ::-webkit-scrollbar-thumb:hover {
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 50%);
 }
 
 /* Utility to completely hide */
