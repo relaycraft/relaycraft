@@ -156,28 +156,33 @@ export const TrafficListItem = memo(
               </Tooltip>
             )}
             <div className="flex -space-x-1">
-              {index.hits.slice(0, 5).map((hit, idx) => {
-                const isScript = hit.type === "script";
-                const tooltipContent = isScript
-                  ? `${t("common.script", "Script")}: ${hit.name}`
-                  : `${t("common.rule", "Rule")}: ${hit.name}`;
-                return (
-                  <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
-                    {isScript ? (
-                      <div className="w-2.5 h-2.5 flex items-center justify-center rounded-full bg-indigo-500/20 ring-1 ring-indigo-500/50 -translate-y-[1px]">
-                        <Terminal className="w-1.5 h-1.5 text-indigo-400" />
-                      </div>
-                    ) : (
-                      <div
-                        className={`w-2 h-2 rounded-full ring-1 ring-background ${getRuleTypeDotClass(hit.type, hit.status)}`}
-                      />
-                    )}
-                  </Tooltip>
-                );
-              })}
-              {index.hits.length > 5 && (
+              {
+                // Deduplicate hits by id (same script/rule may hit multiple times)
+                [...new Map(index.hits.map((h) => [h.id, h])).values()]
+                  .slice(0, 5)
+                  .map((hit, idx) => {
+                    const isScript = hit.type === "script";
+                    const tooltipContent = isScript
+                      ? `${t("common.script", "Script")}: ${hit.name}`
+                      : `${t("common.rule", "Rule")}: ${hit.name}`;
+                    return (
+                      <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
+                        {isScript ? (
+                          <div className="w-2.5 h-2.5 flex items-center justify-center rounded-full bg-indigo-500/20 ring-1 ring-indigo-500/50 -translate-y-[1px]">
+                            <Terminal className="w-1.5 h-1.5 text-indigo-400" />
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-2 h-2 rounded-full ring-1 ring-background ${getRuleTypeDotClass(hit.type, hit.status)}`}
+                          />
+                        )}
+                      </Tooltip>
+                    );
+                  })
+              }
+              {[...new Map(index.hits.map((h) => [h.id, h])).values()].length > 5 && (
                 <span className="text-caption text-muted-foreground ml-1">
-                  +{index.hits.length - 5}
+                  +{[...new Map(index.hits.map((h) => [h.id, h])).values()].length - 5}
                 </span>
               )}
             </div>

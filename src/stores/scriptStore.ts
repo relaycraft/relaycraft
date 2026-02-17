@@ -15,12 +15,14 @@ interface ScriptStore {
   loading: boolean;
   isCreating: boolean;
   draftScript: { name: string; content: string } | null;
+  modifiedSinceStart: Set<string>; // Scripts modified since last engine start
 
   // Actions
   fetchScripts: () => Promise<void>;
   selectScript: (name: string | null) => void;
   setIsCreating: (isCreating: boolean) => void;
   setDraftScript: (draft: { name: string; content: string } | null) => void;
+  clearModifiedSinceStart: () => void; // Called when engine restarts
 
   // Backend Operations
   getScriptContent: (name: string) => Promise<string>;
@@ -38,6 +40,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
   loading: false,
   isCreating: false,
   draftScript: null,
+  modifiedSinceStart: new Set<string>(),
 
   setIsCreating: (isCreating) => set({ isCreating }),
   setDraftScript: (draft) =>
@@ -45,6 +48,8 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
       draftScript: draft,
       selectedScript: draft ? null : get().selectedScript,
     }),
+
+  clearModifiedSinceStart: () => set({ modifiedSinceStart: new Set<string>() }),
 
   fetchScripts: async () => {
     set({ loading: true });
@@ -79,6 +84,15 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
       // If it was a draft being saved for the first time
       if (get().draftScript && get().draftScript?.name === name) {
         set({ draftScript: null, selectedScript: name });
+      }
+      // Mark as modified if engine is running and script is enabled
+      const { useProxyStore } = await import("./proxyStore");
+      const proxyState = useProxyStore.getState();
+      const script = get().scripts.find((s) => s.name === name);
+      if (proxyState.running && script?.enabled) {
+        const newSet = new Set(get().modifiedSinceStart);
+        newSet.add(name);
+        set({ modifiedSinceStart: newSet });
       }
     } catch (error) {
       Logger.error(`Failed to save script ${name}:`, error);
@@ -129,6 +143,16 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
 
     try {
       await invoke("set_script_enabled", { name, enabled });
+
+      // Mark as modified if engine is running and enabling a script
+      // (newly enabled scripts need restart to take effect)
+      const { useProxyStore } = await import("./proxyStore");
+      const proxyState = useProxyStore.getState();
+      if (proxyState.running && enabled) {
+        const newSet = new Set(get().modifiedSinceStart);
+        newSet.add(name);
+        set({ modifiedSinceStart: newSet });
+      }
     } catch (error) {
       console.error(`Failed to toggle script ${name}:`, error);
       // Revert on error

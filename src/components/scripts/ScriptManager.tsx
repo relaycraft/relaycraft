@@ -33,26 +33,24 @@ export function ScriptManager() {
     toggleScript,
     renameScript,
     moveScript,
+    modifiedSinceStart,
   } = useScriptStore();
 
-  const { startProxy, stopProxy, running, activeScripts } = useProxyStore();
+  const { restartProxy, running, activeScripts } = useProxyStore();
   const { showConfirm } = useUIStore();
 
   const { draftScript, setDraftScript } = useScriptStore();
 
-  const [needsRestart, setNeedsRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
 
   // Rename state
   const [editingScriptId, setEditingScriptId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
+  // Check if a script is currently active (loaded in running engine)
+  // activeScripts stores script names (not temp paths) for consistent comparison
   const checkIsScriptActive = (name: string) => {
-    const normalizedName = name.toLowerCase();
-    return activeScripts.some((path) => {
-      const normalizedPath = path.toLowerCase().replace(/\\/g, "/");
-      return normalizedPath === normalizedName || normalizedPath.endsWith(`/${normalizedName}`);
-    });
+    return activeScripts.includes(name);
   };
 
   useEffect(() => {
@@ -71,6 +69,18 @@ export function ScriptManager() {
     setDraftScript({ name: "Untitled Script.py", content: defaultTemplate });
   };
 
+  // Calculate if restart is needed based on:
+  // 1. Any script has been modified since last start
+  // 2. Any script's enabled state differs from its active state
+  const needsRestart =
+    running &&
+    (modifiedSinceStart.size > 0 ||
+      scripts.some(
+        (s) =>
+          (s.enabled && !activeScripts.includes(s.name)) ||
+          (!s.enabled && activeScripts.includes(s.name)),
+      ));
+
   const handleDelete = async (e: React.MouseEvent, name: string) => {
     e.stopPropagation();
     showConfirm({
@@ -80,10 +90,6 @@ export function ScriptManager() {
       onConfirm: async () => {
         try {
           await deleteScript(name);
-          // Only restart if the deleted script was active
-          if (checkIsScriptActive(name)) {
-            setNeedsRestart(true);
-          }
         } catch (error) {
           console.error(error);
         }
@@ -94,18 +100,11 @@ export function ScriptManager() {
   const handleToggle = async (e: React.MouseEvent, name: string, currentStatus: boolean) => {
     e.stopPropagation();
     await toggleScript(name, !currentStatus);
-    setNeedsRestart(true);
   };
 
   const handleMove = async (e: React.MouseEvent, name: string, direction: "up" | "down") => {
     e.stopPropagation();
     await moveScript(name, direction);
-
-    // If the moved script is enabled and proxy is running, it affects the active order
-    const script = scripts.find((s) => s.name === name);
-    if (running && script?.enabled) {
-      setNeedsRestart(true);
-    }
   };
 
   const startRenaming = (e: React.MouseEvent, name: string) => {
@@ -125,10 +124,6 @@ export function ScriptManager() {
 
     try {
       await renameScript(editingScriptId, targetName);
-      // Only restart if the renamed script was active
-      if (checkIsScriptActive(editingScriptId)) {
-        setNeedsRestart(true);
-      }
     } catch (error) {
       console.error("Rename failed", error);
     } finally {
@@ -136,18 +131,10 @@ export function ScriptManager() {
     }
   };
 
-  const handleScriptContentChange = () => {
-    if (selectedScript && checkIsScriptActive(selectedScript)) {
-      setNeedsRestart(true);
-    }
-  };
-
   const handleRestart = async () => {
     setRestarting(true);
     try {
-      await stopProxy();
-      await startProxy();
-      setNeedsRestart(false);
+      await restartProxy();
     } catch (error) {
       console.error("Restart failed", error);
     } finally {
@@ -178,9 +165,6 @@ export function ScriptManager() {
             <div className="flex gap-2 items-start mb-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-600" />
               <div className="flex-1 font-medium">{t("scripts.restart_hint")}</div>
-              <button onClick={() => setNeedsRestart(false)} className="hover:text-yellow-700">
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
             <button
               onClick={handleRestart}
@@ -249,12 +233,15 @@ export function ScriptManager() {
               >
                 {/* Status Indicator with Pending State */}
                 {(() => {
-                  // Active scripts from backend might be full paths (e.g. temp files), so we check if the path ends with the script name
                   const isScriptActive = checkIsScriptActive(script.name);
+                  const isContentModified = modifiedSinceStart.has(script.name);
 
+                  // Pending if: content modified, or enabled state differs from active state
                   const isPending =
                     running &&
-                    ((script.enabled && !isScriptActive) || (!script.enabled && isScriptActive));
+                    (isContentModified ||
+                      (script.enabled && !isScriptActive) ||
+                      (!script.enabled && isScriptActive));
 
                   return (
                     <div className="relative">
@@ -268,7 +255,11 @@ export function ScriptManager() {
                       {isPending && (
                         <div
                           className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-500 border border-background"
-                          title={t("common.pending_restart")}
+                          title={
+                            isContentModified
+                              ? t("scripts.content_modified")
+                              : t("common.pending_restart")
+                          }
                         />
                       )}
                     </div>
@@ -360,11 +351,7 @@ export function ScriptManager() {
 
       {/* Editor Area */}
       <div className="flex-1 overflow-hidden transition-colors duration-300">
-        <ScriptEditor
-          key={selectedScript || "draft"}
-          scriptName={selectedScript}
-          onSave={handleScriptContentChange}
-        />
+        <ScriptEditor key={selectedScript || "draft"} scriptName={selectedScript} />
       </div>
     </div>
   );

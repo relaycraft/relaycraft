@@ -64,8 +64,9 @@ export function stopTrafficMonitor() {
     Logger.debug("Traffic monitor stopped");
   }
 
-  // Reset session flag so next start creates a new session
-  sessionCreatedForAppStart = false;
+  // Don't reset sessionCreatedForAppStart here!
+  // We want to continue using the same session when user stops and starts again.
+  // The flag should only be reset when the app fully restarts (via resetSessionFlag).
 }
 
 /**

@@ -36,6 +36,24 @@ pub async fn stop_proxy(state: tauri::State<'_, ProxyState>) -> Result<String, S
 }
 
 #[tauri::command]
+pub async fn restart_proxy(
+    app: AppHandle,
+    state: tauri::State<'_, ProxyState>,
+) -> Result<String, String> {
+    // Load configuration
+    let config = config::load_config()?;
+
+    // Stop first, then start (this reloads scripts)
+    state.engine.stop().map_err(|e| e.to_tauri_error())?;
+    state
+        .engine
+        .start(&app, &config)
+        .map_err(|e| e.to_tauri_error())?;
+
+    Ok("Proxy restarted".to_string())
+}
+
+#[tauri::command]
 pub async fn get_proxy_status(
     state: tauri::State<'_, ProxyState>,
 ) -> Result<ProxyStatusResponse, String> {

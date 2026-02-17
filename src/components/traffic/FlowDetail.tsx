@@ -306,37 +306,40 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           {flow._rc.hits && flow._rc.hits.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
-                {flow._rc.hits.map((hit, idx) => (
-                  <div
-                    key={idx}
-                    className={`text-caption px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
-                  >
-                    <div className="flex-shrink-0">
-                      {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
-                      {hit.type === "rewrite_body" && <FileSignature className="w-3.5 h-3.5" />}
-                      {hit.type === "map_local" && <FileCode className="w-3.5 h-3.5" />}
-                      {hit.type === "map_remote" && <Globe className="w-3.5 h-3.5" />}
-                      {hit.type === "rewrite_header" && <LayoutList className="w-3.5 h-3.5" />}
-                      {hit.type === "throttle" && <Wifi className="w-3.5 h-3.5" />}
-                      {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
-                    </div>
-                    <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                      <span className="text-small font-bold truncate tracking-tight">
-                        {hit.name}
-                      </span>
-                    </Tooltip>
-                    {hit.message && (
-                      <Tooltip
-                        content={hit.message}
-                        className="ml-auto flex-shrink truncate max-w-[60%] text-right"
-                      >
-                        <span className="text-caption opacity-60 italic truncate font-mono">
-                          {hit.message}
+                {
+                  // Deduplicate hits by id (same script/rule may hit multiple times in different branches)
+                  [...new Map(flow._rc.hits.map((h) => [h.id, h])).values()].map((hit, idx) => (
+                    <div
+                      key={idx}
+                      className={`text-caption px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
+                    >
+                      <div className="flex-shrink-0">
+                        {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
+                        {hit.type === "rewrite_body" && <FileSignature className="w-3.5 h-3.5" />}
+                        {hit.type === "map_local" && <FileCode className="w-3.5 h-3.5" />}
+                        {hit.type === "map_remote" && <Globe className="w-3.5 h-3.5" />}
+                        {hit.type === "rewrite_header" && <LayoutList className="w-3.5 h-3.5" />}
+                        {hit.type === "throttle" && <Wifi className="w-3.5 h-3.5" />}
+                        {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
+                      </div>
+                      <Tooltip content={hit.name} className="flex-shrink min-w-0">
+                        <span className="text-small font-bold truncate tracking-tight">
+                          {hit.name}
                         </span>
                       </Tooltip>
-                    )}
-                  </div>
-                ))}
+                      {hit.message && (
+                        <Tooltip
+                          content={hit.message}
+                          className="ml-auto flex-shrink truncate max-w-[60%] text-right"
+                        >
+                          <span className="text-caption opacity-60 italic truncate font-mono">
+                            {hit.message}
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))
+                }
               </div>
 
               {flow._rc.hits.some((h) => h.status === "file_not_found") && (

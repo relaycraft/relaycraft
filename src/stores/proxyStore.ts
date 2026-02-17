@@ -19,6 +19,7 @@ interface ProxyStore {
   incrementRequestCount: () => void;
   startProxy: () => Promise<void>; // Now sets active=true
   stopProxy: () => Promise<void>; // Now sets active=false
+  restartProxy: () => Promise<void>; // Restart engine to reload scripts
   checkStatus: () => Promise<void>;
   checkCertTrust: () => Promise<void>;
   setCertWarningIgnored: (ignored: boolean) => Promise<void>;
@@ -70,16 +71,22 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       await invoke("set_proxy_active", { active: true });
 
       // Capture currently enabled scripts as "active"
+      // Store script names (not temp paths) for consistent comparison
       const scripts = useScriptStore.getState().scripts;
-      const activeScripts = scripts.filter((s) => s.enabled).map((s) => s.name);
+      const activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
 
-      set({ running: true, active: true, port: config.proxy_port, activeScripts });
+      set({
+        running: true,
+        active: true,
+        port: config.proxy_port,
+        activeScripts: activeScriptNames,
+      });
 
       // 添加成功通知
       const { useNotificationStore } = await import("./notificationStore");
       useNotificationStore.getState().addNotification({
         title: i18n.t("proxy_store.start_success_title"),
-        message: `${i18n.t("proxy_store.start_success_msg", { port: config.proxy_port })}${activeScripts.length > 0 ? i18n.t("proxy_store.scripts_loaded", { count: activeScripts.length }) : ""}`,
+        message: `${i18n.t("proxy_store.start_success_msg", { port: config.proxy_port })}${activeScriptNames.length > 0 ? i18n.t("proxy_store.scripts_loaded", { count: activeScriptNames.length }) : ""}`,
         type: "success",
         category: "system",
         priority: "normal",
@@ -147,6 +154,71 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     }
   },
 
+  restartProxy: async () => {
+    try {
+      set({ error: null });
+
+      // Stop traffic monitor first
+      await stopTrafficMonitor();
+
+      // Restart the engine (stop + start, which reloads scripts)
+      await invoke("restart_proxy");
+
+      // Load config to get the port
+      const config = await invoke<{ proxy_port: number }>("load_config");
+
+      // Start Traffic Monitor again
+      await startTrafficMonitor(config.proxy_port);
+
+      // Set traffic processing to active AFTER session is created
+      // (restart_proxy resets traffic_active to false in backend)
+      await invoke("set_proxy_active", { active: true });
+
+      // Capture currently enabled scripts as "active"
+      // Store script names (not temp paths) for consistent comparison
+      const scripts = useScriptStore.getState().scripts;
+      const activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
+
+      set({
+        running: true,
+        active: true,
+        port: config.proxy_port,
+        activeScripts: activeScriptNames,
+      });
+
+      // Clear modified since start flag (scripts are now reloaded)
+      useScriptStore.getState().clearModifiedSinceStart();
+
+      // Add success notification
+      const { useNotificationStore } = await import("./notificationStore");
+      useNotificationStore.getState().addNotification({
+        title: i18n.t("proxy_store.restart_success_title"),
+        message: `${i18n.t("proxy_store.restart_success_msg", { port: config.proxy_port })}${activeScriptNames.length > 0 ? i18n.t("proxy_store.scripts_loaded", { count: activeScriptNames.length }) : ""}`,
+        type: "success",
+        category: "system",
+        priority: "normal",
+        source: "Proxy Engine",
+      });
+    } catch (error) {
+      const errorMsg = error as string;
+      console.error("Failed to restart proxy:", errorMsg);
+      set({ error: errorMsg, active: false });
+
+      // Add error notification
+      const { useNotificationStore } = await import("./notificationStore");
+      useNotificationStore.getState().addNotification({
+        title: i18n.t("proxy_store.restart_fail_title"),
+        message: i18n.t("proxy_store.restart_fail_msg", { error: errorMsg }),
+        type: "error",
+        category: "system",
+        priority: "critical",
+        source: "Proxy Engine",
+      });
+
+      throw error;
+    }
+  },
+
   checkStatus: async () => {
     try {
       const status = await invoke<{
@@ -163,10 +235,6 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         currentState.ipAddress &&
         currentState.port !== 9090
       ) {
-        // Just sync active scripts if they changed (rare)
-        if (JSON.stringify(status.active_scripts) !== JSON.stringify(currentState.activeScripts)) {
-          set({ activeScripts: status.active_scripts });
-        }
         return;
       }
 
@@ -178,10 +246,17 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       }>("load_config");
       const isTrusted = await invoke<boolean>("check_cert_installed");
 
+      // Get active script names from scriptStore (not from backend temp paths)
+      // This ensures consistent comparison in ScriptManager
+      const scripts = useScriptStore.getState().scripts;
+      const activeScriptNames = status.active
+        ? scripts.filter((s) => s.enabled).map((s) => s.name)
+        : [];
+
       set({
         running: status.running,
         active: status.active,
-        activeScripts: status.active_scripts,
+        activeScripts: activeScriptNames,
         ipAddress,
         port: config.proxy_port,
         certTrusted: isTrusted,

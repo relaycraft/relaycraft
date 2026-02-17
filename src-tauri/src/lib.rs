@@ -184,6 +184,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             proxy::start_proxy,
             proxy::stop_proxy,
+            proxy::restart_proxy,
             proxy::get_proxy_status,
             proxy::set_proxy_active,
             proxy::get_process_stats,

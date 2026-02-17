@@ -224,8 +224,8 @@
       "nav_rules": "/rules 规则管理",
       "nav_scripts": "/scripts 脚本管理",
       "nav_traffic": "/traffic 流量监控",
-      "proxy_start": "/start 启动代理",
-      "proxy_stop": "/stop 停止代理",
+      "proxy_start": "/start 开始监听",
+      "proxy_stop": "/stop 停止监听",
       "rule_block_example": "拦截特定域名的所有请求",
       "rule_conflict": "检查规则冲突",
       "script_auth_example": "自动为目标域名添加认证令牌",
@@ -543,14 +543,18 @@
   },
   "proxy_store": {
     "scripts_loaded": "已加载 {{count}} 个脚本。",
-    "start_fail_msg": "无法启动代理服务。错误: {{error}}",
-    "start_fail_title": "代理启动失败",
-    "start_success_msg": "代理服务已在端口 {{port}} 上成功启动。",
-    "start_success_title": "代理服务已启动",
-    "stop_fail_msg": "无法停止代理服务。错误: {{error}}",
-    "stop_fail_title": "代理停止失败",
-    "stop_success_msg": "代理服务已成功停止。",
-    "stop_success_title": "代理服务已停止"
+    "start_fail_msg": "无法开始监听。错误: {{error}}",
+    "start_fail_title": "监听启动失败",
+    "start_success_msg": "已在端口 {{port}} 上开始监听流量。",
+    "start_success_title": "正在监听",
+    "stop_fail_msg": "无法停止监听。错误: {{error}}",
+    "stop_fail_title": "停止监听失败",
+    "stop_success_msg": "已停止监听流量。",
+    "stop_success_title": "已停止监听",
+    "restart_fail_msg": "无法重启代理引擎。错误: {{error}}",
+    "restart_fail_title": "代理引擎重启失败",
+    "restart_success_msg": "代理引擎已在端口 {{port}} 上成功重启。",
+    "restart_success_title": "代理引擎已重启"
   },
   "rule_editor": {
     "action": {
@@ -622,7 +626,7 @@
     "convert_script_confirm_disable_rule": "原规则将被禁用。",
     "convert_script_confirm_dynamic": "确定要创建脚本 \"{{name}}\" 吗？",
     "convert_script_confirm_enable_script": "新脚本将被启用。",
-    "convert_script_confirm_restart": "注意：启用脚本需要重启代理进程。",
+    "convert_script_confirm_restart": "注意：启用脚本需要重启代理引擎。",
     "convert_script_title": "确认转换",
     "core": {
       "group": "所属分组",
@@ -805,6 +809,7 @@
     "saving": "保存中..."
   },
   "scripts": {
+    "content_modified": "内容已修改，需重启生效",
     "create_script": "新建脚本",
     "delete_confirm": "确定要删除脚本 \"{{name}}\" 吗？该操作将物理删除磁盘上的文件且不可恢复。",
     "delete_title": "删除脚本",
@@ -813,8 +818,8 @@
       "desc": "创建一个 Python 脚本来拦截和修改流量。",
       "title": "暂无脚本"
     },
-    "restart_btn": "立即重启",
-    "restart_hint": "更改需要重启代理以生效",
+    "restart_btn": "重启代理引擎",
+    "restart_hint": "更改需要重启代理引擎以生效",
     "save_failed": "保存脚本失败",
     "save_script": "保存脚本",
     "select_desc": "从左侧列表选择脚本以编辑，或创建新脚本。",
@@ -875,8 +880,8 @@
     "general": {
       "always_on_top": "置顶显示",
       "always_on_top_desc": "始终将窗口置于最前方",
-      "auto_start_proxy": "自动启动代理",
-      "auto_start_proxy_desc": "应用启动时自动开启系统代理和抓包服务。",
+      "auto_start_proxy": "自动开始监听",
+      "auto_start_proxy_desc": "应用启动时自动开始监听流量。",
       "confirm_exit": "退出前确认",
       "confirm_exit_desc": "关闭应用窗口时弹出确认对话框，防止误触导致代理中断",
       "language": "界面语言",
@@ -942,10 +947,10 @@
     "maximize": "最大化",
     "minimize": "最小化",
     "restore": "还原",
-    "running": "运行中",
+    "running": "监听中",
     "search_placeholder": "输入指令或搜索 ({{hotkey}})",
-    "start_proxy": "启动代理服务",
-    "stop_proxy": "停止代理服务",
+    "start_proxy": "开始监听",
+    "stop_proxy": "停止监听",
     "stopped": "已停止"
   },
   "traffic": {
@@ -996,8 +1001,8 @@
     "list_cleared": "流量列表已清空",
     "listening": "正在监听网络流量...",
     "new_requests": "条新请求",
-    "proxy_error": "代理启动错误",
-    "proxy_stopped": "代理服务未启动",
+    "proxy_error": "监听启动错误",
+    "proxy_stopped": "监听未启动",
     "replay_failed": "重发失败",
     "replay_success": "请求已重发",
     "security": {
@@ -1018,8 +1023,8 @@
       "local": "本机",
       "remote": "远程"
     },
-    "start_hint": "点击右上角的代理开关或使用快捷键开始捕获流量。",
-    "start_proxy": "立即启动代理",
+    "start_hint": "点击右上角的开始监听按钮或使用快捷键开始捕获流量。",
+    "start_proxy": "开始监听",
     "status": {
       "encrypted": "加密 (HTTPS)",
       "failed": "失败",

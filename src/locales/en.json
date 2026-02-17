@@ -224,8 +224,8 @@
       "nav_rules": "/rules (Go to Rules)",
       "nav_scripts": "/scripts (Go to Scripts)",
       "nav_traffic": "/traffic (Go to Traffic)",
-      "proxy_start": "/start (Start Proxy)",
-      "proxy_stop": "/stop (Stop Proxy)",
+      "proxy_start": "/start (Start Capture)",
+      "proxy_stop": "/stop (Stop Capture)",
       "rule_block_example": "Block all requests from target domain",
       "rule_conflict": "Check for rule conflicts",
       "script_auth_example": "Auto add authorization token for target domain",
@@ -493,7 +493,7 @@
       "timeout": "Request Timeout"
     },
     "guide": {
-      "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy</span> in the title bar.",
+      "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy engine</span> in the title bar.",
       "title": "Plugin Management"
     },
     "install_local": "Install from File",
@@ -543,14 +543,18 @@
   },
   "proxy_store": {
     "scripts_loaded": "Loaded {{count}} scripts.",
-    "start_fail_msg": "Failed to start proxy service. Error: {{error}}",
-    "start_fail_title": "Proxy Start Failed",
-    "start_success_msg": "Proxy service started successfully on port {{port}}.",
-    "start_success_title": "Proxy Started",
-    "stop_fail_msg": "Failed to stop proxy service. Error: {{error}}",
-    "stop_fail_title": "Proxy Stop Failed",
-    "stop_success_msg": "Proxy service stopped successfully.",
-    "stop_success_title": "Proxy Stopped"
+    "start_fail_msg": "Failed to start traffic capture. Error: {{error}}",
+    "start_fail_title": "Capture Start Failed",
+    "start_success_msg": "Traffic capture started on port {{port}}.",
+    "start_success_title": "Capturing Traffic",
+    "stop_fail_msg": "Failed to stop traffic capture. Error: {{error}}",
+    "stop_fail_title": "Capture Stop Failed",
+    "stop_success_msg": "Traffic capture stopped.",
+    "stop_success_title": "Capture Stopped",
+    "restart_fail_msg": "Failed to restart proxy engine. Error: {{error}}",
+    "restart_fail_title": "Proxy Engine Restart Failed",
+    "restart_success_msg": "Proxy engine restarted successfully on port {{port}}.",
+    "restart_success_title": "Proxy Engine Restarted"
   },
   "rule_editor": {
     "action": {
@@ -622,7 +626,7 @@
     "convert_script_confirm_disable_rule": "The original rule will be disabled.",
     "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
     "convert_script_confirm_enable_script": "The new script will be enabled.",
-    "convert_script_confirm_restart": "Note: Enabling script requires proxy restart.",
+    "convert_script_confirm_restart": "Note: Enabling script requires proxy engine restart.",
     "convert_script_title": "Confirm Conversion",
     "core": {
       "group": "Group",
@@ -805,6 +809,7 @@
     "saving": "Saving..."
   },
   "scripts": {
+    "content_modified": "Content modified, restart required",
     "create_script": "New Script",
     "delete_confirm": "Are you sure you want to delete script \"{{name}}\"? This will permanently delete the file from disk.",
     "delete_title": "Delete Script",
@@ -813,8 +818,8 @@
       "desc": "Create a Python script to intercept and modify traffic.",
       "title": "No Scripts"
     },
-    "restart_btn": "Restart Now",
-    "restart_hint": "Changes require proxy restart to take effect",
+    "restart_btn": "Restart Proxy Engine",
+    "restart_hint": "Changes require proxy engine restart to take effect",
     "save_failed": "Failed to save script",
     "save_script": "Save Script",
     "select_desc": "Select a script from the list to edit, or create a new one.",
@@ -875,8 +880,8 @@
     "general": {
       "always_on_top": "Always on Top",
       "always_on_top_desc": "Keep window above other windows",
-      "auto_start_proxy": "Auto Start Proxy",
-      "auto_start_proxy_desc": "Automatically start system proxy and capture service on launch.",
+      "auto_start_proxy": "Auto Start Capture",
+      "auto_start_proxy_desc": "Automatically start traffic capture on launch.",
       "confirm_exit": "Confirm on Exit",
       "confirm_exit_desc": "Show a confirmation dialog when closing the app to prevent accidental disruption",
       "language": "Language",
@@ -942,10 +947,10 @@
     "maximize": "Maximize",
     "minimize": "Minimize",
     "restore": "Restore",
-    "running": "Running",
+    "running": "Capturing",
     "search_placeholder": "Command or Search ({{hotkey}})",
-    "start_proxy": "Start Proxy",
-    "stop_proxy": "Stop Proxy",
+    "start_proxy": "Start Capture",
+    "stop_proxy": "Stop Capture",
     "stopped": "Stopped"
   },
   "traffic": {
@@ -996,8 +1001,8 @@
     "list_cleared": "Traffic list cleared",
     "listening": "Listening for traffic...",
     "new_requests": " new requests",
-    "proxy_error": "Proxy startup error",
-    "proxy_stopped": "Proxy Stopped",
+    "proxy_error": "Capture startup error",
+    "proxy_stopped": "Capture Stopped",
     "replay_failed": "Replay failed",
     "replay_success": "Request replayed",
     "security": {
@@ -1018,8 +1023,8 @@
       "local": "Local",
       "remote": "Remote"
     },
-    "start_hint": "Click the \"Start\" button or use shortcut to begin capturing.",
-    "start_proxy": "Start Proxy",
+    "start_hint": "Click the \"Start Capture\" button or use shortcut to begin capturing traffic.",
+    "start_proxy": "Start Capture",
     "status": {
       "encrypted": "Encrypted (HTTPS)",
       "failed": "Failed",
