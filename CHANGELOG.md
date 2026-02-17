@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.8](https://github.com/relaycraft/relaycraft/compare/v0.99.7...v0.99.8) (2026-02-17)
+
+
+### Features
+
+* improve script management and UI copy ([16fce25](https://github.com/relaycraft/relaycraft/commit/16fce25f9481fe2a3886296c10b8051fe566deb1))
+* optimize typography, localization, and UI component styling ([7828934](https://github.com/relaycraft/relaycraft/commit/782893403caf7e2fad61448922788d38fad01a92))
+
 ### [0.99.7](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.6...v0.99.7) (2026-02-14)
 
 ### [0.99.6](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.5...v0.99.6) (2026-02-13)
