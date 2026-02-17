@@ -15,7 +15,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-caption text-muted-foreground/40 italic px-2 py-4">
+      <div className="text-xs text-muted-foreground/40 italic px-2 py-4">
         {t("common.no_content")}
       </div>
     );
@@ -26,10 +26,10 @@ export function HeadersView({ headers }: HeadersViewProps) {
       <table className="w-full text-sm">
         <thead className="bg-muted/40 uppercase tracking-tight">
           <tr>
-            <th className="text-left p-2 font-bold w-1/3 text-xs text-muted-foreground/70">
+            <th className="text-left p-2 font-semibold w-1/3 text-xs text-muted-foreground/70">
               {t("common.name")}
             </th>
-            <th className="text-left p-2 font-bold text-xs text-muted-foreground/70">
+            <th className="text-left p-2 font-semibold text-xs text-muted-foreground/70">
               {t("common.value")}
             </th>
           </tr>

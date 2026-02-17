@@ -69,7 +69,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {schema.description && (
-        <p className="text-small text-muted-foreground/60 mb-2 leading-relaxed px-1">
+        <p className="text-ui text-muted-foreground/60 mb-2 leading-relaxed px-1">
           {schema.description}
         </p>
       )}
@@ -102,7 +102,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                       {displayTitle}
                     </Label>
                     {displayDesc && (
-                      <p className="text-caption text-muted-foreground/60 leading-relaxed">
+                      <p className="text-xs text-muted-foreground/60 leading-relaxed">
                         {displayDesc}
                       </p>
                     )}
@@ -130,7 +130,7 @@ export const PluginSettingsRenderer: React.FC<PluginSettingsRendererProps> = ({
                       )}
                     </Label>
                     {displayDesc && (
-                      <p className="text-caption text-muted-foreground/50 leading-relaxed">
+                      <p className="text-xs text-muted-foreground/50 leading-relaxed">
                         {displayDesc}
                       </p>
                     )}

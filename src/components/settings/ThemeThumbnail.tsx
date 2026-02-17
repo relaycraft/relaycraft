@@ -75,7 +75,7 @@ export const ThemeThumbnail: React.FC<ThemeThumbnailProps> = ({
       </div>
 
       <div className="mt-2 flex items-center justify-between px-1">
-        <span className="text-caption font-semibold opacity-80 truncate">{theme.name}</span>
+        <span className="text-tiny font-medium opacity-80 truncate">{theme.name}</span>
         {isActive && (
           <div className="bg-primary rounded-full p-0.5">
             <Check className="w-2 h-2 text-primary-foreground" />

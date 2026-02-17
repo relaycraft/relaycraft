@@ -1,4 +1,4 @@
-import { AlertTriangle, Laptop, ShieldAlert, StopCircle, Terminal } from "lucide-react";
+import { AlertTriangle, Laptop, ShieldAlert, Smartphone, StopCircle, Terminal } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -38,6 +38,15 @@ export const TrafficListItem = memo(
     // Determine if flow has error
     const isError = index.hasError || String(index.status) === "0";
 
+    // Determine if request is from local machine or remote device (mobile)
+    // Only 127.0.0.1 and ::1 are truly "local" (from the same machine)
+    // 192.168.x.x, 10.x.x.x, etc. are remote devices on local network (like phones on WiFi)
+    const isLocal =
+      !index.clientIp ||
+      index.clientIp === "127.0.0.1" ||
+      index.clientIp === "::1" ||
+      index.clientIp === "localhost";
+
     // Determine HTTP version from contentType or default to HTTP/1.1
     const httpVersion = "HTTP/1.1"; // FlowIndex doesn't have this, use default
 
@@ -65,7 +74,7 @@ export const TrafficListItem = memo(
 
         {/* ID Column */}
         <div
-          className="text-caption text-right font-mono text-muted-foreground/60 select-none mr-1 transition-all"
+          className="text-micro text-right font-mono text-muted-foreground/60 select-none mr-0.5 transition-all"
           style={{ minWidth: idColWidth, maxWidth: idColWidth }}
         >
           {seq}
@@ -73,28 +82,38 @@ export const TrafficListItem = memo(
 
         {/* Method Badge */}
         <div
-          className={`w-16 text-caption font-bold text-center px-1.5 py-0.5 rounded border ${getHttpMethodBadgeClass(index.method)}`}
+          className={`w-[62px] flex-shrink-0 flex items-center justify-center text-micro font-semibold tracking-wider py-0.5 rounded border ${getHttpMethodBadgeClass(index.method)}`}
         >
           {index.method}
         </div>
 
-        {/* Source Icon - Always render for alignment (Faint for Local) */}
-        {/* Note: FlowIndex doesn't have clientIp, so we can't determine remote vs local */}
+        {/* Source Icon - Distinguish between Local and Remote (Mobile) */}
         <div className="w-5 flex justify-center text-muted-foreground/60 flex-shrink-0">
-          <Tooltip content={t("traffic.source.local", "Local")} side="bottom">
-            <Laptop className="w-3.5 h-3.5 opacity-20 grayscale" />
-          </Tooltip>
+          {isLocal ? (
+            <Tooltip content={t("traffic.source.local", "Local")} side="bottom">
+              <Laptop className="w-3.5 h-3.5 opacity-20 grayscale" />
+            </Tooltip>
+          ) : (
+            <Tooltip
+              content={`${t("traffic.source.remote", "Remote Device")} (${index.clientIp})`}
+              side="bottom"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-blue-500/70" />
+            </Tooltip>
+          )}
         </div>
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <div className="text-xs font-mono font-medium truncate text-foreground/90 group-hover:text-primary transition-colors flex-1">
+            <div className="text-xs font-mono font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors flex-1">
               {index.url}
             </div>
           </div>
-          <div className="flex items-center gap-2 text-caption text-muted-foreground">
-            <span className={getHttpStatusCodeClass(index.status)}>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span
+              className={`px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider ${getHttpStatusCodeClass(index.status)}`}
+            >
               {isError ? (
                 <Tooltip content={t("traffic.status.failed", "Connection Failed")} side="bottom">
                   <div className="flex items-center justify-center w-6 h-4 cursor-help">
@@ -109,25 +128,25 @@ export const TrafficListItem = memo(
             </span>
             <span>•</span>
             <span
-              className={`font-mono text-caption px-1 rounded-sm border ${getProtocolColor(httpVersion)}`}
+              className={`font-mono text-tiny px-1 rounded-sm border ${getProtocolColor(httpVersion)}`}
             >
               {formatProtocol(httpVersion)}
             </span>
             <span>•</span>
             {index.time ? (
               <span
-                className={`px-1.5 py-0.5 rounded-[4px] font-mono transition-colors ${getDurationBadgeClass(index.time)}`}
+                className={`px-1.5 py-0.5 rounded-[4px] font-mono text-tiny transition-colors ${getDurationBadgeClass(index.time)}`}
               >
                 {index.time.toFixed(0)}ms
               </span>
             ) : (
-              <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/30 italic text-caption">
+              <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/30 italic text-tiny">
                 {t("traffic.status.pending")}
               </span>
             )}
 
             <span>•</span>
-            <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/40 font-mono tracking-tighter text-caption">
+            <span className="px-1.5 py-0.5 rounded-[4px] bg-muted/5 text-muted-foreground/40 font-mono tracking-tighter text-tiny">
               {new Date(index.startedDateTime).toLocaleTimeString([], {
                 hour12: false,
                 hour: "2-digit",
@@ -181,7 +200,7 @@ export const TrafficListItem = memo(
                   })
               }
               {[...new Map(index.hits.map((h) => [h.id, h])).values()].length > 5 && (
-                <span className="text-caption text-muted-foreground ml-1">
+                <span className="text-xs text-muted-foreground ml-1">
                   +{[...new Map(index.hits.map((h) => [h.id, h])).values()].length - 5}
                 </span>
               )}

@@ -96,7 +96,7 @@ export const MarketView: React.FC = () => {
                   ? t("plugins.market.title_theme")
                   : t("plugins.market.title_plugin")}
               </h2>
-              <p className="text-muted-foreground text-small leading-tight">
+              <p className="text-muted-foreground text-ui leading-tight">
                 {marketType === "theme" ? t("plugins.market_desc_theme") : t("plugins.market_desc")}
               </p>
             </div>
@@ -127,7 +127,7 @@ export const MarketView: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-small font-medium px-3 bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-border"
+              className="h-8 text-ui font-medium px-3 bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-border"
               onClick={handleSync}
               disabled={isFetchingMarket}
             >
@@ -194,7 +194,7 @@ export const MarketView: React.FC = () => {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/50 p-6">
                             <Palette className="w-10 h-10 text-muted-foreground/20 mb-2" />
-                            <span className="text-caption text-muted-foreground/40 font-bold uppercase tracking-widest">
+                            <span className="text-xs text-muted-foreground/40 font-bold uppercase tracking-widest">
                               {t("plugins.market.no_preview")}
                             </span>
                           </div>
@@ -268,12 +268,12 @@ export const MarketView: React.FC = () => {
                             <h3 className="font-bold text-sm text-white/90 leading-tight shadow-black drop-shadow-md">
                               {displayName}
                             </h3>
-                            <p className="text-caption text-white/60 font-medium mt-0.5">
+                            <p className="text-xs text-white/60 font-medium mt-0.5">
                               {item.author}
                             </p>
                           </div>
                           {item.downloadCount != null && (
-                            <div className="flex items-center text-caption text-white/60 bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                            <div className="flex items-center text-xs text-white/60 bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
                               <Download className="w-3 h-3 mr-1 opacity-80" />
                               {item.downloadCount.toLocaleString()}
                             </div>
@@ -300,17 +300,17 @@ export const MarketView: React.FC = () => {
                             {displayName}
                           </h3>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-caption px-1.5 py-0.5 bg-muted rounded font-mono text-muted-foreground">
+                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded font-mono text-muted-foreground">
                               v{item.version}
                             </span>
-                            <span className="text-caption text-muted-foreground flex items-center">
+                            <span className="text-xs text-muted-foreground flex items-center">
                               by{" "}
                               <span className="font-medium ml-1 text-foreground/80">
                                 {item.author}
                               </span>
                             </span>
                             {item.downloadCount != null && (
-                              <span className="text-caption text-muted-foreground flex items-center border-l border-border pl-2 ml-1">
+                              <span className="text-xs text-muted-foreground flex items-center border-l border-border pl-2 ml-1">
                                 <Download className="w-3 h-3 mr-1 opacity-70" />
                                 {item.downloadCount.toLocaleString()}
                               </span>
@@ -339,7 +339,7 @@ export const MarketView: React.FC = () => {
                           {item.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-caption px-2 py-0.5 bg-muted/50 border border-border/50 rounded-full text-muted-foreground/80"
+                              className="text-xs px-2 py-0.5 bg-muted/50 border border-border/50 rounded-full text-muted-foreground/80"
                             >
                               {tag}
                             </span>

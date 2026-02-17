@@ -69,7 +69,7 @@ export const AppearanceSettings: React.FC = () => {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="text-small font-semibold uppercase">{mode.label}</span>
+                  <span className="text-xs font-medium">{mode.label}</span>
                 </button>
               );
             })}
@@ -79,14 +79,14 @@ export const AppearanceSettings: React.FC = () => {
           {/* User asked for Theme Thumbnails, let's show them if mode is custom or just show them anyway but with 'Custom' header */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-small font-semibold text-muted-foreground uppercase tracking-widest">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {t("settings.appearance.mode_custom")}
               </h4>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="h-7 text-caption gap-1.5"
+                  className="h-7 text-xs gap-1.5"
                   onClick={handleImportTheme}
                 >
                   <Plus className="w-3 h-3" />
@@ -95,7 +95,7 @@ export const AppearanceSettings: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="h-7 text-caption gap-1.5"
+                  className="h-7 text-xs gap-1.5"
                   onClick={() => setMarketOpen(true, "theme")}
                 >
                   <Globe className="w-3 h-3" />
@@ -133,11 +133,11 @@ export const AppearanceSettings: React.FC = () => {
                   tabIndex={0}
                 >
                   <div className="space-y-1.5">
-                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
+                    <h4 className="text-ui font-semibold text-foreground flex items-center gap-2 group-hover:text-primary transition-colors">
                       <Palette className="w-4 h-4" />
                       {t("settings.appearance.discover_themes_title")}
                     </h4>
-                    <p className="text-small text-muted-foreground max-w-[200px] leading-relaxed">
+                    <p className="text-xs text-muted-foreground max-w-[200px] leading-relaxed">
                       {t("settings.appearance.discover_themes_desc")}
                     </p>
                   </div>
@@ -162,7 +162,7 @@ export const AppearanceSettings: React.FC = () => {
               key={d}
               variant={config.display_density === d ? "default" : "ghost"}
               size="sm"
-              className={`flex-1 text-small font-semibold h-9 transition-all duration-200 ${
+              className={`flex-1 text-xs font-medium h-9 transition-all duration-200 ${
                 config.display_density === d
                   ? "shadow-md border border-primary/20"
                   : "bg-muted/10 border border-transparent hover:bg-primary/10 hover:border-primary/20 hover:text-primary"

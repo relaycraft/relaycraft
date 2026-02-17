@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -22,7 +22,8 @@ const buttonVariants = cva(
       size: {
         default: "h-8 px-4 py-2 text-ui",
         sm: "h-7 rounded-lg px-3 text-xs",
-        xs: "h-6 rounded-lg px-2 text-small",
+        xs: "h-6 rounded-lg px-2 text-xs",
+        tiny: "h-6 rounded-lg px-2 text-tiny",
         lg: "h-10 rounded-lg px-8 text-sm",
         icon: "h-9 w-9",
         "icon-sm": "h-8 w-8",
@@ -52,9 +53,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={isLoading || props.disabled}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        whileHover={{ scale: 1.015 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 500, damping: 25 }}
         {...(props as any)}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

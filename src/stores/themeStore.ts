@@ -99,9 +99,11 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--color-border-subtle": "rgba(255, 255, 255, 0.04)",
         "--color-border-muted": "rgba(255, 255, 255, 0.12)",
 
-        /* Typography */
-        "--text-caption": "0.625rem",
-        "--text-small": "0.6875rem",
+        /* Typography Scale */
+        "--text-micro": "0.625rem",
+        "--text-tiny": "0.6875rem",
+        "--text-caption": "0.75rem",
+        "--text-small": "0.8125rem",
         "--text-ui": "0.8125rem",
       },
       pluginId: "system",
@@ -175,9 +177,11 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--color-border-subtle": "rgba(0, 0, 0, 0.02)",
         "--color-border-muted": "rgba(0, 0, 0, 0.06)",
 
-        /* Typography */
-        "--text-caption": "0.625rem",
-        "--text-small": "0.6875rem",
+        /* Typography Scale */
+        "--text-micro": "0.625rem",
+        "--text-tiny": "0.6875rem",
+        "--text-caption": "0.75rem",
+        "--text-small": "0.8125rem",
         "--text-ui": "0.8125rem",
       },
       pluginId: "system",

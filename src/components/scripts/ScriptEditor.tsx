@@ -149,10 +149,10 @@ addons = [Addon()]
 
     setSaving(true);
     try {
-      await saveScript(targetName, content);
+      saveScript(targetName, content);
       setSaved(true);
       onSave?.();
-      notify.success(t("script_editor.saved"));
+      notify.success(t("script_editor.saved"), { toastOnly: true });
       setTimeout(() => setSaved(false), 2000);
     } catch (_error) {
       notify.error(t("scripts.save_failed"));
@@ -170,7 +170,7 @@ addons = [Addon()]
     try {
       const code = await getScriptContent(scriptName);
       setContent(code || DefaultTemplate);
-      notify.success(t("script_editor.revert_success"));
+      notify.success(t("script_editor.revert_success"), { toastOnly: true });
     } catch (_error) {
       notify.error(t("script_editor.revert_fail"));
     } finally {
@@ -228,11 +228,11 @@ addons = [Addon()]
               title={t("common.double_click_rename")}
             >
               {!scriptName && <Plus className="w-3.5 h-3.5 text-primary" />}
-              <span className="truncate max-w-[300px] text-small font-bold">
+              <span className="truncate max-w-[300px] text-ui font-bold">
                 {scriptName || draftScript?.name}
               </span>
               {!scriptName && (
-                <span className="text-caption bg-primary/10 text-primary px-1 rounded uppercase font-sans font-black">
+                <span className="text-xs bg-primary/10 text-primary px-1 rounded uppercase font-sans font-black">
                   {t("scripts.status.draft")}
                 </span>
               )}

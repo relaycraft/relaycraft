@@ -484,7 +484,7 @@ export function AIRuleAssistant({
             {aiSettings.enabled && (
               <button
                 onClick={() => setMode("ai")}
-                className={`flex items-center gap-1.5 px-3 py-1 text-small font-bold rounded-lg transition-all ${mode === "ai" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "ai" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Sparkles className="w-3 h-3" />
                 {t("rule_editor.ai.tab_ai")}
@@ -492,14 +492,14 @@ export function AIRuleAssistant({
             )}
             <button
               onClick={() => setMode("yaml")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-small font-bold rounded-lg transition-all ${mode === "yaml" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "yaml" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Code className="w-3 h-3" />
               YAML
             </button>
             <button
               onClick={() => setMode("script")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-small font-bold rounded-lg transition-all ${mode === "script" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "script" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <FileCode className="w-3 h-3" />
               {t("rule_editor.ai.tab_script")}
@@ -547,25 +547,25 @@ export function AIRuleAssistant({
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setPrompt(t("rule_editor.ai.chip_explain"))}
-                  className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
                   {t("rule_editor.ai.chip_explain")}
                 </button>
                 <button
                   onClick={() => setPrompt(`${t("rule_editor.ai.chip_modify")}: `)}
-                  className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
                   {t("rule_editor.ai.chip_modify")}
                 </button>
                 <button
                   onClick={() => setPrompt(`${t("rule_editor.ai.chip_create")}: `)}
-                  className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
                   {t("rule_editor.ai.chip_create")}
                 </button>
                 <button
                   onClick={() => setPrompt(`${t("rule_editor.ai.chip_import")}: `)}
-                  className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
                   {t("rule_editor.ai.chip_import")}
                 </button>
@@ -589,7 +589,7 @@ export function AIRuleAssistant({
                 <div className="flex items-center justify-between p-3 bg-card border border-primary/20 rounded-xl animate-in fade-in zoom-in-95 duration-200 shadow-sm">
                   <div className="flex flex-col gap-1 overflow-hidden">
                     <div className="flex items-center gap-2">
-                      <span className="text-caption font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded uppercase flex-shrink-0">
+                      <span className="text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded uppercase flex-shrink-0">
                         {preview.type
                           ? t(
                               `rule_editor.core.types.${preview.type === "rewrite_header" ? "rewrite" : preview.type === "block_request" ? "block" : preview.type}_label`,
@@ -600,7 +600,7 @@ export function AIRuleAssistant({
                         {preview.name}
                       </span>
                     </div>
-                    <div className="text-caption text-muted-foreground font-mono truncate">
+                    <div className="text-xs text-muted-foreground font-mono truncate">
                       {t("rule_editor.match.label", "Match")}:{" "}
                       {preview.match?.request?.find((a) => a.type === "url")?.value || ""}
                     </div>
@@ -615,7 +615,7 @@ export function AIRuleAssistant({
                           setMode("yaml");
                         }
                       }}
-                      className="text-caption h-8"
+                      className="text-xs h-8"
                     >
                       <Code className="w-3 h-3 mr-1" />
                       {t("rule_editor.ai.edit_yaml")}
@@ -641,7 +641,7 @@ export function AIRuleAssistant({
                     </div>
                     <div className="space-y-2 flex-1 overflow-hidden">
                       {detectedIntent === "explain" && (
-                        <h4 className="text-caption font-bold text-primary tracking-widest uppercase">
+                        <h4 className="text-xs font-bold text-primary tracking-widest uppercase">
                           {t("rule_editor.ai.analysis_title")}
                         </h4>
                       )}
@@ -689,10 +689,7 @@ export function AIRuleAssistant({
               {yamlErrors.length > 0 && (
                 <div className="space-y-1">
                   {yamlErrors.map((err, i) => (
-                    <div
-                      key={i}
-                      className="text-caption text-destructive flex items-start gap-1 px-1"
-                    >
+                    <div key={i} className="text-xs text-destructive flex items-start gap-1 px-1">
                       <X className="w-3 h-3 mt-0.5 shrink-0" />
                       <span>{err}</span>
                     </div>
@@ -707,7 +704,7 @@ export function AIRuleAssistant({
                     size="sm"
                     onClick={handleResetYAML}
                     disabled={!initialRule || yamlContent === stringifyYAML(initialRule)}
-                    className="h-8 text-small"
+                    className="h-8 text-ui"
                   >
                     <RotateCcw className="w-3 h-3 mr-1.5" />
                     {t("common.reset")}

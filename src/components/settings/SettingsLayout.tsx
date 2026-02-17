@@ -119,7 +119,7 @@ export function SettingsRow({
             {title}
           </div>
           {description && (
-            <div className="text-small text-muted-foreground/80 mt-0.5 leading-relaxed">
+            <div className="text-xs text-muted-foreground/80 mt-0.5 leading-relaxed">
               {description}
             </div>
           )}

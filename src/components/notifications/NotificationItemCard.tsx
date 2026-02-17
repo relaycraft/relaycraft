@@ -70,7 +70,7 @@ export function NotificationItemCard({
 
           {/* 消息内容 */}
           {notification.message && (
-            <p className="text-small text-muted-foreground/80 leading-relaxed line-clamp-2">
+            <p className="text-ui text-muted-foreground/80 leading-relaxed line-clamp-2">
               {notification.message}
             </p>
           )}
@@ -78,7 +78,7 @@ export function NotificationItemCard({
           {/* 底部信息 */}
           <div className="flex items-center gap-2 pt-0.5">
             {/* 分类徽章 */}
-            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-caption font-bold bg-muted/40 text-muted-foreground/70 border border-border/10">
+            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-bold bg-muted/40 text-muted-foreground/70 border border-border/10">
               <CategoryIcon className="w-2.5 h-2.5 opacity-60" />
               <span>{t(categoryConfig.label)}</span>
             </div>
@@ -87,7 +87,7 @@ export function NotificationItemCard({
             {notification.source && notification.source !== notification.title && (
               <>
                 <span className="text-border/40">|</span>
-                <span className="text-caption text-muted-foreground/40 font-medium truncate max-w-[150px]">
+                <span className="text-xs text-muted-foreground/40 font-medium truncate max-w-[150px]">
                   {notification.source.replace("Plugin: ", "")}
                 </span>
               </>
@@ -95,7 +95,7 @@ export function NotificationItemCard({
 
             {/* 时间 */}
             <span className="text-border/40">|</span>
-            <span className="text-caption text-muted-foreground/40 tabular-nums">
+            <span className="text-xs text-muted-foreground/40 tabular-nums">
               {formatRelativeTime(notification.timestamp)}
             </span>
           </div>
@@ -118,7 +118,7 @@ export function NotificationItemCard({
                     e.stopPropagation();
                     action.onClick();
                   }}
-                  className="h-6 text-caption"
+                  className="h-6 text-xs"
                 >
                   {action.label}
                 </Button>

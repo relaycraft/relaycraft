@@ -189,26 +189,26 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           <div className="flex items-center gap-2">
             {flow.request.httpVersion && (
               <span
-                className={`px-1.5 py-0.5 rounded text-caption font-bold font-mono border ${getProtocolColor(flow.request.httpVersion)}`}
+                className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider uppercase ${getProtocolColor(flow.request.httpVersion)}`}
               >
                 {formatProtocol(flow.request.httpVersion)}
               </span>
             )}
             <span
-              className={`px-2 py-0.5 rounded text-caption font-bold font-mono border ${getHttpMethodBadgeClass(flow.request.method)}`}
+              className={`px-2 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider ${getHttpMethodBadgeClass(flow.request.method)}`}
             >
               {flow.request.method}
             </span>
             {!(flow.response.status === 0 || String(flow.response.status) === "0") && (
               <span
-                className={`px-2 py-0.5 rounded text-caption font-bold font-mono ${getHttpStatusCodeClass(flow.response.status)}`}
+                className={`px-2 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider ${getHttpStatusCodeClass(flow.response.status)}`}
               >
                 {flow.response.status || t("traffic.status.pending")}
               </span>
             )}
             {!!flow.time && (
               <span
-                className={`px-1.5 py-0.5 rounded text-caption font-bold font-mono border transition-colors ${getDurationBadgeClass(flow.time)}`}
+                className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider transition-colors ${getDurationBadgeClass(flow.time)}`}
               >
                 {flow.time.toFixed(0)}ms
               </span>
@@ -221,7 +221,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 <button
                   onClick={handleAIAnalysis}
                   disabled={analyzing}
-                  className={`flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500/30 text-indigo-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-indigo-500/10 hover:scale-105 active:scale-95 ${
+                  className={`flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500/30 text-indigo-500 rounded-lg transition-all duration-200 shadow-sm interactive-pop ${
                     analyzing ? "animate-pulse" : ""
                   }`}
                 >
@@ -230,7 +230,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   ) : (
                     <Sparkles className="w-3.5 h-3.5" />
                   )}
-                  <span className="text-small font-bold tracking-tight">
+                  <span className="text-ui font-semibold tracking-tight">
                     {t("flow.analysis.btn")}
                   </span>
                 </button>
@@ -247,12 +247,12 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
               <button
                 onClick={handleReplay}
                 disabled={replaying}
-                className={`flex items-center gap-1.5 px-3 py-1 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all duration-200 shadow-sm ${
-                  replaying ? "opacity-80" : "hover:scale-105 active:scale-95"
+                className={`flex items-center gap-1.5 px-3 py-1 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all duration-200 shadow-sm interactive-pop ${
+                  replaying ? "opacity-80" : ""
                 }`}
               >
                 <RotateCw className={`w-3.5 h-3.5 ${replaying ? "animate-spin" : ""}`} />
-                <span className="text-small font-bold tracking-tight">{t("flow.replay_btn")}</span>
+                <span className="text-ui font-semibold tracking-tight">{t("flow.replay_btn")}</span>
               </button>
             </Tooltip>
             <Tooltip content={t("traffic.context_menu.edit_composer")}>
@@ -264,7 +264,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span className="text-small font-bold tracking-tight">{t("common.edit")}</span>
+                <span className="text-ui font-semibold tracking-tight">{t("common.edit")}</span>
               </button>
             </Tooltip>
             <button
@@ -281,7 +281,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         <div className="space-y-3">
           <div className="flex items-center group/url w-full overflow-hidden relative">
             <Tooltip content={flow.request.url} side="bottom" className="flex-1 min-w-0">
-              <p className="text-small font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-subtle">
+              <p className="text-xs font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-subtle">
                 {flow.request.url}
               </p>
             </Tooltip>
@@ -311,7 +311,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   [...new Map(flow._rc.hits.map((h) => [h.id, h])).values()].map((hit, idx) => (
                     <div
                       key={idx}
-                      className={`text-caption px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
+                      className={`text-xs px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
                     >
                       <div className="flex-shrink-0">
                         {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
@@ -323,7 +323,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
                       </div>
                       <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                        <span className="text-small font-bold truncate tracking-tight">
+                        <span className="text-xs font-semibold truncate tracking-tight">
                           {hit.name}
                         </span>
                       </Tooltip>
@@ -332,7 +332,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                           content={hit.message}
                           className="ml-auto flex-shrink truncate max-w-[60%] text-right"
                         >
-                          <span className="text-caption opacity-60 italic truncate font-mono">
+                          <span className="text-xs opacity-60 italic truncate font-mono">
                             {hit.message}
                           </span>
                         </Tooltip>
@@ -347,8 +347,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <div className="p-0.5 bg-yellow-500/20 rounded flex-shrink-0">
                     <AlertTriangle className="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div className="text-caption spaces-y-0.5 min-w-0 flex-1">
-                    <div className="font-bold text-yellow-700 leading-tight">
+                  <div className="text-xs spaces-y-0.5 min-w-0 flex-1">
+                    <div className="font-semibold text-yellow-700 leading-tight">
                       {t("flow.map_local.file_not_found")}
                     </div>
                     <Tooltip
@@ -357,14 +357,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         .map((h) => h.message)
                         .join(", ")}
                     >
-                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-caption">
+                      <div className="text-yellow-600/80 font-mono truncate bg-yellow-500/5 px-1 py-0.5 rounded border border-yellow-500/10 select-all cursor-help text-xs">
                         {flow._rc.hits
                           .filter((h) => h.status === "file_not_found")
                           .map((h) => h.message)
                           .join(", ")}
                       </div>
                     </Tooltip>
-                    <div className="text-yellow-600/70 text-caption italic flex items-center gap-1">
+                    <div className="text-yellow-600/70 text-xs italic flex items-center gap-1">
                       <Globe className="w-2 h-2" />
                       {t("flow.map_local.fallback_hint")}
                     </div>
@@ -387,7 +387,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <AlertTriangle className="w-4 h-4 text-error" />
                 </div>
                 <div className="space-y-1 pt-0.5 flex-1">
-                  <h3 className="text-small font-bold text-error flex items-center justify-between">
+                  <h3 className="text-ui font-semibold text-error flex items-center justify-between">
                     <span>{t("flow.analysis.error")}</span>
                     <button
                       onClick={() => setError(null)}
@@ -396,11 +396,11 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </h3>
-                  <p className="text-caption leading-relaxed text-muted-foreground/80 font-medium">
+                  <p className="text-xs leading-relaxed text-muted-foreground/80 font-medium">
                     {error}
                   </p>
                   <div
-                    className="pt-1 flex items-center gap-1.5 cursor-pointer text-caption text-muted-foreground/60 hover:text-primary transition-colors"
+                    className="pt-1 flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground/60 hover:text-primary transition-colors"
                     onClick={() => {
                       useUIStore.getState().setSettingsTab("general");
                       useUIStore.getState().setActiveTab("settings");
@@ -422,7 +422,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <div className="p-1.5 bg-primary/20 rounded-lg">
                     <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
                   </div>
-                  <span className="text-caption font-bold text-primary tracking-widest uppercase">
+                  <span className="text-xs font-semibold text-primary tracking-wider uppercase">
                     {t("flow.analysis.title")}
                   </span>
                 </div>
@@ -458,20 +458,20 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           <TabsList className="p-1 rounded-xl h-auto bg-muted/30 border border-border/40">
             <TabsTrigger
               value="request"
-              className="py-1.5 px-6 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
             >
               {t("flow.tabs.request")}
             </TabsTrigger>
             <TabsTrigger
               value="response"
-              className="py-1.5 px-6 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
             >
               {t("flow.tabs.response")}
             </TabsTrigger>
             {flow._rc.isWebsocket && (
               <TabsTrigger
                 value="messages"
-                className="py-1.5 px-6 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
               >
                 {t("flow.tabs.messages")}
               </TabsTrigger>
@@ -492,7 +492,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("flow.sections.request_headers")}
                       </h3>
                     </div>
@@ -500,7 +500,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("flow.sections.request_body")}
                       </h3>
                     </div>
@@ -525,7 +525,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("flow.sections.response_headers")}
                       </h3>
                     </div>
@@ -533,7 +533,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-small font-bold text-muted-foreground uppercase tracking-[0.15em] pl-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("flow.sections.response_body")}
                       </h3>
                     </div>
@@ -567,10 +567,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 >
                   <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-xl border border-border/40 overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20">
-                      <h3 className="text-caption font-bold text-muted-foreground uppercase tracking-[0.15em]">
+                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.15em]">
                         {t("traffic.websocket.frames")}
                       </h3>
-                      <span className="text-caption text-muted-foreground/60">
+                      <span className="text-xs text-muted-foreground/60">
                         {t("traffic.websocket.messages_count", {
                           count: flow._rc.websocketFrameCount || 0,
                         })}

@@ -84,7 +84,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 pt-1 text-small leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
+              <div className="px-4 pb-4 pt-1 text-ui leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{thoughts}</ReactMarkdown>
                 {isThinking && (
                   <motion.span
@@ -117,25 +117,23 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               <h3 className="text-ui font-bold text-foreground/90 mb-1.5 mt-3">{children}</h3>
             ),
             p: ({ children }: any) => (
-              <p className="mb-2 last:mb-0 leading-relaxed overflow-hidden text-foreground/80">
-                {children}
-              </p>
+              <p className="mb-2 last:mb-0 leading-relaxed text-foreground/80">{children}</p>
             ),
             code: ({ children }: any) => (
-              <code className="bg-primary/10 px-1.5 py-0.5 rounded text-small font-mono border border-primary/20 text-primary font-medium">
+              <code className="bg-primary/10 px-1.5 py-0.5 rounded text-ui font-mono border border-primary/20 text-primary font-medium">
                 {children}
               </code>
             ),
             pre: ({ children }: any) => (
-              <pre className="bg-muted/50 p-4 rounded-xl border border-border/40 my-3 overflow-x-auto no-scrollbar font-mono text-small leading-relaxed select-all shadow-inner">
+              <pre className="bg-muted/50 p-4 rounded-xl border border-border/40 my-3 overflow-x-auto no-scrollbar font-mono text-ui leading-relaxed select-all shadow-inner">
                 {children}
               </pre>
             ),
             ul: ({ children }: any) => (
-              <ul className="list-disc ml-4 space-y-2 mb-4 text-foreground/80">{children}</ul>
+              <ul className="list-disc ml-6 space-y-2 mb-4 text-foreground/80">{children}</ul>
             ),
             ol: ({ children }: any) => (
-              <ol className="list-decimal ml-4 space-y-2 mb-4 text-foreground/80">{children}</ol>
+              <ol className="list-decimal ml-6 space-y-2 mb-4 text-foreground/80">{children}</ol>
             ),
             li: ({ children }: any) => <li className="pl-1 leading-relaxed">{children}</li>,
             strong: ({ children }: any) => (
@@ -150,7 +148,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
             hr: () => <hr className="my-6 border-border/40" />,
             table: ({ children }: any) => (
               <div className="my-4 overflow-x-auto rounded-xl border border-border/40 bg-white/[0.02]">
-                <table className="w-full border-collapse text-small font-sans">{children}</table>
+                <table className="w-full border-collapse text-ui font-sans">{children}</table>
               </div>
             ),
             thead: ({ children }: any) => <thead className="bg-muted/30">{children}</thead>,

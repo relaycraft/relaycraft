@@ -114,7 +114,7 @@ export function ImportRuleModal() {
           <div className="flex items-center justify-between">
             <label
               htmlFor="rule-import-json"
-              className="text-small font-medium text-muted-foreground block"
+              className="text-ui font-medium text-muted-foreground block"
             >
               {t("import_modal.desc")}
             </label>

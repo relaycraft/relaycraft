@@ -390,7 +390,7 @@ export function CommandCenter() {
                 {isEditingRule && (
                   <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 animate-in zoom-in-95">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="text-caption font-bold text-primary uppercase tracking-tight">
+                    <span className="text-xs font-bold text-primary uppercase tracking-tight">
                       {t("command_center.status.editing")}
                     </span>
                   </div>
@@ -412,7 +412,7 @@ export function CommandCenter() {
                   <div className="px-2 py-1.5 flex items-center justify-between min-h-[32px]">
                     <div className="flex flex-wrap gap-1 items-center">
                       {/* Tab Context */}
-                      <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold">
+                      <span className="text-xs bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold">
                         {(() => {
                           const page = pluginPages.find(
                             (p) => p.id === activeTab || p.route === activeTab,
@@ -457,7 +457,7 @@ export function CommandCenter() {
                       {/* Flow Context */}
                       {selectedFlow && (
                         <span
-                          className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95"
+                          className="text-xs bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95"
                           title={selectedFlow.request.url}
                         >
                           <FileJson className="w-3 h-3" />
@@ -466,14 +466,14 @@ export function CommandCenter() {
 
                       {/* Active Rules Count */}
                       {activeRulesCount > 0 && (
-                        <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
+                        <span className="text-xs bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
                           <Layers className="w-3 h-3" /> {activeRulesCount}
                         </span>
                       )}
 
                       {/* Active Scripts Count */}
                       {activeScriptsCount > 0 && (
-                        <span className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
+                        <span className="text-xs bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95">
                           <Braces className="w-3 h-3" /> {activeScriptsCount}
                         </span>
                       )}
@@ -487,7 +487,7 @@ export function CommandCenter() {
                               e.stopPropagation();
                               useAIStore.getState().clearHistory();
                             }}
-                            className="text-caption bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all cursor-pointer"
+                            className="text-xs bg-muted/50 text-muted-foreground/70 h-5 px-1.5 rounded-md border border-border/40 flex items-center gap-1 font-bold animate-in fade-in zoom-in-95 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all cursor-pointer"
                           >
                             <MessageSquare className="w-3 h-3" />
                             {Math.ceil(useAIStore.getState().history.length / 2)}
@@ -532,7 +532,7 @@ export function CommandCenter() {
                           {s.label}
                         </div>
                         {s.description && (
-                          <div className="text-caption text-muted-foreground/50 group-hover:text-muted-foreground/70">
+                          <div className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground/70">
                             {s.description}
                           </div>
                         )}
@@ -555,11 +555,11 @@ export function CommandCenter() {
                           <h3 className="text-xs font-bold text-destructive flex items-center gap-2">
                             {t("command_center.error_generic")}
                           </h3>
-                          <p className="text-small leading-relaxed text-muted-foreground/80 font-medium">
+                          <p className="text-ui leading-relaxed text-muted-foreground/80 font-medium">
                             {error}
                           </p>
                           <div
-                            className="pt-1 flex items-center gap-1.5 cursor-pointer text-caption text-muted-foreground/60 hover:text-primary transition-colors"
+                            className="pt-1 flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground/60 hover:text-primary transition-colors"
                             onClick={() => {
                               useUIStore.getState().setSettingsTab("general"); // Use 'general' or specific AI tab if available, but 'settings' tab navigate is common
                               setActiveTab("settings");
@@ -638,7 +638,7 @@ export function CommandCenter() {
                             <h3 className="text-sm font-bold text-foreground tracking-tight">
                               {getIntentLabel(action.intent)}
                             </h3>
-                            <p className="text-small text-muted-foreground font-medium mt-0.5 opacity-80">
+                            <p className="text-ui text-muted-foreground font-medium mt-0.5 opacity-80">
                               {t("command_center.confirm_required")}
                             </p>
                           </div>
@@ -679,7 +679,7 @@ export function CommandCenter() {
 
             {/* Footer */}
             <div className="px-4 py-2 border-t border-border/40 bg-muted/10 flex items-center justify-end">
-              <div className="text-caption text-muted-foreground/30 font-black uppercase tracking-widest flex items-center gap-1.5 opacity-60">
+              <div className="text-xs text-muted-foreground/30 font-black uppercase tracking-widest flex items-center gap-1.5 opacity-60">
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>{t("command_center.ai_integrated")}</span>
               </div>

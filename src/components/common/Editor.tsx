@@ -66,7 +66,7 @@ const createPremiumTheme = (
       ".cm-scroller": {
         fontFamily: `${fontMono} !important`,
         lineHeight: "1.6",
-        fontSize: "13px",
+        fontSize: "12.5px",
         fontVariantLigatures: "common-ligatures",
         fontFeatureSettings: '"liga" 1, "calt" 1',
         flex: "1",

@@ -145,7 +145,7 @@ export function ScriptManager() {
   return (
     <div className="h-full flex overflow-hidden">
       {/* Sidebar List */}
-      <div className="w-72 border-r border-border bg-muted/40 flex flex-col flex-shrink-0">
+      <div className="w-80 border-r border-border bg-muted/40 flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-border bg-muted/5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export function ScriptManager() {
             </div>
           </div>
 
-          <p className="text-small text-muted-foreground leading-relaxed opacity-70">
+          <p className="text-ui text-muted-foreground leading-relaxed opacity-70">
             {t("scripts.subtitle")}
           </p>
         </div>
@@ -225,7 +225,7 @@ export function ScriptManager() {
               <div
                 key={script.name}
                 onClick={() => selectScript(script.name)}
-                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border ${
+                className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border relative ${
                   selectedScript === script.name
                     ? "bg-primary/10 border-primary/20 text-primary font-medium"
                     : "border-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
@@ -296,8 +296,8 @@ export function ScriptManager() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-auto">
-                  <div className="flex items-center bg-background/50 rounded-md border border-border/40 overflow-hidden mr-1">
+                <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all shrink-0 absolute right-1.5 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm border border-border/40 p-1 px-1.5 rounded-lg shadow-sm">
+                  <div className="flex items-center bg-muted/20 rounded-md border border-border/20 overflow-hidden">
                     <Tooltip content={t("common.move_up")}>
                       <button
                         onClick={(e) => handleMove(e, script.name, "up")}
@@ -307,7 +307,7 @@ export function ScriptManager() {
                         <ChevronUp className="w-3 h-3" />
                       </button>
                     </Tooltip>
-                    <div className="w-[1px] h-3 bg-border/40" />
+                    <div className="w-[1px] h-3 bg-border/20" />
                     <Tooltip content={t("common.move_down")}>
                       <button
                         onClick={(e) => handleMove(e, script.name, "down")}
@@ -322,12 +322,12 @@ export function ScriptManager() {
                   <Tooltip content={script.enabled ? t("common.disable") : t("common.enable")}>
                     <button
                       onClick={(e) => handleToggle(e, script.name, script.enabled)}
-                      className={`p-1 rounded hover:bg-background ${script.enabled ? "text-green-500" : "text-muted-foreground hover:text-primary"}`}
+                      className={`p-1 rounded hover:bg-muted/50 ${script.enabled ? "text-green-500" : "text-muted-foreground hover:text-primary"}`}
                     >
                       {script.enabled ? (
-                        <ToggleRight className="w-5 h-5" />
+                        <ToggleRight className="w-4 h-4" />
                       ) : (
-                        <ToggleLeft className="w-5 h-5" />
+                        <ToggleLeft className="w-4 h-4" />
                       )}
                     </button>
                   </Tooltip>

@@ -17,8 +17,7 @@ interface ActionMapRemoteProps {
   onChangeHeadersResponse: (val: HeaderOperation[]) => void;
 }
 
-const LABEL_STYLE =
-  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+const LABEL_STYLE = "text-xs font-bold text-foreground/50 uppercase tracking-widest mb-0.5 block";
 
 export function ActionMapRemote({
   targetUrl,
@@ -35,7 +34,7 @@ export function ActionMapRemote({
   return (
     <div className="space-y-4 p-3.5 bg-muted/20 rounded-xl border border-border/40">
       <div className="space-y-3">
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label htmlFor="map-remote-url" className={LABEL_STYLE}>
             {t("rule_editor.action.map_remote.url")}
           </label>
@@ -57,7 +56,7 @@ export function ActionMapRemote({
             >
               {t("rule_editor.action.map_remote.preserve_path")}
             </label>
-            <p className="text-caption text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("rule_editor.action.map_remote.preserve_path_desc")}
             </p>
           </div>

@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Info, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { JsonModification } from "../../../../types/rules";
 import { Button } from "../../../common/Button";
@@ -31,8 +31,7 @@ interface ActionRewriteProps {
   onChangeJsonModifications: (mods: JsonModification[]) => void;
 }
 
-const LABEL_STYLE =
-  "text-small font-bold text-foreground/50 uppercase tracking-widest mb-1.5 block";
+const LABEL_STYLE = "text-xs font-bold text-foreground/50 uppercase tracking-widest mb-0.5 block";
 
 export function ActionRewrite({
   target,
@@ -71,7 +70,7 @@ export function ActionRewrite({
   return (
     <div className="space-y-4 p-3.5 bg-muted/20 rounded-xl border border-border/40">
       <div className="space-y-3">
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <SegmentedControl
             name="rewrite-target"
             options={[
@@ -86,12 +85,12 @@ export function ActionRewrite({
         {/* Independent Response Settings - Moved above Rewrite Mode */}
         {target === "response" && (
           <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className={LABEL_STYLE}>
                   {t("rule_editor.action.map_local.content_type")}
                 </label>
-                <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+                <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                   {t("common.optional")}
                 </span>
               </div>
@@ -103,10 +102,10 @@ export function ActionRewrite({
                 className="font-mono text-xs"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.status_code")}</label>
-                <span className="text-caption text-muted-foreground/40 font-medium mb-1.5 uppercase tracking-tighter">
+                <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                   {t("common.optional")}
                 </span>
               </div>
@@ -124,7 +123,7 @@ export function ActionRewrite({
           </div>
         )}
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.type")}</label>
           <SegmentedControl
             name="rewrite-mode"
@@ -153,7 +152,7 @@ export function ActionRewrite({
 
         {type === "set" && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.modes_set")}</label>
               <textarea
                 value={content}
@@ -171,7 +170,7 @@ export function ActionRewrite({
 
         {(type === "replace" || type === "regex_replace") && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className={LABEL_STYLE}>
                 {type === "regex_replace"
                   ? t("rule_editor.action.rewrite.placeholders_regex_pattern")
@@ -185,7 +184,7 @@ export function ActionRewrite({
                 className="font-mono text-xs"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className={LABEL_STYLE}>
                 {t("rule_editor.action.rewrite.placeholders_replacement")}
               </label>
@@ -203,8 +202,9 @@ export function ActionRewrite({
         {type === "json" && (
           <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-2">
-              <div className="px-1 py-1.5 mb-2">
-                <p className="text-caption text-muted-foreground/70">
+              <div className="flex items-start gap-3 px-3 py-2.5 bg-primary/5 border border-primary/10 border-l-2 border-l-primary rounded-lg mb-4 animate-in fade-in slide-in-from-top-1">
+                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs text-primary/80 leading-relaxed font-medium">
                   {t("rule_editor.action.rewrite.jsonpath_hint")}
                 </p>
               </div>
@@ -228,12 +228,12 @@ export function ActionRewrite({
                       value={mod.path}
                       onChange={(e) => updateJsonMod(i, "path", e.target.value)}
                       placeholder="$.store.book[0].title"
-                      className="flex-1 h-7 text-small font-mono px-2"
+                      className="flex-1 h-7 text-ui font-mono px-2"
                     />
                     <Select
                       value={mod.operation || "set"}
                       onChange={(val) => updateJsonMod(i, "operation", val)}
-                      className="w-24 text-caption h-7 min-h-0 py-0"
+                      className="w-24 text-xs h-7 min-h-0 py-0"
                       containerClassName="w-24 shrink-0"
                     >
                       <option value="set">
@@ -256,7 +256,7 @@ export function ActionRewrite({
                           "rule_editor.action.rewrite.json_value_placeholder",
                           "Value (JSON)",
                         )}
-                        className="flex-1 h-7 text-small font-mono px-2"
+                        className="flex-1 h-7 text-ui font-mono px-2"
                       />
                     )}
                   </div>
@@ -272,7 +272,7 @@ export function ActionRewrite({
               <Button
                 variant="outline"
                 onClick={addJsonMod}
-                className="w-full h-auto py-3 text-small border-dashed border-border/60 hover:bg-muted/50 text-muted-foreground mt-2 flex items-center justify-center gap-2"
+                className="w-full h-auto py-3 text-ui border-dashed border-border/60 hover:bg-muted/50 text-muted-foreground mt-2 flex items-center justify-center gap-2"
               >
                 <span className="text-lg leading-none">+</span>
                 {t("common.add")}

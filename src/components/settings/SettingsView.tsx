@@ -22,7 +22,6 @@ import { useUIStore } from "../../stores/uiStore";
 import { AISettingsPanel } from "../ai/AISettingsPanel";
 import { Button } from "../common/Button";
 import { AppLogo } from "../layout/AppLogo";
-import { LogViewer } from "../traffic/LogViewer";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { CertificateSettings } from "./CertificateSettings";
 import { MarketView } from "./MarketView";
@@ -56,7 +55,7 @@ export function SettingsView() {
     resetUpstreamStatus,
   } = useSettingsStore();
 
-  const [showLogViewer, setShowLogViewer] = React.useState(false);
+  const { setLogViewerOpen } = useUIStore();
   const [systemInfo, setSystemInfo] = React.useState<{
     version: string;
     platform: string;
@@ -122,9 +121,9 @@ export function SettingsView() {
       <AnimatePresence mode="wait">
         <motion.div
           key={settingsTab}
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
           {settingsTab === "general" && (
@@ -254,7 +253,7 @@ export function SettingsView() {
                         {/* Connectivity Status Badge */}
                         {upstreamStatus !== "idle" && (
                           <div
-                            className={`flex items-center gap-1.5 px-2 py-1 rounded text-caption font-medium ${
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${
                               upstreamStatus === "success"
                                 ? "text-green-600 bg-green-500/10"
                                 : "text-destructive bg-destructive/10"
@@ -273,7 +272,7 @@ export function SettingsView() {
                         <Button
                           variant="outline"
                           size="xs"
-                          className="text-caption h-7 px-2 gap-1.5"
+                          className="text-xs h-7 px-2 gap-1.5"
                           onClick={testUpstreamConnectivity}
                           disabled={testingUpstream || !config.upstream_proxy?.url}
                         >
@@ -292,7 +291,7 @@ export function SettingsView() {
                 </div>
               )}
 
-              <div className="bg-muted/10 p-3 text-small text-muted-foreground/60 text-center border-t border-border/40">
+              <div className="bg-muted/10 p-3 text-ui text-muted-foreground/60 text-center border-t border-border/40">
                 {t("settings.network.restart_hint")}
               </div>
             </SettingsSection>
@@ -319,7 +318,7 @@ export function SettingsView() {
                     <span className="text-ui font-medium text-foreground">
                       RelayCraft v{systemInfo?.version}
                     </span>
-                    <span className="text-small text-muted-foreground">
+                    <span className="text-ui text-muted-foreground">
                       {t("settings.about.checking_updates")}
                     </span>
                   </div>
@@ -392,7 +391,7 @@ export function SettingsView() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowLogViewer(true)}
+                      onClick={() => setLogViewerOpen(true)}
                       className="text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
                     >
                       {t("settings.about.view_logs")}
@@ -486,7 +485,6 @@ export function SettingsView() {
       </AnimatePresence>
 
       {/* Modals */}
-      {showLogViewer && <LogViewer onClose={() => setShowLogViewer(false)} />}
       <MarketView />
     </SettingsPage>
   );

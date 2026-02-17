@@ -112,7 +112,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
             <div>
               <h2 className="text-ui font-bold text-foreground flex items-center gap-2">
                 {t("breakpoint.control_center")}
-                <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-caption rounded-full font-black">
+                <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-xs rounded-full font-black">
                   {flows.length}
                 </span>
               </h2>
@@ -122,14 +122,14 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleBatchAction("abort")}
-              className="flex items-center gap-1.5 px-3 h-8 text-small font-bold text-red-500 hover:bg-red-500/10 border border-red-500/10 rounded-lg transition-all"
+              className="flex items-center gap-1.5 px-3 h-8 text-ui font-bold text-red-500 hover:bg-red-500/10 border border-red-500/10 rounded-lg transition-all"
             >
               <Trash2 className="w-3 h-3" />
               {t("breakpoint.abort_all")}
             </button>
             <button
               onClick={() => handleBatchAction("resume")}
-              className="flex items-center gap-1.5 px-3 h-8 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-small font-bold shadow-md shadow-primary/10 transition-all"
+              className="flex items-center gap-1.5 px-3 h-8 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-ui font-bold shadow-md shadow-primary/10 transition-all"
             >
               <CheckCircle2 className="w-3 h-3" />
               {t("breakpoint.resume_all")}
@@ -145,7 +145,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
           {/* Left Sidebar: Flow List */}
           <div className="w-56 border-r border-border bg-muted/5 flex flex-col overflow-hidden">
             <div className="p-2.5 border-b border-border bg-muted/10">
-              <span className="text-caption font-black text-muted-foreground uppercase tracking-widest pl-1">
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-widest pl-1">
                 {t("breakpoint.queue")}
               </span>
             </div>
@@ -162,7 +162,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span
-                      className={`text-caption font-black px-1.5 py-0.5 rounded shadow-sm border ${
+                      className={`text-xs font-black px-1.5 py-0.5 rounded shadow-sm border ${
                         f._rc?.intercept?.phase === "request"
                           ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
                           : "bg-green-500/10 text-green-600 border-green-500/20"
@@ -170,7 +170,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                     >
                       {f.request.method}
                     </span>
-                    <span className="text-caption font-mono text-muted-foreground/40">
+                    <span className="text-xs font-mono text-muted-foreground/40">
                       #{f.id.slice(-4)}
                     </span>
                   </div>
@@ -195,11 +195,11 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-1.5 py-0.5 rounded-lg text-caption font-black uppercase tracking-wider border shrink-0 ${isRequest ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
+                      className={`px-1.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider border shrink-0 ${isRequest ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
                     >
                       {isRequest ? t("breakpoint.request") : t("breakpoint.response")}
                     </span>
-                    <span className="text-small font-bold text-foreground/70 truncate font-mono">
+                    <span className="text-ui font-bold text-foreground/70 truncate font-mono">
                       {flow.request.url}
                     </span>
                   </div>
@@ -208,13 +208,13 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
               <div className="flex items-center gap-1.5 ml-4">
                 <button
                   onClick={() => handleResume(flow.id, { action: "abort" })}
-                  className="px-3 h-7 text-caption font-bold text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
+                  className="px-3 h-7 text-xs font-bold text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
                 >
                   {t("breakpoint.abort")}
                 </button>
                 <button
                   onClick={handleCurrentResume}
-                  className="flex items-center gap-2 px-4 h-7 text-green-600 hover:bg-green-600/10 rounded-lg text-caption font-extrabold transition-all"
+                  className="flex items-center gap-2 px-4 h-7 text-green-600 hover:bg-green-600/10 rounded-lg text-xs font-extrabold transition-all"
                 >
                   <Play className="w-2.5 h-2.5 fill-current" />
                   {t("breakpoint.resume")}
@@ -228,11 +228,11 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 pl-1">
                     <Globe className="w-3 h-3 text-primary" />
-                    <span className="text-caption font-black text-muted-foreground uppercase tracking-widest">
+                    <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                       {t("breakpoint.method_protocol")}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-small font-bold">
+                  <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-ui font-bold">
                     <span className="text-primary">{flow.request.method}</span>
                     <span className="text-muted-foreground opacity-30">|</span>
                     <span className="text-foreground/60 uppercase">{flow.request.httpVersion}</span>
@@ -242,11 +242,11 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 pl-1">
                       <Hash className="w-3 h-3 text-primary" />
-                      <span className="text-caption font-black text-muted-foreground uppercase tracking-widest">
+                      <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                         {t("breakpoint.status_code")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-small font-bold">
+                    <div className="flex items-center gap-2 p-2 bg-muted/20 border border-border/40 rounded-xl font-mono text-ui font-bold">
                       <input
                         type="number"
                         value={statusCode}
@@ -261,7 +261,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 pl-1">
                   <ArrowRightLeft className="w-3 h-3 text-primary" />
-                  <span className="text-caption font-black text-muted-foreground uppercase tracking-widest">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                     {t("breakpoint.headers")}
                   </span>
                 </div>
@@ -273,7 +273,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 pl-1">
                   <Layers className="w-3 h-3 text-primary" />
-                  <span className="text-caption font-black text-muted-foreground uppercase tracking-widest">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                     {t("breakpoint.body_content")}
                   </span>
                 </div>

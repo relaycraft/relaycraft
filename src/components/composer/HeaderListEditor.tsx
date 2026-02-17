@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Button } from "../common/Button";
 
 interface HeaderItem {
   key: string;
@@ -32,17 +33,19 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <label className="text-caption font-extrabold text-muted-foreground uppercase tracking-widest">
+        <label className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
           {t("common.headers")}
         </label>
-        <button
+        <Button
           type="button"
           onClick={addItem}
-          className="text-caption flex items-center gap-1.5 text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-all font-bold uppercase tracking-wider"
+          variant="ghost"
+          size="xs"
+          className="text-muted-foreground/80 hover:text-primary hover:bg-primary/5 px-2 rounded-md font-medium text-xs h-7"
         >
-          <Plus className="w-3 h-3" />
+          <Plus className="w-3.5 h-3.5 mr-1" />
           {t("composer.headers_list.add")}
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-1.5">
@@ -51,7 +54,7 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
             <button
               type="button"
               onClick={() => updateItem(index, "enabled", !item.enabled)}
-              className={`p-1.5 rounded-lg transition-all ${item.enabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground/30 hover:bg-muted"}`}
+              className={`p-1.5 rounded-lg transition-all interactive-pop ${item.enabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground/30 hover:bg-muted"}`}
             >
               {item.enabled ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
             </button>
@@ -75,14 +78,14 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
             </div>
             <button
               onClick={() => removeItem(index)}
-              className="p-1.5 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 interactive-pop"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         ))}
         {headers.length === 0 && (
-          <div className="text-small text-muted-foreground border border-dashed border-border/60 rounded-xl py-4 text-center bg-muted/5 font-medium">
+          <div className="text-ui text-muted-foreground border border-dashed border-border/60 rounded-xl py-4 text-center bg-muted/5 font-medium">
             {t("composer.headers_list.empty")}
           </div>
         )}

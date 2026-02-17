@@ -47,7 +47,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
 
   return (
     <div
-      className="flex items-center px-4 py-1.5 bg-muted/40 backdrop-blur-sm border-y border-border/20 group/group-header cursor-pointer select-none sticky top-0 z-10"
+      className="flex items-center px-4 py-1.5 bg-card border-y border-border/40 group/group-header cursor-pointer select-none sticky top-0 z-20 shadow-sm"
       onClick={() => toggleGroupCollapse(group.id)}
     >
       <div className="mr-3 transition-colors hover:text-primary">
@@ -79,7 +79,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
             >
               {group.name}
             </span>
-            <span className="text-caption font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
+            <span className="text-xs font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
               {ruleCount}
             </span>
           </div>

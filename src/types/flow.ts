@@ -270,6 +270,11 @@ export interface FlowIndex {
   time: number;
   size: number;
 
+  // 来源信息
+  clientIp?: string; // 客户端IP，用于区分本机和远程请求
+  appName?: string; // 来源应用标识符，如 "com.apple.MobileSafari"
+  appDisplayName?: string; // 来源应用显示名称，如 "Safari"
+
   // 标记
   hasError: boolean;
   hasRequestBody: boolean;

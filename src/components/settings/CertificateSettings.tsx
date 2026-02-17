@@ -190,10 +190,10 @@ export function CertificateSettings() {
                     <div className="flex-1 min-w-0 space-y-4">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-bold text-foreground">{t("cert.ca_name")}</h3>
+                          <h3 className="text-ui font-bold text-foreground">{t("cert.ca_name")}</h3>
                           <span
                             className={cn(
-                              "text-caption px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border",
+                              "text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border",
                               isInstalled
                                 ? "bg-green-500/10 text-green-600 border-green-500/20"
                                 : "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -212,24 +212,24 @@ export function CertificateSettings() {
                       {/* Info Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-muted/30 border border-border/40">
-                          <div className="flex items-center gap-2 text-caption font-bold text-muted-foreground uppercase tracking-wider">
-                            <Clock className="w-3 h-3" />
+                          <div className="flex items-center gap-2 text-micro font-bold text-muted-foreground uppercase tracking-widest">
+                            <Clock className="w-2.5 h-2.5" />
                             {t("cert.info.expires")}
                           </div>
-                          <div className="font-mono text-xs font-medium pl-1 text-foreground/90">
+                          <div className="font-mono text-xs font-medium pl-0.5 text-foreground/90">
                             {certInfo?.not_after || t("common.unknown")}
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-muted/30 border border-border/40">
-                          <div className="flex items-center gap-2 text-caption font-bold text-muted-foreground uppercase tracking-wider">
-                            <Fingerprint className="w-3 h-3" />
+                          <div className="flex items-center gap-2 text-micro font-bold text-muted-foreground uppercase tracking-widest">
+                            <Fingerprint className="w-2.5 h-2.5" />
                             {t("cert.info.fingerprint")}{" "}
                             <span className="text-muted-foreground/50 font-normal normal-case ml-1">
                               (SHA256)
                             </span>
                           </div>
-                          <div className="font-mono text-caption text-muted-foreground break-all leading-normal pl-1">
+                          <div className="font-mono text-xs text-muted-foreground break-all leading-normal pl-0.5">
                             {certInfo?.fingerprint || t("common.not_loaded")}
                           </div>
                         </div>
@@ -312,7 +312,7 @@ export function CertificateSettings() {
               <div className="text-xs font-bold text-foreground mb-1">
                 {t("cert.storage.title")}
               </div>
-              <div className="text-small text-muted-foreground/70 truncate font-mono">
+              <div className="text-ui text-muted-foreground/70 truncate font-mono">
                 {certPath || "—"}
               </div>
             </div>
@@ -322,7 +322,7 @@ export function CertificateSettings() {
                 onClick={handleOpenCertDir}
                 variant="outline"
                 size="sm"
-                className="h-8 text-small font-bold px-3 gap-1.5"
+                className="h-8 text-ui font-bold px-3 gap-1.5"
               >
                 {t("cert.storage.open")}
               </Button>

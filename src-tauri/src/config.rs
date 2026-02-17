@@ -121,10 +121,22 @@ pub fn get_app_root_dir() -> Result<PathBuf, String> {
     {
         let home =
             std::env::var("HOME").map_err(|_| "Failed to resolve HOME variable".to_string())?;
+
+        // Industry Standard: Use the product name from the environment (passed via our dev script)
+        // or fallback to the bundle identifier if we can get it.
+        // For now, we suffix with " Dev" if we detect we are in a dev override.
+        let app_folder = if std::env::var("RELAYCRAFT_DEV").is_ok()
+            || std::env::var("TAURI_ENV").map(|v| v == "dev").unwrap_or(false)
+        {
+            "RelayCraft Dev"
+        } else {
+            "relaycraft"
+        };
+
         let path = PathBuf::from(home)
             .join("Library")
             .join("Application Support")
-            .join("relaycraft");
+            .join(app_folder);
         if !path.exists() {
             let _ = fs::create_dir_all(&path);
         }

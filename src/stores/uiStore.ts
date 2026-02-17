@@ -71,6 +71,8 @@ interface UIStore {
   setMarketOpen: (open: boolean, type?: "plugin" | "theme") => void;
   isMac: boolean;
   setOsType: (isMac: boolean) => void;
+  logViewerOpen: boolean;
+  setLogViewerOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -158,4 +160,6 @@ export const useUIStore = create<UIStore>((set, get) => ({
       marketOpen: open,
       marketType: type || state.marketType,
     })),
+  logViewerOpen: false,
+  setLogViewerOpen: (open) => set({ logViewerOpen: open }),
 }));

@@ -86,6 +86,7 @@ export function FilterBar({
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
             <AIAssistant
               mode="filter"
+              align="center"
               onGenerate={(result) => {
                 setFilterText(result);
               }}
@@ -142,7 +143,7 @@ export function FilterBar({
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <div className="w-3.5 h-3.5 flex items-center justify-center font-bold text-caption">
+              <div className="w-3.5 h-3.5 flex items-center justify-center font-bold text-xs">
                 Aa
               </div>
             </Button>
@@ -180,7 +181,7 @@ export function FilterBar({
         </div>
 
         {/* Count Badge */}
-        <div className="hidden sm:flex items-center px-2 py-1 bg-muted/30 border border-border/50 rounded-md text-caption font-mono text-muted-foreground whitespace-nowrap tabular-nums z-10">
+        <div className="hidden sm:flex items-center px-2 py-1 bg-muted/30 border border-border/50 rounded-md text-xs font-mono text-muted-foreground whitespace-nowrap tabular-nums z-10">
           <span className={filterText ? "text-primary font-bold" : ""}>{filteredCount}</span>
           <span className="opacity-40 mx-1">/</span>
           <span className="opacity-60">{totalCount}</span>
@@ -221,27 +222,27 @@ export function FilterBar({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 opacity-80">
                 <div>
                   • <b>{t("traffic.filter.and")}</b>: {t("traffic.filter.and_desc")}{" "}
-                  <span className="opacity-60 text-small">(e.g. method:POST type:json)</span>
+                  <span className="opacity-60 text-tiny">(e.g. method:POST type:json)</span>
                 </div>
                 <div>
                   • <b>{t("traffic.filter.or")}</b>: {t("traffic.filter.or_desc")}{" "}
-                  <span className="opacity-60 text-small">(e.g. status:4xx status:5xx)</span>
+                  <span className="opacity-60 text-tiny">(e.g. status:4xx status:5xx)</span>
                 </div>
                 <div>
                   • <b>{t("traffic.filter.neg")}</b>{" "}
-                  <span className="opacity-60 text-small">(e.g. -domain:google)</span>
+                  <span className="opacity-60 text-tiny">(e.g. -domain:google)</span>
                 </div>
                 <div>
                   • <b>{t("traffic.filter.compare")}</b>{" "}
-                  <span className="opacity-60 text-small">(e.g. size:&gt;1mb)</span>
+                  <span className="opacity-60 text-tiny">(e.g. size:&gt;1mb)</span>
                 </div>
                 <div>
                   • <b>{t("traffic.filter.headers")}</b>{" "}
-                  <span className="opacity-60 text-small">(e.g. h:ua:mozilla)</span>
+                  <span className="opacity-60 text-tiny">(e.g. h:ua:mozilla)</span>
                 </div>
                 <div>
                   • <b>{t("traffic.filter.body")}</b>{" "}
-                  <span className="opacity-60 text-small">(e.g. body:error)</span>
+                  <span className="opacity-60 text-tiny">(e.g. body:error)</span>
                 </div>
               </div>
             </div>

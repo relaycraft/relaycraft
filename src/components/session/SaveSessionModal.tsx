@@ -50,7 +50,7 @@ export function SaveSessionModal() {
         <div className="space-y-2">
           <label
             htmlFor="session-name"
-            className="text-small font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
+            className="text-ui font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <Type className="w-3 h-3 opacity-70" />
             {t("save_session.name")} <span className="text-destructive/80">*</span>
@@ -68,7 +68,7 @@ export function SaveSessionModal() {
         <div className="space-y-2">
           <label
             htmlFor="session-desc"
-            className="text-small font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
+            className="text-ui font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <AlignLeft className="w-3 h-3 opacity-70" />
             {t("save_session.desc")}

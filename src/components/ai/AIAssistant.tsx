@@ -22,7 +22,7 @@ export interface AIAssistantProps {
   mode: "filter" | "regex" | "naming";
   context?: any;
   value?: string; // Current content of the field
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
 }
 
 export function AIAssistant({
@@ -70,7 +70,7 @@ export function AIAssistant({
     if (!prompt || loading) return;
     setLoading(true);
     setContent("");
-    if (mode !== "filter") {
+    if (mode !== "filter" && mode !== "regex") {
       setView("explanation"); // Switch to view to show streaming or loading
     }
 
@@ -162,7 +162,6 @@ export function AIAssistant({
       suggestions: [
         t("ai_assistant.search.suggestions.error"),
         t("ai_assistant.search.suggestions.json"),
-        t("ai_assistant.search.suggestions.slow"),
       ],
     },
     regex: {
@@ -171,7 +170,6 @@ export function AIAssistant({
       suggestions: [
         t("ai_assistant.regex.suggestions.path"),
         t("ai_assistant.regex.suggestions.domain"),
-        t("ai_assistant.regex.suggestions.error"),
       ],
     },
     naming: {
@@ -202,7 +200,13 @@ export function AIAssistant({
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className={`absolute top-full mt-2 w-[440px] max-w-[90vw] p-4 rounded-2xl z-50 shadow-2xl overflow-hidden ${align === "right" ? "right-0" : "left-0"} bg-popover/90 backdrop-blur-xl border border-border/40`}
+            className={`absolute top-full mt-2 w-[480px] max-w-[calc(100vw-80px)] p-4 rounded-2xl z-50 shadow-2xl shadow-primary/20 overflow-hidden ${
+              align === "right"
+                ? "right-0 origin-top-right"
+                : align === "center"
+                  ? "left-1/2 -translate-x-1/2 origin-top"
+                  : "left-0 origin-top-left"
+            } bg-popover backdrop-blur-xl border border-border/40`}
           >
             <div className="relative z-10 flex flex-col gap-3">
               {/* Header */}
@@ -224,12 +228,8 @@ export function AIAssistant({
                     <div className="p-1 bg-primary/20 rounded-md">
                       <Bot className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <span className="text-caption font-bold text-primary uppercase tracking-widest">
-                      {view === "input"
-                        ? config.title
-                        : loading
-                          ? t("ai_assistant.analyzing")
-                          : config.title}
+                    <span className="text-xs font-bold text-primary uppercase tracking-widest">
+                      {config.title}
                     </span>
                   </div>
                 </div>
@@ -252,7 +252,7 @@ export function AIAssistant({
                         onChange={(e) => setPrompt(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                         placeholder={config.placeholder}
-                        className="w-full pl-3.5 pr-10 h-8 bg-muted/30 border border-border/20 rounded-xl text-xs placeholder:text-caption focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 font-sans transition-all disabled:opacity-50"
+                        className="w-full pl-3.5 pr-10 h-8 bg-muted/30 border border-border/20 rounded-xl text-xs placeholder:text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 font-sans transition-all disabled:opacity-50"
                         disabled={loading}
                       />
                       <button
@@ -269,7 +269,7 @@ export function AIAssistant({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-1.5 py-0.5">
                     {config.suggestions.map((s) => (
                       <button
                         key={s}
@@ -277,7 +277,7 @@ export function AIAssistant({
                           setPrompt(s);
                           setTimeout(handleGenerate, 50);
                         }}
-                        className="text-caption font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all cursor-pointer whitespace-nowrap"
+                        className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all cursor-pointer whitespace-nowrap"
                       >
                         {s}
                       </button>
@@ -288,7 +288,7 @@ export function AIAssistant({
                     <button
                       onClick={handleExplain}
                       disabled={loading}
-                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-caption font-bold mt-1 px-1"
+                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs font-bold mt-1 px-1"
                     >
                       <BookOpen className="w-3 h-3" />
                       {t("ai_assistant.regex.explain_btn")}
@@ -301,10 +301,7 @@ export function AIAssistant({
                     <div className="text-xs leading-relaxed text-foreground/90 font-medium">
                       {loading && !content ? (
                         <div className="flex items-center gap-2 text-muted-foreground animate-pulse py-1 text-center justify-center h-full">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          <span className="text-caption uppercase tracking-wider font-bold">
-                            {t("ai_assistant.analyzing")}
-                          </span>
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         </div>
                       ) : (
                         <>

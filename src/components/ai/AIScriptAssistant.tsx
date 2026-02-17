@@ -261,7 +261,7 @@ export function AIScriptAssistant({
             </div>
             <div className="flex-1 space-y-2 min-w-0">
               <div className="flex items-center justify-between">
-                <span className="text-caption font-black text-primary uppercase tracking-[0.2em] opacity-80">
+                <span className="text-xs font-black text-primary uppercase tracking-[0.2em] opacity-80">
                   {t("script_editor.ai.insight_title", "RelayCraft AI Insight")}
                 </span>
                 <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ function QuickAction({ label, onClick }: { label: string; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-caption font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
+      className="flex items-center gap-2 px-3 py-1 bg-muted/20 border border-border/10 rounded-full text-xs font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all whitespace-nowrap"
     >
       {label}
     </button>

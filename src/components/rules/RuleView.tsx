@@ -151,16 +151,16 @@ export function RuleView() {
                         key={idx}
                         className="flex flex-col gap-0.5 p-2 rounded-lg bg-background/50 border border-border/10"
                       >
-                        <div className="text-caption font-mono text-foreground truncate">
+                        <div className="text-xs font-mono text-foreground truncate">
                           {err.path.split(/[\\/]/).pop()}
                         </div>
-                        <div className="text-caption text-destructive/80 italic line-clamp-2">
+                        <div className="text-xs text-destructive/80 italic line-clamp-2">
                           {err.error}
                         </div>
                       </div>
                     ))}
                     {loadErrors.length > 3 && (
-                      <div className="text-caption text-muted-foreground pl-2 italic">
+                      <div className="text-xs text-muted-foreground pl-2 italic">
                         ...and {loadErrors.length - 3} more
                       </div>
                     )}
@@ -214,7 +214,7 @@ export function RuleView() {
                                 selectedRuleId={selectedRule?.id}
                               />
                             ) : (
-                              <div className="px-12 py-6 text-small text-muted-foreground/50 italic text-center">
+                              <div className="px-12 py-6 text-ui text-muted-foreground/50 italic text-center">
                                 {t("rules.empty.group_empty")}
                               </div>
                             )}
@@ -228,12 +228,12 @@ export function RuleView() {
               {/* Uncategorized Rules */}
               {groupedRules.uncategorized && groupedRules.uncategorized.length > 0 && (
                 <div className="border-b border-border/20">
-                  <div className="flex items-center px-4 py-2 bg-muted/40 border-y border-border/40 select-none">
+                  <div className="flex items-center px-4 py-1.5 bg-card border-y border-border/40 select-none sticky top-0 z-20 shadow-sm">
                     <Folders className="w-3.5 h-3.5 mr-2 text-muted-foreground/60" />
                     <span className="text-ui font-bold tracking-tight text-muted-foreground">
                       {t("rules.uncategorized")}
                     </span>
-                    <span className="ml-2 text-caption font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
+                    <span className="ml-2 text-xs font-medium bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground/70">
                       {groupedRules.uncategorized.length}
                     </span>
                   </div>

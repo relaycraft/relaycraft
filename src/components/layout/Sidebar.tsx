@@ -82,7 +82,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
               <motion.div
                 layoutId="active-pill"
                 className="absolute inset-0 bg-primary/20 rounded-xl border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                transition={{ type: "spring", stiffness: 520, damping: 32 }}
               />
             )}
 
@@ -91,7 +91,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
                 scale: activeTab === item.id ? 1.15 : 1,
               }}
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.95 }}
               className="relative z-10"
             >
               <IconWrapper
@@ -118,7 +118,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
             <motion.div
               layoutId="active-pill"
               className="absolute inset-0 bg-primary/20 rounded-xl border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              transition={{ type: "spring", stiffness: 520, damping: 32 }}
             />
           )}
 
@@ -127,7 +127,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
               scale: activeTab === "settings" ? 1.15 : 1,
             }}
             whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.95 }}
             className="relative z-10"
           >
             <IconWrapper

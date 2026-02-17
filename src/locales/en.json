@@ -87,6 +87,9 @@
     "status_code": "Status Code"
   },
   "cert": {
+    "format": {
+      "label": "Format"
+    },
     "actions": {
       "install": "Install & Trust Certificate",
       "regenerate": "Regenerate Root CA",
@@ -1005,6 +1008,10 @@
     "proxy_stopped": "Capture Stopped",
     "replay_failed": "Replay failed",
     "replay_success": "Request replayed",
+    "source": {
+      "local": "Local",
+      "remote": "Remote Device"
+    },
     "security": {
       "fix_now": "Fix Now",
       "untrusted_desc": "HTTPS decryption will not work until you install the root certificate.",

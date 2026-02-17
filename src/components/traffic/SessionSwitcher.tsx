@@ -164,7 +164,7 @@ export function SessionSwitcher() {
           ) : (
             <History className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
           )}
-          <span className="truncate text-small font-medium tracking-tight tabular-nums">
+          <span className="truncate text-xs font-medium tracking-tight tabular-nums">
             {viewingSession ? formatDateTime(viewingSession.created_at) : "---"}
           </span>
         </div>
@@ -186,16 +186,16 @@ export function SessionSwitcher() {
               width: 260,
             }}
           >
-            <div className="px-3 py-2 text-caption font-bold text-muted-foreground tracking-wider uppercase border-b border-border/40 bg-muted/20">
+            <div className="px-3 py-2 text-xs font-bold text-muted-foreground tracking-wider uppercase border-b border-border/40 bg-muted/20">
               {t("session.history", { defaultValue: "History Records" })}
-              <span className="ml-2 py-0.5 px-1.5 rounded-full bg-border/40 text-caption font-mono">
+              <span className="ml-2 py-0.5 px-1.5 rounded-full bg-border/40 text-xs font-mono">
                 {dbSessions.length}
               </span>
             </div>
 
             <div className="max-h-48 overflow-y-auto">
               {loadingSessions ? (
-                <div className="px-4 py-3 text-center text-muted-foreground text-small">
+                <div className="px-4 py-3 text-center text-muted-foreground text-ui">
                   {t("common.loading", { defaultValue: "Loading..." })}
                 </div>
               ) : (
@@ -216,7 +216,7 @@ export function SessionSwitcher() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-small font-semibold tabular-nums ${isViewing ? "text-primary" : ""}`}
+                            className={`text-xs font-semibold tabular-nums ${isViewing ? "text-primary" : ""}`}
                           >
                             {formatDateTime(session.created_at)}
                           </span>
@@ -230,7 +230,7 @@ export function SessionSwitcher() {
                             <Check className="w-3 h-3 text-primary flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-caption text-muted-foreground mt-0.5 opacity-70">
+                        <div className="flex items-center gap-2 text-tiny text-muted-foreground mt-0.5 opacity-70">
                           <div className="flex items-center gap-1">
                             {session.flow_count > 0 ? session.flow_count : 0} flows
                           </div>

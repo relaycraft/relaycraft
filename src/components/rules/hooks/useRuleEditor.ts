@@ -59,39 +59,79 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       })) || [],
   );
 
-  // --- 3. Action State ---
+  // --- 3. Action State (Directly initialized from prop to prevent false dirty states) ---
+  const actions = rule?.actions || [];
 
   // Rewrite Body
-  const [rewriteTarget, setRewriteTarget] = useState<"request" | "response">("response");
-  const [rewriteType, setRewriteType] = useState<"replace" | "regex_replace" | "set" | "json">(
-    "set",
+  const rewriteBodyAction = actions.find((a) => a.type === "rewrite_body") as any;
+  const [rewriteTarget, setRewriteTarget] = useState<"request" | "response">(
+    rewriteBodyAction?.target || "response",
   );
-  const [rewriteContent, setRewriteContent] = useState("");
-  const [rewritePattern, setRewritePattern] = useState("");
-  const [rewriteReplacement, setRewriteReplacement] = useState("");
-  const [jsonModifications, setJsonModifications] = useState<JsonModification[]>([]);
-  const [rewriteStatusCode, setRewriteStatusCode] = useState<number | undefined>();
-  const [rewriteContentType, setRewriteContentType] = useState<string | undefined>();
+  const [rewriteType, setRewriteType] = useState<"replace" | "regex_replace" | "set" | "json">(
+    () => {
+      if (rewriteBodyAction?.set) return "set";
+      if (rewriteBodyAction?.replace) return "replace";
+      if (rewriteBodyAction?.regex_replace) return "regex_replace";
+      if (rewriteBodyAction?.json) return "json";
+      return "set";
+    },
+  );
+  const [rewriteContent, setRewriteContent] = useState(rewriteBodyAction?.set?.content || "");
+  const [rewritePattern, setRewritePattern] = useState(
+    rewriteBodyAction?.replace?.pattern || rewriteBodyAction?.regex_replace?.pattern || "",
+  );
+  const [rewriteReplacement, setRewriteReplacement] = useState(
+    rewriteBodyAction?.replace?.replacement || rewriteBodyAction?.regex_replace?.replacement || "",
+  );
+  const [jsonModifications, setJsonModifications] = useState<JsonModification[]>(
+    rewriteBodyAction?.json?.modifications || [],
+  );
+  const [rewriteStatusCode, setRewriteStatusCode] = useState<number | undefined>(
+    rewriteBodyAction?.statusCode ?? rewriteBodyAction?.set?.statusCode ?? undefined,
+  );
+  const [rewriteContentType, setRewriteContentType] = useState<string | undefined>(
+    rewriteBodyAction?.contentType ?? rewriteBodyAction?.set?.contentType ?? "",
+  );
 
   // Headers (Shared)
-  const [headersRequest, setHeadersRequest] = useState<HeaderOperation[]>([]);
-  const [headersResponse, setHeadersResponse] = useState<HeaderOperation[]>([]);
+  const [headersRequest, setHeadersRequest] = useState<HeaderOperation[]>(() => {
+    const list: HeaderOperation[] = [];
+    actions.forEach((a: any) => {
+      if (a.headers?.request) list.push(...a.headers.request);
+      if (a.type === "rewrite_header" && a.headers?.request) {
+        // Already added above if it has headers.request
+      }
+    });
+    return list;
+  });
+  const [headersResponse, setHeadersResponse] = useState<HeaderOperation[]>(() => {
+    const list: HeaderOperation[] = [];
+    actions.forEach((a: any) => {
+      if (a.headers?.response) list.push(...a.headers.response);
+    });
+    return list;
+  });
 
   // Map Local
-  const [mapLocalSource, setMapLocalSource] = useState<"file" | "manual">("file");
-  const [localPath, setLocalPath] = useState("");
-  const [mapLocalContent, setMapLocalContent] = useState("");
-  const [contentType, setContentType] = useState("");
-  const [mapLocalStatusCode, setMapLocalStatusCode] = useState(200);
+  const mapLocalAction = actions.find((a) => a.type === "map_local") as any;
+  const [mapLocalSource, setMapLocalSource] = useState<"file" | "manual">(
+    mapLocalAction?.source || "file",
+  );
+  const [localPath, setLocalPath] = useState(mapLocalAction?.localPath || "");
+  const [mapLocalContent, setMapLocalContent] = useState(mapLocalAction?.content || "");
+  const [contentType, setContentType] = useState(mapLocalAction?.contentType || "");
+  const [mapLocalStatusCode, setMapLocalStatusCode] = useState(mapLocalAction?.statusCode || 200);
 
   // Map Remote
-  const [targetUrl, setTargetUrl] = useState("");
-  const [preservePath, setPreservePath] = useState(false);
+  const mapRemoteAction = actions.find((a) => a.type === "map_remote") as any;
+  const [targetUrl, setTargetUrl] = useState(mapRemoteAction?.targetUrl || "");
+  const [preservePath, setPreservePath] = useState(mapRemoteAction?.preservePath);
 
   // Throttle
-  const [delayMs, setDelayMs] = useState(0);
-  const [packetLoss, setPacketLoss] = useState(0);
-  const [bandwidthKbps, setBandwidthKbps] = useState(0);
+  const throttleAction = actions.find((a) => a.type === "throttle") as any;
+  const [delayMs, setDelayMs] = useState(throttleAction?.delayMs || 0);
+  const [packetLoss, setPacketLoss] = useState(throttleAction?.packetLoss || 0);
+  const [bandwidthKbps, setBandwidthKbps] = useState(throttleAction?.bandwidthKbps || 0);
 
   // Helper to get current rule object (for AI & Save)
   const getCurrentRuleObject = useCallback((): Partial<Rule> => {

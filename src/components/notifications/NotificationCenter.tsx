@@ -112,7 +112,7 @@ export function NotificationCenter() {
                 </Tooltip>
                 <div>
                   <h2 className="font-bold text-sm">{t("notifications.title", "Notifications")}</h2>
-                  <p className="text-caption text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {t("notifications.count", { count: notifications.length })}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ export function NotificationCenter() {
                     <p className="text-ui font-semibold text-muted-foreground/50 tracking-tight">
                       {t("notifications.empty", "No notifications")}
                     </p>
-                    <p className="text-small mt-1 opacity-60">
+                    <p className="text-ui mt-1 opacity-60">
                       {t("notifications.all_processed", "You are all caught up")}
                     </p>
                   </div>

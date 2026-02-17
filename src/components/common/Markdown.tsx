@@ -42,7 +42,7 @@ export function Markdown({ content, className = "" }: MarkdownProps) {
             // Inline or short single-line code
             return (
               <code
-                className="bg-primary/10 px-1.5 py-0.5 rounded text-small font-mono text-primary font-bold mx-0.5"
+                className="bg-primary/10 px-1.5 py-0.5 rounded text-ui font-mono text-primary font-bold mx-0.5"
                 {...props}
               >
                 {children}
@@ -82,7 +82,7 @@ export function Markdown({ content, className = "" }: MarkdownProps) {
             <thead className="bg-muted/40 border-b border-border/30">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-1.5 font-bold uppercase text-caption tracking-wider opacity-60">
+            <th className="px-3 py-1.5 font-bold uppercase text-xs tracking-wider opacity-60">
               {children}
             </th>
           ),

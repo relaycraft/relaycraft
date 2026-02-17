@@ -87,6 +87,9 @@
     "status_code": "状态码"
   },
   "cert": {
+    "format": {
+      "label": "格式"
+    },
     "actions": {
       "install": "安装并信任证书",
       "regenerate": "重新生成根证书",
@@ -1021,7 +1024,7 @@
     },
     "source": {
       "local": "本机",
-      "remote": "远程"
+      "remote": "远程设备"
     },
     "start_hint": "点击右上角的开始监听按钮或使用快捷键开始捕获流量。",
     "start_proxy": "开始监听",

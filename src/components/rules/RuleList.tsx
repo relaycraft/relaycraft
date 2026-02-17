@@ -183,12 +183,13 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
 
               {/* Content */}
               <div
-                className="relative z-10 flex-1 min-w-0 mr-2.5 cursor-pointer group/content"
+                className="relative z-10 flex-1 min-w-0 mr-2.5 cursor-pointer group/content flex flex-col transition-all"
                 onClick={() => onEdit(rule)}
+                style={{ gap: "var(--density-rule-content-gap, 1px)" }}
               >
                 <div className="flex items-center gap-2 mb-0 min-h-[20px]">
                   <span
-                    className={`font-semibold text-xs truncate transition-colors tracking-tight ${
+                    className={`font-semibold text-ui truncate transition-colors tracking-tight ${
                       rule.execution.enabled
                         ? isSelected
                           ? "text-primary"
@@ -205,7 +206,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                           <p className="font-semibold text-red-400">
                             {t("rules.conflict.shadowed")}
                           </p>
-                          <p className="text-caption opacity-80 leading-tight">
+                          <p className="text-xs opacity-80 leading-tight">
                             {t("rules.conflict.shadowed_desc", {
                               name: allRules.find((r) => r.id === conflict.byRuleId)?.name,
                             })}
@@ -215,14 +216,14 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                     >
                       <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full border border-destructive/20 shadow-sm animate-pulse cursor-help pointer-events-auto">
                         <AlertTriangle className="w-2.5 h-2.5" />
-                        <span className="text-caption uppercase font-semibold leading-none">
+                        <span className="text-xs uppercase font-semibold leading-none">
                           {t("rules.conflict.overridden")}
                         </span>
                       </div>
                     </Tooltip>
                   )}
                   {!rule.execution.enabled && (
-                    <span className="text-caption uppercase font-semibold px-1.5 py-0.5 rounded-lg bg-muted text-muted-foreground/80 leading-none">
+                    <span className="text-tiny uppercase font-semibold px-1.5 py-0.5 rounded-lg bg-muted text-muted-foreground/80 leading-none">
                       {t("common.disabled")}
                     </span>
                   )}
@@ -236,8 +237,8 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                   </span>
                   {belowLabel(rule) && (
                     <>
-                      <span className="opacity-30 text-caption">•</span>
-                      <span className="truncate text-small text-muted-foreground/70">
+                      <span className="opacity-30 text-xs">•</span>
+                      <span className="truncate text-xs text-muted-foreground/70">
                         {belowLabel(rule)}
                       </span>
                     </>

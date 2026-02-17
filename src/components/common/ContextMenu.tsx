@@ -132,7 +132,7 @@ export function ContextMenu({ x, y, visible, items, onClose }: ContextMenuProps)
               )}
               <span className="flex-1">{item.label}</span>
               {item.shortcut && (
-                <span className="text-caption text-muted-foreground/50 font-medium ml-4 tracking-tight">
+                <span className="text-xs text-muted-foreground/50 font-medium ml-4 tracking-tight">
                   {item.shortcut}
                 </span>
               )}

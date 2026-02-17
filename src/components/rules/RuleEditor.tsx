@@ -302,7 +302,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
           <section className="space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-0.5 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
-              <span className="text-small font-semibold text-foreground/80 uppercase tracking-widest py-1">
+              <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest py-1">
                 {t("rule_editor.sections.action")}
               </span>
             </div>

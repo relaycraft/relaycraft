@@ -5,6 +5,8 @@ import { Logger } from "../lib/logger";
 import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
 import { useScriptStore } from "./scriptStore";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 interface ProxyStore {
   running: boolean; // Engine process is running
   active: boolean; // Traffic processing is active
@@ -47,6 +49,9 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     try {
       set({ error: null });
 
+      // Start the "timer" for minimum delay
+      const minDelay = sleep(500);
+
       // Get current status
       const status = await invoke<{
         running: boolean;
@@ -74,6 +79,9 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       // Store script names (not temp paths) for consistent comparison
       const scripts = useScriptStore.getState().scripts;
       const activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
+
+      // Ensure at least 500ms has passed
+      await minDelay;
 
       set({
         running: true,
@@ -116,11 +124,17 @@ export const useProxyStore = create<ProxyStore>((set) => ({
     try {
       set({ error: null });
 
+      // Start the "timer" for minimum delay
+      const minDelay = sleep(500);
+
       // Set traffic processing to inactive first (stops accepting new requests)
       await invoke("set_proxy_active", { active: false });
 
       // Final poll to capture any remaining data, then stop monitor
       await finalPollAndStop();
+
+      // Ensure at least 500ms has passed
+      await minDelay;
 
       set({ active: false, requestCount: 0 });
 
@@ -246,12 +260,17 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       }>("load_config");
       const isTrusted = await invoke<boolean>("check_cert_installed");
 
-      // Get active script names from scriptStore (not from backend temp paths)
-      // This ensures consistent comparison in ScriptManager
+      // Update active scripts only if necessary - avoid overwriting snapshots taken during start/restart
       const scripts = useScriptStore.getState().scripts;
-      const activeScriptNames = status.active
-        ? scripts.filter((s) => s.enabled).map((s) => s.name)
-        : [];
+      let activeScriptNames = currentState.activeScripts;
+
+      if (!status.active) {
+        activeScriptNames = [];
+      } else if (activeScriptNames.length === 0) {
+        // Initial load detection - if engine is running but we don't know what's active,
+        // assume currently enabled scripts are the ones
+        activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
+      }
 
       set({
         running: status.running,

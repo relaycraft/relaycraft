@@ -80,6 +80,9 @@ CREATE TABLE IF NOT EXISTS flow_indices (
     started_datetime TEXT NOT NULL,
     time REAL NOT NULL,
     size INTEGER NOT NULL,
+    client_ip TEXT,
+    app_name TEXT,
+    app_display_name TEXT,
 
     has_error INTEGER DEFAULT 0,
     has_request_body INTEGER DEFAULT 0,
@@ -213,79 +216,9 @@ class FlowDatabase:
         return self._local.conn
 
     def _init_db(self):
-        """Initialize database schema and run migrations"""
+        """Initialize database schema"""
         conn = self._get_conn()
         conn.executescript(SCHEMA)
-        conn.commit()
-
-        # Migration: Remove seq column if it exists (from older versions)
-        self._migrate_remove_seq_column()
-
-    def _migrate_remove_seq_column(self):
-        """Migration: Remove seq column from flow_indices table.
-
-        SQLite doesn't support DROP COLUMN in older versions,so we need to
-        recreate the table.
-        """
-        conn = self._get_conn()
-
-        # Check if seq column exists
-        cursor = conn.execute("PRAGMA table_info(flow_indices)")
-        columns = [row[1] for row in cursor.fetchall()]
-
-        if 'seq' not in columns:
-            return  # Already migrated
-
-        # Create new table without seq column
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS flow_indices_new (
-                id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-
-                method TEXT NOT NULL,
-                url TEXT NOT NULL,
-                host TEXT NOT NULL,
-                path TEXT NOT NULL,
-                status INTEGER NOT NULL,
-                content_type TEXT,
-                started_datetime TEXT NOT NULL,
-                time REAL NOT NULL,
-                size INTEGER NOT NULL,
-
-                has_error INTEGER DEFAULT 0,
-                has_request_body INTEGER DEFAULT 0,
-                has_response_body INTEGER DEFAULT 0,
-                is_websocket INTEGER DEFAULT 0,
-                websocket_frame_count INTEGER DEFAULT 0,
-                is_intercepted INTEGER DEFAULT 0,
-                hits TEXT,
-
-                msg_ts REAL NOT NULL,
-                created_at REAL DEFAULT (julianday('now')),
-
-                FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
-            )
-        """)
-
-        # Copy data (excluding seq column)
-        conn.execute("""
-            INSERT INTO flow_indices_new
-            SELECT id, session_id, method, url, host, path, status, content_type,
-                   started_datetime, time, size, has_error, has_request_body,
-                   has_response_body, is_websocket, websocket_frame_count,
-                   is_intercepted, hits, msg_ts, created_at
-            FROM flow_indices
-        """)
-
-        # Drop old table and rename new one
-        conn.execute("DROP TABLE flow_indices")
-        conn.execute("ALTER TABLE flow_indices_new RENAME TO flow_indices")
-
-        # Recreate indexes
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_indices_session_ts ON flow_indices(session_id, msg_ts DESC)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_indices_session_host ON flow_indices(session_id, host)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_indices_session_status ON flow_indices(session_id, status)")
-
         conn.commit()
 
     def _create_new_session(self) -> str:
@@ -584,11 +517,12 @@ class FlowDatabase:
                 conn.execute("""
                     INSERT OR REPLACE INTO flow_indices (
                         id, session_id, method, url, host, path, status,
-                        content_type, started_datetime, time, size,
+                        content_type, started_datetime, time, size, client_ip,
+                        app_name, app_display_name,
                         has_error, has_request_body, has_response_body,
                         is_websocket, websocket_frame_count, is_intercepted,
                         hits, msg_ts
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     index_data['id'],
                     index_data['session_id'],
@@ -601,6 +535,9 @@ class FlowDatabase:
                     index_data['started_datetime'],
                     index_data['time'],
                     index_data['size'],
+                    index_data['client_ip'],
+                    index_data.get('app_name', ''),
+                    index_data.get('app_display_name', ''),
                     index_data['has_error'],
                     index_data['has_request_body'],
                     index_data['has_response_body'],
@@ -673,6 +610,9 @@ class FlowDatabase:
             'started_datetime': flow_data.get('startedDateTime', ''),
             'time': flow_data.get('time', 0),
             'size': flow_data.get('size', 0),
+            'client_ip': rc.get('clientIp', '') or flow_data.get('clientIp', ''),
+            'app_name': rc.get('appName', '') or flow_data.get('appName', ''),
+            'app_display_name': rc.get('appDisplayName', '') or flow_data.get('appDisplayName', ''),
             'has_error': 1 if rc.get('error') else 0,
             'has_request_body': 1 if (req.get('postData') or {}).get('text') else 0,
             'has_response_body': 1 if (res.get('content') or {}).get('text') else 0,

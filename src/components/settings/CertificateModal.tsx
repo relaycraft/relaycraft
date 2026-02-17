@@ -29,6 +29,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
   const [localIp, setLocalIp] = useState<string>("127.0.0.1");
   const [proxyPort, setProxyPort] = useState<number>(9090);
   const [showQr, setShowQr] = useState(false);
+  const [certFormat, setCertFormat] = useState<"pem" | "crt">("pem");
   const isMacOS = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
 
   const loadCertContext = useCallback(async () => {
@@ -140,19 +141,19 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                     <TabsList className="bg-muted/30 p-0.5 border border-border/40 w-fit h-auto gap-0.5 rounded-lg">
                       <TabsTrigger
                         value="windows"
-                        className="px-4 py-1.5 rounded-md text-small font-medium transition-all"
+                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
                       >
                         {t("cert.manual.desktop.windows")}
                       </TabsTrigger>
                       <TabsTrigger
                         value="macos"
-                        className="px-4 py-1.5 rounded-md text-small font-medium transition-all"
+                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
                       >
                         {t("cert.manual.desktop.macos")}
                       </TabsTrigger>
                       <TabsTrigger
                         value="linux"
-                        className="px-4 py-1.5 rounded-md text-small font-medium transition-all"
+                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
                       >
                         {t("cert.manual.desktop.linux")}
                       </TabsTrigger>
@@ -172,7 +173,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                               <h4 className="text-xs font-bold text-amber-600">
                                 {t("cert.manual.guides.macos_sequoia_hint_title")}
                               </h4>
-                              <p className="text-caption text-muted-foreground leading-relaxed">
+                              <p className="text-xs text-muted-foreground leading-relaxed">
                                 <span
                                   // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
                                   dangerouslySetInnerHTML={{
@@ -187,11 +188,11 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                         <Stepper steps={macosSteps} />
 
                         <div className="pt-4 border-t border-border/40">
-                          <div className="text-caption font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                             {t("cert.manual.guides.terminal_hint")}
                           </div>
                           <div className="bg-zinc-950 rounded-lg p-3 group relative border border-white/5 ring-1 ring-white/5 shadow-sm">
-                            <div className="font-mono text-caption text-zinc-300 break-all pr-8 leading-relaxed">
+                            <div className="font-mono text-xs text-zinc-300 break-all pr-8 leading-relaxed">
                               sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k
                               /Library/Keychains/System.keychain "
                               {certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"
@@ -228,11 +229,11 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                             },
                           ].map((distro) => (
                             <div key={distro.id} className="space-y-1.5">
-                              <div className="text-caption font-bold text-muted-foreground uppercase px-1">
+                              <div className="text-xs font-bold text-muted-foreground uppercase px-1">
                                 {distro.label}
                               </div>
                               <div className="bg-zinc-950 rounded-lg p-3 group relative border border-white/5 shadow-sm">
-                                <div className="font-mono text-caption text-zinc-300 break-all pr-8 leading-relaxed">
+                                <div className="font-mono text-xs text-zinc-300 break-all pr-8 leading-relaxed">
                                   {distro.cmd.replace(
                                     "{{path}}",
                                     certPath || "~/relaycraft-ca-cert.pem",
@@ -266,15 +267,15 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                       {t("cert.manual.guides.mobile_step1")}
                     </h3>
                     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 relative overflow-hidden group">
-                      <p className="text-caption text-muted-foreground leading-relaxed mb-3 max-w-lg font-medium">
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-3 max-w-lg font-medium">
                         {t("cert.manual.guides.mobile_step1_desc")}
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10">
-                          <div className="text-caption font-bold text-muted-foreground mb-1 uppercase tracking-tight">
+                          <div className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-tight">
                             {t("cert.manual.guides.mobile_wifi_config")}
                           </div>
-                          <div className="font-mono text-caption flex items-center justify-between">
+                          <div className="font-mono text-xs flex items-center justify-between">
                             <span className="text-muted-foreground">
                               {t("cert.info.ip")}{" "}
                               <span className="select-all text-primary font-bold">{localIp}</span>
@@ -287,13 +288,13 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                         </div>
                         <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 flex items-center justify-between gap-2 transition-all hover:border-primary/30 group/linkbox">
                           <div className="flex-1 min-w-0">
-                            <div className="text-caption font-bold text-muted-foreground mb-1 uppercase tracking-tight">
+                            <div className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-tight">
                               {t("cert.manual.guides.mobile_browser_access")}
                             </div>
                             <a
                               href={`http://${localIp}:${proxyPort}/cert`}
                               target="_blank"
-                              className="font-mono text-caption text-primary font-bold flex items-center gap-2 hover:underline group/link"
+                              className="font-mono text-xs text-primary font-bold flex items-center gap-2 hover:underline group/link"
                             >
                               <span className="truncate">
                                 http://{localIp}:{proxyPort}/cert
@@ -327,15 +328,40 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                             <div className="mt-3 flex flex-col items-center gap-3 py-4 bg-muted/40 rounded-lg border border-border/40 shadow-inner">
                               <div className="p-2 bg-white rounded-lg shadow-sm border border-border/20">
                                 <QRCodeSVG
-                                  value={`http://${localIp}:${proxyPort}/cert`}
+                                  value={`http://${localIp}:${proxyPort}/cert?format=${certFormat}`}
                                   size={130}
                                   level="H"
                                   includeMargin={false}
                                 />
                               </div>
-                              <span className="text-caption font-bold text-muted-foreground/70 uppercase tracking-widest">
+                              <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">
                                 {t("cert.manual.guides.mobile_qr_code_hint")}
                               </span>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{t("cert.format.label", "Format")}:</span>
+                                <button
+                                  onClick={() => setCertFormat("pem")}
+                                  className={cn(
+                                    "px-2 py-0.5 rounded transition-colors",
+                                    certFormat === "pem"
+                                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                      : "bg-muted hover:bg-muted/80",
+                                  )}
+                                >
+                                  PEM
+                                </button>
+                                <button
+                                  onClick={() => setCertFormat("crt")}
+                                  className={cn(
+                                    "px-2 py-0.5 rounded transition-colors",
+                                    certFormat === "crt"
+                                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                      : "bg-muted hover:bg-muted/80",
+                                  )}
+                                >
+                                  CRT
+                                </button>
+                              </div>
                             </div>
                           </motion.div>
                         )}
@@ -343,7 +369,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
 
                       <div className="mt-3 flex items-start gap-2 px-1">
                         <div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" />
-                        <p className="text-caption text-muted-foreground italic leading-relaxed">
+                        <p className="text-xs text-muted-foreground italic leading-relaxed">
                           {t("cert.manual.guides.mobile_manual_transfer_tip")}
                         </p>
                       </div>
@@ -360,13 +386,13 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                       <TabsList className="bg-muted/20 p-0.5 border border-border/40 w-fit justify-start h-auto gap-0.5 rounded-lg mb-3">
                         <TabsTrigger
                           value="ios"
-                          className="px-4 py-1 rounded-md text-caption font-medium transition-all"
+                          className="px-4 py-1 rounded-md text-xs font-medium transition-all"
                         >
                           iOS / iPadOS
                         </TabsTrigger>
                         <TabsTrigger
                           value="android"
-                          className="px-4 py-1 rounded-md text-caption font-medium transition-all"
+                          className="px-4 py-1 rounded-md text-xs font-medium transition-all"
                         >
                           Android
                         </TabsTrigger>
@@ -385,16 +411,16 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                     <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
                       <div className="flex items-center gap-2 text-amber-600 mb-2">
                         <Info className="w-3.5 h-3.5" />
-                        <h4 className="text-small font-bold uppercase tracking-tight">
+                        <h4 className="text-ui font-bold uppercase tracking-tight">
                           {t("cert.manual.guides.mobile_troubleshooting_title")}
                         </h4>
                       </div>
                       <ul className="space-y-2">
-                        <li className="flex gap-2 items-start text-caption text-muted-foreground leading-relaxed">
+                        <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
                           <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
                           {t("cert.manual.guides.mobile_troubleshooting_ios_trust")}
                         </li>
-                        <li className="flex gap-2 items-start text-caption text-muted-foreground leading-relaxed">
+                        <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
                           <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
                           {t("cert.manual.guides.mobile_troubleshooting_app_pinning")}
                         </li>
@@ -422,7 +448,7 @@ function Stepper({ steps }: { steps: React.ReactNode[] }) {
           )}
 
           {/* Badge */}
-          <div className="absolute left-1 top-1 w-7 h-7 rounded-lg bg-muted text-foreground/70 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center text-caption font-black shadow-sm transition-all duration-300 ring-4 ring-background z-10 border border-border/10">
+          <div className="absolute left-1 top-1 w-7 h-7 rounded-lg bg-muted text-foreground/70 group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center text-xs font-black shadow-sm transition-all duration-300 ring-4 ring-background z-10 border border-border/10">
             {i + 1}
           </div>
 

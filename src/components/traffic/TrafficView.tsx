@@ -212,7 +212,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
   useEffect(() => {
     const maxId = filteredIndices.length;
     const digits = maxId.toString().length;
-    const newWidth = Math.max(40, digits * 10 + 4);
+    const newWidth = Math.max(32, digits * 10 + 4);
     if (Math.abs(newWidth - idColWidth) > 8) {
       // Only update if magnitude changes significantly
       setIdColWidth(newWidth);
@@ -296,7 +296,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
               <p className="text-xs font-bold text-amber-500 leading-tight">
                 {t("traffic.security.untrusted_title")}
               </p>
-              <p className="text-small text-amber-500/80 leading-tight mt-0.5">
+              <p className="text-ui text-amber-500/80 leading-tight mt-0.5">
                 {t("traffic.security.untrusted_desc")}
               </p>
             </div>
@@ -305,7 +305,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-small px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 font-bold"
+              className="h-7 text-ui px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 font-bold"
               onClick={() => {
                 useUIStore.getState().setSettingsTab("certificate");
                 setActiveTab("settings");
@@ -402,7 +402,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                     title={t("traffic.listening")}
                     description={
                       <div className="space-y-6">
-                        <div className="flex items-center justify-center gap-2 text-small text-muted-foreground mt-1">
+                        <div className="flex items-center justify-center gap-2 text-ui text-muted-foreground mt-1">
                           <span className="px-1.5 py-0.5 bg-muted rounded border border-border/50 font-mono">
                             127.0.0.1:9090
                           </span>
@@ -418,11 +418,9 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               <div className="p-1 bg-blue-500/10 rounded text-blue-500">
                                 <Terminal className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-small font-bold">
-                                {t("traffic.setup.system")}
-                              </span>
+                              <span className="text-ui font-bold">{t("traffic.setup.system")}</span>
                             </div>
-                            <p className="text-small text-muted-foreground leading-relaxed">
+                            <p className="text-ui text-muted-foreground leading-relaxed">
                               {t("traffic.setup.system_desc")}
                             </p>
                           </div>
@@ -431,11 +429,9 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               <div className="p-1 bg-purple-500/10 rounded text-purple-500">
                                 <QrCode className="w-3.5 h-3.5" />
                               </div>
-                              <span className="text-small font-bold">
-                                {t("traffic.setup.mobile")}
-                              </span>
+                              <span className="text-ui font-bold">{t("traffic.setup.mobile")}</span>
                             </div>
-                            <p className="text-small text-muted-foreground leading-relaxed">
+                            <p className="text-ui text-muted-foreground leading-relaxed">
                               {t("traffic.setup.mobile_desc")}
                             </p>
                           </div>
@@ -444,7 +440,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                         <div className="flex items-center justify-center gap-4 pt-2">
                           <button
                             onClick={() => setIsGuideOpen(true)}
-                            className="text-small text-primary hover:underline flex items-center gap-1"
+                            className="text-ui text-primary hover:underline flex items-center gap-1"
                           >
                             <Info className="w-3 h-3" />
                             {t("traffic.setup.guide")}
@@ -454,7 +450,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                               useUIStore.getState().setSettingsTab("certificate");
                               setActiveTab("settings");
                             }}
-                            className="text-small text-muted-foreground hover:text-foreground flex items-center gap-1"
+                            className="text-ui text-muted-foreground hover:text-foreground flex items-center gap-1"
                           >
                             <Lock className="w-3 h-3" />
                             {t("traffic.setup.cert")}
@@ -525,10 +521,10 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                             setShowJumpBubble(false);
                             if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
                           }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-small font-medium backdrop-blur-xl ring-1 ring-white/5"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-ui font-medium backdrop-blur-xl ring-1 ring-white/5"
                         >
                           <div className="flex items-center gap-1.5">
-                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-caption font-bold">
+                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
                               {newRequestsCount > 99 ? "99+" : newRequestsCount}
                             </div>
                             <span>{t("traffic.new_requests", "New Requests")}</span>

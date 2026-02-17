@@ -26,7 +26,7 @@ export function NotificationCategoryBadge({ category, className = "" }: Category
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-caption font-medium border ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border ${className}`}
       style={{
         backgroundColor: `color-mix(in srgb, ${config.color}, transparent 90%)`,
         color: config.color,

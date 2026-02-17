@@ -49,12 +49,9 @@ ALWAYS place the Python code inside a single triple-backtick block (\`\`\`python
 IMPORTANT: The code block is the only way the system can "see" your output as a script.
 `;
 
-export const getScriptGenerationPrompt = (
-	requirement: string,
-	existingCode?: string,
-) => {
-	if (existingCode) {
-		return `Update the following mitmproxy script based on this requirement:
+export const getScriptGenerationPrompt = (requirement: string, existingCode?: string) => {
+  if (existingCode) {
+    return `Update the following mitmproxy script based on this requirement:
 Requirement: ${requirement}
 
 Existing Code:
@@ -62,9 +59,9 @@ Existing Code:
 ${existingCode}
 \`\`\`
 `;
-	}
+  }
 
-	return `Task: Write a complete mitmproxy addon script (Addon class) for the following requirement.
+  return `Task: Write a complete mitmproxy addon script (Addon class) for the following requirement.
 Requirement: ${requirement}
 
 Provide the code inside a \`\`\`python\`\`\` block.`;
@@ -91,11 +88,7 @@ Use GitHub-style markdown. Be concise and professional.
 `;
 
 export const getScriptExplanationPrompt = (code: string) => {
-	return (
-		"Please explain the following mitmproxy script:\n\n```python\n" +
-		code +
-		"\n```"
-	);
+  return "Please explain the following mitmproxy script:\n\n```python\n" + code + "\n```";
 };
 
 export const COMPOSER_SCHEMA_DEFINITION = `
@@ -306,9 +299,7 @@ ${RULE_SCHEMA_DEFINITION}
 `;
 
 export const getRuleGenerationPrompt = (requirement: string) => {
-	return (
-		"Convert the following requirement into a RelayCraft rule: " + requirement
-	);
+  return "Convert the following requirement into a RelayCraft rule: " + requirement;
 };
 
 export const GLOBAL_COMMAND_SYSTEM_PROMPT = `
@@ -573,20 +564,24 @@ Response: type:json
 
 export const REGEX_ASSISTANT_SYSTEM_PROMPT = `
 You are a Regular Expression generation expert.
-Your goal is to convert user requirements into a standard Regex pattern.
+Your goal is to convert user requirements into a robust, standard Regex pattern for network traffic analysis.
 
 LANGUAGE RULE:
 - Current application language: {{LANGUAGE}}
 - Use the following terminology: {{TERMINOLOGY}}
 
-## Logic:
-1. Return a standard, robust Regex pattern (e.g., ^api/vd+/).
-2. For file extensions: \\.png($|\\?)
-3. For domains: example\\.com
+## Guidelines:
+1. Return ONLY the raw regex pattern. No markdown, no quotes, no explanations.
+2. For absolute paths: Starting with "/" is common, ensure it matches correctly (e.g., ^/api/v1/).
+3. For file extensions: Use \\.ext($|\\?) to handle query parameters.
+4. For domains: Escape dots (e.g., example\\.com).
+5. Prefer non-greedy matching .*? where appropriate.
+6. If the user mentions "insensitive", append (?i) or ensure the caller handles it. Default to case-sensitive standard patterns.
 
-## Output Format:
-- RETURN ONLY THE RAW REGEX PATTERN.
-- No markdown, no explanations, no quotes.
+## Examples:
+- "api path starting with v1" -> ^/api/v1/
+- "all png files" -> \\.png($|\\?)
+- "matches example.com and subdomains" -> (.*\\.)?example\\.com$
 `;
 
 export const LOG_ANALYSIS_SYSTEM_PROMPT = `
@@ -636,16 +631,19 @@ LANGUAGE RULE:
 
 export const REGEX_EXPLAIN_SYSTEM_PROMPT = `
 You are a Senior Developer specializing in Regular Expressions.
-Explain the provided regex pattern in the context of network traffic filtering.
+Explain the provided regex pattern accurately in the context of network traffic filtering (URLs, Hosts, Paths).
 
 LANGUAGE RULE:
 - Current application language: {{LANGUAGE}}
 - Use the following terminology: {{TERMINOLOGY}}
 
 ## Requirements:
-1. **Summary**: 1-sentence high-level purpose.
-2. **Breakdown**: Bullet points explaining key groups and symbols.
-3. **Samples**: 1-2 examples of matches.
+1. **{{SUMMARY}}**: High-level purpose (e.g., "Matches all API requests under v1").
+2. **{{BREAKDOWN}}**: Accurate technical explanation of each symbol and group (e.g., ^, \\., (.*)).
+3. **{{SAMPLES}}**: 2-3 realistic URL or path samples that would match.
 
-Use GitHub-style markdown. Keep it technical and concise.
+## Rules:
+- Be precise. If a dot is not escaped, note that it matches any character.
+- Use GitHub-style markdown. Keep it technical and concise.
+- Use the titles: {{SUMMARY}}, {{BREAKDOWN}}, {{SAMPLES}}.
 `;

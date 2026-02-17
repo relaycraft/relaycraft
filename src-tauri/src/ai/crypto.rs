@@ -22,10 +22,17 @@ use std::path::PathBuf;
 const MASK_KEY: u8 = 0x5A;
 
 fn get_secret_path(provider: &str) -> Result<PathBuf, Box<dyn Error>> {
-    let dir =
+    let data_dir =
         crate::config::get_data_dir().map_err(|e| format!("Failed to get data dir: {}", e))?;
-    let filename = format!("secrets_{}.dat", provider);
-    Ok(dir.join(filename))
+    let secrets_dir = data_dir.join("secrets");
+    
+    // Ensure secrets directory exists
+    if !secrets_dir.exists() {
+        std::fs::create_dir_all(&secrets_dir)?;
+    }
+    
+    let filename = format!("{}.dat", provider);
+    Ok(secrets_dir.join(filename))
 }
 
 fn mask_data(data: &str) -> Vec<u8> {

@@ -596,6 +596,9 @@ class TrafficMonitor:
                         "startedDateTime": idx.get("started_datetime", ""),
                         "time": idx.get("time", 0),
                         "size": idx.get("size", 0),
+                        "clientIp": idx.get("client_ip", ""),
+                        "appName": idx.get("app_name", ""),
+                        "appDisplayName": idx.get("app_display_name", ""),
                         "hasError": bool(idx.get("has_error")),
                         "hasRequestBody": bool(idx.get("has_request_body")),
                         "hasResponseBody": bool(idx.get("has_response_body")),
@@ -1333,21 +1336,28 @@ class TrafficMonitor:
                 )
 
         # Certificate serving
-        elif flow.request.path == "/cert":
+        # Supports: /cert (default PEM), /cert?format=pem, /cert?format=crt
+        elif flow.request.path == "/cert" or flow.request.path.startswith("/cert?"):
             try:
                 import os
                 confdir = os.environ.get("MITMPROXY_CONFDIR")
                 if confdir:
-                    cert_path_crt = os.path.join(confdir, "relaycraft-ca-cert.crt")
                     cert_path_pem = os.path.join(confdir, "relaycraft-ca-cert.pem")
+                    cert_path_crt = os.path.join(confdir, "relaycraft-ca-cert.crt")
 
-                    target_path = cert_path_crt if os.path.exists(cert_path_crt) else cert_path_pem
-                    filename = (
-                        "relaycraft-ca-cert.crt"
-                        if target_path == cert_path_crt
-                        else "relaycraft-ca-cert.pem"
-                    )
-                    content_type = "application/x-x509-ca-cert"
+                    # Check format query parameter
+                    query = flow.request.query
+                    format_param = query.get("format", "pem").lower()
+
+                    if format_param == "crt" and os.path.exists(cert_path_crt):
+                        target_path = cert_path_crt
+                        filename = "relaycraft-ca-cert.crt"
+                        content_type = "application/x-x509-ca-cert"
+                    else:
+                        # Default to PEM format (most compatible)
+                        target_path = cert_path_pem
+                        filename = "relaycraft-ca-cert.pem"
+                        content_type = "application/x-pem-file"
 
                     if os.path.exists(target_path):
                         with open(target_path, "rb") as f:

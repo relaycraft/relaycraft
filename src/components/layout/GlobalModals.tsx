@@ -4,10 +4,12 @@ import { useMemo } from "react";
 import { notify } from "../../lib/notify";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
+import { useUIStore } from "../../stores/uiStore";
 import { CommandCenter } from "../ai/CommandCenter";
 import { AlertDialog } from "../common/AlertDialog";
 import { ImportRuleModal } from "../rules/ImportRuleModal";
 import { SaveSessionModal } from "../session/SaveSessionModal";
+import { LogViewer } from "../traffic/LogViewer";
 import { BreakpointModal } from "./BreakpointModal";
 import { ExitConfirmModal } from "./ExitConfirmModal";
 
@@ -23,6 +25,8 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
     () => Array.from(interceptedFlowsMap.values()),
     [interceptedFlowsMap],
   );
+
+  const { logViewerOpen, setLogViewerOpen } = useUIStore();
 
   const handleResumeBreakpoint = async (flowId: string, modifications: any) => {
     try {
@@ -64,6 +68,7 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
           await exit(0);
         }}
       />
+      {logViewerOpen && <LogViewer onClose={() => setLogViewerOpen(false)} />}
     </>
   );
 }

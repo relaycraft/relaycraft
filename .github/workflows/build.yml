@@ -211,8 +211,9 @@ jobs:
             echo "🔍 Regenerating Tauri Updater Signatures (.sig)"
             # 2. Regenerate Tauri Updater Signatures (.sig)
             # The binaries have been modified by signtool, so we MUST re-sign for the updater.
-            npx tauri signer sign -w $EXE.FullName
-            npx tauri signer sign -w $MSI.FullName
+            # Use pnpm exec to skip the custom tauri script in package.json
+            pnpm exec tauri signer sign $EXE.FullName
+            pnpm exec tauri signer sign $MSI.FullName
 
             echo "✅ Windows signing and signature regeneration complete!"
           } else {

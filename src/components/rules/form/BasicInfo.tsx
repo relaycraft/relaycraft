@@ -36,7 +36,7 @@ interface BasicInfoProps {
   };
 }
 
-const LABEL_STYLE = "text-xs font-bold text-foreground/60 uppercase tracking-widest mb-1.5 block";
+const LABEL_STYLE = "text-xs font-bold text-foreground/60 uppercase tracking-widest mb-0.5 block";
 
 export function BasicInfo({
   name,
@@ -105,7 +105,7 @@ export function BasicInfo({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <label className={LABEL_STYLE}>{t("rule_editor.core.name")}</label>
           <div className="relative group/nameinput">
             <Input
@@ -141,7 +141,7 @@ export function BasicInfo({
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             <label className={LABEL_STYLE}>{t("rule_editor.core.group")}</label>
             <Select
               value={groupId}
@@ -259,7 +259,7 @@ export function BasicInfo({
           }`}
         >
           <Info className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-small font-medium leading-tight">
+          <span className="text-ui font-medium leading-tight">
             {ruleType === "block_request"
               ? t("rule_editor.core.hints.terminal")
               : ruleType === "map_local"

@@ -1,8 +1,17 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Create a custom tailwind-merge instance that recognizes our custom font-size classes
+const customTwMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": ["text-micro", "text-tiny", "text-ui"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return customTwMerge(clsx(inputs));
 }
 
 export function formatProtocol(protocol?: string): string {
@@ -30,11 +39,14 @@ export function getProtocolColor(protocol?: string): string {
  * Get text color class for HTTP status codes
  */
 export function getHttpStatusCodeClass(status: number | null): string {
-  if (status === 0) return "text-red-500/50 italic font-medium";
-  if (status === null) return "text-muted-foreground/60 font-bold";
-  if (status < 300) return "text-success";
-  if (status < 400) return "text-warning";
-  return "text-error";
+  if (status === 0 || status === null)
+    return "text-muted-foreground/60 bg-muted/5 border-border/20";
+  if (status < 200) return "text-muted-foreground bg-muted/10 border-border/30";
+  if (status < 300)
+    return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+  if (status < 400) return "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20";
+  if (status < 500) return "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20";
+  return "text-red-700 dark:text-red-400 bg-red-600/10 border-red-600/20";
 }
 
 /**
