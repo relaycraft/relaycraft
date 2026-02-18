@@ -36,6 +36,8 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
         body: JSON.stringify({ id: flowId, modifications }),
         cache: "no-store",
       });
+      // Remove from intercepted flows after successful resume
+      useTrafficStore.getState().updateInterceptedFlow(flowId, null);
     } catch (e) {
       console.error("Failed to resume breakpoint", e);
       notify.error(`Failed to resume breakpoint: ${e}`);

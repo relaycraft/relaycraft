@@ -11,6 +11,7 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
     icon?: LucideIcon;
+    isLoading?: boolean;
   };
   className?: string;
   titleClassName?: string;
@@ -110,7 +111,7 @@ export function EmptyState({
       <div className="max-w-md w-full animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-200">
         <h3
           className={cn(
-            "text-base font-bold tracking-tight mb-2",
+            "text-sm font-bold tracking-tight mb-2",
             isDestructive ? "text-destructive" : "text-foreground",
             titleClassName,
           )}
@@ -125,9 +126,10 @@ export function EmptyState({
         {action && (
           <Button
             onClick={action.onClick}
+            isLoading={action.isLoading}
             className="rounded-xl px-6 h-9 shadow-md shadow-primary/10 transition-all active:scale-95"
           >
-            {action.icon && <action.icon className="w-3.5 h-3.5 mr-2" />}
+            {action.icon && !action.isLoading && <action.icon className="w-3.5 h-3.5 mr-2" />}
             {action.label}
           </Button>
         )}

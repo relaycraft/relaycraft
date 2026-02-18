@@ -259,7 +259,7 @@ export function BasicInfo({
           }`}
         >
           <Info className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-ui font-medium leading-tight">
+          <span className="text-xs font-medium leading-tight">
             {ruleType === "block_request"
               ? t("rule_editor.core.hints.terminal")
               : ruleType === "map_local"

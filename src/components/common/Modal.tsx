@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { X } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
@@ -65,17 +66,17 @@ export function Modal({
     },
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 isolate">
           {/* Backdrop */}
           <motion.div
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="absolute inset-0 bg-black/25 backdrop-blur-[1px]"
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
             onClick={onClose}
           />
 
@@ -111,6 +112,7 @@ export function Modal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

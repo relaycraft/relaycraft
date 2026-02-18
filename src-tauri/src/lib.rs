@@ -95,6 +95,15 @@ pub fn run() {
                 ])
                 .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
                 .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
+                .format(|out, message, record| {
+                    out.finish(format_args!(
+                        "[{}] [{}] [{}] {}",
+                        chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+                        record.level(),
+                        record.target(),
+                        message
+                    ))
+                })
                 .build(),
         )
         .plugin(tauri_plugin_fs::init())

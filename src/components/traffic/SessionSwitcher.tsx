@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Eye, History, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Eraser, Eye, History, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import { useProxyStore } from "../../stores/proxyStore";
 import { type DbSession, useSessionStore } from "../../stores/sessionStore";
 import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
+import { Tooltip } from "../common/Tooltip";
 
 /**
  * Format bytes to human readable size
@@ -40,6 +41,7 @@ export function SessionSwitcher() {
     fetchDbSessions,
     switchDbSession,
     deleteDbSession,
+    deleteAllDbSessions,
   } = useSessionStore();
   const { active: isProxyActive } = useProxyStore();
 
@@ -89,9 +91,6 @@ export function SessionSwitcher() {
   const writingSession = isProxyActive ? dbSessions.find((s) => s.is_active === 1) : null;
   const viewingSession = dbSessions.find((s) => s.id === showSessionId);
   // Historical mode: viewing a session that is NOT the current writing session
-  // If there's no writing session, we're not in historical mode (just viewing old data)
-  // Historical mode: we are viewing a session that is NOT the current writing session,
-  // OR the proxy is not active at all (everything is history).
   const isHistoricalMode =
     !writingSession || (showSessionId && writingSession.id !== showSessionId);
 
@@ -123,9 +122,26 @@ export function SessionSwitcher() {
     });
   };
 
-  if (dbSessions.length <= 1) {
-    return null;
-  }
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    showConfirm({
+      title: t("session.clear_all_confirm", { defaultValue: "Clear All History?" }),
+      message: t("session.clear_all_msg", {
+        defaultValue: "This will delete all historical sessions. This action cannot be undone.",
+      }),
+      variant: "danger",
+      confirmLabel: t("common.clear", { defaultValue: "Clear" }),
+      onConfirm: async () => {
+        await deleteAllDbSessions();
+      },
+    });
+  };
+
+  // if (dbSessions.length <= 1) {
+  //   return null;
+  // }
 
   const toggleDropdown = () => {
     if (!isOpen && dropdownRef.current) {
@@ -141,37 +157,40 @@ export function SessionSwitcher() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <Button
-        variant="ghost"
-        size="xs"
-        onClick={toggleDropdown}
-        title={
+      <Tooltip
+        content={
           isHistoricalMode
             ? t("session.historical_mode", { defaultValue: "Viewing historical session" })
             : writingSession
               ? t("session.switch_hint", { defaultValue: "Switch session" })
               : t("common.loading", { defaultValue: "Loading..." })
         }
-        className={`h-7 px-2.5 gap-2 border border-border/40 bg-background/40 shadow-sm transition-all hover:bg-background/60 hover:border-border/60 ${
-          isHistoricalMode
-            ? "text-warning hover:text-warning/80 ring-1 ring-warning/20"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
-          {isHistoricalMode ? (
-            <Eye className="w-3.5 h-3.5 flex-shrink-0" />
-          ) : (
-            <History className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
-          )}
-          <span className="truncate text-xs font-medium tracking-tight tabular-nums">
-            {viewingSession ? formatDateTime(viewingSession.created_at) : "---"}
-          </span>
-        </div>
-        <ChevronDown
-          className={`w-3 h-3 opacity-40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-        />
-      </Button>
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={toggleDropdown}
+          className={`h-7 px-2.5 gap-2 border border-border/40 bg-background/40 shadow-sm transition-all hover:bg-background/60 hover:border-border/60 ${
+            isHistoricalMode
+              ? "text-warning hover:text-warning/80 ring-1 ring-warning/20"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            {isHistoricalMode ? (
+              <Eye className="w-3.5 h-3.5 flex-shrink-0" />
+            ) : (
+              <History className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
+            )}
+            <span className="truncate text-xs font-medium tracking-tight tabular-nums">
+              {viewingSession ? formatDateTime(viewingSession.created_at) : "---"}
+            </span>
+          </div>
+          <ChevronDown
+            className={`w-3 h-3 opacity-40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          />
+        </Button>
+      </Tooltip>
 
       {isOpen &&
         createPortal(
@@ -186,11 +205,28 @@ export function SessionSwitcher() {
               width: 260,
             }}
           >
-            <div className="px-3 py-2 text-xs font-bold text-muted-foreground tracking-wider uppercase border-b border-border/40 bg-muted/20">
-              {t("session.history", { defaultValue: "History Records" })}
-              <span className="ml-2 py-0.5 px-1.5 rounded-full bg-border/40 text-xs font-mono">
-                {dbSessions.length}
-              </span>
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20 border-l-2 border-transparent">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground tracking-tight">
+                <History className="w-3 h-3" />
+                {t("session.history", { defaultValue: "Session History" })}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {dbSessions.length > 1 && (
+                  <Tooltip content={t("session.clear_all", { defaultValue: "Clear All History" })}>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={handleClearAll}
+                      className="h-6 w-6 text-muted-foreground hover:text-error hover:bg-error/10 transition-all"
+                    >
+                      <Eraser className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                )}
+                <span className="py-0.5 px-1.5 rounded-full bg-border/40 text-[10px] font-mono text-muted-foreground">
+                  {dbSessions.length}
+                </span>
+              </div>
             </div>
 
             <div className="max-h-48 overflow-y-auto">
@@ -207,30 +243,32 @@ export function SessionSwitcher() {
                     <div
                       key={session.id}
                       onClick={() => handleSwitch(session.id)}
-                      className={`group flex items-center gap-3 px-3 py-2 cursor-pointer transition-all border-l-2 ${
+                      className={`group flex items-center gap-3 px-3 py-1.5 cursor-pointer transition-all border-l-2 ${
                         isViewing
-                          ? "bg-primary/5 border-primary text-foreground"
+                          ? "bg-primary/10 border-primary text-foreground"
                           : "border-transparent hover:bg-muted/40 hover:border-border/40"
                       }`}
                     >
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pl-1">
+                        {" "}
+                        {/* Extra padding to align content better */}
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-xs font-semibold tabular-nums ${isViewing ? "text-primary" : ""}`}
+                            className={`text-xs tabular-nums ${isViewing ? "text-primary font-medium" : "text-foreground/80"}`}
                           >
                             {formatDateTime(session.created_at)}
                           </span>
                           {isWriting && (
-                            <span className="flex h-2 w-2 relative">
+                            <span className="flex h-1.5 w-1.5 relative">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
                             </span>
                           )}
                           {isViewing && !isWriting && (
                             <Check className="w-3 h-3 text-primary flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-tiny text-muted-foreground mt-0.5 opacity-70">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5 opacity-50">
                           <div className="flex items-center gap-1">
                             {session.flow_count > 0 ? session.flow_count : 0} flows
                           </div>
@@ -245,7 +283,7 @@ export function SessionSwitcher() {
                           variant="ghost"
                           size="icon-xs"
                           onClick={(e) => handleDelete(e, session)}
-                          className="opacity-0 group-hover:opacity-100 hover:text-error h-5 w-5"
+                          className="opacity-0 group-hover:opacity-100 hover:text-error h-5 w-5 bg-background/50 backdrop-blur shadow-sm border border-border/20"
                         >
                           <Trash2 className="w-2.5 h-2.5" />
                         </Button>

@@ -24,15 +24,22 @@ def main():
         db = FlowDatabase(db_path, body_dir)
         print("   OK")
 
-        # Test default session
-        print("\n2. Checking default session...")
+        # Create a new session (frontend calls this on app start)
+        print("\n2. Creating new session...")
+        session_id = db.create_new_session_for_app_start()
+        assert session_id is not None, "Failed to create session"
+        assert session_id.startswith("s_"), f"Wrong session format: {session_id}"
+        print(f"   OK - {session_id}")
+
+        # Test active session
+        print("\n3. Checking active session...")
         session = db.get_active_session()
         assert session is not None, "No active session"
-        assert session["id"].startswith("s_"), f"Wrong session format: {session['id']}"
+        assert session["id"] == session_id, f"Wrong active session: {session['id']}"
         print(f"   OK - {session['id']}: {session['name']}")
 
         # Test storing a flow
-        print("\n3. Storing test flow...")
+        print("\n4. Storing test flow...")
         test_flow = {
             'id': 'test-flow-001',
             'seq': 1,

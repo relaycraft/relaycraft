@@ -1,12 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   ExternalLink,
   Globe,
   Info,
   Monitor,
-  QrCode,
   ShieldCheck,
   Smartphone,
   X,
@@ -14,7 +13,6 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "../../lib/utils";
 import { CopyButton } from "../common/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 
@@ -28,8 +26,6 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
   const [certPath, setCertPath] = useState<string | null>(null);
   const [localIp, setLocalIp] = useState<string>("127.0.0.1");
   const [proxyPort, setProxyPort] = useState<number>(9090);
-  const [showQr, setShowQr] = useState(false);
-  const [certFormat, setCertFormat] = useState<"pem" | "crt">("pem");
   const isMacOS = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
 
   const loadCertContext = useCallback(async () => {
@@ -286,86 +282,32 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                             </span>
                           </div>
                         </div>
-                        <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 flex items-center justify-between gap-2 transition-all hover:border-primary/30 group/linkbox">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-tight">
-                              {t("cert.manual.guides.mobile_browser_access")}
-                            </div>
+                        <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 hover:border-primary/30 transition-colors">
+                          <div className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-tight">
+                            {t("cert.manual.guides.mobile_browser_access")}
+                          </div>
+                          <div className="flex items-center gap-3">
                             <a
-                              href={`http://${localIp}:${proxyPort}/cert`}
+                              href="http://relay.guide"
                               target="_blank"
-                              className="font-mono text-xs text-primary font-bold flex items-center gap-2 hover:underline group/link"
+                              className="flex-1 font-mono text-xs text-primary font-bold hover:underline flex items-center gap-1.5 group/link min-w-0"
+                              rel="noopener"
                             >
-                              <span className="truncate">
-                                http://{localIp}:{proxyPort}/cert
-                              </span>
+                              <span className="truncate">http://relay.guide</span>
                               <ExternalLink className="w-3 h-3 shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                             </a>
+                            <div className="flex-shrink-0 p-1 bg-white rounded-lg border border-border/20 shadow-sm">
+                              <QRCodeSVG
+                                value="http://relay.guide"
+                                size={72}
+                                level="M"
+                                bgColor="#ffffff"
+                                fgColor="#0b0c0f"
+                              />
+                            </div>
                           </div>
-                          <button
-                            onClick={() => setShowQr(!showQr)}
-                            className={cn(
-                              "p-1.5 rounded-md border transition-all shrink-0",
-                              showQr
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground",
-                            )}
-                            title={t("cert.manual.guides.mobile_qr_code_hint")}
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                          </button>
                         </div>
                       </div>
-
-                      <AnimatePresence>
-                        {showQr && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-3 flex flex-col items-center gap-3 py-4 bg-muted/40 rounded-lg border border-border/40 shadow-inner">
-                              <div className="p-2 bg-white rounded-lg shadow-sm border border-border/20">
-                                <QRCodeSVG
-                                  value={`http://${localIp}:${proxyPort}/cert?format=${certFormat}`}
-                                  size={130}
-                                  level="H"
-                                  includeMargin={false}
-                                />
-                              </div>
-                              <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">
-                                {t("cert.manual.guides.mobile_qr_code_hint")}
-                              </span>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>{t("cert.format.label", "Format")}:</span>
-                                <button
-                                  onClick={() => setCertFormat("pem")}
-                                  className={cn(
-                                    "px-2 py-0.5 rounded transition-colors",
-                                    certFormat === "pem"
-                                      ? "bg-primary/10 text-primary hover:bg-primary/20"
-                                      : "bg-muted hover:bg-muted/80",
-                                  )}
-                                >
-                                  PEM
-                                </button>
-                                <button
-                                  onClick={() => setCertFormat("crt")}
-                                  className={cn(
-                                    "px-2 py-0.5 rounded transition-colors",
-                                    certFormat === "crt"
-                                      ? "bg-primary/10 text-primary hover:bg-primary/20"
-                                      : "bg-muted hover:bg-muted/80",
-                                  )}
-                                >
-                                  CRT
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
 
                       <div className="mt-3 flex items-start gap-2 px-1">
                         <div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" />

@@ -1,6 +1,8 @@
+import { emit } from "@tauri-apps/api/event";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { initPlugins } from "../plugins/pluginLoader";
 import { useAIStore } from "../stores/aiStore";
 import { usePluginStore } from "../stores/pluginStore";
@@ -16,11 +18,17 @@ interface UseAppInitProps {
 }
 
 export function useAppInit({ setShowExitModal }: UseAppInitProps) {
-  const { config, loadConfig } = useSettingsStore();
-  const { loadSettings: loadAISettings } = useAIStore();
-  const { loadRules } = useRuleStore();
-  const { fetchScripts } = useScriptStore();
-  const { checkStatus, startProxy, checkCertTrust } = useProxyStore();
+  const config = useSettingsStore((state) => state.config);
+  const loadConfig = useSettingsStore((state) => state.loadConfig);
+  const loadAISettings = useAIStore((state) => state.loadSettings);
+  const loadRules = useRuleStore((state) => state.loadRules);
+  const fetchScripts = useScriptStore((state) => state.fetchScripts);
+  const checkStatus = useProxyStore((state) => state.checkStatus);
+  const startProxy = useProxyStore((state) => state.startProxy);
+  const checkCertTrust = useProxyStore((state) => state.checkCertTrust);
+  const { t, i18n } = useTranslation();
+
+  const initRef = useRef(false);
 
   // Apply display density to document root
   useEffect(() => {
@@ -38,7 +46,34 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
 
   // Initial Data Load - Optimized for parallel execution
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
     const init = async () => {
+      console.log("[init] Starting initialization...", {
+        language: i18n.language,
+        isInitialized: i18n.isInitialized,
+      });
+
+      // Wait for i18n to be ready to avoid showing raw keys
+      if (!i18n.isInitialized) {
+        console.log("[init] i18n not initialized, waiting...");
+        await new Promise((resolve) => {
+          const check = () => {
+            if (i18n.isInitialized) resolve(true);
+            else setTimeout(check, 50);
+          };
+          check();
+        });
+        console.log("[init] i18n initialized now", { language: i18n.language });
+        console.log("[init] i18n initialized now", { language: i18n.language });
+      }
+
+      // Critical path - must complete first
+      const osStatus = t("init.status_os");
+      console.log("[init] OS Status string:", osStatus);
+      await emit("init-status", osStatus);
+
       // Check OS type first and apply class to HTML
       try {
         const osType = await type();
@@ -55,22 +90,29 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         useUIStore.getState().setOsType(isMac);
       }
 
+      console.log("[init] Loading config...");
+      await emit("init-status", t("init.status_config"));
       // Apply language class
       const currentLang = useSettingsStore.getState().config.language || "en";
+      console.log("[init] Current persistent language:", currentLang);
+
       if (currentLang.startsWith("zh")) {
         document.documentElement.classList.add("lang-zh");
       } else {
         document.documentElement.classList.remove("lang-zh");
       }
 
-      // Critical path - must complete first
       await loadConfig();
 
-      // Parallel non-dependent operations (50-70% faster than sequential)
+      console.log("[init] Loading data stores...");
+      await emit("init-status", t("init.status_data"));
+      // Sequential fetch to ensure script state is ready for status check
+      await fetchScripts();
+
+      // Parallel non-dependent operations
       await Promise.all([
         loadAISettings(),
         loadRules(),
-        fetchScripts(),
         checkStatus(),
         checkCertTrust(),
         useThemeStore.getState().fetchThemes(),
@@ -81,13 +123,21 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       const currentConfig = useSettingsStore.getState().config;
       const isRunning = useProxyStore.getState().running;
       if (currentConfig.auto_start_proxy && !isRunning) {
+        console.log("[init] Auto-starting proxy...");
+        await emit("init-status", t("init.status_proxy"));
         startProxy().catch((err) => console.error("Failed to auto-start proxy:", err));
       }
 
-      // Show window after initialization is complete to avoid white screen
+      console.log("[init] Initialization complete");
+      await emit("init-status", t("init.status_complete"));
+
+      // Show main window immediately when ready
       setTimeout(async () => {
         const mainWin = getCurrentWindow();
+
+        // Parallelize fetching windows and showing main
         await mainWin.show();
+        await mainWin.setFocus();
 
         // Find and close the splashscreen window
         const allWindows = await getAllWindows();
@@ -95,7 +145,7 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         if (splashWin) {
           await splashWin.close();
         }
-      }, 2000);
+      }, 10);
     };
     init();
   }, [
@@ -106,6 +156,9 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     loadConfig,
     loadRules,
     startProxy,
+    t,
+    i18n.language,
+    i18n.isInitialized,
   ]);
 
   // Deferred Plugin Loading - Don't block initial render
@@ -152,8 +205,9 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
   // Proxy Status Heartbeat
   useEffect(() => {
     const heartbeat = setInterval(() => {
-      if (useProxyStore.getState().running) {
-        checkStatus();
+      const { running, checkStatus: checkProxyStatus } = useProxyStore.getState();
+      if (running) {
+        checkProxyStatus();
       }
     }, 5000);
 
@@ -166,5 +220,5 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       window.removeEventListener("focus", handleFocus);
       clearInterval(heartbeat);
     };
-  }, [checkStatus, checkCertTrust]);
+  }, [checkCertTrust]);
 }

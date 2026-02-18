@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   ChevronDown,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { notify } from "../../lib/notify";
+import { getUniqueName } from "../../lib/utils";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useScriptStore } from "../../stores/scriptStore";
 import { useUIStore } from "../../stores/uiStore";
@@ -66,7 +69,9 @@ export function ScriptManager() {
 
   const handleCreate = () => {
     const defaultTemplate = `"""\nAddon Script for RelayCraft\n"""\nfrom mitmproxy import http, ctx\n\nclass Addon:\n    def request(self, flow: http.HTTPFlow):\n        # TODO: Add your logic\n        pass\n\naddons = [Addon()]\n`;
-    setDraftScript({ name: "Untitled Script.py", content: defaultTemplate });
+    const existingNames = scripts.map((s) => s.name);
+    const uniqueName = getUniqueName("Untitled Script.py", existingNames);
+    setDraftScript({ name: uniqueName, content: defaultTemplate });
   };
 
   // Calculate if restart is needed based on:
@@ -122,6 +127,12 @@ export function ScriptManager() {
     let targetName = editName.trim();
     if (!targetName.endsWith(".py")) targetName += ".py";
 
+    if (targetName !== editingScriptId && scripts.some((s) => s.name === targetName)) {
+      notify.error(t("scripts.name_exists"));
+      setEditingScriptId(null);
+      return;
+    }
+
     try {
       await renameScript(editingScriptId, targetName);
     } catch (error) {
@@ -159,27 +170,54 @@ export function ScriptManager() {
           </p>
         </div>
 
-        {/* Restart Hint Banner - Moved to top for better visibility */}
-        {needsRestart && (
-          <div className="px-4 py-3 bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-600 text-xs shadow-inner animate-in slide-in-from-top-2 duration-300">
-            <div className="flex gap-2 items-start mb-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-600" />
-              <div className="flex-1 font-medium">{t("scripts.restart_hint")}</div>
-            </div>
-            <button
-              onClick={handleRestart}
-              disabled={restarting}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-700 rounded transition-colors disabled:opacity-50 font-medium"
+        {/* Premium Compact Restart Hint Banner */}
+        <AnimatePresence>
+          {needsRestart && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="overflow-hidden"
             >
-              {restarting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
-              )}
-              {t("scripts.restart_btn")}
-            </button>
-          </div>
-        )}
+              <div className="px-3 pt-3">
+                <div className="relative group p-3 rounded-xl border border-warning/15 bg-warning/5 backdrop-blur-xl overflow-hidden shadow-md shadow-warning/5">
+                  {/* Background glow decoration */}
+                  <div className="absolute -top-8 -right-8 w-16 h-16 bg-warning/10 rounded-full blur-xl group-hover:bg-warning/15 transition-colors" />
+
+                  <div className="relative flex flex-col gap-2.5">
+                    <div className="flex gap-2.5 items-start">
+                      <div className="mt-0.5 p-1 rounded-lg bg-warning/10 text-warning shadow-sm ring-1 ring-warning/20">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xs font-black text-warning uppercase tracking-widest leading-none mb-1">
+                          {t("common.pending_restart")}
+                        </h3>
+                        <p className="text-micro text-warning/80 leading-tight font-medium">
+                          {t("scripts.restart_hint")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleRestart}
+                      disabled={restarting}
+                      className="group-inner relative w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-warning text-warning-foreground rounded-lg transition-all hover:bg-warning/90 hover:scale-[1.01] active:scale-95 disabled:opacity-50 font-black text-xs uppercase tracking-widest shadow-sm shadow-warning/10"
+                    >
+                      {restarting ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3 h-3" />
+                      )}
+                      {restarting ? t("common.restarting") : t("scripts.restart_btn")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1 pt-2">
           {draftScript && (
@@ -253,14 +291,18 @@ export function ScriptManager() {
                         }`}
                       />
                       {isPending && (
-                        <div
-                          className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-500 border border-background"
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-yellow-500 border-2 border-background shadow-[0_0_8px_rgba(234,179,8,0.5)] z-10"
                           title={
                             isContentModified
                               ? t("scripts.content_modified")
                               : t("common.pending_restart")
                           }
-                        />
+                        >
+                          <span className="absolute inset-0 rounded-full bg-yellow-500 animate-ping opacity-40" />
+                        </motion.div>
                       )}
                     </div>
                   );

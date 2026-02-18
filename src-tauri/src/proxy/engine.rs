@@ -584,7 +584,7 @@ impl MitmproxyEngine {
                             // Process exited
                             if !inner.is_stopping.load(Ordering::SeqCst) {
                                 let msg = format!(
-                                    "CRASH: Proxy engine (PID {}) exited unexpectedly with status: {}. Check engine.log for details.",
+                                    "Proxy engine (PID {}) exited unexpectedly with status: {}. Check engine.log for details.",
                                     child.id(),
                                     status
                                 );

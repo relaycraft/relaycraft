@@ -1,11 +1,10 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { FileDown, FileUp, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "sonner";
-import { CommandCenter } from "./components/ai/CommandCenter";
-// UI Components
+import "./i18n";
 import { Button } from "./components/common/Button";
 import { Input } from "./components/common/Input";
 import { Tooltip } from "./components/common/Tooltip";
@@ -30,6 +29,7 @@ import { useAppShortcuts } from "./hooks/useAppShortcuts";
 import { useGlobalScrollbar } from "./hooks/useGlobalScrollbar";
 // Libs
 import { notify } from "./lib/notify";
+import { getUniqueName } from "./lib/utils";
 import { usePluginPageStore } from "./stores/pluginPageStore";
 import { useProxyStore } from "./stores/proxyStore";
 import { useRuleStore } from "./stores/ruleStore";
@@ -41,7 +41,126 @@ import { useUIStore } from "./stores/uiStore";
 
 // Styles
 import "./plugins/api";
-import "./i18n";
+
+// Subtle, drifting color blobs for premium aesthetics
+const VibrancyBackground = () => (
+  <div className="bg-vibrancy-container" aria-hidden="true">
+    <div
+      className="vibrancy-blob bg-primary/20 -top-[10%] -left-[10%] animate-vibrancy-drift"
+      style={{ animationDuration: "45s" }}
+    />
+    <div
+      className="vibrancy-blob bg-purple-500/10 top-[20%] -right-[5%] animate-vibrancy-drift"
+      style={{ animationDuration: "60s", animationDelay: "-10s" }}
+    />
+    <div
+      className="vibrancy-blob bg-blue-400/10 -bottom-[10%] left-[15%] animate-vibrancy-drift"
+      style={{ animationDuration: "50s", animationDelay: "-20s" }}
+    />
+    {/* Noise Texture Overlay */}
+    <div
+      className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
+      style={{ backgroundImage: 'url("/noise.svg")' }}
+    />
+  </div>
+);
+
+/**
+ * Isolated component for traffic header actions to prevent re-rendering the whole App
+ * when session state changes (e.g. during polling).
+ */
+const TrafficActionButtons = () => {
+  const { t } = useTranslation();
+  const active = useProxyStore((state) => state.active);
+  const dbSessions = useSessionStore((state) => state.dbSessions);
+  const showSessionId = useSessionStore((state) => state.showSessionId);
+
+  const isHistoricalSession = useMemo(() => {
+    const activeSession = dbSessions.find((s) => s.is_active === 1);
+    if (!active) return true;
+    return !!(activeSession && showSessionId && activeSession.id !== showSessionId);
+  }, [active, dbSessions, showSessionId]);
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Session Persistence Group */}
+      <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
+        <div className="flex items-center gap-0.5 px-0.5">
+          <Tooltip content={t("common.save")} side="bottom">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => useUIStore.getState().setSaveSessionModalOpen(true)}
+              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+            >
+              <Save className="w-3.5 h-3.5" />
+            </Button>
+          </Tooltip>
+          <Tooltip content={t("common.open")} side="bottom">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => useSessionStore.getState().loadSession()}
+              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+            </Button>
+          </Tooltip>
+        </div>
+
+        <div className="w-px h-3.5 bg-border/40 mx-1" />
+
+        <div className="flex items-center gap-0.5 px-0.5">
+          <Tooltip content={t("common.export_har")} side="bottom">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => useSessionStore.getState().exportHar()}
+              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+            >
+              <FileUp className="w-3.5 h-3.5" />
+            </Button>
+          </Tooltip>
+          {!isHistoricalSession && (
+            <Tooltip content={t("common.import_har_hint")} side="bottom">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => useSessionStore.getState().importHar()}
+                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+              </Button>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+
+      <div className="w-px h-4 bg-border/40 mx-0.5" />
+
+      {/* State Actions */}
+      {!isHistoricalSession && (
+        <Tooltip content={t("common.clear")} side="bottom">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => useTrafficStore.getState().clearFlows()}
+            className="h-7 w-7 text-muted-foreground hover:text-error hover:bg-error/10 rounded-md border border-border/20 shadow-sm"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </Tooltip>
+      )}
+
+      <div className="w-px h-4 bg-border/40 mx-0.5" />
+
+      {/* Session Switcher (History) */}
+      <div className="flex items-center gap-1.5 px-0.5">
+        <SessionSwitcher />
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const { t } = useTranslation();
@@ -59,24 +178,8 @@ function App() {
   const { active, startProxy, stopProxy } = useProxyStore();
 
   // Header Logic State
-  const { setImportModalOpen, activeTab } = useUIStore();
+  const activeTab = useUIStore((state) => state.activeTab);
   const pluginPages = usePluginPageStore((state) => state.pages);
-
-  // Check if current viewing session is historical (not the one currently being written)
-  // A session is historical if:
-  // 1. Proxy is running and viewing a different session than the active one, OR
-  // 2. Proxy is not running (all sessions are historical in this case)
-  const isHistoricalSession = useSessionStore((state) => {
-    const activeSession = state.dbSessions.find((s) => s.is_active === 1);
-
-    // If proxy is not running, all sessions are historical
-    if (!active) {
-      return true;
-    }
-
-    // If proxy is running, check if viewing a different session
-    return !!(activeSession && state.showSessionId && activeSession.id !== state.showSessionId);
-  });
 
   const handleToggleProxy = async () => {
     if (loading || toggleLock.current) return;
@@ -132,34 +235,11 @@ function App() {
           notify.error(result.error || "Export Failed", t("common.error"));
         }
       }
-    } catch (err) {
-      console.error("Failed to export rules:", err);
-      notify.error(t("traffic.proxy_error", { error: String(err) }), t("common.error"));
+    } catch (error) {
+      console.error("Error exporting rules:", error);
+      notify.error(String(error), t("common.error"));
     }
   };
-
-  // Subtle, drifting color blobs for premium aesthetics
-  const VibrancyBackground = () => (
-    <div className="bg-vibrancy-container">
-      <div
-        className="vibrancy-blob bg-primary/20 -top-[10%] -left-[10%] animate-vibrancy-drift"
-        style={{ animationDuration: "45s" }}
-      />
-      <div
-        className="vibrancy-blob bg-purple-500/10 top-[20%] -right-[5%] animate-vibrancy-drift"
-        style={{ animationDuration: "60s", animationDelay: "-10s" }}
-      />
-      <div
-        className="vibrancy-blob bg-blue-400/10 -bottom-[10%] left-[15%] animate-vibrancy-drift"
-        style={{ animationDuration: "50s", animationDelay: "-20s" }}
-      />
-      {/* Noise Texture Overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-        style={{ backgroundImage: 'url("/noise.svg")' }}
-      />
-    </div>
-  );
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden font-sans">
@@ -180,7 +260,6 @@ function App() {
       />
 
       <NotificationCenter />
-      <CommandCenter />
       <TitleBar running={active} loading={loading} onToggle={handleToggleProxy} />
 
       <div className="flex-1 flex pt-10 overflow-hidden relative">
@@ -221,85 +300,7 @@ function App() {
                   </div>
 
                   {/* Traffic Actions */}
-                  {activeTab === "traffic" && (
-                    <div className="flex items-center gap-2">
-                      {/* Session Persistence Group */}
-                      <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
-                        <div className="flex items-center gap-0.5 px-0.5">
-                          <Tooltip content={t("common.save")} side="bottom">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() => useUIStore.getState().setSaveSessionModalOpen(true)}
-                              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                            >
-                              <Save className="w-3.5 h-3.5" />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content={t("common.open")} side="bottom">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() => useSessionStore.getState().loadSession()}
-                              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                            >
-                              <FolderOpen className="w-3.5 h-3.5" />
-                            </Button>
-                          </Tooltip>
-                        </div>
-
-                        <div className="w-px h-3.5 bg-border/40 mx-1" />
-
-                        <div className="flex items-center gap-0.5 px-0.5">
-                          <Tooltip content={t("common.export_har")} side="bottom">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() => useSessionStore.getState().exportHar()}
-                              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                            >
-                              <FileUp className="w-3.5 h-3.5" />
-                            </Button>
-                          </Tooltip>
-                          {!isHistoricalSession && (
-                            <Tooltip content={t("common.import_har_hint")} side="bottom">
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => useSessionStore.getState().importHar()}
-                                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                              >
-                                <FileDown className="w-3.5 h-3.5" />
-                              </Button>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="w-px h-4 bg-border/40 mx-0.5" />
-
-                      {/* State Actions */}
-                      {!isHistoricalSession && (
-                        <Tooltip content={t("common.clear")} side="bottom">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => useTrafficStore.getState().clearFlows()}
-                            className="h-7 w-7 text-muted-foreground hover:text-error hover:bg-error/10 rounded-md border border-border/20 shadow-sm"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </Tooltip>
-                      )}
-
-                      <div className="w-px h-4 bg-border/40 mx-0.5" />
-
-                      {/* Session Switcher (History) */}
-                      <div className="flex items-center gap-1.5 px-0.5">
-                        <SessionSwitcher />
-                      </div>
-                    </div>
-                  )}
+                  {activeTab === "traffic" && <TrafficActionButtons />}
 
                   {/* Rule Management Actions in Title Area */}
                   {activeTab === "rules" && (
@@ -358,7 +359,7 @@ function App() {
                           <Button
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => setImportModalOpen(true)}
+                            onClick={() => useUIStore.getState().setImportModalOpen(true)}
                             className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
                           >
                             <FileDown className="w-3.5 h-3.5" />
@@ -375,9 +376,14 @@ function App() {
                         size="sm"
                         onClick={() => {
                           const defaultTemplate = `"""\nAddon Script for RelayCraft\n"""\nfrom mitmproxy import http, ctx\n\nclass Addon:\n    def request(self, flow: http.HTTPFlow):\n        # TODO: Add your logic\n        pass\n\naddons = [Addon()]\n`;
+                          const existingNames = useScriptStore
+                            .getState()
+                            .scripts.map((s) => s.name);
+                          const uniqueName = getUniqueName("Untitled Script.py", existingNames);
+
                           useScriptStore.getState().selectScript(null);
                           useScriptStore.getState().setDraftScript({
-                            name: "Untitled Script.py",
+                            name: uniqueName,
                             content: defaultTemplate,
                           });
 
@@ -395,7 +401,9 @@ function App() {
                 {/* Tab Content - Wrapped in Suspense for lazy loading */}
                 <div className="flex-1 overflow-hidden relative">
                   <Suspense fallback={null}>
-                    {activeTab === "traffic" && <TrafficView onToggleProxy={handleToggleProxy} />}
+                    {activeTab === "traffic" && (
+                      <TrafficView onToggleProxy={handleToggleProxy} loading={loading} />
+                    )}
 
                     {activeTab === "rules" && <RuleView />}
 

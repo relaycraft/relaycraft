@@ -17,6 +17,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import { Logger } from "../../lib/logger";
+import { useProxyStore } from "../../stores/proxyStore";
 import { Button } from "../common/Button";
 import { EmptyState } from "../common/EmptyState";
 import { Tooltip } from "../common/Tooltip";
@@ -38,7 +39,7 @@ const LogLine = memo(
   }) => {
     return (
       <div className="group whitespace-pre-wrap break-all hover:bg-primary/5 px-2 py-0.5 rounded transition-colors flex gap-4 border-l-2 border-transparent hover:border-primary/20">
-        <span className="text-tiny text-muted-foreground/30 select-none w-10 text-right shrink-0 font-mono mt-0.5">
+        <span className="text-tiny text-muted-foreground/50 select-none w-10 text-right shrink-0 font-mono mt-0.5">
           {index + 1}
         </span>
         <span className="flex-1 leading-relaxed text-tiny font-medium tracking-tight font-mono">
@@ -57,6 +58,7 @@ interface LogViewerProps {
 
 export function LogViewer({ onClose }: LogViewerProps) {
   const { t } = useTranslation();
+  const proxyPort = useProxyStore((s) => s.port);
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [logType, setLogType] = useState<"proxy" | "app" | "audit" | "script" | "plugin" | "crash">(
@@ -90,42 +92,60 @@ export function LogViewer({ onClose }: LogViewerProps) {
 
       let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-      // 1. Highlight Time [HH:MM:SS]
+      // 1. Highlight Time — date+time bracket (/80 readable), ms-precision bracket (/45 subtle)
       html = html.replace(
-        /(\[\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}(?:\.\d+)?\]|\[\d{2}:\d{2}:\d{2}(?:\.\d+)?\])/g,
-        '<span class="text-muted-foreground/40 font-mono text-micro">$1</span>',
+        /(\[\d{4}-\d{2}-\d{2}[\sT]\d{2}:\d{2}:\d{2}(?:\.\d+)?\])/g,
+        '<span class="text-muted-foreground/80 font-mono text-micro">$1</span>',
+      );
+      html = html.replace(
+        /(\[\d{2}:\d{2}:\d{2}(?:\.\d+)?\])/g,
+        '<span class="text-muted-foreground/45 font-mono text-micro">$1</span>',
       );
 
-      // 2. Highlight Keywords with refined colors
+      // 2. Highlight Keywords/Levels with refined colors (handles both [INFO] and INFO)
       html = html.replace(
-        /\b(ERROR|FAIL|FATAL|Exception|Panic|CRITICAL)\b/gi,
-        '<span class="text-rose-500 font-bold bg-rose-500/10 px-1 rounded-sm">$1</span>',
+        /(\[)?\b(ERROR|FAIL|FATAL|Exception|Panic|CRITICAL)\b(\])?/gi,
+        '<span class="text-rose-500 font-bold bg-rose-500/10 px-1 rounded-sm">$1$2$3</span>',
       );
       html = html.replace(
-        /\b(CRASH)\b/gi,
-        '<span class="text-rose-600 font-black bg-rose-600/20 px-1 rounded-sm">$1</span>',
+        /(\[)?\b(CRASH)\b(\])?/gi,
+        '<span class="text-rose-600 font-black bg-rose-600/20 px-1 rounded-sm">$1$2$3</span>',
       );
       html = html.replace(
-        /\b(WARN|WARNING)\b/gi,
-        '<span class="text-amber-500 font-bold bg-amber-500/10 px-1 rounded-sm">$1</span>',
+        /(\[)?\b(WARN|WARNING)\b(\])?/gi,
+        '<span class="text-amber-500 font-bold bg-amber-500/10 px-1 rounded-sm">$1$2$3</span>',
       );
-      html = html.replace(/\b(INFO)\b/gi, '<span class="text-blue-500/70 font-bold">$1</span>');
       html = html.replace(
-        /\b(DEBUG)\b/gi,
-        '<span class="text-muted-foreground/50 font-medium">$1</span>',
+        /(\[)?\b(INFO)\b(\])?/gi,
+        '<span class="text-blue-500 font-bold bg-blue-500/5 px-1 rounded-sm">$1$2$3</span>',
       );
-      html = html.replace(/\b(SUCCESS)\b/gi, '<span class="text-emerald-500 font-bold">$1</span>');
+      html = html.replace(
+        /(\[)?\b(DEBUG)\b(\])?/gi,
+        '<span class="text-muted-foreground/50 font-medium">$1$2$3</span>',
+      );
+      html = html.replace(
+        /(\[)?\b(SUCCESS)\b(\])?/gi,
+        '<span class="text-emerald-500 font-bold bg-emerald-500/5 px-1 rounded-sm">$1$2$3</span>',
+      );
+
+      // High-level Domain Tags
       html = html.replace(
         /\[AUDIT\]/g,
-        '<span class="text-amber-500/80 font-bold border-b border-amber-500/20">[AUDIT]</span>',
+        '<span class="text-amber-500 font-bold border-b border-amber-500/30 bg-amber-500/5 px-1 rounded-sm">[AUDIT]</span>',
       );
       html = html.replace(
         /\[SCRIPT\]/g,
-        '<span class="text-indigo-500/80 font-bold border-b border-indigo-500/20">[SCRIPT]</span>',
+        '<span class="text-indigo-500 font-bold border-b border-indigo-500/30 bg-indigo-500/5 px-1 rounded-sm">[SCRIPT]</span>',
       );
       html = html.replace(
         /\[PLUGIN\]/g,
-        '<span class="text-pink-500/80 font-bold border-b border-pink-500/20">[PLUGIN]</span>',
+        '<span class="text-pink-500 font-bold border-b border-pink-500/30 bg-pink-500/5 px-1 rounded-sm">[PLUGIN]</span>',
+      );
+
+      // 3. Highlight Module Names (third bracket in unified format) as secondary
+      html = html.replace(
+        /(\]\s\[(?:INFO|WARN|ERROR|DEBUG|SUCCESS|AUDIT|SCRIPT|PLUGIN)\]\s)(\[.*?\])/gi,
+        '$1<span class="text-muted-foreground/45 italic">$2</span>',
       );
 
       // 3. Highlight HTTP Methods
@@ -159,7 +179,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
     if (logType === "proxy") {
       result = logs.filter((line) => {
         if (line.includes("/_relay/poll")) return false;
-        if (line.includes("127.0.0.1") && line.includes(":9090")) return false;
+        if (line.includes("127.0.0.1") && line.includes(`:${proxyPort}`)) return false;
         return true;
       });
     }
@@ -170,7 +190,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
     }
 
     return result;
-  }, [logs, logType, searchQuery]);
+  }, [logs, logType, searchQuery, proxyPort]);
 
   const tabs = [
     { id: "proxy", label: t("log_viewer.proxy_logs"), icon: Server },
@@ -196,7 +216,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-6xl h-[85vh] bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl flex flex-col overflow-hidden relative"
+        className="w-full max-w-4xl h-[85vh] bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl flex flex-col overflow-hidden relative"
       >
         {/* Header Area */}
         <div className="flex flex-col shrink-0">

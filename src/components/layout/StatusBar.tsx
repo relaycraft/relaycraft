@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Bell, BellOff, Database, Globe, Octagon, Server } from "lucide-react";
+import { Activity, Bell, BellOff, Database, Globe, Server } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { version as APP_VERSION } from "../../../package.json";
@@ -119,30 +119,39 @@ export function StatusBar() {
         {breakpoints.length > 0 && (
           <div className="relative flex items-center">
             <div className="w-px h-3 bg-border/40 mx-2" />
-            <Tooltip content={t("status_bar.breakpoints")}>
-              <div className="relative">
+            <div className="relative flex items-center">
+              <Tooltip content={t("status_bar.breakpoints")}>
                 <div
                   onClick={() => setShowBreakpoints(!showBreakpoints)}
-                  className={`breakpoint-manager-trigger flex items-center gap-1.5 transition-colors cursor-pointer select-none rounded-[6px] px-2 py-0.5 ${showBreakpoints ? "bg-error/10 text-error ring-1 ring-error/20" : "text-error/80 hover:text-error hover:bg-error/5"}`}
+                  className={`breakpoint-manager-trigger flex items-center gap-2 transition-all cursor-pointer select-none rounded-full px-2 py-0.5 ${
+                    showBreakpoints
+                      ? "bg-error/10 text-error ring-1 ring-error/30 shadow-[0_0_10px_rgba(var(--error-rgb),0.2)]"
+                      : "text-error/80 hover:text-error hover:bg-error/5"
+                  }`}
                 >
-                  <Octagon className="w-3 h-3 fill-current opacity-20" />
-                  <span className="font-bold font-mono">{breakpoints.length}</span>
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-2 h-2 bg-error rounded-full shadow-[0_0_8px_rgba(var(--error-rgb),0.6)]" />
+                    <div className="absolute inset-0 bg-error rounded-full blur-[3px] opacity-40 animate-pulse" />
+                  </div>
+                  <span className="font-bold font-mono text-[11px] leading-none">
+                    {breakpoints.length}
+                  </span>
                 </div>
+              </Tooltip>
 
-                <AnimatePresence>
-                  {showBreakpoints && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 z-[60] shadow-2xl rounded-2xl overflow-hidden border border-error/20 bg-background/95 backdrop-blur-xl"
-                    >
-                      <BreakpointManager variant="minimal" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </Tooltip>
+              <AnimatePresence>
+                {showBreakpoints && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
+                  >
+                    <BreakpointManager variant="minimal" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
 

@@ -37,6 +37,7 @@ interface SessionStore {
   fetchDbSessions: () => Promise<void>;
   switchDbSession: (sessionId: string) => Promise<void>;
   deleteDbSession: (sessionId: string) => Promise<void>;
+  deleteAllDbSessions: () => Promise<void>;
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
@@ -60,21 +61,30 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       });
       if (response.ok) {
         const sessions: DbSession[] = await response.json();
-        const currentShowId = get().showSessionId;
 
-        // If no current selection, don't auto-set it on initial load
-        // This avoids showing a session ID when the traffic list is empty
-        const newShowId = currentShowId || null;
+        // Performance Optimization: Only update state if data actually changed.
+        // This is crucial because this function is called every 2 seconds in SessionSwitcher.
+        const currentSessions = get().dbSessions;
+        const hasChanged = JSON.stringify(sessions) !== JSON.stringify(currentSessions);
 
-        set({
-          dbSessions: sessions,
-          showSessionId: newShowId,
-        });
+        if (hasChanged) {
+          const currentShowId = get().showSessionId;
+          // If no current selection, don't auto-set it on initial load
+          const newShowId = currentShowId || null;
+
+          set({
+            dbSessions: sessions,
+            showSessionId: newShowId,
+          });
+        }
       }
     } catch (error) {
       Logger.error("Failed to fetch sessions:", error);
     } finally {
-      set({ loadingSessions: false });
+      // Only reset loading if it was actually loading
+      if (get().loadingSessions) {
+        set({ loadingSessions: false });
+      }
     }
   },
 
@@ -150,6 +160,57 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       }
     } catch (error) {
       Logger.error("Failed to delete session:", error);
+    }
+  },
+
+  // Delete all historical sessions
+  deleteAllDbSessions: async () => {
+    try {
+      const port = useSettingsStore.getState().config.proxy_port;
+      Logger.info("Requesting clearance of all historical sessions...");
+      const response = await fetch(`http://127.0.0.1:${port}/_relay/sessions/delete_all`, {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        Logger.info(`All historical sessions cleared. Count: ${data.count || 0}`);
+
+        // Refresh session list
+        await get().fetchDbSessions();
+
+        // If we were viewing a historical session that got deleted, switch to the active one
+        // or just ensure we have something selected
+        const sessions = get().dbSessions;
+        const currentShowId = get().showSessionId;
+        const stillExists = sessions.some((s) => s.id === currentShowId);
+
+        if (!stillExists && sessions.length > 0) {
+          // Find the active session, or just the first one
+          const activeSession = sessions.find((s) => s.is_active === 1) || sessions[0];
+          set({ showSessionId: activeSession.id });
+        }
+
+        const { notify } = await import("../lib/notify");
+        // We can't use the hook here, so we'll import i18next directly
+        const i18next = await import("i18next");
+        notify.success(
+          i18next.t("session.all_cleared", {
+            defaultValue: "All historical sessions have been cleared",
+          }),
+        );
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      Logger.error("Failed to clear historical sessions:", error);
+      const { notify } = await import("../lib/notify");
+      const i18next = await import("i18next");
+      notify.error(
+        i18next.t("session.clear_error", { defaultValue: "Failed to clear historical sessions" }),
+      );
     }
   },
 

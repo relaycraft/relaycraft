@@ -86,6 +86,8 @@ export function getRuleTypeDotClass(type: string, status?: string): string {
   switch (type) {
     case "script":
       return "bg-rule-script";
+    case "breakpoint":
+      return "bg-rule-breakpoint";
     case "rewrite_body":
       return "bg-rule-rewrite-body";
     case "map_local":
@@ -110,4 +112,27 @@ export function getRuleTypeBadgeClass(type: string, status?: string): string {
   const dotClass = getRuleTypeDotClass(type, status);
   const colorName = dotClass.replace("bg-", "");
   return `text-${colorName} bg-${colorName}/10 border border-${colorName}/20`;
+}
+
+/**
+ * Generates a unique name given a base name and a list of existing names.
+ * Example: if "Untitled Script.py" exists, returns "Untitled Script 1.py"
+ */
+export function getUniqueName(baseName: string, existingNames: string[]): string {
+  if (!existingNames.includes(baseName)) {
+    return baseName;
+  }
+
+  const extensionMatch = baseName.match(/\.[^.]+$/);
+  const extension = extensionMatch ? extensionMatch[0] : "";
+  const nameWithoutExt = extensionMatch ? baseName.slice(0, -extension.length) : baseName;
+
+  let counter = 1;
+  while (true) {
+    const newName = `${nameWithoutExt} ${counter}${extension}`;
+    if (!existingNames.includes(newName)) {
+      return newName;
+    }
+    counter++;
+  }
 }

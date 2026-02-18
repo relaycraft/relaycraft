@@ -71,7 +71,7 @@
   "breakpoint": {
     "abort": "Abort",
     "abort_all": "Abort All",
-    "active_manager": "Active Breakpoint Manager",
+    "active_manager": "Breakpoint Manager",
     "body_content": "Body Content",
     "clear_all": "Clear All",
     "control_center": "Intercept Control Center",
@@ -81,10 +81,32 @@
     "queue": "Intercept Queue",
     "remove_one": "Remove this breakpoint",
     "request": "Request",
+    "request_phase": "Request Phase",
     "response": "Response",
+    "response_phase": "Response Phase",
     "resume": "Resume",
     "resume_all": "Resume All",
-    "status_code": "Status Code"
+    "status_code": "Status Code",
+    "add_title": "Add Breakpoint",
+    "pattern": "URL Pattern",
+    "pattern_placeholder": "e.g. api.example.com or /auth",
+    "pattern_hint": "Enter domain, path, or full URL to match",
+    "match_type_label": "Match Type",
+    "match_types": {
+      "contains": "Contains",
+      "exact": "Exact Match",
+      "regex": "Regular Expression"
+    },
+    "break_on": "Break Phase",
+    "preview": "Rule Preview",
+    "preview_contains": "URL contains",
+    "preview_equals": "URL equals",
+    "preview_matches": "URL matches regex",
+    "preview_both": "Will break on both request and response",
+    "preview_request": "Will break on request only (outgoing)",
+    "preview_response": "Will break on response only (incoming)",
+    "preview_none": "No break phase selected, this breakpoint will not trigger",
+    "add": "Add Breakpoint"
   },
   "cert": {
     "format": {
@@ -243,6 +265,7 @@
   "common": {
     "add": "Add",
     "beautify": "Beautify",
+    "breakpoint": "Breakpoint",
     "browse": "Browse",
     "cancel": "Cancel",
     "clear": "Clear",
@@ -285,6 +308,7 @@
     "pending_restart": "Pending Restart (Not Active)",
     "reset": "Reset",
     "rule": "Rule",
+    "restarting": "Restarting...",
     "save": "Save",
     "save_success": "Saved successfully",
     "script": "Script",
@@ -770,11 +794,16 @@
     "delete_confirm": "Delete this session?",
     "delete_confirm_msg": "Are you sure you want to delete session \"{{name}}\"? This action cannot be undone.",
     "delete_title": "Delete Session",
+    "all_cleared": "All historical sessions have been cleared",
+    "clear_error": "Failed to clear historical sessions",
+    "clear_all": "Clear All History",
+    "clear_all_confirm": "Clear All History?",
+    "clear_all_msg": "This will delete all historical sessions. This action cannot be undone.",
     "flow_count": "{{count}} flows",
     "historical_mode": "Viewing historical session - new data continues in background",
     "history": "Session History",
     "latest": "LATEST",
-    "switch_hint": "Switch to historical session",
+    "switch_hint": "Switch session",
     "time": {
       "just_now": "Just now",
       "minutes_ago": "{{count}}m ago",
@@ -821,6 +850,7 @@
       "desc": "Create a Python script to intercept and modify traffic.",
       "title": "No Scripts"
     },
+    "name_exists": "Script name already exists",
     "restart_btn": "Restart Proxy Engine",
     "restart_hint": "Changes require proxy engine restart to take effect",
     "save_failed": "Failed to save script",
@@ -895,7 +925,11 @@
       "mitm_risk": "Risk of Man-in-the-Middle Attack",
       "port": "Proxy Port",
       "port_desc": "Proxy Server Port (1024-65535)",
-      "restart_hint": "Note: Proxy restart required after changing Port, SSL, or Upstream Proxy settings",
+      "restart_hint": "Port, SSL & upstream proxy changes require engine restart",
+      "pending_restart_title": "Restart Required to Apply Changes",
+      "pending_restart_desc": "Port, SSL, or upstream proxy settings have changed.",
+      "restart_now": "Restart Now",
+      "restarting": "Restarting...",
       "ssl_insecure": "Ignore SSL Certificate Validation",
       "ssl_insecure_desc": "For intranet or self-signed certificate environments",
       "title": "Network & Proxy",
@@ -914,8 +948,14 @@
     "copy_address": "Copy Address",
     "current_proxy": "Current Proxy Address",
     "got_it": "Got it",
-    "install_cert": "Certificate Required",
-    "install_cert_desc": "After setting proxy, visit <strong>http://mitm.it</strong> on mobile browser to install certificate for HTTPS.",
+    "install_cert": "Install Certificate",
+    "install_cert_desc": "After setting proxy, visit <strong>http://relay.guide</strong> on mobile browser to install certificate for HTTPS.",
+    "install_cert_step1": "Configure Wi-Fi Proxy",
+    "install_cert_step1_desc": "Make sure your phone and computer are on the same Wi-Fi. Go to Wi-Fi details → Proxy → <strong>Manual</strong>, enter IP <code>{{ip}}</code> and port <code>{{port}}</code>.",
+    "install_cert_step2": "Visit Certificate Page",
+    "install_cert_step2_desc": "After configuring the proxy, open your mobile browser and visit (or scan the QR code):",
+    "install_cert_fallback": "Can't connect?",
+    "install_cert_fallback_desc": "You can send the certificate file from your computer directly to your phone to install it (most reliable option).",
     "mobile_config": "Mobile Config (iOS/Android)",
     "pc_config": "PC / Browser Config",
     "switchy_omega": "Recommended: SwitchyOmega",
@@ -1026,10 +1066,6 @@
       "system": "System Proxy",
       "system_desc": "Route your computer's HTTP/HTTPS traffic through RelayCraft."
     },
-    "source": {
-      "local": "Local",
-      "remote": "Remote"
-    },
     "start_hint": "Click the \"Start Capture\" button or use shortcut to begin capturing traffic.",
     "start_proxy": "Start Capture",
     "status": {
@@ -1043,5 +1079,18 @@
       "messages_count": "messages",
       "no_frames": "No WebSocket frames captured yet"
     }
+  },
+  "init": {
+    "status_os": "Checking OS features...",
+    "status_config": "Loading configuration...",
+    "status_data": "Initializing data stores...",
+    "status_ai": "Syncing AI settings...",
+    "status_rules": "Loading intercept rules...",
+    "status_scripts": "Loading extension scripts...",
+    "status_proxy": "Checking proxy status...",
+    "status_certs": "Verifying certificate trust...",
+    "status_themes": "Loading custom themes...",
+    "status_plugins": "Initializing plugins...",
+    "status_complete": "Ready"
   }
 }

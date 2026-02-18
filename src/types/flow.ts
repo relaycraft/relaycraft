@@ -100,6 +100,7 @@ export interface RcMatchedHit {
   status?: "success" | "warning" | "error" | "file_not_found";
   message?: string;
   timestamp?: number;
+  phase?: "request" | "response"; // For breakpoint hits
 }
 
 /**

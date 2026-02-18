@@ -81,13 +81,14 @@ class CoreAddon:
                     self.traffic_monitor._store_flow(flow_data)
 
             # 2. Interception (Manual/Breakpoint) - Asynchronous
-            if self.debug_mgr.should_intercept(flow):
+            matched_rule = self.debug_mgr.should_intercept(flow)
+            if matched_rule:
                 def push_paused():
                     f_data = self.traffic_monitor.process_flow(flow)
                     if f_data:
                         self.traffic_monitor._store_flow(f_data)
 
-                coro = self.debug_mgr.wait_for_resume(flow, "request", on_pause=push_paused)
+                coro = self.debug_mgr.wait_for_resume(flow, "request", on_pause=push_paused, rule=matched_rule)
                 import inspect
                 if inspect.iscoroutine(coro):
                     await coro
@@ -100,13 +101,14 @@ class CoreAddon:
             self.rule_engine.handle_response(flow)
 
             # 2. Interception (Manual/Breakpoint) - Asynchronous
-            if self.debug_mgr.should_intercept(flow):
+            matched_rule = self.debug_mgr.should_intercept(flow, "response")
+            if matched_rule:
                 def push_paused_res():
                     f_data = self.traffic_monitor.process_flow(flow)
                     if f_data:
                         self.traffic_monitor._store_flow(f_data)
 
-                coro = self.debug_mgr.wait_for_resume(flow, "response", on_pause=push_paused_res)
+                coro = self.debug_mgr.wait_for_resume(flow, "response", on_pause=push_paused_res, rule=matched_rule)
                 import inspect
                 if inspect.iscoroutine(coro):
                     await coro
@@ -138,8 +140,12 @@ class CoreAddon:
             host = flow.request.host or ""
             port = flow.request.port
 
+            # relay.guide is always internal (certificate landing page)
+            if host == "relay.guide":
+                return True
+
             # Robust Check: Any path containing /_relay is internal
-            if "/_relay" in path or path == "/cert":
+            if "/_relay" in path or path == "/cert" or path in ("/cert.pem", "/cert.crt"):
                 return True
 
             # Secondary check for localhost on proxy port
@@ -148,7 +154,7 @@ class CoreAddon:
             current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
             is_proxy_port = port == current_port
 
-            return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path == "/cert")
+            return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path in ("/cert", "/cert.pem", "/cert.crt"))
         except:
             return False
 

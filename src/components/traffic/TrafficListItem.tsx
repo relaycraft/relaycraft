@@ -1,4 +1,11 @@
-import { AlertTriangle, Laptop, ShieldAlert, Smartphone, StopCircle, Terminal } from "lucide-react";
+import {
+  AlertTriangle,
+  CirclePause,
+  Laptop,
+  ShieldAlert,
+  Smartphone,
+  Terminal,
+} from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,23 +24,15 @@ interface TrafficListItemProps {
   seq: number; // Display sequence number (calculated from array index)
   isSelected: boolean;
   idColWidth: number;
-  breakpoints: Array<{ pattern: string }>;
   onSelect: (index: FlowIndex) => void;
   onContextMenu: (e: React.MouseEvent, index: FlowIndex) => void;
 }
 
 export const TrafficListItem = memo(
-  ({
-    index,
-    seq,
-    isSelected,
-    idColWidth,
-    breakpoints,
-    onSelect,
-    onContextMenu,
-  }: TrafficListItemProps) => {
+  ({ index, seq, isSelected, idColWidth, onSelect, onContextMenu }: TrafficListItemProps) => {
     const { t } = useTranslation();
-    const isBreakpointMatch = breakpoints.some((b) => index.url.includes(b.pattern));
+    // Use isIntercepted from backend - only true for flows actually intercepted by breakpoints
+    const isIntercepted = index.isIntercepted;
 
     // Determine if flow has error
     const isError = index.hasError || String(index.status) === "0";
@@ -68,9 +67,6 @@ export const TrafficListItem = memo(
             isSelected ? "bg-primary" : "bg-transparent"
           }`}
         />
-
-        {/* Breakpoint Highlighting */}
-        {isBreakpointMatch && <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500/50" />}
 
         {/* ID Column */}
         <div
@@ -158,55 +154,97 @@ export const TrafficListItem = memo(
         </div>
 
         {/* Hit Indicators */}
-        {index.hits && index.hits.length > 0 && (
+        {(index.hits && index.hits.length > 0) || isIntercepted ? (
           <div className="flex items-center gap-1.5 flex-shrink-0 px-2">
-            {isBreakpointMatch && (
+            {/* Currently intercepted indicator (pulsing) */}
+            {isIntercepted && (
               <Tooltip
-                content={t("traffic.breakpoint_hit_tooltip", "This domain has breakpoint enabled")}
+                content={t(
+                  "traffic.breakpoint_active_tooltip",
+                  "Currently intercepted by breakpoint",
+                )}
                 side="left"
               >
-                <StopCircle className="w-4 h-4 text-error animate-pulse" />
+                <div className="relative flex items-center justify-center w-5 h-5">
+                  <div className="absolute inset-0 bg-red-500/30 rounded-full blur-[4px] animate-pulse" />
+                  <div className="relative w-3.5 h-3.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse flex items-center justify-center">
+                    <CirclePause className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+                  </div>
+                </div>
               </Tooltip>
             )}
             {/* File not found warning */}
-            {index.hits.some((h) => h.status === "file_not_found") && (
+            {index.hits?.some((h) => h.status === "file_not_found") && (
               <Tooltip content={t("traffic.file_not_found", "File not found")} side="left">
                 <AlertTriangle className="w-3.5 h-3.5 text-error" />
               </Tooltip>
             )}
             <div className="flex -space-x-1">
-              {
-                // Deduplicate hits by id (same script/rule may hit multiple times)
-                [...new Map(index.hits.map((h) => [h.id, h])).values()]
+              {index.hits &&
+                // Deduplicate hits: for breakpoints, use rule_id (without phase) as key
+                [
+                  ...new Map(
+                    index.hits.map((h) => [
+                      h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
+                      h,
+                    ]),
+                  ).values(),
+                ]
                   .slice(0, 5)
                   .map((hit, idx) => {
                     const isScript = hit.type === "script";
-                    const tooltipContent = isScript
-                      ? `${t("common.script", "Script")}: ${hit.name}`
-                      : `${t("common.rule", "Rule")}: ${hit.name}`;
+                    const isBreakpoint = hit.type === "breakpoint";
+                    let tooltipContent = "";
+                    if (isScript) {
+                      tooltipContent = `${t("common.script", "Script")}: ${hit.name}`;
+                    } else if (isBreakpoint) {
+                      tooltipContent = `${t("common.breakpoint", "Breakpoint")}: ${hit.name}`;
+                    } else {
+                      tooltipContent = `${t("common.rule", "Rule")}: ${hit.name}`;
+                    }
                     return (
                       <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
                         {isScript ? (
-                          <div className="w-2.5 h-2.5 flex items-center justify-center rounded-full bg-indigo-500/20 ring-1 ring-indigo-500/50 -translate-y-[1px]">
-                            <Terminal className="w-1.5 h-1.5 text-indigo-400" />
+                          <div className="w-3 h-3 flex items-center justify-center rounded-full border border-indigo-500 flex-shrink-0">
+                            <Terminal className="w-2 h-2 text-indigo-500" strokeWidth={2.5} />
                           </div>
+                        ) : isBreakpoint ? (
+                          <CirclePause
+                            className="w-3 h-3 text-red-500 flex-shrink-0"
+                            strokeWidth={2}
+                          />
                         ) : (
                           <div
-                            className={`w-2 h-2 rounded-full ring-1 ring-background ${getRuleTypeDotClass(hit.type, hit.status)}`}
+                            className={`w-2.5 h-2.5 rounded-full border border-background shadow-sm aspect-square ${getRuleTypeDotClass(hit.type, hit.status)}`}
                           />
                         )}
                       </Tooltip>
                     );
-                  })
-              }
-              {[...new Map(index.hits.map((h) => [h.id, h])).values()].length > 5 && (
-                <span className="text-xs text-muted-foreground ml-1">
-                  +{[...new Map(index.hits.map((h) => [h.id, h])).values()].length - 5}
-                </span>
-              )}
+                  })}
+              {index.hits &&
+                [
+                  ...new Map(
+                    index.hits.map((h) => [
+                      h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
+                      h,
+                    ]),
+                  ).values(),
+                ].length > 5 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    +
+                    {[
+                      ...new Map(
+                        index.hits.map((h) => [
+                          h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
+                          h,
+                        ]),
+                      ).values(),
+                    ].length - 5}
+                  </span>
+                )}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
   },

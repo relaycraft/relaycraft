@@ -247,7 +247,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         status.running === currentState.running &&
         status.active === currentState.active &&
         currentState.ipAddress &&
-        currentState.port !== 9090
+        currentState.port > 0
       ) {
         return;
       }
@@ -260,16 +260,27 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       }>("load_config");
       const isTrusted = await invoke<boolean>("check_cert_installed");
 
-      // Update active scripts only if necessary - avoid overwriting snapshots taken during start/restart
-      const scripts = useScriptStore.getState().scripts;
+      // Determine the core active scripts state
       let activeScriptNames = currentState.activeScripts;
 
-      if (!status.active) {
+      if (!status.running) {
+        // Engine is not running, so no scripts can be active
         activeScriptNames = [];
-      } else if (activeScriptNames.length === 0) {
-        // Initial load detection - if engine is running but we don't know what's active,
-        // assume currently enabled scripts are the ones
-        activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
+      } else if (status.active) {
+        // Proxy is actively processing traffic, trust the backend status report
+        activeScriptNames = status.active_scripts || [];
+      } else {
+        // Engine is idling in background (running but inactive)
+        // If we don't have a record of active scripts yet (initial startup),
+        // fallback to the database enabled state as a best-guess synchronization.
+        if (activeScriptNames.length === 0) {
+          const scripts = useScriptStore.getState().scripts;
+          if (scripts.length > 0) {
+            activeScriptNames = scripts.filter((s) => s.enabled).map((s) => s.name);
+          }
+        }
+        // If we already have a non-empty activeScripts record, we KEEP it
+        // during idle to avoid false "Restart Required" prompts.
       }
 
       set({

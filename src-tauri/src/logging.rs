@@ -95,7 +95,7 @@ pub fn init_log_dir(path: PathBuf) {
 pub fn setup_panic_hook() {
     panic::set_hook(Box::new(|info| {
         let msg = format!(
-            "CRASH: {}\nBacktrace: {:?}\n",
+            "{}\nBacktrace: {:?}\n",
             info,
             std::backtrace::Backtrace::capture()
         );

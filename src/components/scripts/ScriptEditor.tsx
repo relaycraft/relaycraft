@@ -122,12 +122,25 @@ addons = [Addon()]
         setIsRenaming(false);
         return;
       }
+      if (useScriptStore.getState().scripts.some((s) => s.name === newName)) {
+        notify.error(t("scripts.name_exists"));
+        setIsRenaming(false);
+        return;
+      }
       try {
         await renameScript(scriptName, newName);
       } catch (error) {
         console.error("Failed to rename script:", error);
       }
     } else if (draftScript) {
+      if (
+        newName !== draftScript.name &&
+        useScriptStore.getState().scripts.some((s) => s.name === newName)
+      ) {
+        notify.error(t("scripts.name_exists"));
+        setIsRenaming(false);
+        return;
+      }
       setDraftScript({ ...draftScript, name: newName });
     }
     setIsRenaming(false);

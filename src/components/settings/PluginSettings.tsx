@@ -224,8 +224,11 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
 
 export const PluginSettings: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { plugins, loading, fetchPlugins, installPluginLocal } = usePluginStore();
-  const { setMarketOpen } = useUIStore();
+  const plugins = usePluginStore((state) => state.plugins);
+  const loading = usePluginStore((state) => state.loading);
+  const fetchPlugins = usePluginStore((state) => state.fetchPlugins);
+  const installPluginLocal = usePluginStore((state) => state.installPluginLocal);
+  const setMarketOpen = useUIStore((state) => state.setMarketOpen);
   const [searchQuery, setSearchQuery] = React.useState("");
 
   // Sorting & Filtering Logic
@@ -343,7 +346,7 @@ export const PluginSettings: React.FC = () => {
               <h5 className="text-ui text-primary font-bold uppercase tracking-widest">
                 {t("plugins.guide.title")}
               </h5>
-              <p className="text-ui text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 <Trans
                   i18nKey="plugins.guide.desc"
                   components={{

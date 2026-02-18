@@ -311,9 +311,14 @@ class TrafficMonitor:
                 tz=timezone.utc
             ).isoformat() if flow.request.timestamp_start else ""
 
-            # Hits from rules/scripts
+            # Hits from rules/scripts/breakpoints
             hits = flow.metadata.get("_relaycraft_hits", [])
-            hits.extend(getattr(flow, "_relaycraft_script_hits", []))
+            script_hits = getattr(flow, "_relaycraft_script_hits", [])
+            breakpoint_hits = getattr(flow, "_relaycraft_breakpoint_hits", [])
+            
+            
+            hits.extend(script_hits)
+            hits.extend(breakpoint_hits)
 
             return {
                 # ========== Identity ==========
@@ -732,12 +737,27 @@ class TrafficMonitor:
                 data = json.loads(flow.request.content.decode('utf-8'))
                 action = data.get("action")
                 if action == "add":
-                    self.debug_mgr.add_breakpoint(data.get("pattern"))
+                    # Support both legacy pattern format and new rule format
+                    rule = data.get("rule") or {"pattern": data.get("pattern")}
+                    self.debug_mgr.add_breakpoint(rule)
                 elif action == "remove":
-                    self.debug_mgr.remove_breakpoint(data.get("pattern"))
+                    # Support removal by ID or pattern
+                    self.debug_mgr.remove_breakpoint(data.get("id") or data.get("pattern"))
                 elif action == "clear":
                     with self.debug_mgr.lock:
                         self.debug_mgr.breakpoints = []
+                elif action == "list":
+                    with self.debug_mgr.lock:
+                        bp_list = self.debug_mgr.breakpoints
+                        flow.response = Response.make(
+                            200,
+                            json.dumps(bp_list).encode('utf-8'),
+                            {
+                                "Content-Type": "application/json",
+                                "Access-Control-Allow-Origin": "*"
+                            }
+                        )
+                        return
 
                 flow.response = Response.make(200, b"OK", {
                     "Access-Control-Allow-Origin": "*"
@@ -769,6 +789,25 @@ class TrafficMonitor:
                 )
 
         # ==================== Session API ====================
+        # Delete all historical sessions
+        elif "/_relay/sessions/delete_all" in flow.request.path:
+            try:
+                count = self.db.delete_all_historical_sessions()
+                json_str = json.dumps({"success": True, "count": count}, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*",
+                    },
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
 
         # List sessions
         elif "/_relay/sessions" in flow.request.path and flow.request.method == "GET":
@@ -866,6 +905,27 @@ class TrafficMonitor:
                 json_str = json.dumps({"success": success}, ensure_ascii=False)
                 flow.response = Response.make(
                     200 if success else 400,
+                    json_str.encode("utf-8"),
+                    {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode('utf-8'),
+                    {"Access-Control-Allow-Origin": "*"}
+                )
+
+
+        # List sessions
+        elif "/_relay/sessions" in flow.request.path and flow.request.method == "GET":
+            try:
+                sessions = self.db.list_sessions()
+                json_str = json.dumps(sessions, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
                     json_str.encode("utf-8"),
                     {
                         "Content-Type": "application/json",
@@ -1335,54 +1395,410 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
-        # Certificate serving
-        # Supports: /cert (default PEM), /cert?format=pem, /cert?format=crt
-        elif flow.request.path == "/cert" or flow.request.path.startswith("/cert?"):
+        # Certificate serving — relay.guide landing page + direct downloads
+        # Handles:
+        #   relay.guide /          → HTML landing page
+        #   relay.guide /cert      → download PEM (default)
+        #   relay.guide /cert.pem  → download PEM
+        #   relay.guide /cert.crt  → download CRT
+        #   127.x.x.x:port /cert   → legacy direct download (kept for compatibility)
+        elif (
+            flow.request.host == "relay.guide"
+            or flow.request.path == "/cert"
+            or flow.request.path.startswith("/cert?")
+            or flow.request.path in ("/cert.pem", "/cert.crt")
+        ):
             try:
                 import os
                 confdir = os.environ.get("MITMPROXY_CONFDIR")
-                if confdir:
-                    cert_path_pem = os.path.join(confdir, "relaycraft-ca-cert.pem")
-                    cert_path_crt = os.path.join(confdir, "relaycraft-ca-cert.crt")
+                cert_path_pem = os.path.join(confdir, "relaycraft-ca-cert.pem") if confdir else None
+                cert_path_crt = os.path.join(confdir, "relaycraft-ca-cert.crt") if confdir else None
 
-                    # Check format query parameter
-                    query = flow.request.query
-                    format_param = query.get("format", "pem").lower()
+                path = flow.request.path.split("?")[0]  # strip query string
 
-                    if format_param == "crt" and os.path.exists(cert_path_crt):
-                        target_path = cert_path_crt
-                        filename = "relaycraft-ca-cert.crt"
-                        content_type = "application/x-x509-ca-cert"
-                    else:
-                        # Default to PEM format (most compatible)
-                        target_path = cert_path_pem
-                        filename = "relaycraft-ca-cert.pem"
-                        content_type = "application/x-pem-file"
-
-                    if os.path.exists(target_path):
-                        with open(target_path, "rb") as f:
+                # ── Direct download paths ──────────────────────────────────────
+                if path in ("/cert", "/cert.pem"):
+                    if cert_path_pem and os.path.exists(cert_path_pem):
+                        with open(cert_path_pem, "rb") as f:
                             content = f.read()
-
                         flow.response = Response.make(
-                            200,
-                            content,
+                            200, content,
                             {
-                                "Content-Type": content_type,
-                                "Content-Disposition": f'attachment; filename="{filename}"',
-                                "Access-Control-Allow-Origin": "*"
+                                "Content-Type": "application/x-pem-file",
+                                "Content-Disposition": 'attachment; filename="relaycraft-ca-cert.pem"',
+                                "Access-Control-Allow-Origin": "*",
                             }
                         )
-                        return
+                    else:
+                        flow.response = Response.make(404, b"Certificate not found", {"Access-Control-Allow-Origin": "*"})
+                    return
 
-                flow.response = Response.make(404, b"Not Found", {
-                    "Access-Control-Allow-Origin": "*"
-                })
+                elif path == "/cert.crt":
+                    target = cert_path_crt if (cert_path_crt and os.path.exists(cert_path_crt)) else cert_path_pem
+                    fname = "relaycraft-ca-cert.crt"
+                    if target and os.path.exists(target):
+                        with open(target, "rb") as f:
+                            content = f.read()
+                        flow.response = Response.make(
+                            200, content,
+                            {
+                                "Content-Type": "application/x-x509-ca-cert",
+                                "Content-Disposition": f'attachment; filename="{fname}"',
+                                "Access-Control-Allow-Origin": "*",
+                            }
+                        )
+                    else:
+                        flow.response = Response.make(404, b"Certificate not found", {"Access-Control-Allow-Origin": "*"})
+                    return
+
+                # ── Landing page ───────────────────────────────────────────────
+                # Determine proxy address for display
+                try:
+                    proxy_host = flow.request.host if flow.request.host != "relay.guide" else "127.0.0.1"
+                    current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
+                    proxy_addr = f"{proxy_host}:{current_port}"
+                except Exception:
+                    proxy_addr = "127.0.0.1:9090"
+
+                ua = flow.request.headers.get("user-agent", "").lower()
+                if "iphone" in ua or "ipad" in ua:
+                    detected_os = "ios"
+                elif "android" in ua:
+                    detected_os = "android"
+                elif "macintosh" in ua or "mac os x" in ua:
+                    detected_os = "macos"
+                elif "windows" in ua:
+                    detected_os = "windows"
+                else:
+                    detected_os = "android"  # default for mobile-first context
+
+                html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RelayCraft · 证书安装</title>
+<style>
+  :root {{
+    --bg: #0b0c0f;
+    --surface: #161a22;
+    --surface2: #1e2229;
+    --border: rgba(255,255,255,0.08);
+    --primary: #60a5fa;
+    --primary-dim: rgba(96,165,250,0.12);
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --radius: 12px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --mono: "JetBrains Mono", "Fira Code", Menlo, monospace;
+  }}
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 60px;
+  }}
+  .card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 520px;
+  }}
+  /* Header */
+  .header {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    width: 100%;
+    max-width: 520px;
+  }}
+  .logo {{
+    width: 36px; height: 36px;
+    background: var(--primary-dim);
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }}
+  .header-text h1 {{ font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }}
+  .header-text p {{ font-size: 12px; color: var(--muted); }}
+  /* Proxy badge */
+  .proxy-badge {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary-dim);
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }}
+  .proxy-badge .dot {{
+    width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--success);
+  }}
+  .proxy-badge code {{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--primary);
+  }}
+  .proxy-badge .label {{ color: var(--muted); }}
+  /* Section title */
+  .section-title {{
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }}
+  /* OS tabs */
+  .tabs {{
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }}
+  .tab {{
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+  }}
+  .tab:hover {{ background: var(--surface2); color: var(--fg); }}
+  .tab.active {{
+    background: var(--primary-dim);
+    border-color: rgba(96,165,250,0.3);
+    color: var(--primary);
+    font-weight: 600;
+  }}
+  /* Panel */
+  .panel {{ display: none; }}
+  .panel.active {{ display: block; }}
+  /* Steps */
+  .steps {{ list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }}
+  .step {{
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }}
+  .step-num {{
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--primary-dim);
+    border: 1px solid rgba(96,165,250,0.25);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }}
+  .step-text {{ font-size: 13px; color: var(--fg); line-height: 1.5; }}
+  .step-text strong {{ color: var(--fg); font-weight: 600; }}
+  .step-text code {{
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--primary);
+  }}
+  /* Download button */
+  .dl-btn {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 20px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-bottom: 10px;
+  }}
+  .dl-btn:hover {{ opacity: 0.88; }}
+  .dl-btn:active {{ transform: scale(0.98); }}
+  .dl-btn-secondary {{
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 9px 16px;
+  }}
+  .dl-btn-secondary:hover {{ color: var(--fg); opacity: 1; background: var(--surface2); border-color: rgba(255,255,255,0.15); }}
+  /* Warning box */
+  .warn-box {{
+    display: flex;
+    gap: 10px;
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: rgba(245,158,11,0.85);
+    line-height: 1.5;
+  }}
+  .warn-icon {{ flex-shrink: 0; font-size: 14px; margin-top: 1px; }}
+  /* Divider */
+  .divider {{ border: none; border-top: 1px solid var(--border); margin: 20px 0; }}
+  /* Footer */
+  .footer {{
+    margin-top: 28px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    opacity: 0.6;
+  }}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🔀</div>
+  <div class="header-text">
+    <h1>RelayCraft</h1>
+    <p>relay.guide · 证书安装向导</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="proxy-badge">
+    <div class="dot"></div>
+    <span class="label">代理已连接 ·</span>
+    <code>{proxy_addr}</code>
+  </div>
+
+  <p class="section-title">选择您的设备系统</p>
+  <div class="tabs">
+    <button class="tab" data-os="ios" onclick="switchTab('ios')">📱 iOS</button>
+    <button class="tab" data-os="android" onclick="switchTab('android')">🤖 Android</button>
+    <button class="tab" data-os="macos" onclick="switchTab('macos')">🍎 macOS</button>
+    <button class="tab" data-os="windows" onclick="switchTab('windows')">🪟 Windows</button>
+  </div>
+
+  <!-- iOS -->
+  <div class="panel" id="panel-ios">
+    <a class="dl-btn" href="/cert.crt" download>
+      ⬇ 下载证书（iOS 推荐）
+    </a>
+    <ol class="steps">
+      <li class="step"><div class="step-num">1</div><div class="step-text">点击上方按钮下载证书文件，Safari 会提示"已下载描述文件"</div></li>
+      <li class="step"><div class="step-num">2</div><div class="step-text">前往 <strong>设置 → 已下载的描述文件</strong>，点击安装</div></li>
+      <li class="step"><div class="step-num">3</div><div class="step-text">前往 <strong>设置 → 通用 → 关于本机 → 证书信任设置</strong></div></li>
+      <li class="step"><div class="step-num">4</div><div class="step-text">找到 <strong>RelayCraft CA</strong>，开启完全信任</div></li>
+    </ol>
+  </div>
+
+  <!-- Android -->
+  <div class="panel" id="panel-android">
+    <a class="dl-btn" href="/cert.crt" download>
+      ⬇ 下载证书（Android 推荐）
+    </a>
+    <ol class="steps">
+      <li class="step"><div class="step-num">1</div><div class="step-text">点击上方按钮下载 <code>.crt</code> 证书文件</div></li>
+      <li class="step"><div class="step-num">2</div><div class="step-text">前往 <strong>设置 → 安全 → 加密与凭据 → 安装证书</strong></div></li>
+      <li class="step"><div class="step-num">3</div><div class="step-text">选择 <strong>CA 证书</strong>，找到下载的文件并安装</div></li>
+      <li class="step"><div class="step-num">4</div><div class="step-text">部分机型路径不同，可在设置中搜索「证书」或「CA 证书」</div></li>
+    </ol>
+  </div>
+
+  <!-- macOS -->
+  <div class="panel" id="panel-macos">
+    <a class="dl-btn" href="/cert.pem" download>
+      ⬇ 下载证书（macOS）
+    </a>
+    <ol class="steps">
+      <li class="step"><div class="step-num">1</div><div class="step-text">下载证书后，双击 <code>.pem</code> 文件打开「钥匙串访问」</div></li>
+      <li class="step"><div class="step-num">2</div><div class="step-text">在「系统」钥匙串中找到 <strong>RelayCraft CA</strong></div></li>
+      <li class="step"><div class="step-num">3</div><div class="step-text">双击证书 → 展开「信任」→ 将「使用此证书时」设为 <strong>始终信任</strong></div></li>
+      <li class="step"><div class="step-num">4</div><div class="step-text">关闭窗口，输入系统密码确认</div></li>
+    </ol>
+  </div>
+
+  <!-- Windows -->
+  <div class="panel" id="panel-windows">
+    <a class="dl-btn" href="/cert.crt" download>
+      ⬇ 下载证书（Windows）
+    </a>
+    <ol class="steps">
+      <li class="step"><div class="step-num">1</div><div class="step-text">下载证书后，双击 <code>.crt</code> 文件</div></li>
+      <li class="step"><div class="step-num">2</div><div class="step-text">点击「安装证书」→ 选择「本地计算机」→ 下一步</div></li>
+      <li class="step"><div class="step-num">3</div><div class="step-text">选择「将所有证书放入下列存储」→ 浏览 → 选择 <strong>受信任的根证书颁发机构</strong></div></li>
+      <li class="step"><div class="step-num">4</div><div class="step-text">完成安装，重启浏览器</div></li>
+    </ol>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-title">其他格式</p>
+  <a class="dl-btn dl-btn-secondary" href="/cert.pem" download>⬇ 下载 PEM 格式</a>
+  <a class="dl-btn dl-btn-secondary" href="/cert.crt" download>⬇ 下载 CRT 格式</a>
+
+  <div class="warn-box">
+    <span class="warn-icon">⚠</span>
+    <span>此证书仅用于本地抓包调试，请勿在生产环境或不受信任的设备上安装。</span>
+  </div>
+</div>
+
+<div class="footer">RelayCraft · {proxy_addr} · relay.guide</div>
+
+<script>
+  function switchTab(os) {{
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.os === os));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + os));
+  }}
+  switchTab('{detected_os}');
+</script>
+</body>
+</html>"""
+
+                flow.response = Response.make(
+                    200,
+                    html.encode("utf-8"),
+                    {
+                        "Content-Type": "text/html; charset=utf-8",
+                        "Access-Control-Allow-Origin": "*",
+                    }
+                )
+
             except Exception as e:
                 flow.response = Response.make(
                     500,
-                    str(e).encode('utf-8'),
+                    str(e).encode("utf-8"),
                     {"Access-Control-Allow-Origin": "*"}
                 )
+
 
     def _store_flow(self, flow_data: Dict) -> None:
         """Store flow data to database.

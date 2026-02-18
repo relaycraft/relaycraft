@@ -23,13 +23,13 @@ export function HeadersView({ headers }: HeadersViewProps) {
 
   return (
     <div className="bg-background rounded border border-border overflow-hidden">
-      <table className="w-full text-sm">
+      <table className="w-full text-tiny">
         <thead className="bg-muted/40 uppercase tracking-tight">
           <tr>
-            <th className="text-left p-2 font-semibold w-1/3 text-xs text-muted-foreground/70">
+            <th className="text-left p-2 font-black w-1/3 text-xs text-muted-foreground/70 tracking-wider">
               {t("common.name")}
             </th>
-            <th className="text-left p-2 font-semibold text-xs text-muted-foreground/70">
+            <th className="text-left p-2 font-black text-xs text-muted-foreground/70 tracking-wider">
               {t("common.value")}
             </th>
           </tr>
@@ -38,7 +38,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
           {entries.map(([name, value], index) => (
             <tr key={index} className="border-t border-border hover:bg-muted/50 transition">
               <td
-                className="px-2 font-mono text-xs break-all text-foreground/80"
+                className="px-2 font-mono text-tiny break-all text-foreground/80"
                 style={{
                   paddingTop: "var(--density-p, 8px)",
                   paddingBottom: "var(--density-p, 8px)",
@@ -47,7 +47,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
                 {name}
               </td>
               <td
-                className="px-2 font-mono text-xs break-all text-foreground/90"
+                className="px-2 font-mono text-tiny break-all text-foreground/90"
                 style={{
                   paddingTop: "var(--density-p, 8px)",
                   paddingBottom: "var(--density-p, 8px)",

@@ -189,7 +189,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
               >
                 <div className="flex items-center gap-2 mb-0 min-h-[20px]">
                   <span
-                    className={`font-semibold text-ui truncate transition-colors tracking-tight ${
+                    className={`font-medium text-ui truncate transition-colors tracking-tight ${
                       rule.execution.enabled
                         ? isSelected
                           ? "text-primary"

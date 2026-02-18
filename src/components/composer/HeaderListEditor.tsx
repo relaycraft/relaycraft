@@ -33,7 +33,7 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <label className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">
+        <label className="text-xs font-bold text-muted-foreground/60 uppercase tracking-wider">
           {t("common.headers")}
         </label>
         <Button
@@ -66,14 +66,14 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
                 value={item.key}
                 onChange={(e) => updateItem(index, "key", e.target.value)}
                 placeholder={t("composer.headers_list.key")}
-                className="w-1/3 px-3 py-1.5 bg-transparent text-xs font-mono focus:outline-none border-r border-border/20"
+                className="w-1/3 px-3 py-1.5 bg-transparent text-tiny font-mono focus:outline-none border-r border-border/20"
               />
               <input
                 type="text"
                 value={item.value}
                 onChange={(e) => updateItem(index, "value", e.target.value)}
                 placeholder={t("composer.headers_list.value")}
-                className="flex-1 px-3 py-1.5 bg-transparent text-xs font-mono focus:outline-none"
+                className="flex-1 px-3 py-1.5 bg-transparent text-tiny font-mono focus:outline-none placeholder:text-muted-foreground/40"
               />
             </div>
             <button

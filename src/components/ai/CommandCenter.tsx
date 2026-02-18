@@ -26,6 +26,7 @@ import { useSuggestionEngine } from "../../hooks/useSuggestionEngine";
 import { dispatchCommand } from "../../lib/ai/dispatcher";
 import { mapAIRuleToInternal } from "../../lib/ai/ruleMapper";
 import { SuggestionEngine } from "../../lib/ai/suggestionEngine";
+import { getUniqueName } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { type CommandAction, useCommandStore } from "../../stores/commandStore";
 import { useComposerStore } from "../../stores/composerStore";
@@ -258,7 +259,10 @@ export function CommandCenter() {
         setIsOpen(false);
         break;
       case "CREATE_SCRIPT": {
-        const scriptName = act.params?.name || `Untitled Script.py`;
+        const existingNames = useScriptStore.getState().scripts.map((s) => s.name);
+        const scriptName = act.params?.name
+          ? getUniqueName(act.params.name, existingNames)
+          : getUniqueName("Untitled Script.py", existingNames);
 
         // Direct jump logic: user wants to generate IN the editor
         // We ignore any potential generated code in the message and just take the intent/requirement

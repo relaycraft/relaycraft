@@ -4,15 +4,20 @@ import { useTranslation } from "react-i18next";
 import { generateCurlCommand } from "../../../lib/curl";
 import { notify } from "../../../lib/notify";
 import { fetchFlowDetail } from "../../../lib/trafficMonitor";
-import { useBreakpointStore } from "../../../stores/breakpointStore";
 import { useComposerStore } from "../../../stores/composerStore";
 import { useRuleStore } from "../../../stores/ruleStore";
-import { useSettingsStore } from "../../../stores/settingsStore";
 import { useTrafficStore } from "../../../stores/trafficStore";
 import { useUIStore } from "../../../stores/uiStore";
 import type { Flow, FlowIndex } from "../../../types";
 import { getHeaderValue, harToLegacyHeaders } from "../../../types";
 import type { ContextMenuItem } from "../../common/ContextMenu";
+
+// Type for the modal state callback
+export type BreakpointModalState = {
+  isOpen: boolean;
+  url: string;
+  method: string;
+};
 
 export function useTrafficContextMenu() {
   const { t } = useTranslation();
@@ -20,7 +25,12 @@ export function useTrafficContextMenu() {
   const { setDraftRule } = useRuleStore();
   const { setActiveTab } = useUIStore();
   const { selectFlow, indices } = useTrafficStore();
-  const { addBreakpoint } = useBreakpointStore();
+  // State for breakpoint modal
+  const [breakpointModal, setBreakpointModal] = useState<BreakpointModalState>({
+    isOpen: false,
+    url: "",
+    method: "GET",
+  });
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -29,24 +39,14 @@ export function useTrafficContextMenu() {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [pausedIndices, setPausedIndices] = useState<FlowIndex[] | null>(null);
 
-  const handleToggleBreakpoint = useCallback(
-    async (pattern: string) => {
-      if (!pattern || pattern.trim() === "") return;
-      try {
-        const port = useSettingsStore.getState().config.proxy_port;
-        await fetch(`http://127.0.0.1:${port}/_relay/breakpoints`, {
-          method: "POST",
-          body: JSON.stringify({ action: "add", pattern }),
-          cache: "no-store",
-        });
-        addBreakpoint(pattern);
-      } catch (e) {
-        console.error("Failed to set breakpoint", e);
-        notify.error(`Failed to set breakpoint: ${e}`);
-      }
-    },
-    [addBreakpoint],
-  );
+  // Open breakpoint modal with the target URL
+  const openBreakpointModal = useCallback((url: string, method: string = "GET") => {
+    setBreakpointModal({ isOpen: true, url, method });
+  }, []);
+
+  const closeBreakpointModal = useCallback(() => {
+    setBreakpointModal({ isOpen: false, url: "", method: "GET" });
+  }, []);
 
   const handleContextMenu = useCallback(
     async (e: React.MouseEvent, index: FlowIndex) => {
@@ -223,8 +223,7 @@ export function useTrafficContextMenu() {
           label: t("traffic.context_menu.set_breakpoint"),
           icon: <AlertTriangle className="w-3.5 h-3.5" />,
           onClick: () => {
-            const url = new URL(menuTargetIndex.url);
-            handleToggleBreakpoint(url.host);
+            openBreakpointModal(menuTargetIndex.url, menuTargetIndex.method);
             handleCloseMenu();
           },
         },
@@ -265,5 +264,9 @@ export function useTrafficContextMenu() {
     handleContextMenu,
     handleCloseMenu,
     pausedIndices,
+    // Breakpoint modal state
+    breakpointModal,
+    openBreakpointModal,
+    closeBreakpointModal,
   };
 }

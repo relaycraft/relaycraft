@@ -63,7 +63,7 @@ export function parseFilter(input: string): FilterCriteria {
 
       const item: FilterItem = {
         key,
-        value: value.toLowerCase(),
+        value: value, // Keep original case for case-sensitive support
         negative: isNegative,
         operator,
       };
@@ -116,14 +116,14 @@ export function parseFilter(input: string): FilterCriteria {
         default:
           criteria.text.push({
             key: "",
-            value: part.toLowerCase(),
+            value: part, // Keep original case for case-sensitive support
             negative: isNegative,
           });
       }
     } else {
       criteria.text.push({
         key: "",
-        value: cleanPart.toLowerCase(),
+        value: cleanPart, // Keep original case for case-sensitive support
         negative: isNegative,
       });
     }
@@ -178,6 +178,22 @@ export function matchFlow(
   isRegex: boolean,
   caseSensitive: boolean,
 ): boolean {
+  // Helper function for case-aware string matching
+  const matchString = (actual: string, search: string): boolean => {
+    if (caseSensitive) {
+      return actual.includes(search);
+    }
+    return actual.toLowerCase().includes(search.toLowerCase());
+  };
+
+  // Helper function for case-aware equality check
+  const equalsString = (actual: string, search: string): boolean => {
+    if (caseSensitive) {
+      return actual === search;
+    }
+    return actual.toLowerCase() === search.toLowerCase();
+  };
+
   const checkGroup = (items: FilterItem[], matchFn: (item: FilterItem) => boolean) => {
     if (items.length === 0) return true;
     // Logic: OR within same key group, BUT negative items act as exclusions (AND NOT)
@@ -195,7 +211,7 @@ export function matchFlow(
   };
 
   // 1. Method
-  if (!checkGroup(criteria.method, (item) => flow.method.toLowerCase() === item.value))
+  if (!checkGroup(criteria.method, (item) => equalsString(flow.method || "", item.value)))
     return false;
 
   // 2. Status
@@ -214,12 +230,12 @@ export function matchFlow(
   // 3. Domain
   if (
     !checkGroup(criteria.domain, (item) => {
-      return flow.host.toLowerCase().includes(item.value);
+      return matchString(flow.host || "", item.value);
     })
   )
     return false;
 
-  // 4. Type
+  // 4. Type (always case-insensitive for content-type matching)
   if (
     !checkGroup(criteria.type, (item) => {
       const contentType = (
@@ -227,8 +243,8 @@ export function matchFlow(
         flow.contentType ||
         ""
       ).toLowerCase();
-      const url = flow.url.toLowerCase();
-      const val = item.value;
+      const url = (flow.url || "").toLowerCase();
+      const val = item.value.toLowerCase();
       if (val === "json") return contentType.includes("json");
       if (val === "image" || val === "img") return contentType.includes("image");
       if (val === "js" || val === "script")
@@ -240,7 +256,7 @@ export function matchFlow(
   )
     return false;
 
-  // 5. IP (Any)
+  // 5. IP (Any) - IP addresses are case-insensitive
   if (
     !checkGroup(criteria.ip, (item) => {
       return (
@@ -250,7 +266,7 @@ export function matchFlow(
   )
     return false;
 
-  // 6. Source IP (Strict)
+  // 6. Source IP (Strict) - IP addresses are case-insensitive
   if (
     !checkGroup(criteria.source, (item) => {
       return (flow.clientIp || "").includes(item.value);
@@ -288,17 +304,18 @@ export function matchFlow(
 
       // item.value might be "key:val" or just "val" (search in all keys/values)
       if (item.value.includes(":")) {
-        const [hKey, hVal] = item.value.split(":");
+        const colonIndex = item.value.indexOf(":");
+        const hKey = item.value.substring(0, colonIndex);
+        const hVal = item.value.substring(colonIndex + 1);
         const actualVal = Object.entries(combined).find(
-          ([k]) => k.toLowerCase() === hKey,
+          ([k]) => k.toLowerCase() === hKey.toLowerCase(),
         )?.[1] as string;
-        return actualVal?.toLowerCase().includes(hVal);
+        return actualVal ? matchString(actualVal, hVal) : false;
       }
 
       // Search in all headers
       return Object.entries(combined).some(
-        ([k, v]) =>
-          k.toLowerCase().includes(item.value) || String(v).toLowerCase().includes(item.value),
+        ([k, v]) => matchString(k, item.value) || matchString(String(v), item.value),
       );
     })
   )
@@ -314,9 +331,7 @@ export function matchFlow(
         return false;
       }
     }
-    const a = caseSensitive ? actual : actual.toLowerCase();
-    const s = caseSensitive ? search : search.toLowerCase();
-    return a.includes(s);
+    return matchString(actual, search);
   };
 
   if (!checkGroup(criteria.body, (item) => matchText(flow.responseBody, item.value))) return false;
@@ -329,11 +344,33 @@ export function matchFlow(
     for (const item of criteria.text) {
       // Support both statusCode (legacy Flow) and status (FlowIndex)
       const statusStr = (flow.statusCode ?? flow.status)?.toString() || "";
-      const isMatch =
-        flow.url.toLowerCase().includes(item.value) ||
-        flow.method.toLowerCase().includes(item.value) ||
-        statusStr.includes(item.value) ||
-        flow.host.toLowerCase().includes(item.value);
+      const url = flow.url || "";
+      const method = flow.method || "";
+      const host = flow.host || "";
+
+      let isMatch: boolean;
+      if (isRegex) {
+        // Use regex matching for general text search
+        try {
+          const regex = new RegExp(item.value, caseSensitive ? "" : "i");
+          isMatch =
+            regex.test(url) || regex.test(method) || regex.test(statusStr) || regex.test(host);
+        } catch (e) {
+          // Invalid regex, fall back to literal search
+          isMatch =
+            matchString(url, item.value) ||
+            matchString(method, item.value) ||
+            statusStr.includes(item.value) ||
+            matchString(host, item.value);
+        }
+      } else {
+        // Use literal matching with case sensitivity support
+        isMatch =
+          matchString(url, item.value) ||
+          matchString(method, item.value) ||
+          statusStr.includes(item.value) ||
+          matchString(host, item.value);
+      }
 
       if (item.negative) {
         if (isMatch) return false;

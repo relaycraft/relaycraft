@@ -264,6 +264,24 @@ async function pollTraffic() {
 
           if (isViewingCurrent) {
             useTrafficStore.getState().addIndices(indices);
+
+            // Handle intercepted flows - fetch full details and update store
+            const interceptedIndices = indices.filter((idx) => idx.isIntercepted);
+            for (const idx of interceptedIndices) {
+              // Check if we already have this intercepted flow
+              const existing = useTrafficStore.getState().interceptedFlows.get(idx.id);
+              if (!existing) {
+                // Fetch full flow detail for the intercepted flow
+                const flow = await fetchFlowDetail(idx.id);
+                if (flow) {
+                  useTrafficStore.getState().updateInterceptedFlow(idx.id, flow);
+                }
+              }
+            }
+            // Note: We don't remove flows from interceptedFlows here anymore.
+            // The flow will be removed when:
+            // 1. User clicks Resume/Abort in BreakpointModal
+            // 2. Backend sends an update with isIntercepted: false for the same flow ID
           }
         }
 

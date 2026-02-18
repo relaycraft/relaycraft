@@ -14,6 +14,7 @@ import { CopyButton } from "../common/CopyButton";
 import { Editor } from "../common/Editor";
 import { EmptyState } from "../common/EmptyState";
 import { Input } from "../common/Input";
+import { Modal } from "../common/Modal";
 import { Select } from "../common/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Textarea } from "../common/Textarea";
@@ -174,11 +175,11 @@ export function ComposerView() {
       <header className="px-6 py-4 flex-shrink-0 z-20">
         <div className="flex items-center gap-1 p-1 bg-muted/20 backdrop-blur-xl border border-border/40 rounded-lg shadow-sm group focus-within:ring-1 ring-primary/20 transition-all">
           {/* Method Selector */}
-          <div className="w-[72px] shrink-0">
+          <div className="w-[84px] shrink-0">
             <Select
               value={method}
               onChange={(val) => setMethod(val)}
-              className="bg-primary/10 border-none text-primary font-black h-8 text-xs tracking-widest"
+              className="bg-primary/10 border-none text-primary font-bold h-8 text-tiny tracking-widest pl-2 pr-7"
             >
               {["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"].map((m) => (
                 <option key={m} value={m}>
@@ -188,11 +189,11 @@ export function ComposerView() {
             </Select>
           </div>
 
-          <div className="w-px h-4 bg-border/20 mx-0" />
+          <div className="w-px h-4 bg-border/40 mx-0.5" />
 
           {/* URL Input */}
           <div className="flex-1 relative flex items-center min-w-0 -ml-1">
-            <Globe className="absolute left-2 w-3.5 h-3.5 text-muted-foreground/50 group-focus-within:text-primary transition-colors shrink-0" />
+            <Globe className="absolute left-2.5 w-3.5 h-3.5 text-muted-foreground/40 group-focus-within:text-primary/70 transition-colors shrink-0" />
             <Input
               type="text"
               value={url}
@@ -203,7 +204,7 @@ export function ComposerView() {
                 }
               }}
               placeholder={t("composer.url_placeholder")}
-              className="w-full bg-transparent border-none h-8 text-xs font-sans pl-7 pr-4 shadow-none ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/30"
+              className="w-full bg-transparent border-none h-8 text-ui font-medium pl-8 pr-4 shadow-none ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/25"
             />
           </div>
 
@@ -499,76 +500,63 @@ export function ComposerView() {
       </main>
 
       {/* cURL Modal (Redesigned) */}
-      {showCurlModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-8 bg-black/25 backdrop-blur-[1px] animate-in fade-in duration-300">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-card w-full max-w-xl rounded-2xl border border-white/5 shadow-2xl overflow-hidden flex flex-col"
-          >
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-muted/20">
-              <h3 className="text-sm font-bold tracking-tight text-foreground">
-                {t("composer.curl_modal.title")}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowCurlModal(false);
-                  setParseError(null);
-                }}
-                className="text-muted-foreground/40 hover:text-foreground transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-ui text-muted-foreground/80 leading-relaxed font-medium">
-                {t("composer.curl_modal.desc")}
-              </p>
-              <div className="relative group">
-                <Textarea
-                  value={curlInput}
-                  onChange={(e) => {
-                    setCurlInput(e.target.value);
-                    if (parseError) setParseError(null);
-                  }}
-                  placeholder={t("composer.curl_modal.placeholder")}
-                  rows={10}
-                  className={cn(
-                    "w-full p-4 bg-muted/10 border rounded-2xl text-ui font-mono focus:outline-none focus:ring-2 transition-all resize-none shadow-inner",
-                    parseError
-                      ? "border-red-500/50 focus:ring-red-500/20"
-                      : "border-white/5 focus:ring-primary/20",
-                  )}
-                />
-                {parseError && (
-                  <div className="absolute top-4 right-4 text-xs text-red-400 font-bold bg-background/90 backdrop-blur px-2 py-1 rounded-lg border border-red-500/20 shadow-sm flex items-center gap-1.5 animate-in slide-in-from-top-1">
-                    <AlertCircle className="w-3 h-3" /> {parseError}
-                  </div>
-                )}
+      <Modal
+        isOpen={showCurlModal}
+        onClose={() => {
+          setShowCurlModal(false);
+          setParseError(null);
+        }}
+        title={t("composer.curl_modal.title")}
+        icon={<Code2 className="w-4 h-4 text-primary" />}
+        className="max-w-xl"
+      >
+        <div className="space-y-4">
+          <p className="text-ui text-muted-foreground/80 leading-relaxed font-medium">
+            {t("composer.curl_modal.desc")}
+          </p>
+          <div className="relative group">
+            <Textarea
+              value={curlInput}
+              onChange={(e) => {
+                setCurlInput(e.target.value);
+                if (parseError) setParseError(null);
+              }}
+              placeholder={t("composer.curl_modal.placeholder")}
+              rows={10}
+              className={cn(
+                "w-full p-4 bg-muted/10 border rounded-xl text-ui font-mono focus:outline-none focus:ring-1 transition-all resize-none shadow-inner",
+                parseError
+                  ? "border-red-500/50 focus:ring-red-500/20"
+                  : "border-white/5 focus:ring-primary/20",
+              )}
+            />
+            {parseError && (
+              <div className="absolute top-4 right-4 text-xs text-red-400 font-bold bg-background/90 backdrop-blur px-2 py-1 rounded-lg border border-red-500/20 shadow-sm flex items-center gap-1.5 animate-in slide-in-from-top-1">
+                <AlertCircle className="w-3 h-3" /> {parseError}
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  variant="quiet"
-                  onClick={() => {
-                    setShowCurlModal(false);
-                    setParseError(null);
-                  }}
-                  className="px-6 rounded-xl text-muted-foreground hover:text-foreground"
-                >
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  onClick={handleParseCurl}
-                  disabled={!curlInput}
-                  className="px-8 rounded-xl shadow-lg shadow-primary/20"
-                >
-                  {t("composer.curl_modal.parse_btn")}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 pt-1">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowCurlModal(false);
+                setParseError(null);
+              }}
+              className="px-6 rounded-xl text-muted-foreground hover:text-foreground"
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={handleParseCurl}
+              disabled={!curlInput}
+              className="px-8 rounded-xl shadow-lg shadow-primary/20"
+            >
+              {t("composer.curl_modal.parse_btn")}
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

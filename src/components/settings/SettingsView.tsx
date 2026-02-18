@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useProxyStore } from "../../stores/proxyStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 import { AISettingsPanel } from "../ai/AISettingsPanel";
@@ -54,6 +55,40 @@ export function SettingsView() {
     testUpstreamConnectivity,
     resetUpstreamStatus,
   } = useSettingsStore();
+
+  const { running, restartProxy } = useProxyStore();
+
+  // Snapshot of network config at the time of last engine start/restart
+  const networkSnapshot = React.useRef({
+    proxy_port: config.proxy_port,
+    ssl_insecure: config.ssl_insecure,
+    upstream_proxy: config.upstream_proxy,
+  });
+
+  // Track if network settings have changed since last restart
+  const networkChanged =
+    running &&
+    (config.proxy_port !== networkSnapshot.current.proxy_port ||
+      config.ssl_insecure !== networkSnapshot.current.ssl_insecure ||
+      JSON.stringify(config.upstream_proxy) !==
+        JSON.stringify(networkSnapshot.current.upstream_proxy));
+
+  const [restarting, setRestarting] = React.useState(false);
+
+  const handleRestartEngine = async () => {
+    setRestarting(true);
+    try {
+      await restartProxy();
+      // Update snapshot after successful restart
+      networkSnapshot.current = {
+        proxy_port: config.proxy_port,
+        ssl_insecure: config.ssl_insecure,
+        upstream_proxy: config.upstream_proxy,
+      };
+    } finally {
+      setRestarting(false);
+    }
+  };
 
   const { setLogViewerOpen } = useUIStore();
   const [systemInfo, setSystemInfo] = React.useState<{
@@ -291,9 +326,57 @@ export function SettingsView() {
                 </div>
               )}
 
-              <div className="bg-muted/10 p-3 text-ui text-muted-foreground/60 text-center border-t border-border/40">
-                {t("settings.network.restart_hint")}
-              </div>
+              <AnimatePresence>
+                {networkChanged && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, y: -6, height: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mx-0 mt-0 flex items-center justify-between gap-3 px-4 py-3 bg-amber-500/8 border-t border-amber-500/20">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-1 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
+                          <RefreshCcw className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 leading-tight">
+                            {t("settings.network.pending_restart_title")}
+                          </p>
+                          <p className="text-xs text-amber-600/70 dark:text-amber-400/70 leading-tight mt-0.5">
+                            {t("settings.network.pending_restart_desc")}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={handleRestartEngine}
+                        disabled={restarting}
+                        className="shrink-0 h-7 px-3 gap-1.5 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/60"
+                      >
+                        <RefreshCcw className={`w-3 h-3 ${restarting ? "animate-spin" : ""}`} />
+                        {restarting
+                          ? t("settings.network.restarting")
+                          : t("settings.network.restart_now")}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+                {!networkChanged && (
+                  <motion.div
+                    key="hint"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="px-4 py-3 text-xs text-muted-foreground/40 text-center border-t border-border/30 flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCcw className="w-3 h-3 opacity-50" />
+                    {t("settings.network.restart_hint")}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </SettingsSection>
           )}
 

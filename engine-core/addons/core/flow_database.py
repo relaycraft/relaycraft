@@ -195,25 +195,102 @@ class FlowDatabase:
         """
         return self._create_new_session()
 
+    def _create_connection(self) -> sqlite3.Connection:
+        """Create a new database connection with proper settings."""
+        conn = sqlite3.connect(
+            self.db_path,
+            check_same_thread=False,
+            timeout=30.0  # 30 second timeout for locked database
+        )
+        conn.row_factory = sqlite3.Row
+        # Enable WAL mode for better concurrency
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        # Performance optimizations for large databases
+        conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+        conn.execute("PRAGMA mmap_size=268435456")  # 256MB memory-mapped I/O
+        conn.execute("PRAGMA temp_store=MEMORY")  # Store temp tables in memory
+        # Optimize WAL checkpoint - auto-checkpoint every 1000 pages
+        conn.execute("PRAGMA wal_autocheckpoint=1000")
+        # Set busy timeout to wait for locks
+        conn.execute("PRAGMA busy_timeout=30000")  # 30 seconds
+        return conn
+
     def _get_conn(self) -> sqlite3.Connection:
-        """Get thread-local connection"""
+        """Get thread-local connection with health check and auto-reconnect."""
         if not hasattr(self._local, 'conn') or self._local.conn is None:
-            self._local.conn = sqlite3.connect(
-                self.db_path,
-                check_same_thread=False
-            )
-            self._local.conn.row_factory = sqlite3.Row
-            # Enable WAL mode for better concurrency
-            self._local.conn.execute("PRAGMA journal_mode=WAL")
-            self._local.conn.execute("PRAGMA synchronous=NORMAL")
-            self._local.conn.execute("PRAGMA foreign_keys=ON")
-            # Performance optimizations for large databases
-            self._local.conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
-            self._local.conn.execute("PRAGMA mmap_size=268435456")  # 256MB memory-mapped I/O
-            self._local.conn.execute("PRAGMA temp_store=MEMORY")  # Store temp tables in memory
-            # Optimize WAL checkpoint - auto-checkpoint every 1000 pages
-            self._local.conn.execute("PRAGMA wal_autocheckpoint=1000")
+            self._local.conn = self._create_connection()
+        else:
+            # Health check - verify connection is still valid
+            try:
+                self._local.conn.execute("SELECT 1")
+            except sqlite3.Error as e:
+                self.logger.warning(f"Database connection unhealthy ({e}), reconnecting...")
+                try:
+                    self._local.conn.close()
+                except Exception:
+                    pass
+                self._local.conn = self._create_connection()
         return self._local.conn
+
+    def _execute_with_retry(self, operation_name: str, operation, max_retries: int = 3):
+        """Execute a database operation with retry logic for transient errors.
+        
+        Args:
+            operation_name: Name of the operation for logging
+            operation: Callable that takes a connection and returns a result
+            max_retries: Maximum number of retries
+            
+        Returns:
+            Result of the operation
+            
+        Raises:
+            Last exception if all retries fail
+        """
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                conn = self._get_conn()
+                return operation(conn)
+            except sqlite3.OperationalError as e:
+                last_error = e
+                error_msg = str(e).lower()
+                # Retry on transient errors
+                if 'locked' in error_msg or 'database is locked' in error_msg:
+                    self.logger.warning(f"Database locked during {operation_name}, retry {attempt + 1}/{max_retries}")
+                    # Force reconnection on next attempt
+                    if hasattr(self._local, 'conn') and self._local.conn:
+                        try:
+                            self._local.conn.close()
+                        except:
+                            pass
+                        self._local.conn = None
+                    time.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                    continue
+                else:
+                    raise
+            except sqlite3.DatabaseError as e:
+                last_error = e
+                error_msg = str(e).lower()
+                # Retry on disk I/O errors
+                if 'disk i/o' in error_msg or 'malformed' in error_msg:
+                    self.logger.error(f"Database error during {operation_name}: {e}, retry {attempt + 1}/{max_retries}")
+                    # Force reconnection
+                    if hasattr(self._local, 'conn') and self._local.conn:
+                        try:
+                            self._local.conn.close()
+                        except:
+                            pass
+                        self._local.conn = None
+                    time.sleep(0.2 * (attempt + 1))
+                    continue
+                else:
+                    raise
+        
+        # All retries failed
+        self.logger.error(f"All {max_retries} retries failed for {operation_name}")
+        raise last_error
 
     def _init_db(self):
         """Initialize database schema"""
@@ -398,22 +475,24 @@ class FlowDatabase:
 
     def list_sessions(self) -> List[Dict]:
         """List all sessions with real-time flow counts"""
-        conn = self._get_conn()
-        rows = conn.execute("""
-            SELECT
-                s.id, s.name, s.description, s.created_at, s.updated_at,
-                s.metadata, s.is_active,
-                COALESCE(f.flow_count, 0) as flow_count,
-                COALESCE(f.total_size, 0) as total_size
-            FROM sessions s
-            LEFT JOIN (
-                SELECT session_id, COUNT(*) as flow_count, SUM(size) as total_size
-                FROM flow_indices
-                GROUP BY session_id
-            ) f ON s.id = f.session_id
-            ORDER BY s.created_at DESC
-        """).fetchall()
-        return [dict(row) for row in rows]
+        def _query(conn):
+            rows = conn.execute("""
+                SELECT
+                    s.id, s.name, s.description, s.created_at, s.updated_at,
+                    s.metadata, s.is_active,
+                    COALESCE(f.flow_count, 0) as flow_count,
+                    COALESCE(f.total_size, 0) as total_size
+                FROM sessions s
+                LEFT JOIN (
+                    SELECT session_id, COUNT(*) as flow_count, SUM(size) as total_size
+                    FROM flow_indices
+                    GROUP BY session_id
+                ) f ON s.id = f.session_id
+                ORDER BY s.created_at DESC
+            """).fetchall()
+            return [dict(row) for row in rows]
+        
+        return self._execute_with_retry("list_sessions", _query)
 
     def delete_session(self, session_id: str) -> bool:
         """Delete a session and all its flows.
@@ -450,6 +529,26 @@ class FlowDatabase:
             conn.commit()
 
         return True
+
+    def delete_all_historical_sessions(self) -> int:
+        """Delete all inactive sessions and their flows.
+        
+        Returns the number of deleted sessions.
+        """
+        conn = self._get_conn()
+        
+        # Get all inactive sessions
+        rows = conn.execute("SELECT id FROM sessions WHERE is_active = 0").fetchall()
+        if not rows:
+            return 0
+            
+        deleted_count = 0
+        for row in rows:
+            session_id = row[0]
+            if self.delete_session(session_id):
+                deleted_count += 1
+                
+        return deleted_count
 
     def update_session_stats(self, session_id: str):
         """Update session statistics"""
@@ -692,48 +791,50 @@ class FlowDatabase:
                 # No active session, return empty
                 return []
 
-        conn = self._get_conn()
-        t1 = time_module.time()
+        def _query(conn):
+            t1 = time_module.time()
 
-        query = """
-            SELECT * FROM flow_indices
-            WHERE session_id = ? AND msg_ts >= ?
-            ORDER BY msg_ts ASC
-        """
-        params = [session_id, since]
+            query = """
+                SELECT * FROM flow_indices
+                WHERE session_id = ? AND msg_ts >= ?
+                ORDER BY msg_ts ASC
+            """
+            params = [session_id, since]
 
-        if limit:
-            query += " LIMIT ?"
-            params.append(limit)
+            if limit:
+                query += " LIMIT ?"
+                params.append(limit)
 
-        rows = conn.execute(query, params).fetchall()
-        t2 = time_module.time()
+            rows = conn.execute(query, params).fetchall()
+            t2 = time_module.time()
 
-        result = []
-        for row in rows:
-            item = dict(row)
-            # Parse hits JSON
-            if item.get('hits'):
-                try:
-                    item['hits'] = json.loads(item['hits'])
-                except:
+            result = []
+            for row in rows:
+                item = dict(row)
+                # Parse hits JSON
+                if item.get('hits'):
+                    try:
+                        item['hits'] = json.loads(item['hits'])
+                    except:
+                        item['hits'] = []
+                else:
                     item['hits'] = []
-            else:
-                item['hits'] = []
-            result.append(item)
-        t3 = time_module.time()
-        
-        # Log if slow (>100ms) or returning many rows
-        total_ms = (t3 - t0) * 1000
-        if total_ms > 100 or len(result) > 100:
-            self.logger.info(
-                f"get_indices ({total_ms:.0f}ms, {len(result)} rows): "
-                f"session={(t1-t0)*1000:.0f}ms, "
-                f"query={(t2-t1)*1000:.0f}ms, "
-                f"parse={(t3-t2)*1000:.0f}ms"
-            )
+                result.append(item)
+            t3 = time_module.time()
+            
+            # Log if slow (>100ms) or returning many rows
+            total_ms = (t3 - t0) * 1000
+            if total_ms > 100 or len(result) > 100:
+                self.logger.info(
+                    f"get_indices ({total_ms:.0f}ms, {len(result)} rows): "
+                    f"session={(t1-t0)*1000:.0f}ms, "
+                    f"query={(t2-t1)*1000:.0f}ms, "
+                    f"parse={(t3-t2)*1000:.0f}ms"
+                )
 
-        return result
+            return result
+        
+        return self._execute_with_retry("get_indices", _query)
 
     def get_flow_seq(self, flow_id: str) -> Optional[int]:
         """Get sequence number for an existing flow, or None if not exists"""
@@ -750,61 +851,62 @@ class FlowDatabase:
         import time as time_module
         t0 = time_module.time()
         
-        conn = self._get_conn()
+        def _query(conn):
+            # Only select needed columns for better performance
+            t1 = time_module.time()
+            row = conn.execute("""
+                SELECT id, session_id, data, request_body_ref, response_body_ref
+                FROM flow_details WHERE id = ?
+            """, (flow_id,)).fetchone()
+            t2 = time_module.time()
 
-        # Only select needed columns for better performance
-        t1 = time_module.time()
-        row = conn.execute("""
-            SELECT id, session_id, data, request_body_ref, response_body_ref
-            FROM flow_details WHERE id = ?
-        """, (flow_id,)).fetchone()
-        t2 = time_module.time()
+            if not row:
+                return None
 
-        if not row:
-            return None
+            flow_data = json.loads(row['data'])
+            session_id = row['session_id']
+            req_ref = row['request_body_ref']
+            res_ref = row['response_body_ref']
+            t3 = time_module.time()
 
-        flow_data = json.loads(row['data'])
-        session_id = row['session_id']
-        req_ref = row['request_body_ref']
-        res_ref = row['response_body_ref']
-        t3 = time_module.time()
+            # Batch load compressed bodies in a single query for better performance
+            compressed_bodies = {}
+            if (req_ref == 'compressed' or res_ref == 'compressed'):
+                body_rows = conn.execute("""
+                    SELECT type, data FROM flow_bodies WHERE flow_id = ?
+                """, (flow_id,)).fetchall()
+                for body_row in body_rows:
+                    compressed_bodies[body_row['type']] = body_row['data']
+            t4 = time_module.time()
 
-        # Batch load compressed bodies in a single query for better performance
-        compressed_bodies = {}
-        if (req_ref == 'compressed' or res_ref == 'compressed'):
-            body_rows = conn.execute("""
-                SELECT type, data FROM flow_bodies WHERE flow_id = ?
-            """, (flow_id,)).fetchall()
-            for body_row in body_rows:
-                compressed_bodies[body_row['type']] = body_row['data']
-        t4 = time_module.time()
+            # Restore request body
+            if req_ref and req_ref != 'inline':
+                body = self._load_body(conn, flow_id, session_id, req_ref, 'request', compressed_bodies)
+                if body and flow_data.get('request', {}).get('postData'):
+                    flow_data['request']['postData']['text'] = body
 
-        # Restore request body
-        if req_ref and req_ref != 'inline':
-            body = self._load_body(conn, flow_id, session_id, req_ref, 'request', compressed_bodies)
-            if body and flow_data.get('request', {}).get('postData'):
-                flow_data['request']['postData']['text'] = body
+            # Restore response body
+            if res_ref and res_ref != 'inline':
+                body = self._load_body(conn, flow_id, session_id, res_ref, 'response', compressed_bodies)
+                if body and flow_data.get('response', {}).get('content'):
+                    flow_data['response']['content']['text'] = body
+            t5 = time_module.time()
+            
+            # Log if slow (>100ms)
+            total_ms = (t5 - t0) * 1000
+            if total_ms > 100:
+                self.logger.info(
+                    f"get_detail SLOW ({total_ms:.0f}ms): "
+                    f"conn={(t1-t0)*1000:.0f}ms, "
+                    f"query={(t2-t1)*1000:.0f}ms, "
+                    f"json={(t3-t2)*1000:.0f}ms, "
+                    f"bodies={(t4-t3)*1000:.0f}ms, "
+                    f"restore={(t5-t4)*1000:.0f}ms"
+                )
 
-        # Restore response body
-        if res_ref and res_ref != 'inline':
-            body = self._load_body(conn, flow_id, session_id, res_ref, 'response', compressed_bodies)
-            if body and flow_data.get('response', {}).get('content'):
-                flow_data['response']['content']['text'] = body
-        t5 = time_module.time()
+            return flow_data
         
-        # Log if slow (>100ms)
-        total_ms = (t5 - t0) * 1000
-        if total_ms > 100:
-            self.logger.info(
-                f"get_detail SLOW ({total_ms:.0f}ms): "
-                f"conn={(t1-t0)*1000:.0f}ms, "
-                f"query={(t2-t1)*1000:.0f}ms, "
-                f"json={(t3-t2)*1000:.0f}ms, "
-                f"bodies={(t4-t3)*1000:.0f}ms, "
-                f"restore={(t5-t4)*1000:.0f}ms"
-            )
-
-        return flow_data
+        return self._execute_with_retry("get_detail", _query)
 
     def _load_body(self, conn, flow_id: str, session_id: str, ref: str, body_type: str,
                    compressed_bodies: Dict = None) -> Optional[str]:
@@ -1072,9 +1174,27 @@ class FlowDatabase:
     def _maybe_cleanup(self):
         """Run cleanup if interval has passed"""
         now = time.time()
+        # Also run periodic WAL checkpoint more frequently than full cleanup
+        if now - self._last_cleanup > 60:  # Every 60 seconds
+            self._run_wal_checkpoint()
         if now - self._last_cleanup > Config.CLEANUP_INTERVAL:
             self._last_cleanup = now
             self._run_cleanup()
+
+    def _run_wal_checkpoint(self):
+        """Run WAL checkpoint to prevent WAL file from growing too large.
+        
+        This is called more frequently than full cleanup to keep the WAL file small.
+        """
+        try:
+            conn = self._get_conn()
+            result = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+            # result is (busy, log, checkpointed)
+            if result and result[0] > 0:
+                # If checkpoint was busy, log it
+                self.logger.debug(f"WAL checkpoint busy: {result}")
+        except sqlite3.Error as e:
+            self.logger.warning(f"WAL checkpoint error: {e}")
 
     def _run_cleanup(self):
         """Clean up old data and enforce total flow limit

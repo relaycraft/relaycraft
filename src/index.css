@@ -149,6 +149,8 @@
   /* Cyan-500 */
   --color-rule-block: #f43f5e;
   /* Rose-500 */
+  --color-rule-breakpoint: #ef4444;
+  /* Red-500 */
 
   --color-method-delete: #f43f5e;
 
@@ -790,6 +792,10 @@ select option:hover {
     color: var(--color-rule-block);
   }
 
+  .text-rule-breakpoint {
+    color: var(--color-rule-breakpoint);
+  }
+
   .bg-rule-script {
     background-color: var(--color-rule-script);
   }
@@ -816,6 +822,10 @@ select option:hover {
 
   .bg-rule-block {
     background-color: var(--color-rule-block);
+  }
+
+  .bg-rule-breakpoint {
+    background-color: var(--color-rule-breakpoint);
   }
 
   /* Interaction Feedback Utilities */

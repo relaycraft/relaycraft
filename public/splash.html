@@ -7,100 +7,78 @@
     <title>RelayCraft Loading</title>
     <style>
         :root {
-            /* Dark Theme Defaults (Modern Charcoal) */
-            --color-background: #0b0c0f;
-            --color-vibrancy-inner: #1a1c24;
+            /* Dark Theme - Default */
+            --color-card-bg: rgba(30, 30, 36, 0.98);
+            --color-card-border: rgba(255, 255, 255, 0.1);
             --color-primary: #60a5fa;
             --color-accent: #7c3aed;
             --color-foreground: #e6edf3;
-            --logo-shine: rgba(255, 255, 255, 0.1);
-            --loader-bg: rgba(255, 255, 255, 0.05);
+            --loader-bg: rgba(255, 255, 255, 0.15);
             --text-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-            --muted-text: rgba(230, 237, 243, 0.4);
+            --muted-text: rgba(230, 237, 243, 0.6);
+            --shadow-color: rgba(0, 0, 0, 0.6);
         }
 
-        @media (prefers-color-scheme: light) {
-            :root {
-                /* Light Theme Defaults (Nebula White) */
-                --color-background: #fcfcfd;
-                --color-vibrancy-inner: #f4f4f7;
-                --color-primary: #4f46e5;
-                --color-accent: #7c3aed;
-                --color-foreground: #1a1c23;
-                --logo-shine: rgba(0, 0, 0, 0.05);
-                --loader-bg: rgba(0, 0, 0, 0.05);
-                --text-gradient: linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%);
-                --muted-text: rgba(26, 28, 35, 0.4);
-            }
+        /* Light Theme - only when explicitly set */
+        .theme-light {
+            --color-card-bg: rgba(255, 255, 255, 0.98);
+            --color-card-border: rgba(0, 0, 0, 0.1);
+            --color-primary: #4f46e5;
+            --color-accent: #7c3aed;
+            --color-foreground: #1a1c23;
+            --loader-bg: rgba(0, 0, 0, 0.12);
+            --text-gradient: linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%);
+            --muted-text: rgba(26, 28, 35, 0.6);
+            --shadow-color: rgba(0, 0, 0, 0.2);
         }
 
-        html {
-            background-color: var(--color-background);
-        }
-
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background-color: var(--color-background);
-            color: var(--color-foreground);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            background: transparent;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             -webkit-user-select: none;
             user-select: none;
             cursor: default;
         }
 
-        .vibrancy-container {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background: radial-gradient(circle at 50% 50%, var(--color-vibrancy-inner) 0%, var(--color-background) 100%);
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        .blob {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
-            animation: float 10s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
-        }
-
-        @keyframes float {
-            from {
-                transform: translate(-20%, -20%) scale(1);
-            }
-
-            to {
-                transform: translate(20%, 20%) scale(1.1);
-            }
-        }
-
-        .logo-container {
+        /* 圆角卡片容器 */
+        .splash-card {
+            width: 420px;
+            padding: 32px 40px;
+            background: var(--color-card-bg);
+            border-radius: 20px;
+            border: 1px solid var(--color-card-border);
+            box-shadow:
+                0 25px 50px -12px var(--shadow-color),
+                0 0 0 1px var(--color-card-border);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 24px;
-            z-index: 10;
+            gap: 16px;
+            animation: card-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
-        .logo-wrapper {
-            position: relative;
-            width: 140px;
-            height: 140px;
-            animation: logo-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes logo-entrance {
+        @keyframes card-entrance {
             0% {
                 opacity: 0;
-                transform: scale(0.8) translateY(20px);
+                transform: scale(0.9) translateY(20px);
             }
 
             100% {
@@ -109,42 +87,43 @@
             }
         }
 
+        .logo-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            animation: logo-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes logo-entrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         .logo-svg {
             width: 100%;
             height: 100%;
-            filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.2));
-        }
-
-        /* Ripple / Shine Sweep Animation */
-        .shine-sweep {
-            animation: sweep 3s infinite linear;
-        }
-
-        @keyframes sweep {
-            0% {
-                transform: translateX(-150%) skewX(-25deg);
-            }
-
-            50%,
-            100% {
-                transform: translateX(250%) skewX(-25deg);
-            }
+            filter: drop-shadow(0 4px 12px rgba(96, 165, 250, 0.3));
         }
 
         .text-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            width: 100%;
         }
 
         .app-name {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             letter-spacing: -0.02em;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: entrance 0.6s 0.3s forwards ease-out;
             background: var(--text-gradient);
             -webkit-background-clip: text;
             background-clip: text;
@@ -152,32 +131,22 @@
         }
 
         .slogan {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 500;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+            letter-spacing: 0.01em;
             color: var(--muted-text);
-            opacity: 0;
-            transform: translateY(8px);
-            animation: entrance 0.6s 0.5s forwards ease-out;
-        }
-
-        @keyframes entrance {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.4;
         }
 
         .loader-bar {
             width: 180px;
-            height: 2px;
+            height: 3px;
             background: var(--loader-bg);
             border-radius: 10px;
             overflow: hidden;
-            margin-top: 12px;
-            opacity: 0;
-            animation: fade-in 0.4s 0.7s forwards;
+            margin-top: 4px;
         }
 
         .loader-progress {
@@ -193,34 +162,120 @@
             }
 
             100% {
-                transform: translateX(250%);
+                transform: translateX(350%);
             }
         }
 
-        .footer {
-            position: fixed;
-            bottom: 32px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 500;
+        .status-text {
+            font-size: 11px;
             color: var(--muted-text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            height: 16px;
+            text-align: center;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .footer {
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 4px;
-            opacity: 0;
-            animation: fade-in 0.8s 1s forwards;
+            margin-top: 4px;
         }
 
         .version {
+            font-size: 10px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             letter-spacing: 0.05em;
+            color: var(--muted-text);
+            opacity: 0.8;
         }
 
-        @keyframes fade-in {
-            to {
+        .copyright {
+            font-size: 9px;
+            color: var(--muted-text);
+            opacity: 0.6;
+        }
+
+        /* Relay dot pulse animation */
+        .relay-dot-pulse {
+            animation: relay-dot-pulse 3s ease-in-out infinite;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+
+        @keyframes relay-dot-pulse {
+
+            0%,
+            100% {
+                r: 14px;
+                opacity: 0.9;
+            }
+
+            50% {
+                r: 16px;
                 opacity: 1;
+            }
+        }
+
+        /* Flow particles */
+        .flow-particle-1 {
+            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
+            animation: flow-move 4s linear infinite, flow-fade 4s ease-in-out infinite;
+        }
+
+        .flow-particle-2 {
+            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
+            animation: flow-move 4s linear infinite, flow-fade-2 4s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes flow-move {
+            0% {
+                offset-distance: 0%;
+            }
+
+            100% {
+                offset-distance: 100%;
+            }
+        }
+
+        @keyframes flow-fade {
+            0% {
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.8;
+            }
+
+            80% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes flow-fade-2 {
+            0% {
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.6;
+            }
+
+            80% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 0;
             }
         }
     </style>
@@ -229,101 +284,110 @@
         (function () {
             try {
                 const mode = localStorage.getItem('themeMode');
-                const themeColors = localStorage.getItem('themeColors');
-
+                // Only switch to light theme when explicitly set to 'light'
                 if (mode === 'light') {
-                    document.documentElement.style.setProperty('--color-background', '#fcfcfd');
-                    document.documentElement.style.setProperty('--color-vibrancy-inner', '#f4f4f7');
-                    document.documentElement.style.setProperty('--color-primary', '#4f46e5');
-                    document.documentElement.style.setProperty('--color-foreground', '#1a1c23');
-                    document.documentElement.style.setProperty('--logo-shine', 'rgba(0, 0, 0, 0.05)');
-                    document.documentElement.style.setProperty('--loader-bg', 'rgba(0, 0, 0, 0.05)');
-                    document.documentElement.style.setProperty('--text-gradient', 'linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%)');
-                    document.documentElement.style.setProperty('--muted-text', 'rgba(26, 28, 35, 0.4)');
-                } else if (themeColors) {
-                    const colors = JSON.parse(themeColors);
-                    // Map basic variables if available
-                    if (colors['--color-background']) {
-                        document.documentElement.style.setProperty('--color-background', colors['--color-background']);
-                    }
-                    if (colors['--color-primary']) {
-                        document.documentElement.style.setProperty('--color-primary', colors['--color-primary']);
-                    }
-                    if (colors['--color-foreground']) {
-                        document.documentElement.style.setProperty('--color-foreground', colors['--color-foreground']);
-                        // Set muted text based on foreground
-                        document.documentElement.style.setProperty('--muted-text', colors['--color-foreground'] + '66'); // ~40% opacity
-                    }
-                    // Handle inner vibrancy if background is set
-                    if (colors['--color-background']) {
-                        // Simple estimation for inner blob glow
-                        document.documentElement.style.setProperty('--color-vibrancy-inner', colors['--color-background']);
-                    }
+                    document.documentElement.classList.add('theme-light');
                 }
+                // Default is dark theme (no class needed)
             } catch (e) {
                 console.warn('Theme sync failed', e);
             }
         })();
+
+        // Listen for initialization status updates
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('status');
+            const sloganEl = document.getElementById('slogan');
+
+            // Initial localized text based on browser language
+            const isZh = navigator.language.startsWith('zh');
+            if (statusEl) {
+                statusEl.textContent = isZh ? '正在启动...' : 'Starting...';
+            }
+            if (sloganEl) {
+                sloganEl.textContent = isZh ? 'AI 原生的网络流量调试工具' : 'AI-Native Network Debugging Tool';
+            }
+
+            if (window.__TAURI__) {
+                const { listen } = window.__TAURI__.event;
+                listen('init-status', (event) => {
+                    if (statusEl) {
+                        statusEl.textContent = event.payload;
+                    }
+                });
+            } else {
+                console.warn('Tauri API not found. withGlobalTauri might be disabled.');
+            }
+        });
     </script>
 </head>
 
 <body>
-    <div class="vibrancy-container">
-        <div class="blob"></div>
-    </div>
-
-    <div class="logo-container">
+    <div class="splash-card">
         <div class="logo-wrapper">
-            <svg class="logo-svg" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="logo-svg" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#4F46E5" />
+                    <linearGradient id="mainGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#4F46E5" />
                         <stop offset="100%" stop-color="#7C3AED" />
                     </linearGradient>
-                    <mask id="m">
-                        <path
-                            d="M 64 0 C 106 0 128 22 128 64 C 128 106 106 128 64 128 C 22 128 0 106 0 64 C 0 22 22 0 64 0 Z"
-                            fill="white" />
-                    </mask>
+                    <linearGradient id="flowGradient" x1="0" y1="0" x2="100%" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="white" stop-opacity="0" />
+                        <stop offset="50%" stop-color="white" stop-opacity="0.5" />
+                        <stop offset="100%" stop-color="white" stop-opacity="0" />
+                    </linearGradient>
                 </defs>
 
-                <path d="M 64 0 C 106 0 128 22 128 64 C 128 106 106 128 64 128 C 22 128 0 106 0 64 C 0 22 22 0 64 0 Z"
-                    fill="url(#g)" />
+                <!-- Group wrapper for scaling/padding -->
+                <g transform="translate(44.8, 44.8) scale(0.825)">
+                    <!-- Modern Squircle Background -->
+                    <rect x="0" y="0" width="512" height="512" rx="100" fill="url(#mainGradient)" />
 
-                <!-- Ripple Sweep Layer -->
-                <g mask="url(#m)">
-                    <rect class="shine-sweep" x="0" y="0" width="100" height="128" fill="var(--logo-shine)" />
-                </g>
+                    <!-- Subtle Data Stream (Background) -->
+                    <path d="M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300"
+                        stroke="url(#flowGradient)" stroke-width="60" stroke-linecap="round" stroke-opacity="0.15"
+                        fill="none" />
 
-                <g transform="translate(64, 64)">
-                    <g stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                        <line x1="-18" y1="-26" x2="-18" y2="-8" />
-                        <line x1="-18" y1="4" x2="-18" y2="26" />
-                        <path d="M -18,-26 L 0,-26 Q 18,-26 18,-12 Q 18,2 0,2 L -18,2" />
-                        <path d="M 0,2 Q 6,20 22,26" />
+                    <!-- Signal/Data Flow Elements -->
+                    <g transform="translate(111, 96)">
+                        <!-- Bar 1: Input -->
+                        <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95" />
+
+                        <!-- Bar 2: Processing -->
+                        <rect x="80" y="30" width="50" height="260" rx="25" fill="white" fill-opacity="1" />
+
+                        <!-- Bar 3: Peak/Relay -->
+                        <rect x="160" y="0" width="50" height="320" rx="25" fill="white" fill-opacity="1" />
+
+                        <!-- Bar 4: Output -->
+                        <rect x="240" y="60" width="50" height="200" rx="25" fill="white" fill-opacity="0.95" />
+
+                        <!-- Animated Pulse Dot -->
+                        <circle cx="265" cy="296" r="14" fill="white" class="relay-dot-pulse" />
                     </g>
-                    <g opacity="0.7">
-                        <line x1="-28" y1="-2" x2="-8" y2="-2" stroke="white" stroke-width="4" stroke-linecap="round" />
-                        <line x1="24" y1="-18" x2="32" y2="-18" stroke="white" stroke-width="4"
-                            stroke-linecap="round" />
-                        <line x1="26" y1="8" x2="34" y2="8" stroke="white" stroke-width="4" stroke-linecap="round" />
-                    </g>
+
+                    <!-- Flow Particles -->
+                    <circle r="8" fill="white" opacity="0" class="flow-particle-1"
+                        style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
+                    <circle r="6" fill="white" opacity="0" class="flow-particle-2"
+                        style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
                 </g>
             </svg>
         </div>
 
         <div class="text-group">
             <div class="app-name">RelayCraft</div>
-            <div class="slogan">Intercept • Analyze • Craft</div>
+            <div id="slogan" class="slogan">AI-Native Network Debugging Tool</div>
             <div class="loader-bar">
                 <div class="loader-progress"></div>
             </div>
+            <div id="status" class="status-text"></div>
         </div>
-    </div>
 
-    <div class="footer">
-        <div class="version">v0.99.8</div>
-        <div class="engine">© 2026 RelayCraft Team</div>
+        <div class="footer">
+            <div class="version">v0.99.8</div>
+            <div class="copyright">© 2026 RelayCraft Team</div>
+        </div>
     </div>
 </body>
 

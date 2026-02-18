@@ -135,7 +135,7 @@ export function ImportRuleModal() {
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-1">
-          <Button variant="ghost" size="sm" onClick={() => setImportModalOpen(false)}>
+          <Button variant="ghost" onClick={() => setImportModalOpen(false)}>
             {t("common.cancel")}
           </Button>
           <Button

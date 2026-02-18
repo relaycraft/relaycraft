@@ -11,11 +11,10 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import { matchFlow, parseFilter } from "../../lib/filterParser";
-import { useBreakpointStore } from "../../stores/breakpointStore";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTrafficStore } from "../../stores/trafficStore";
@@ -25,6 +24,7 @@ import { Button } from "../common/Button";
 import { ContextMenu } from "../common/ContextMenu";
 import { EmptyState } from "../common/EmptyState";
 import { SetupGuideModal } from "../layout/SetupGuideModal";
+import { AddBreakpointModal } from "./AddBreakpointModal";
 import { FilterBar } from "./FilterBar";
 import { FlowDetail } from "./FlowDetail";
 import { useTrafficContextMenu } from "./hooks/useTrafficContextMenu";
@@ -32,15 +32,22 @@ import { TrafficListItem } from "./TrafficListItem";
 
 interface TrafficViewProps {
   onToggleProxy: () => void;
+  loading?: boolean;
 }
 
-export function TrafficView({ onToggleProxy }: TrafficViewProps) {
+export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
   const { t } = useTranslation();
-  const { indices, selectedFlow, selectFlow } = useTrafficStore();
-  const { active, certTrusted, certWarningIgnored, setCertWarningIgnored } = useProxyStore();
-  const { breakpoints } = useBreakpointStore();
-  const { setActiveTab } = useUIStore();
-  const { showSessionId, dbSessions } = useSessionStore();
+  const indices = useTrafficStore((state) => state.indices);
+  const selectedFlow = useTrafficStore((state) => state.selectedFlow);
+  const selectFlow = useTrafficStore((state) => state.selectFlow);
+  const active = useProxyStore((state) => state.active);
+  const port = useProxyStore((state) => state.port);
+  const certTrusted = useProxyStore((state) => state.certTrusted);
+  const certWarningIgnored = useProxyStore((state) => state.certWarningIgnored);
+  const setCertWarningIgnored = useProxyStore((state) => state.setCertWarningIgnored);
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const showSessionId = useSessionStore((state) => state.showSessionId);
+  const dbSessions = useSessionStore((state) => state.dbSessions);
 
   // Check if viewing historical session (not the one currently being written)
   // A session is historical if:
@@ -66,6 +73,8 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     handleContextMenu,
     handleCloseMenu,
     pausedIndices,
+    breakpointModal,
+    closeBreakpointModal,
   } = useTrafficContextMenu();
 
   // Local State
@@ -281,6 +290,14 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []); // Empty dependency array ensures this listener is bound only once
 
+  // Stable select handler to prevent list item re-renders
+  const handleSelect = useCallback(
+    (idx: FlowIndex) => {
+      selectFlow(idx.id);
+    },
+    [selectFlow],
+  );
+
   return (
     <div className="h-full flex flex-col">
       {!(certTrusted || certWarningIgnored) && (
@@ -392,6 +409,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                       label: t("traffic.start_proxy"),
                       onClick: onToggleProxy,
                       icon: Wifi,
+                      isLoading: loading,
                     }}
                     animation="pulse"
                     className="py-12"
@@ -402,9 +420,9 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                     title={t("traffic.listening")}
                     description={
                       <div className="space-y-6">
-                        <div className="flex items-center justify-center gap-2 text-ui text-muted-foreground mt-1">
+                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-1">
                           <span className="px-1.5 py-0.5 bg-muted rounded border border-border/50 font-mono">
-                            127.0.0.1:9090
+                            127.0.0.1:{port}
                           </span>
                           <span>•</span>
                           <span className="text-primary font-medium">
@@ -487,8 +505,7 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                       seq={index + 1}
                       isSelected={selectedFlow?.id === idx.id}
                       idColWidth={idColWidth}
-                      breakpoints={breakpoints}
-                      onSelect={(i) => selectFlow(i.id)}
+                      onSelect={handleSelect}
                       onContextMenu={handleContextMenu}
                     />
                   )}
@@ -521,10 +538,10 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
                             setShowJumpBubble(false);
                             if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
                           }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-ui font-medium backdrop-blur-xl ring-1 ring-white/5"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-xs font-medium backdrop-blur-xl ring-1 ring-white/5"
                         >
                           <div className="flex items-center gap-1.5">
-                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-micro font-bold">
                               {newRequestsCount > 99 ? "99+" : newRequestsCount}
                             </div>
                             <span>{t("traffic.new_requests", "New Requests")}</span>
@@ -566,6 +583,14 @@ export function TrafficView({ onToggleProxy }: TrafficViewProps) {
         onClose={handleCloseMenu}
       />
       <SetupGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+
+      {/* Add Breakpoint Modal */}
+      <AddBreakpointModal
+        isOpen={breakpointModal.isOpen}
+        onClose={closeBreakpointModal}
+        initialUrl={breakpointModal.url}
+        initialMethod={breakpointModal.method}
+      />
     </div>
   );
 }

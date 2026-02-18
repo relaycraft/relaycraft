@@ -35,7 +35,11 @@ class RelayCraftLogger:
     def debug(self, msg: str):
         self._get_log_func("debug")(f"{msg}")
 
+_LOG_INITIALIZED = False
+
 def setup_logging() -> RelayCraftLogger:
+    global _LOG_INITIALIZED
+    
     # Configure root logger for standalone runs
     root = logging.getLogger()
     if root.level == logging.NOTSET:
@@ -52,7 +56,9 @@ def setup_logging() -> RelayCraftLogger:
     logging.getLogger("mitmproxy").setLevel(logging.WARNING)
     
     logger = RelayCraftLogger("relaycraft")
-    logger.info("RelayCraft system logger initialized")
+    if not _LOG_INITIALIZED:
+        logger.info("RelayCraft system logger initialized")
+        _LOG_INITIALIZED = True
     return logger
 
 def get_mime_type(file_path: str) -> str:

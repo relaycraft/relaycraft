@@ -105,7 +105,20 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
   renameScript: async (oldName: string, newName: string) => {
     set({ loading: true });
     try {
+      // Mark as modified if engine is running and script was active
+      const { useProxyStore } = await import("./proxyStore");
+      const proxyState = useProxyStore.getState();
+      const isScriptActive = proxyState.activeScripts.includes(oldName);
+
       await invoke("rename_script", { oldName, newName });
+
+      if (proxyState.running && isScriptActive) {
+        const newSet = new Set(get().modifiedSinceStart);
+        newSet.add(oldName);
+        newSet.add(newName);
+        set({ modifiedSinceStart: newSet });
+      }
+
       if (get().selectedScript === oldName) {
         set({ selectedScript: newName });
       }
@@ -121,7 +134,19 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
   deleteScript: async (name: string) => {
     set({ loading: true });
     try {
+      // Mark as modified if engine is running and script was active
+      const { useProxyStore } = await import("./proxyStore");
+      const proxyState = useProxyStore.getState();
+      const isScriptActive = proxyState.activeScripts.includes(name);
+
       await invoke("delete_script", { name });
+
+      if (proxyState.running && isScriptActive) {
+        const newSet = new Set(get().modifiedSinceStart);
+        newSet.add(name);
+        set({ modifiedSinceStart: newSet });
+      }
+
       if (get().selectedScript === name) {
         set({ selectedScript: null });
       }
@@ -144,11 +169,11 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
     try {
       await invoke("set_script_enabled", { name, enabled });
 
-      // Mark as modified if engine is running and enabling a script
-      // (newly enabled scripts need restart to take effect)
+      // Mark as modified if engine is running
+      // (Any toggle while running requires restart to sync with backend state)
       const { useProxyStore } = await import("./proxyStore");
       const proxyState = useProxyStore.getState();
-      if (proxyState.running && enabled) {
+      if (proxyState.running) {
         const newSet = new Set(get().modifiedSinceStart);
         newSet.add(name);
         set({ modifiedSinceStart: newSet });

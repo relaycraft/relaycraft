@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   Ban,
+  CirclePause,
   FileCode,
   FileSignature,
   Globe,
@@ -16,6 +17,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
+
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAILanguageInfo } from "../../lib/ai/lang";
@@ -113,7 +115,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
 
       const userMsg = {
         role: "user" as const,
-        content: `Analyze this flow: ${JSON.stringify(flowData, null, 2)}`,
+        content: `Analyze this flow: ${JSON.stringify(flowData, null, 2)} `,
       };
 
       await chatCompletionStream(
@@ -126,7 +128,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             if (newVal.length > 0 && newVal.length < 50 && !newVal.startsWith("**")) {
               // Match something like "Title**:" or "Any Language Title**:"
               // but only at the very beginning of the string
-              if (/^[^*]+(\*\*):/.test(newVal)) {
+              if (/^[^*]+\*\*:(.*)/.test(newVal)) {
                 newVal = `**${newVal}`;
               }
             }
@@ -230,7 +232,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   ) : (
                     <Sparkles className="w-3.5 h-3.5" />
                   )}
-                  <span className="text-ui font-semibold tracking-tight">
+                  <span className="text-xs font-medium tracking-tight">
                     {t("flow.analysis.btn")}
                   </span>
                 </button>
@@ -252,7 +254,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 }`}
               >
                 <RotateCw className={`w-3.5 h-3.5 ${replaying ? "animate-spin" : ""}`} />
-                <span className="text-ui font-semibold tracking-tight">{t("flow.replay_btn")}</span>
+                <span className="text-xs font-medium tracking-tight">{t("flow.replay_btn")}</span>
               </button>
             </Tooltip>
             <Tooltip content={t("traffic.context_menu.edit_composer")}>
@@ -264,7 +266,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span className="text-ui font-semibold tracking-tight">{t("common.edit")}</span>
+                <span className="text-xs font-medium tracking-tight">{t("common.edit")}</span>
               </button>
             </Tooltip>
             <button
@@ -308,37 +310,89 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
               <div className="flex flex-col gap-1.5">
                 {
                   // Deduplicate hits by id (same script/rule may hit multiple times in different branches)
-                  [...new Map(flow._rc.hits.map((h) => [h.id, h])).values()].map((hit, idx) => (
-                    <div
-                      key={idx}
-                      className={`text-xs px-2 py-1 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
-                    >
-                      <div className="flex-shrink-0">
-                        {hit.type === "script" && <Terminal className="w-3.5 h-3.5" />}
-                        {hit.type === "rewrite_body" && <FileSignature className="w-3.5 h-3.5" />}
-                        {hit.type === "map_local" && <FileCode className="w-3.5 h-3.5" />}
-                        {hit.type === "map_remote" && <Globe className="w-3.5 h-3.5" />}
-                        {hit.type === "rewrite_header" && <LayoutList className="w-3.5 h-3.5" />}
-                        {hit.type === "throttle" && <Wifi className="w-3.5 h-3.5" />}
-                        {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
-                      </div>
-                      <Tooltip content={hit.name} className="flex-shrink min-w-0">
-                        <span className="text-xs font-semibold truncate tracking-tight">
-                          {hit.name}
-                        </span>
-                      </Tooltip>
-                      {hit.message && (
-                        <Tooltip
-                          content={hit.message}
-                          className="ml-auto flex-shrink truncate max-w-[60%] text-right"
-                        >
-                          <span className="text-xs opacity-60 italic truncate font-mono">
-                            {hit.message}
+                  // For breakpoints, use rule_id (without phase) as key and collect all phases
+                  [
+                    ...new Map(
+                      flow._rc.hits.map((h) => [
+                        h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
+                        h,
+                      ]),
+                    ).values(),
+                  ].map((hit, idx) => {
+                    // Collect unique phases for breakpoint hits
+                    const phases =
+                      hit.type === "breakpoint"
+                        ? [
+                            ...new Set(
+                              flow._rc.hits
+                                .filter(
+                                  (h) =>
+                                    h.type === "breakpoint" &&
+                                    h.id.replace(/:request$|:response$/, "") ===
+                                      hit.id.replace(/:request$|:response$/, ""),
+                                )
+                                .map((h) => h.phase)
+                                .filter(Boolean),
+                            ),
+                          ]
+                        : [];
+                    return (
+                      <div
+                        key={idx}
+                        className={`text-xs px-2.5 py-2.5 rounded border flex items-center gap-2 ${getRuleTypeBadgeClass(hit.type, hit.status)}`}
+                      >
+                        <div className="flex-shrink-0">
+                          {hit.type === "script" && (
+                            <Terminal
+                              className="w-4 h-4 text-indigo-500 flex-shrink-0"
+                              strokeWidth={2}
+                            />
+                          )}
+                          {hit.type === "breakpoint" && (
+                            <CirclePause
+                              className="w-4 h-4 text-red-500 flex-shrink-0"
+                              strokeWidth={2}
+                            />
+                          )}
+                          {hit.type === "rewrite_body" && <FileSignature className="w-3.5 h-3.5" />}
+                          {hit.type === "map_local" && <FileCode className="w-3.5 h-3.5" />}
+                          {hit.type === "map_remote" && <Globe className="w-3.5 h-3.5" />}
+                          {hit.type === "rewrite_header" && <LayoutList className="w-3.5 h-3.5" />}
+                          {hit.type === "throttle" && <Wifi className="w-3.5 h-3.5" />}
+                          {hit.type === "block_request" && <Ban className="w-3.5 h-3.5" />}
+                        </div>
+                        <Tooltip content={hit.name} className="flex-shrink min-w-0">
+                          <span className="text-xs font-semibold truncate tracking-tight">
+                            {hit.name}
                           </span>
                         </Tooltip>
-                      )}
-                    </div>
-                  ))
+                        {hit.type === "breakpoint" && phases.length > 0 && (
+                          <span className="text-xs opacity-60 italic">
+                            (
+                            {phases.map((p, i) => (
+                              <span key={p}>
+                                {p === "request"
+                                  ? t("breakpoint.request_phase", "Request")
+                                  : t("breakpoint.response_phase", "Response")}
+                                {i < phases.length - 1 && " & "}
+                              </span>
+                            ))}
+                            )
+                          </span>
+                        )}
+                        {hit.message && (
+                          <Tooltip
+                            content={hit.message}
+                            className="ml-auto flex-shrink truncate max-w-[60%] text-right"
+                          >
+                            <span className="text-xs opacity-60 italic truncate font-mono">
+                              {hit.message}
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
+                    );
+                  })
                 }
               </div>
 
@@ -347,7 +401,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                   <div className="p-0.5 bg-yellow-500/20 rounded flex-shrink-0">
                     <AlertTriangle className="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div className="text-xs spaces-y-0.5 min-w-0 flex-1">
+                  <div className="text-xs space-y-0.5 min-w-0 flex-1">
                     <div className="font-semibold text-yellow-700 leading-tight">
                       {t("flow.map_local.file_not_found")}
                     </div>

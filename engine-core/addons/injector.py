@@ -23,25 +23,29 @@ class TrackingInjector(ast.NodeTransformer):
 try:
     import os
     import time
-    def __rc_record_hit(flow, script_path):
-        if not hasattr(flow, "_relaycraft_script_hits"):
-            flow._relaycraft_script_hits = []
-        script_name = os.path.basename(script_path)
-        hit_id = "script:" + script_name
-        # Check for duplicate
-        for existing in flow._relaycraft_script_hits:
-            if existing.get("id") == hit_id:
-                return
-        # Add structured hit info
-        flow._relaycraft_script_hits.append({
-            "id": hit_id,
-            "name": script_name,
-            "type": "script",
-            "status": "success",
-            "timestamp": time.time()
-        })
-except:
-    def __rc_record_hit(flow, script_path): pass
+    def _rc_record_hit(flow, script_path):
+        try:
+            if not hasattr(flow, "_relaycraft_script_hits"):
+                flow._relaycraft_script_hits = []
+            script_name = os.path.basename(script_path)
+            hit_id = "script:" + script_name
+            # Check for duplicate
+            for existing in flow._relaycraft_script_hits:
+                if existing.get("id") == hit_id:
+                    return
+            # Add structured hit info
+            flow._relaycraft_script_hits.append({
+                "id": hit_id,
+                "name": script_name,
+                "type": "script",
+                "status": "success",
+                "timestamp": time.time()
+            })
+        except Exception as e:
+            print(f"[RELAYCRAFT] _rc_record_hit error: {e}")
+except Exception as e:
+    print(f"[RELAYCRAFT] Failed to setup _rc_record_hit: {e}")
+    def _rc_record_hit(flow, script_path): pass
 """
         try:
             helper_ast = ast.parse(helper_code).body
@@ -54,12 +58,12 @@ except:
 
     def _create_safe_call(self, flow_param):
         """Create a safe try-except wrapped call:
-        try: __rc_record_hit(flow, __file__); except: pass
+        try: _rc_record_hit(flow, __file__); except Exception as e: print(f"Error: {e}")
         """
         return ast.Try(
             body=[
                 ast.Expr(value=ast.Call(
-                    func=ast.Name(id='__rc_record_hit', ctx=ast.Load()),
+                    func=ast.Name(id='_rc_record_hit', ctx=ast.Load()),
                     args=[
                         ast.Name(id=flow_param, ctx=ast.Load()),
                         ast.Name(id='__file__', ctx=ast.Load())
@@ -67,7 +71,17 @@ except:
                     keywords=[]
                 ))
             ],
-            handlers=[ast.ExceptHandler(type=None, name=None, body=[ast.Pass()])],
+            handlers=[ast.ExceptHandler(
+                type=ast.Name(id='Exception', ctx=ast.Load()),
+                name='e',
+                body=[
+                    ast.Expr(value=ast.Call(
+                        func=ast.Name(id='print', ctx=ast.Load()),
+                        args=[ast.Constant(value='[RELAYCRAFT] Failed to record script hit: '), ast.Name(id='e', ctx=ast.Load())],
+                        keywords=[]
+                    ))
+                ]
+            )],
             orelse=[],
             finalbody=[]
         )

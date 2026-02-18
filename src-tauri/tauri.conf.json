@@ -18,6 +18,8 @@
     }
   },
   "app": {
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -36,7 +38,7 @@
         "label": "splashscreen",
         "url": "splash.html",
         "width": 480,
-        "height": 480,
+        "height": 320,
         "decorations": false,
         "transparent": true,
         "center": true,
