@@ -30,19 +30,18 @@ class CoreAddon:
         self.debug_mgr: DebugManager = DebugManager()
         self.proxy_mgr: ProxyManager = ProxyManager()
         self.traffic_monitor: TrafficMonitor = TrafficMonitor(self.debug_mgr)
-        self._scripts_wrapped: bool = False
 
     def load(self, loader: Any) -> None:
         """Standard mitmproxy load hook"""
         if hasattr(ctx, "master"):
             ctx.master.relaycraft_main = self
+        
+        # Note: User scripts are now loaded in entry.py before CoreAddon is instantiated
+        # This ensures scripts are preprocessed and loaded before mitmproxy registers hooks
 
     async def running(self) -> None:
-        """Called when proxy is up and running. Good time for discovery."""
-        if not self._scripts_wrapped:
-            self.logger.info("RelayCraft: Performing initial script discovery...")
-            self.discover_and_wrap_scripts()
-            self._scripts_wrapped = True
+        """Called when proxy is up and running."""
+        pass
 
     async def request(self, flow: http.HTTPFlow) -> None:
 
@@ -192,49 +191,3 @@ class CoreAddon:
             self.traffic_monitor.process_tls_error(tls_start)
         except Exception as e:
             self.logger.error(f"Error in tls_failed_client: {e}")
-
-    def discover_and_wrap_scripts(self) -> None:
-        """Discover and wrap all loaded script addons."""
-        try:
-            count = 0
-            potential_scripts = []
-
-            for addon in ctx.master.addons.chain:
-                # Is it a direct script?
-                if hasattr(addon, "path"):
-                    potential_scripts.append(addon)
-
-                # Is it a ScriptLoader? (Mitmproxy 10+)
-                a_type = type(addon).__name__
-                if "ScriptLoader" in a_type:
-                    # Look for children
-                    for attr in ["addons", "scripts"]:
-                        subs = getattr(addon, attr, [])
-                        if subs:
-                            potential_scripts.extend(list(subs))
-
-            for script in potential_scripts:
-                if script is self: continue
-
-                path = getattr(script, "path", None)
-                if not path: path = getattr(script, "filename", None)
-
-                if path:
-                    spath = str(path).lower().replace("\\", "/")
-                    if "core" not in spath and "anchor.py" not in spath and "entry.py" not in spath:
-                        self.wrap_script_addon(script)
-                        count += 1
-
-            if count > 0:
-                self.logger.info(f"RelayCraft: Initialized tracking for {count} user scripts")
-            else:
-                self.logger.info("RelayCraft: No user scripts found to wrap.")
-        except Exception as e:
-            self.logger.error(f"RelayCraft: Discovery error: {e}")
-            import traceback
-            self.logger.error(traceback.format_exc())
-
-    def wrap_script_addon(self, addon: Any) -> None:
-        """Dynamic wrapping logic (placeholder for now as it relies on AST injection in injector.py)"""
-        # This method is kept for future runtime wrapping extensions
-        pass

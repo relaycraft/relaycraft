@@ -2,7 +2,6 @@ use crate::common::error::AppError;
 use crate::config::AppConfig;
 use crate::logging;
 use crate::proxy::paths::get_engine_path;
-use crate::scripts::processor::preprocess_scripts;
 use crate::scripts::storage::ScriptStorage;
 use std::path::PathBuf;
 use std::process::{Child, Command as StdCommand, Stdio};
@@ -132,12 +131,12 @@ impl ProxyEngine for MitmproxyEngine {
         let user_scripts = script_storage
             .get_enabled_script_paths()
             .map_err(|e| AppError::Config(e.to_string()))?;
-        let injector_path = self.get_injector_path(app)?;
-        let python_path =
-            crate::proxy::paths::get_python_path(app).map_err(AppError::Config)?;
 
-        let processed_scripts = preprocess_scripts(&user_scripts, &injector_path, &python_path)
-            .map_err(|e| AppError::Config(e.to_string()))?;
+        let user_scripts_joined = user_scripts
+            .iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect::<Vec<String>>()
+            .join(";");
 
         {
             let mut active_lock = self
@@ -145,11 +144,10 @@ impl ProxyEngine for MitmproxyEngine {
                 .active_scripts
                 .lock()
                 .map_err(|_| AppError::Config("Lock poisoned".into()))?;
-            *active_lock = processed_scripts.clone();
-        }
-
-        for script in &processed_scripts {
-            args.extend_from_slice(&["-s".to_string(), script.clone()]);
+            *active_lock = user_scripts
+                .iter()
+                .map(|p| p.to_string_lossy().to_string())
+                .collect();
         }
 
         // Add anchor.py as the LAST script to capture final flow state after all user scripts
@@ -165,6 +163,9 @@ impl ProxyEngine for MitmproxyEngine {
         // Use standard MITMPROXY_CONFDIR env var to point to our certs directory.
         // This makes mitmproxy look for mitmproxy-ca.pem in this directory.
         cmd.env("MITMPROXY_CONFDIR", &cert_dir);
+
+        // Pass user scripts to the engine for internal loading and injection
+        cmd.env("RELAYCRAFT_USER_SCRIPTS", &user_scripts_joined);
 
         cmd.args(&args)
             .stdout(Stdio::piped())
@@ -392,7 +393,7 @@ impl ProxyEngine for MitmproxyEngine {
             // Use reqwest in a spawned task (async)
             let url_clone = url.clone();
             let body_clone = body.clone();
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 let client = reqwest::Client::new();
                 match client
                     .post(&url_clone)
@@ -511,39 +512,6 @@ impl MitmproxyEngine {
                 .into_iter()
                 .find(|p| p.exists())
                 .ok_or_else(|| AppError::NotFound("entry.py not found".into()))
-        }
-    }
-
-    fn get_injector_path(&self, app: &AppHandle) -> Result<PathBuf, AppError> {
-        if cfg!(debug_assertions) {
-            let current_dir = std::env::current_dir()?;
-            let project_root = if current_dir.ends_with("src-tauri") {
-                current_dir.parent().unwrap().to_path_buf()
-            } else {
-                current_dir
-            };
-            // Directly use engine-core/addons in debug mode
-            Ok(project_root
-                .join("engine-core")
-                .join("addons")
-                .join("injector.py"))
-        } else {
-            let resource_dir = app
-                .path()
-                .resource_dir()
-                .map_err(|e| AppError::Config(e.to_string()))?;
-            let candidates = vec![
-                resource_dir
-                    .join("resources")
-                    .join("addons")
-                    .join("injector.py"),
-                resource_dir.join("addons").join("injector.py"),
-                resource_dir.join("injector.py"),
-            ];
-            candidates
-                .into_iter()
-                .find(|p| p.exists())
-                .ok_or_else(|| AppError::NotFound("injector.py not found".into()))
         }
     }
 

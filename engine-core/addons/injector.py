@@ -49,7 +49,19 @@ except Exception as e:
 """
         try:
             helper_ast = ast.parse(helper_code).body
-            node.body = helper_ast + node.body
+            
+            # Preserve module docstring if present
+            # A docstring is the first statement and is a constant string expression
+            docstring_stmt = None
+            if (node.body and
+                isinstance(node.body[0], ast.Expr) and
+                isinstance(node.body[0].value, ast.Constant) and
+                isinstance(node.body[0].value.value, str)):
+                docstring_stmt = node.body[0]
+                remaining_body = node.body[1:]
+                node.body = [docstring_stmt] + helper_ast + remaining_body
+            else:
+                node.body = helper_ast + node.body
         except Exception:
             pass
 
