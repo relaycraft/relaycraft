@@ -800,7 +800,7 @@
     "clear_all_confirm": "Clear All History?",
     "clear_all_msg": "This will delete all historical sessions. This action cannot be undone.",
     "flow_count": "{{count}} flows",
-    "historical_mode": "Viewing historical session - new data continues in background",
+    "historical_mode": "Viewing historical session",
     "history": "Session History",
     "latest": "LATEST",
     "switch_hint": "Switch session",

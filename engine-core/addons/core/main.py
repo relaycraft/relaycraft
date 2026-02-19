@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
 from .rules import RuleEngine
@@ -7,6 +8,8 @@ from .monitor import TrafficMonitor
 from .debug import DebugManager
 from .proxy import ProxyManager
 from .utils import setup_logging, RelayCraftLogger
+from injector import inject_tracking
+
 
 # Global traffic active state (in-memory, controlled via HTTP API)
 _traffic_active: bool = False
@@ -199,6 +202,7 @@ class CoreAddon:
             count = 0
             potential_scripts = []
 
+            # 1. Discover built-in addons (chains)
             for addon in ctx.master.addons.chain:
                 # Is it a direct script?
                 if hasattr(addon, "path"):
@@ -212,6 +216,33 @@ class CoreAddon:
                         subs = getattr(addon, attr, [])
                         if subs:
                             potential_scripts.extend(list(subs))
+
+            # 2. Add user scripts from environment variable (Passed by Rust)
+            user_scripts_env = os.environ.get("RELAYCRAFT_USER_SCRIPTS", "")
+            if user_scripts_env:
+                for path_str in user_scripts_env.split(";"):
+                    if not path_str: continue
+                    path = Path(path_str)
+                    if path.exists():
+                        try:
+                            # Load script into mitmproxy
+                            # We use loader.add to ensure it's managed by mitmproxy
+                            self.logger.info(f"RelayCraft: Loading user script: {path}")
+                            ctx.master.addons.add(str(path))
+                            count += 1
+                        except Exception as e:
+                            self.logger.error(f"Failed to load user script {path}: {e}")
+
+            # Re-discover after adding
+            potential_scripts = []
+            for addon in ctx.master.addons.chain:
+                if hasattr(addon, "path"):
+                    potential_scripts.append(addon)
+                a_type = type(addon).__name__
+                if "ScriptLoader" in a_type:
+                    for attr in ["addons", "scripts"]:
+                        subs = getattr(addon, attr, [])
+                        if subs: potential_scripts.extend(list(subs))
 
             for script in potential_scripts:
                 if script is self: continue
@@ -235,6 +266,40 @@ class CoreAddon:
             self.logger.error(traceback.format_exc())
 
     def wrap_script_addon(self, addon: Any) -> None:
-        """Dynamic wrapping logic (placeholder for now as it relies on AST injection in injector.py)"""
-        # This method is kept for future runtime wrapping extensions
-        pass
+        """Dynamic wrapping logic using AST injection"""
+        try:
+            path = getattr(addon, "path", None)
+            if not path:
+                path = getattr(addon, "filename", None)
+            if not path:
+                return
+
+            self.logger.info(f"RelayCraft: Injecting tracking into {path}")
+
+            # Read source
+            with open(path, "r", encoding="utf-8") as f:
+                source = f.read()
+
+            # Inject tracking
+            modified_source = inject_tracking(source)
+
+            # NOTE: For mitmproxy addons, they are already loaded.
+            # However, since this happens in the 'running' hook,
+            # we can actually modify the addon instance's methods.
+            # But it's cleaner to re-execute the modified source in the addon's context
+            # or replace the hook functions.
+
+            # Simple strategy: compile and exec modified source within the addon's namespace
+            # This follows how mitmproxy's ScriptLoader works.
+            code = compile(modified_source, str(path), "exec")
+            # Clear existing hooks to prevent duplicate/old logic
+            for hook in {"request", "response", "error", "websocket_message"}:
+                if hasattr(addon, hook):
+                    delattr(addon, hook)
+
+            # Execute modified code in the addon's __dict__
+            # This will populate it with the fresh (injected) hook functions
+            exec(code, addon.__dict__)
+
+        except Exception as e:
+            self.logger.error(f"RelayCraft: Failed to wrap script {getattr(addon, 'path', 'unknown')}: {e}")

@@ -189,7 +189,11 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         if (!stillExists && sessions.length > 0) {
           // Find the active session, or just the first one
           const activeSession = sessions.find((s) => s.is_active === 1) || sessions[0];
-          set({ showSessionId: activeSession.id });
+          // Use switchDbSession to ensure traffic store is cleared and re-polled!
+          await get().switchDbSession(activeSession.id);
+        } else if (sessions.length === 0) {
+          set({ showSessionId: null });
+          useTrafficStore.getState().clearLocal();
         }
 
         const { notify } = await import("../lib/notify");

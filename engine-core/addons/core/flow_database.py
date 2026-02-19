@@ -17,6 +17,7 @@ import uuid
 import sqlite3
 import threading
 import time
+import shutil
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from contextlib import contextmanager
@@ -514,15 +515,8 @@ class FlowDatabase:
                 # Cannot delete active session
                 return False
 
-            # Get flow IDs for file cleanup
-            flow_ids = [
-                row[0] for row in conn.execute(
-                    "SELECT id FROM flow_indices WHERE session_id = ?", (session_id,)
-                )
-            ]
-
-            # Delete body files
-            self._delete_body_files(session_id, flow_ids)
+            # Delete body files (entire directory)
+            self._delete_body_files(session_id)
 
             # Delete from database (CASCADE handles related tables)
             conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
@@ -542,11 +536,19 @@ class FlowDatabase:
         if not rows:
             return 0
             
+        self.logger.info(f"Deleting all {len(rows)} historical sessions...")
         deleted_count = 0
         for row in rows:
             session_id = row[0]
             if self.delete_session(session_id):
                 deleted_count += 1
+        
+        # Reclamation: Run VACUUM to reclaim disk space after large deletion
+        if deleted_count > 0:
+            try:
+                self.vacuum(full=True)
+            except Exception as e:
+                self.logger.error(f"Post-clearall vacuum failed: {e}")
                 
         return deleted_count
 
@@ -1340,21 +1342,33 @@ class FlowDatabase:
                     f"db_size={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'}"
                 )
 
-    def _delete_body_files(self, session_id: str, flow_ids: List[str]):
-        """Delete body files for given flows"""
+    def _delete_body_files(self, session_id: str, flow_ids: List[str] = None):
+        """Delete body files for given flows or entire session directory.
+        
+        If flow_ids is None, the entire session directory is removed (much faster).
+        """
         session_dir = Path(self.body_dir) / session_id
 
         if not session_dir.exists():
             return
 
-        for flow_id in flow_ids:
-            for suffix in ['_r.dat', '_s.dat', '_req.dat', '_res.dat']:
-                filepath = session_dir / f"{flow_id}{suffix}"
-                if filepath.exists():
-                    try:
-                        filepath.unlink()
-                    except:
-                        pass
+        if flow_ids is None:
+            # Delete entire directory - much faster for large sessions
+            try:
+                shutil.rmtree(session_dir)
+                self.logger.debug(f"Removed session directory: {session_dir}")
+            except Exception as e:
+                self.logger.error(f"Error removing session directory {session_dir}: {e}")
+        else:
+            # Delete individual files (used for incremental cleanup)
+            for flow_id in flow_ids:
+                for suffix in ['_r.dat', '_s.dat', '_req.dat', '_res.dat']:
+                    filepath = session_dir / f"{flow_id}{suffix}"
+                    if filepath.exists():
+                        try:
+                            filepath.unlink()
+                        except:
+                            pass
 
     def clear_session(self, session_id: str = None):
         """Clear all flows in a session"""

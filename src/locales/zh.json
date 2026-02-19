@@ -800,7 +800,7 @@
     "clear_all_confirm": "确认清空全部历史记录？",
     "clear_all_msg": "这将删除所有历史会话记录，此操作无法撤销。",
     "flow_count": "{{count}} 条请求",
-    "historical_mode": "查看历史会话 - 新数据继续在后台记录",
+    "historical_mode": "查看历史会话",
     "history": "会话历史",
     "latest": "最新",
     "switch_hint": "切换到历史会话",
