@@ -188,6 +188,12 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
+      - name: Sign Linux Binaries
+        if: runner.os == 'Linux'
+        run: |
+          find src-tauri/target/release/bundle/appimage/ -name "*.AppImage" -exec pnpm exec tauri signer sign {} \;
+          find src-tauri/target/release/bundle/deb/ -name "*.deb" -exec pnpm exec tauri signer sign {} \;
+
       - name: Sign Windows Binaries
         if: matrix.platform == 'self-hosted'
         shell: powershell
@@ -210,8 +216,8 @@ jobs:
             # 2. Regenerate Tauri Updater Signatures (.sig)
             # The binaries have been modified by signtool, so we MUST re-sign for the updater.
             # Use pnpm exec to skip the custom tauri script in package.json
-            pnpm exec tauri signer sign $EXE.FullName > "$($EXE.FullName).sig"
-            pnpm exec tauri signer sign $MSI.FullName > "$($MSI.FullName).sig"
+            pnpm exec tauri signer sign $EXE.FullName
+            pnpm exec tauri signer sign $MSI.FullName
 
             echo "✅ Windows signing and signature regeneration complete!"
           } else {
@@ -486,6 +492,9 @@ jobs:
           echo "📌 Stapling DMG..."
           xcrun stapler staple "$DMG_PATH"
 
+          echo "  Signing DMG for updater/verification..."
+          pnpm exec tauri signer sign "$DMG_PATH"
+
           echo "📦 Re-creating and signing .tar.gz for updater..."
           # The original .tar.gz from tauri-action is missing notarization and engine relocation.
           # We must recreate it from the corrected RelayCraft.app.
@@ -493,7 +502,7 @@ jobs:
           tar -czf RelayCraft.app.tar.gz RelayCraft.app
           # Return to root for signer
           cd -
-          pnpm exec tauri signer sign "src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app.tar.gz" > "src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app.tar.gz.sig"
+          pnpm exec tauri signer sign "src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app.tar.gz"
 
           echo "🎉 macOS signing, notarization, and packaging complete!"
         env:
@@ -567,8 +576,7 @@ jobs:
       - name: Sign latest.json
         run: |
           # Use npx to avoid needing to install pnpm dependencies in this job
-          # Redirect output to overwrite the file with the correct signature
-          npx @tauri-apps/cli signer sign all-bundles/latest.json > all-bundles/latest.json.sig
+          npx @tauri-apps/cli signer sign all-bundles/latest.json
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

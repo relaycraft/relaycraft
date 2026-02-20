@@ -82,17 +82,18 @@ function getPlatformKeys(filename) {
 
 const files = fs.readdirSync(artifactsDir);
 files.forEach((file) => {
+  const lowerFile = file.toLowerCase();
   // We only care about the archives/installers that Tauri updater uses
   if (
-    file.endsWith(".zip") ||
-    file.endsWith(".tar.gz") ||
-    file.endsWith(".gz") ||
-    file.endsWith(".msi") ||
-    file.endsWith(".exe") ||
-    file.endsWith(".AppImage") ||
-    file.endsWith(".deb")
+    lowerFile.endsWith(".zip") ||
+    lowerFile.endsWith(".tar.gz") ||
+    lowerFile.endsWith(".gz") ||
+    lowerFile.endsWith(".msi") ||
+    lowerFile.endsWith(".exe") ||
+    lowerFile.endsWith(".appimage") ||
+    lowerFile.endsWith(".deb")
   ) {
-    if (file.endsWith(".sig")) return; // handled by getSignature
+    if (lowerFile.endsWith(".sig")) return; // handled by getSignature
 
     const keys = getPlatformKeys(file);
     keys.forEach((key) => {
