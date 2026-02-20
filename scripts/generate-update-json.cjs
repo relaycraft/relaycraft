@@ -45,33 +45,37 @@ function getSignature(filePath) {
 
 // Logic to refine platform keys based on common filenames
 function getPlatformKeys(filename) {
-  if (filename.includes("universal")) {
-    if (filename.includes("macos") || filename.includes("apple-darwin") || filename.endsWith(".tar.gz")) {
+  const lowerFile = filename.toLowerCase();
+
+  if (lowerFile.includes("universal")) {
+    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin") || lowerFile.endsWith(".tar.gz")) {
       return ["macos-aarch64", "macos-x86_64"];
     }
   }
 
-  if (filename.includes("aarch64") || filename.includes("arm64")) {
-    if (filename.includes("macos") || filename.includes("apple-darwin")) return ["macos-aarch64"];
-    if (filename.includes("linux")) return ["linux-aarch64"];
+  if (lowerFile.includes("aarch64") || lowerFile.includes("arm64")) {
+    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin")) return ["macos-aarch64"];
+    if (lowerFile.includes("linux")) return ["linux-aarch64"];
   }
 
-  if (filename.includes("x64") || filename.includes("x86_64")) {
-    if (filename.includes("macos") || filename.includes("apple-darwin")) return ["macos-x86_64"];
-    if (filename.includes("windows")) return ["windows-x86_64"];
-    if (filename.includes("linux")) return ["linux-x86_64"];
+  if (lowerFile.includes("x64") || lowerFile.includes("x86_64") || lowerFile.includes("amd64")) {
+    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin")) return ["macos-x86_64"];
+    if (lowerFile.includes("windows")) return ["windows-x86_64"];
+    if (lowerFile.includes("linux")) return ["linux-x86_64"];
   }
 
-  // Fallback based on extension - but be careful with Mac
-  if (filename.endsWith(".msi.zip") || filename.endsWith(".msi")) return ["windows-x86_64"];
-  if (filename.endsWith(".exe")) return ["windows-x86_64"];
+  // Fallback based on extension
+  if (lowerFile.endsWith(".msi.zip") || lowerFile.endsWith(".msi") || lowerFile.endsWith(".exe") || lowerFile.endsWith(".nsis.zip")) {
+    return ["windows-x86_64"];
+  }
 
-  // If it's a tar.gz on mac and hasn't matched a specific arch, it's likely universal or we should treat it as such for safety
-  if (filename.endsWith(".app.tar.gz") || (filename.endsWith(".tar.gz") && filename.includes("apple-darwin"))) {
+  if (lowerFile.endsWith(".app.tar.gz") || (lowerFile.endsWith(".tar.gz") && lowerFile.includes("apple-darwin"))) {
     return ["macos-aarch64", "macos-x86_64"];
   }
 
-  if (filename.endsWith(".deb.gz") || filename.endsWith(".AppImage.tar.gz")) return ["linux-x86_64"];
+  if (lowerFile.endsWith(".deb") || lowerFile.endsWith(".appimage") || lowerFile.endsWith(".appimage.tar.gz")) {
+    return ["linux-x86_64"];
+  }
 
   return [];
 }
@@ -84,7 +88,9 @@ files.forEach((file) => {
     file.endsWith(".tar.gz") ||
     file.endsWith(".gz") ||
     file.endsWith(".msi") ||
-    file.endsWith(".exe")
+    file.endsWith(".exe") ||
+    file.endsWith(".AppImage") ||
+    file.endsWith(".deb")
   ) {
     if (file.endsWith(".sig")) return; // handled by getSignature
 
