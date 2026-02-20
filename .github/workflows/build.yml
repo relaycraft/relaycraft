@@ -16,13 +16,16 @@ jobs:
         include:
           - platform: 'macos-latest'
             args: "--target universal-apple-darwin"
-            target: 'universal-apple-darwin' # Universal (Intel + Apple Silicon)
+            target: 'universal-apple-darwin'
+            rustup_targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ""
             target: 'x86_64-unknown-linux-gnu'
+            rustup_targets: 'x86_64-unknown-linux-gnu'
           - platform: 'self-hosted'
             args: ""
             target: 'x86_64-pc-windows-msvc'
+            rustup_targets: 'x86_64-pc-windows-msvc'
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -63,7 +66,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rustup_targets }}
 
       - name: Rust Cache
         uses: swatinem/rust-cache@v2

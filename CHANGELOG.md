@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.10](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.7...v0.99.10) (2026-02-20)
+
+
+### Features
+
+* improve script management and UI copy ([16fce25](https://github-relaycraft/relaycraft/relaycraft/commit/16fce25f9481fe2a3886296c10b8051fe566deb1))
+* optimize breakpoint system and overhaul splash screen branding ([9e80503](https://github-relaycraft/relaycraft/relaycraft/commit/9e80503db56fa0e8f7b3a72695492ca54b8d06be))
+* optimize typography, localization, and UI component styling ([7828934](https://github-relaycraft/relaycraft/relaycraft/commit/782893403caf7e2fad61448922788d38fad01a92))
+
+
+### Bug Fixes
+
+* resolve updater issues, improve macos builds and websocket reliability ([a2637ad](https://github-relaycraft/relaycraft/relaycraft/commit/a2637adcfcccc45061d7decbea414d8df6839068))
+
 ### [0.99.9](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.7...v0.99.9) (2026-02-19)
 
 
