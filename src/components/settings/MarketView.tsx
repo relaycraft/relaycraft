@@ -11,11 +11,29 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { usePluginStore } from "../../stores/pluginStore";
 import { useThemeStore } from "../../stores/themeStore";
 import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
+
+/**
+ * Compares two semantic version strings.
+ * Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
+ */
+const compareVersions = (v1: string, v2: string) => {
+  const parts1 = v1.replace(/^v/, "").split(".").map(Number);
+  const parts2 = v2.replace(/^v/, "").split(".").map(Number);
+
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+};
 
 export const MarketView: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -67,7 +85,7 @@ export const MarketView: React.FC = () => {
     fetchMarketPlugins(type);
   };
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -284,99 +302,112 @@ export const MarketView: React.FC = () => {
                   );
                 }
 
-                // Plugin Layout (Original List/Card)
+                // Plugin Layout (Redesigned)
+                const installedPlugin = installedPlugins.find((p) => p.manifest.id === item.id);
+                const hasUpdate =
+                  installedPlugin &&
+                  compareVersions(item.version, installedPlugin.manifest.version) > 0;
+
                 return (
                   <div
                     key={item.id}
                     className="group p-5 bg-card border border-border rounded-xl hover:shadow-lg hover:border-primary/20 transition-all duration-300 flex flex-col relative overflow-hidden"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-300">
                           <Package className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-sm text-foreground leading-tight group-hover:text-primary transition-colors">
-                            {displayName}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded font-mono text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-sm text-foreground leading-tight group-hover:text-primary transition-colors">
+                              {displayName}
+                            </h3>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-muted/50 rounded font-bold text-muted-foreground/40 border border-border/40">
                               v{item.version}
                             </span>
-                            <span className="text-xs text-muted-foreground flex items-center">
-                              by{" "}
-                              <span className="font-medium ml-1 text-foreground/80">
-                                {item.author}
-                              </span>
+                            {item.homepage && (
+                              <a
+                                href={item.homepage}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground/30 hover:text-primary transition-colors"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-micro font-bold text-muted-foreground/40 uppercase tracking-wider">
+                              by {item.author}
                             </span>
                             {item.downloadCount != null && (
-                              <span className="text-xs text-muted-foreground flex items-center border-l border-border pl-2 ml-1">
-                                <Download className="w-3 h-3 mr-1 opacity-70" />
+                              <span className="text-micro text-muted-foreground/30 flex items-center border-l border-border/40 pl-2">
+                                <Download className="w-2.5 h-2.5 mr-1" />
                                 {item.downloadCount.toLocaleString()}
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      {item.homepage && (
-                        <a
-                          href={item.homepage}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground/50 hover:text-primary transition-colors"
+
+                      <div className="flex flex-col items-end gap-1.5">
+                        <Button
+                          variant={isInstalled && !hasUpdate ? "ghost" : "default"}
+                          size="sm"
+                          disabled={(isInstalled && !hasUpdate) || isInstalling}
+                          onClick={() => installPlugin(item.downloadUrl)}
+                          className={`h-7 text-micro px-3 font-bold transition-all ${
+                            isInstalled && !hasUpdate
+                              ? "bg-muted/30 text-muted-foreground/50 cursor-default"
+                              : hasUpdate
+                                ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/10 shadow-lg"
+                                : "hover:scale-105 shadow-sm hover:shadow-primary/20"
+                          }`}
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
+                          {isInstalling ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : isInstalled && !hasUpdate ? (
+                            <>
+                              <Check className="w-3 h-3 mr-1 opacity-60" />
+                              {t("plugins.market.installed")}
+                            </>
+                          ) : hasUpdate ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              {t("common.update", { defaultValue: "Update" })}
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3 h-3 mr-1" />
+                              {t("plugins.market.install")}
+                            </>
+                          )}
+                        </Button>
+                        {hasUpdate && (
+                          <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-tighter">
+                            New Update
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex-1 mb-4">
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2 pr-12">
                         {displayDesc}
                       </p>
                       {item.tags && item.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
+                        <div className="flex flex-wrap gap-1 mt-3">
                           {item.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-xs px-2 py-0.5 bg-muted/50 border border-border/50 rounded-full text-muted-foreground/80"
+                              className="text-micro font-black uppercase tracking-tighter px-1.5 py-0.5 bg-muted/40 border border-border/20 rounded-md text-muted-foreground/40"
                             >
                               {tag}
                             </span>
                           ))}
                         </div>
                       )}
-                    </div>
-
-                    <div className="flex items-center justify-end pt-3 border-t border-border/40">
-                      <Button
-                        variant={isInstalled ? "ghost" : "default"}
-                        size="sm"
-                        disabled={isInstalled || isInstalling}
-                        onClick={() => installPlugin(item.downloadUrl)}
-                        className={`h-8 text-xs px-4 font-medium transition-all ${
-                          isInstalled
-                            ? "bg-muted/50 text-muted-foreground hover:bg-muted"
-                            : "hover:scale-105 shadow-sm hover:shadow-primary/20"
-                        }`}
-                      >
-                        {isInstalling ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                            {t("plugins.installing")}
-                          </>
-                        ) : isInstalled ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 mr-1.5" />
-                            {t("plugins.market.installed")}
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-3.5 h-3.5 mr-1.5" />
-                            {t("plugins.market.install")}
-                          </>
-                        )}
-                      </Button>
                     </div>
                   </div>
                 );
@@ -385,6 +416,7 @@ export const MarketView: React.FC = () => {
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 };

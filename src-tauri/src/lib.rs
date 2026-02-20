@@ -176,14 +176,15 @@ pub fn run() {
             }
 
             // Auto-start proxy engine on app launch (as background service)
-            // The engine starts but traffic processing is inactive by default
+            // The engine starts but traffic processing remains inactive until frontend activates it
+            // Frontend will call startProxy() which starts TrafficMonitor and sets active=true
             let proxy_state = app.state::<proxy::ProxyState>();
             let app_handle: tauri::AppHandle = app.handle().clone();
             match proxy_state.engine.start(&app_handle, &app_config) {
                 Ok(()) => {
                     log::info!("Proxy engine started as background service");
-                    // Apply the auto-start configuration
-                    let _ = proxy_state.engine.set_active(app_config.auto_start_proxy);
+                    // Don't set active here - let frontend control it via startProxy()
+                    // This ensures TrafficMonitor is properly initialized
                 }
                 Err(e) => {
                     log::error!("Failed to start proxy engine on app launch: {:?}", e);

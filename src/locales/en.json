@@ -798,8 +798,8 @@
     "clear_error": "Failed to clear historical sessions",
     "clear_all": "Clear All History",
     "clear_all_confirm": "Clear All History?",
-    "clear_all_msg": "This will delete all historical sessions. This action cannot be undone.",
-    "flow_count": "{{count}} flows",
+    "clear_all_msg": "This will delete all historical sessions (excluding the active recording session). This action cannot be undone.",
+    "flow_count": "{{count}} entries",
     "historical_mode": "Viewing historical session",
     "history": "Session History",
     "latest": "LATEST",
@@ -983,7 +983,10 @@
     "ip": "Local IP",
     "listening": "Listening",
     "port": "Listening Port",
-    "stopped": "Stopped"
+    "stopped": "Stopped",
+    "engine_healthy": "Engine running",
+    "engine_idle": "Engine idle",
+    "engine_error": "Engine not running"
   },
   "titlebar": {
     "close": "Close",
@@ -1076,7 +1079,7 @@
     },
     "websocket": {
       "frames": "WebSocket Frames",
-      "messages_count": "messages",
+      "messages_count": "{{count}} messages",
       "no_frames": "No WebSocket frames captured yet"
     }
   },

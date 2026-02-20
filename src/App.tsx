@@ -19,7 +19,6 @@ import { PluginPageWrapper } from "./components/plugins/PluginPageWrapper";
 import { RuleView } from "./components/rules/RuleView";
 import { ScriptManager } from "./components/scripts/ScriptManager";
 import { CertificateSettings } from "./components/settings/CertificateSettings";
-import { PluginSettings } from "./components/settings/PluginSettings";
 import { SettingsView } from "./components/settings/SettingsView";
 import { SessionSwitcher } from "./components/traffic/SessionSwitcher";
 import { TrafficView } from "./components/traffic/TrafficView";
@@ -413,11 +412,6 @@ function App() {
 
                     {activeTab === "settings" && <SettingsView />}
 
-                    {activeTab === "plugins" && (
-                      <div className="h-full overflow-hidden">
-                        <PluginSettings />
-                      </div>
-                    )}
                     {activeTab === "certificate" && <CertificateSettings />}
 
                     {/* Plugin Pages */}

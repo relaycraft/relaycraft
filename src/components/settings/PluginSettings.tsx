@@ -67,10 +67,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
     localized?.description || plugin.manifest.description || t("plugins.no_description");
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div
       className={`group relative p-3 rounded-2xl border transition-all ${
         plugin.enabled
           ? "bg-card border-primary/20 shadow-lg shadow-primary/5"
@@ -218,7 +215,7 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 
@@ -230,6 +227,18 @@ export const PluginSettings: React.FC = () => {
   const installPluginLocal = usePluginStore((state) => state.installPluginLocal);
   const setMarketOpen = useUIStore((state) => state.setMarketOpen);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [showLoading, setShowLoading] = React.useState(false);
+
+  // Stabilize loading state to prevent flash
+  React.useEffect(() => {
+    let timer: any;
+    if (loading) {
+      timer = setTimeout(() => setShowLoading(true), 250);
+    } else {
+      setShowLoading(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   // Sorting & Filtering Logic
   const sortedPlugins = React.useMemo(() => {
@@ -309,10 +318,10 @@ export const PluginSettings: React.FC = () => {
             />
           </div>
 
-          {loading && plugins.length === 0 ? (
+          {showLoading && plugins.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/40 gap-4">
-              <RefreshCw className="w-8 h-8 animate-spin" />
-              <span className="text-xs font-medium uppercase tracking-widest">
+              <RefreshCw className="w-6 h-6 animate-spin" />
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">
                 {t("plugins.scanning")}
               </span>
             </div>

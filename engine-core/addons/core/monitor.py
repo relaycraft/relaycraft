@@ -234,14 +234,14 @@ class TrafficMonitor:
                     {
                         "id": str(uuid.uuid4()),
                         "flowId": flow.id,
-                        "order": i,
-                        "type": m.type,
+                        "seq": i,
+                        "type": m.type.name.lower() if hasattr(m.type, 'name') else str(m.type),
                         "fromClient": m.from_client,
                         "content": (
-                            m.text if m.type == 'text'
+                            m.text if m.is_text
                             else (m.content.hex() if m.content else "")
                         ),
-                        "encoding": "text" if m.type == 'text' else "base64",
+                        "encoding": "text" if m.is_text else "base64",
                         "timestamp": m.timestamp * 1000,
                         "length": len(m.content) if m.content else 0,
                     }
@@ -388,6 +388,7 @@ class TrafficMonitor:
                     "error": error_detail,
                     "isWebsocket": is_websocket,
                     "websocketFrameCount": ws_frame_count,
+                    "websocketFrames": ws_frames,
                     "hits": hits,
                     "intercept": {
                         "intercepted": is_paused,
@@ -416,7 +417,6 @@ class TrafficMonitor:
                 "clientIp": client_ip,
                 "serverIp": server_ip,
                 "isWebsocket": is_websocket,
-                "websocketFrames": ws_frames,
                 "bodyTruncated": req_truncated or res_truncated,
                 "hits": hits,
                 "intercepted": is_paused,
@@ -597,6 +597,7 @@ class TrafficMonitor:
                         "host": idx.get("host", ""),
                         "path": idx.get("path", ""),
                         "status": idx.get("status", 0),
+                        "httpVersion": idx.get("http_version", ""),
                         "contentType": idx.get("content_type", ""),
                         "startedDateTime": idx.get("started_datetime", ""),
                         "time": idx.get("time", 0),
@@ -1173,14 +1174,14 @@ class TrafficMonitor:
                     if isinstance(data, list):
                         flows = data
                         session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
-                        session_description = "Imported from session file"
+                        session_description = ""
                         session_metadata = {"type": "session_import"}
                         session_created_at = None
                     else:
                         flows = data.get("flows", [])
                         # Use original session name and metadata
                         session_name = data.get("name") or f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
-                        session_description = data.get("description") or "Imported from session file"
+                        session_description = data.get("description") or ""
                         session_metadata = data.get("metadata") or {}
                         session_metadata["type"] = "session_import"
                         # Use original createdAt from metadata (it's in milliseconds)
@@ -1234,7 +1235,7 @@ class TrafficMonitor:
                             "contentType": f.get("contentType") or "",
                             "startedDateTime": f.get("startedDateTime") or "",
                             "time": f.get("time") or 0,
-                            "size": f.get("size") or 0,
+                            "size": f.get("size") or (f.get("response") or {}).get("content", {}).get("size", 0),
                             "hasError": bool(rc.get("error")),
                             "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                             "hasResponseBody": bool((resp.get("content") or {}).get("text")),
@@ -1292,7 +1293,7 @@ class TrafficMonitor:
                     from pathlib import Path
                     session_id = self.db.create_session(
                         name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
-                        description=f"Imported from HAR file with {len(entries)} entries",
+                        description="",
                         metadata={"type": "har_import"}
                     )
 

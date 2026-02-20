@@ -51,7 +51,7 @@ interface TrafficStore {
   addIndex: (index: FlowIndex) => void;
 
   /** Load flow detail (with caching) */
-  loadDetail: (id: string) => Promise<Flow | null>;
+  loadDetail: (id: string, forceRefresh?: boolean) => Promise<Flow | null>;
 
   /** Prefetch details for visible area */
   prefetchDetails: (ids: string[]) => void;
@@ -130,16 +130,20 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     get().addIndices([index]);
   },
 
-  loadDetail: async (id) => {
+  loadDetail: async (id, forceRefresh = false) => {
     const { detailCache, cacheOrder, config } = get();
 
-    // Check cache
-    if (detailCache.has(id)) {
-      // Update LRU order
-      set({
-        cacheOrder: [...cacheOrder.filter((x) => x !== id), id],
-      });
-      return detailCache.get(id)!;
+    // Check cache (unless force refresh)
+    if (!forceRefresh && detailCache.has(id)) {
+      const cachedFlow = detailCache.get(id)!;
+      // Don't cache WebSocket flows - they need to be refreshed to show new frames
+      if (!cachedFlow._rc?.isWebsocket) {
+        // Update LRU order
+        set({
+          cacheOrder: [...cacheOrder.filter((x) => x !== id), id],
+        });
+        return cachedFlow;
+      }
     }
 
     // Load from backend
@@ -147,7 +151,12 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     try {
       const flow = await fetchFlowDetail(id);
       if (flow) {
-        // Add to cache
+        // Don't cache WebSocket flows - they are dynamic and need fresh data
+        if (flow._rc?.isWebsocket) {
+          return flow;
+        }
+
+        // Add to cache for non-WebSocket flows
         set((state) => {
           const newCache = new Map(state.detailCache);
           const newOrder = [...state.cacheOrder, id];

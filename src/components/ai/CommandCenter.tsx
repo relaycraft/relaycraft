@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSuggestionEngine } from "../../hooks/useSuggestionEngine";
 import { dispatchCommand } from "../../lib/ai/dispatcher";
@@ -328,7 +329,7 @@ export function CommandCenter() {
 
   const isEditingRule = activeTab === "rules" && (selectedRule || draftRule);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -691,6 +692,7 @@ export function CommandCenter() {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

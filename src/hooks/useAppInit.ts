@@ -120,12 +120,13 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       ]);
 
       // Implement Auto-start Proxy
+      // Check if traffic monitoring should be activated (not just if engine is running)
       const currentConfig = useSettingsStore.getState().config;
-      const isRunning = useProxyStore.getState().running;
-      if (currentConfig.auto_start_proxy && !isRunning) {
-        console.log("[init] Auto-starting proxy...");
+      const { running: isEngineRunning, active: isTrafficActive } = useProxyStore.getState();
+      if (currentConfig.auto_start_proxy && isEngineRunning && !isTrafficActive) {
+        console.log("[init] Auto-starting traffic monitoring...");
         await emit("init-status", t("init.status_proxy"));
-        startProxy().catch((err) => console.error("Failed to auto-start proxy:", err));
+        startProxy().catch((err) => console.error("Failed to auto-start traffic monitoring:", err));
       }
 
       console.log("[init] Initialization complete");

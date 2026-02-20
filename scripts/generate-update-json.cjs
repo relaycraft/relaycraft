@@ -44,23 +44,36 @@ function getSignature(filePath) {
 }
 
 // Logic to refine platform keys based on common filenames
-function getPlatformKey(filename) {
-  if (filename.includes("aarch64") || filename.includes("arm64")) {
-    if (filename.includes("macos") || filename.includes("apple-darwin")) return "macos-aarch64";
-    if (filename.includes("linux")) return "linux-aarch64";
+function getPlatformKeys(filename) {
+  if (filename.includes("universal")) {
+    if (filename.includes("macos") || filename.includes("apple-darwin") || filename.endsWith(".tar.gz")) {
+      return ["macos-aarch64", "macos-x86_64"];
+    }
   }
-  if (filename.includes("x64") || filename.includes("x86_64")) {
-    if (filename.includes("macos") || filename.includes("apple-darwin")) return "macos-x86_64";
-    if (filename.includes("windows")) return "windows-x86_64";
-    if (filename.includes("linux")) return "linux-x86_64";
-  }
-  // Fallback based on extension
-  if (filename.endsWith(".msi.zip") || filename.endsWith(".msi")) return "windows-x86_64";
-  if (filename.endsWith(".exe")) return "windows-x86_64";
-  if (filename.endsWith(".app.tar.gz")) return "macos-x86_64"; // Default to x64 if unknown
-  if (filename.endsWith(".deb.gz") || filename.endsWith(".AppImage.tar.gz")) return "linux-x86_64";
 
-  return null;
+  if (filename.includes("aarch64") || filename.includes("arm64")) {
+    if (filename.includes("macos") || filename.includes("apple-darwin")) return ["macos-aarch64"];
+    if (filename.includes("linux")) return ["linux-aarch64"];
+  }
+
+  if (filename.includes("x64") || filename.includes("x86_64")) {
+    if (filename.includes("macos") || filename.includes("apple-darwin")) return ["macos-x86_64"];
+    if (filename.includes("windows")) return ["windows-x86_64"];
+    if (filename.includes("linux")) return ["linux-x86_64"];
+  }
+
+  // Fallback based on extension - but be careful with Mac
+  if (filename.endsWith(".msi.zip") || filename.endsWith(".msi")) return ["windows-x86_64"];
+  if (filename.endsWith(".exe")) return ["windows-x86_64"];
+
+  // If it's a tar.gz on mac and hasn't matched a specific arch, it's likely universal or we should treat it as such for safety
+  if (filename.endsWith(".app.tar.gz") || (filename.endsWith(".tar.gz") && filename.includes("apple-darwin"))) {
+    return ["macos-aarch64", "macos-x86_64"];
+  }
+
+  if (filename.endsWith(".deb.gz") || filename.endsWith(".AppImage.tar.gz")) return ["linux-x86_64"];
+
+  return [];
 }
 
 const files = fs.readdirSync(artifactsDir);
@@ -75,8 +88,8 @@ files.forEach((file) => {
   ) {
     if (file.endsWith(".sig")) return; // handled by getSignature
 
-    const key = getPlatformKey(file);
-    if (key) {
+    const keys = getPlatformKeys(file);
+    keys.forEach((key) => {
       const signature = getSignature(path.join(artifactsDir, file));
       if (signature) {
         output.platforms[key] = {
@@ -84,7 +97,7 @@ files.forEach((file) => {
           url: `${repoUrl}/${tag}/${file}`,
         };
       }
-    }
+    });
   }
 });
 

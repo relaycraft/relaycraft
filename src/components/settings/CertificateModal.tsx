@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   ExternalLink,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { CopyButton } from "../common/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
@@ -26,6 +27,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
   const [certPath, setCertPath] = useState<string | null>(null);
   const [localIp, setLocalIp] = useState<string>("127.0.0.1");
   const [proxyPort, setProxyPort] = useState<number>(9090);
+  const [qrOpen, setQrOpen] = useState(false);
   const isMacOS = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
 
   const loadCertContext = useCallback(async () => {
@@ -73,7 +75,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
     </span>,
   ];
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -296,18 +298,61 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                               <span className="truncate">http://relay.guide</span>
                               <ExternalLink className="w-3 h-3 shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                             </a>
-                            <div className="flex-shrink-0 p-1 bg-white rounded-lg border border-border/20 shadow-sm">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQrOpen(true);
+                              }}
+                              className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
+                              title={t("common.show_qr", { defaultValue: "Show QR Code" })}
+                            >
                               <QRCodeSVG
                                 value="http://relay.guide"
-                                size={72}
+                                size={20}
                                 level="M"
-                                bgColor="#ffffff"
-                                fgColor="#0b0c0f"
+                                bgColor="transparent"
+                                fgColor="currentColor"
+                                className="text-foreground/70"
                               />
-                            </div>
+                            </button>
                           </div>
                         </div>
                       </div>
+
+                      {createPortal(
+                        <AnimatePresence>
+                          {qrOpen && (
+                            <motion.div
+                              key="qr-overlay"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQrOpen(false);
+                              }}
+                            >
+                              <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                className="bg-white p-6 rounded-2xl shadow-2xl relative flex flex-col items-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <QRCodeSVG
+                                  value="http://relay.guide"
+                                  size={200}
+                                  level="M"
+                                  bgColor="#ffffff"
+                                  fgColor="#0b0c0f"
+                                />
+                              </motion.div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>,
+                        document.body,
+                      )}
 
                       <div className="mt-3 flex items-start gap-2 px-1">
                         <div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" />
@@ -375,7 +420,8 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
           </Tabs>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }
 

@@ -163,6 +163,14 @@ class CoreAddon:
             return
 
         err_msg = str(flow.error)
+        
+        # Prevent double-logging of client TLS failures on CONNECT requests.
+        # tls_failed_client already captures these.
+        if flow.request and flow.request.method == "CONNECT":
+            err_lower = err_msg.lower()
+            if "client" in err_lower and ("disconnect" in err_lower or "tls" in err_lower or "handshake" in err_lower or "closed" in err_lower):
+                return
+
         self.logger.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
 
         # Capture the error flow for the UI so it doesn't just disappear
@@ -178,6 +186,17 @@ class CoreAddon:
                 self.traffic_monitor._store_flow(flow_data)
         except Exception as e:
             self.logger.error(f"Error capturing error flow: {e}")
+
+    def websocket_message(self, flow: http.HTTPFlow) -> None:
+        """Called when a WebSocket message is received."""
+        if self.is_internal_request(flow):
+            return
+
+        try:
+            # Update the flow data with new WebSocket frames
+            self.traffic_monitor.handle_websocket_message(flow)
+        except Exception as e:
+            self.logger.error(f"Error handling WebSocket message: {e}")
 
     def tls_failed_client(self, tls_start: tls.TlsData) -> None:
         """

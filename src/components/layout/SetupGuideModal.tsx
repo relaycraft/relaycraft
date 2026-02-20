@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   Globe,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useProxyStore } from "../../stores/proxyStore";
 import { CopyButton } from "../common/CopyButton";
@@ -21,6 +23,7 @@ interface SetupGuideProps {
 
 export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
   const [localIp, setLocalIp] = useState<string>("127.0.0.1");
+  const [qrOpen, setQrOpen] = useState(false);
   const proxyPort = useProxyStore((state) => state.port);
   const { t } = useTranslation();
 
@@ -137,19 +140,27 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <a
                   href={certUrl}
                   target="_blank"
-                  className="flex-1 font-mono text-[11px] font-semibold text-primary hover:underline truncate"
+                  className="flex-1 font-mono text-[11px] font-semibold text-primary hover:underline truncate flex items-center gap-1.5"
                 >
-                  {certUrl}
+                  <span className="truncate">{certUrl}</span>
                 </a>
-                <div className="flex-shrink-0 p-1 bg-white rounded-lg border border-border/20 shadow-sm">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQrOpen(true);
+                  }}
+                  className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
+                  title={t("common.show_qr", { defaultValue: "Show QR Code" })}
+                >
                   <QRCodeSVG
                     value={certUrl}
-                    size={72}
-                    bgColor="#ffffff"
-                    fgColor="#0b0c0f"
+                    size={20}
                     level="M"
+                    bgColor="transparent"
+                    fgColor="currentColor"
+                    className="text-foreground/70"
                   />
-                </div>
+                </button>
               </div>
             </span>
           </div>
@@ -194,6 +205,40 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
           {t("setup_guide.got_it")}
         </button>
       </div>
+      {createPortal(
+        <AnimatePresence>
+          {qrOpen && (
+            <motion.div
+              key="qr-overlay-setup"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setQrOpen(false);
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                className="bg-white p-6 rounded-2xl shadow-2xl relative flex flex-col items-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <QRCodeSVG
+                  value={certUrl}
+                  size={200}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#0b0c0f"
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </Modal>
   );
 }

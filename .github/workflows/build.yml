@@ -15,8 +15,8 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
-            args: "--target aarch64-apple-darwin"
-            target: 'aarch64-apple-darwin' # Apple Silicon
+            args: "--target universal-apple-darwin"
+            target: 'universal-apple-darwin' # Universal (Intel + Apple Silicon)
           - platform: 'ubuntu-22.04'
             args: ""
             target: 'x86_64-unknown-linux-gnu'
@@ -228,7 +228,7 @@ jobs:
           # ============================================================
           # DETERMINISTIC PATH RELOCATION (Fix for CI confusion)
           # ============================================================
-          APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/RelayCraft.app"
+          APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app"
           echo "🔍 Step 0: Target App Bundle: $APP_PATH"
 
           if [ ! -d "$APP_PATH" ]; then
@@ -488,6 +488,15 @@ jobs:
           echo "📌 Stapling DMG..."
           xcrun stapler staple "$DMG_PATH"
 
+          echo "📦 Re-creating and signing .tar.gz for updater..."
+          # The original .tar.gz from tauri-action is missing notarization and engine relocation.
+          # We must recreate it from the corrected RelayCraft.app.
+          cd "src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          tar -czf RelayCraft.app.tar.gz RelayCraft.app
+          # Return to root for signer
+          cd -
+          pnpm exec tauri signer sign "src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app.tar.gz"
+
           echo "🎉 macOS signing, notarization, and packaging complete!"
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -566,6 +575,14 @@ jobs:
           echo "Files collected and metadata generated:"
           ls -la all-bundles/
 
+      - name: Sign latest.json
+        run: |
+          # Use npx to avoid needing to install pnpm dependencies in this job
+          npx @tauri-apps/cli signer sign all-bundles/latest.json
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
@@ -579,5 +596,6 @@ jobs:
              all-bundles/*.AppImage
              all-bundles/*.sig
              all-bundles/latest.json
+             all-bundles/latest.json.sig
           draft: true
           token: ${{ github.token }}

@@ -139,6 +139,8 @@ export function SessionSwitcher() {
     });
   };
 
+  const hasHistoricalSessions = dbSessions.some((s) => s.is_active === 0);
+
   // if (dbSessions.length <= 1) {
   //   return null;
   // }
@@ -182,7 +184,7 @@ export function SessionSwitcher() {
             ) : (
               <History className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
             )}
-            <span className="truncate text-xs font-medium tracking-tight tabular-nums">
+            <span className="truncate text-[11px] font-medium tabular-nums tracking-tight">
               {viewingSession ? formatDateTime(viewingSession.created_at) : "---"}
             </span>
           </div>
@@ -205,13 +207,13 @@ export function SessionSwitcher() {
               width: 260,
             }}
           >
-            <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20 border-l-2 border-transparent">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-muted/20 border-l-2 border-transparent">
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground tracking-tight">
-                <History className="w-3 h-3" />
+                <History className="w-3.5 h-3.5" />
                 {t("session.history", { defaultValue: "Session History" })}
               </div>
               <div className="flex items-center gap-1.5">
-                {dbSessions.length > 1 && (
+                {hasHistoricalSessions && (
                   <Tooltip content={t("session.clear_all", { defaultValue: "Clear All History" })}>
                     <Button
                       variant="ghost"
@@ -223,7 +225,7 @@ export function SessionSwitcher() {
                     </Button>
                   </Tooltip>
                 )}
-                <span className="py-0.5 px-1.5 rounded-full bg-border/40 text-[10px] font-mono text-muted-foreground">
+                <span className="py-0.5 px-2 rounded-full bg-border/50 text-[10px] font-mono font-medium text-muted-foreground/80">
                   {dbSessions.length}
                 </span>
               </div>
@@ -239,11 +241,11 @@ export function SessionSwitcher() {
                   const isViewing = session.id === showSessionId;
                   const isWriting = isProxyActive && session.is_active === 1;
 
-                  return (
+                  const sessionItem = (
                     <div
                       key={session.id}
                       onClick={() => handleSwitch(session.id)}
-                      className={`group flex items-center gap-3 px-3 py-1.5 cursor-pointer transition-all border-l-2 ${
+                      className={`group flex items-center gap-2 px-3 py-0.5 cursor-pointer transition-all border-l-2 ${
                         isViewing
                           ? "bg-primary/10 border-primary text-foreground"
                           : "border-transparent hover:bg-muted/40 hover:border-border/40"
@@ -254,7 +256,7 @@ export function SessionSwitcher() {
                         {/* Extra padding to align content better */}
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-xs tabular-nums ${isViewing ? "text-primary font-medium" : "text-foreground/80"}`}
+                            className={`text-[11px] font-medium tabular-nums ${isViewing ? "text-primary" : "text-foreground/85"}`}
                           >
                             {formatDateTime(session.created_at)}
                           </span>
@@ -268,12 +270,15 @@ export function SessionSwitcher() {
                             <Check className="w-3 h-3 text-primary flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5 opacity-50">
-                          <div className="flex items-center gap-1">
-                            {session.flow_count > 0 ? session.flow_count : 0} flows
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium font-mono text-muted-foreground/50">
+                          <div className="flex items-center gap-0.5">
+                            <span className="opacity-90">
+                              {session.flow_count > 0 ? session.flow_count : 0}
+                            </span>
+                            <span className="text-[9px] opacity-60">flows</span>
                           </div>
                           <span className="opacity-30">•</span>
-                          <div>{formatSize(session.total_size || 0)}</div>
+                          <div className="opacity-90">{formatSize(session.total_size || 0)}</div>
                         </div>
                       </div>
 
@@ -290,6 +295,21 @@ export function SessionSwitcher() {
                       )}
                     </div>
                   );
+
+                  if (session.description) {
+                    return (
+                      <Tooltip
+                        key={session.id}
+                        content={session.description}
+                        side="left"
+                        className="w-full"
+                      >
+                        {sessionItem}
+                      </Tooltip>
+                    );
+                  }
+
+                  return sessionItem;
                 })
               )}
             </div>

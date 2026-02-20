@@ -75,8 +75,9 @@ export function ScriptManager() {
   };
 
   // Calculate if restart is needed based on:
-  // 1. Any script has been modified since last start
-  // 2. Any script's enabled state differs from its active state
+  // 1. Engine is running (scripts are loaded at engine start, not dynamically)
+  // 2. Any script has been modified since last start
+  // 3. Any script's enabled state differs from its active state
   const needsRestart =
     running &&
     (modifiedSinceStart.size > 0 ||
@@ -274,7 +275,8 @@ export function ScriptManager() {
                   const isScriptActive = checkIsScriptActive(script.name);
                   const isContentModified = modifiedSinceStart.has(script.name);
 
-                  // Pending if: content modified, or enabled state differs from active state
+                  // Pending if: engine is running, and (content modified or enabled state differs from active state)
+                  // Scripts are loaded at engine start, so changes require engine restart to take effect
                   const isPending =
                     running &&
                     (isContentModified ||

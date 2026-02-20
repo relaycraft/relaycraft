@@ -235,6 +235,7 @@ async function pollTraffic() {
             host: idx.host,
             path: idx.path,
             status: idx.status,
+            httpVersion: idx.httpVersion || "",
             contentType: idx.contentType || "",
             startedDateTime: idx.startedDateTime,
             time: idx.time || 0,

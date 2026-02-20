@@ -798,8 +798,8 @@
     "clear_error": "清除历史会话失败",
     "clear_all": "清空全部历史记录",
     "clear_all_confirm": "确认清空全部历史记录？",
-    "clear_all_msg": "这将删除所有历史会话记录，此操作无法撤销。",
-    "flow_count": "{{count}} 条请求",
+    "clear_all_msg": "这将删除所有历史会话记录（当前正在记录的会话除外）。此操作无法撤销。",
+    "flow_count": "{{count}} 记录",
     "historical_mode": "查看历史会话",
     "history": "会话历史",
     "latest": "最新",
@@ -983,7 +983,10 @@
     "ip": "本机 IP",
     "listening": "监听中",
     "port": "监听端口",
-    "stopped": "已停止"
+    "stopped": "已停止",
+    "engine_healthy": "引擎工作中",
+    "engine_idle": "引擎空闲",
+    "engine_error": "引擎未运行"
   },
   "titlebar": {
     "close": "关闭",
@@ -1076,7 +1079,7 @@
     },
     "websocket": {
       "frames": "WebSocket 帧",
-      "messages_count": "条消息",
+      "messages_count": "{{count}} 条消息",
       "no_frames": "尚未捕获到 WebSocket 帧"
     }
   },

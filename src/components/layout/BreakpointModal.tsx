@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { Flow } from "../../types";
 import type { HarHeader } from "../../types/flow";
@@ -167,7 +168,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
     });
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         variants={backdropVariants}
@@ -207,7 +208,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
           <div className="relative z-10 flex items-center justify-between px-4 py-2.5 border-b border-border/40 bg-muted/5 shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
-                <Layers className="w-4 h-4" />
+                <PayloadIcon />
               </div>
               <h2 className="text-sm font-bold text-foreground/90 tracking-tight flex items-center gap-2">
                 {t("breakpoint.control_center")}
@@ -385,6 +386,14 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
+
+const PayloadIcon = () => (
+  <div className="relative w-4 h-4">
+    <Layers className="w-4 h-4 absolute inset-0" />
+    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-primary rounded-full ring-2 ring-background animate-pulse" />
+  </div>
+);

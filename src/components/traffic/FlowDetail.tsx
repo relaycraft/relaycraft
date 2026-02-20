@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
   Ban,
   CirclePause,
   FileCode,
@@ -9,6 +11,7 @@ import {
   Globe,
   LayoutList,
   Loader2,
+  RefreshCw,
   RotateCw,
   Send,
   Settings,
@@ -33,6 +36,7 @@ import {
 } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
+import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Flow } from "../../types";
 import { harToLegacyHeaders } from "../../types";
@@ -533,10 +537,15 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 pt-2">
+        <div className="flex-1 overflow-hidden flex flex-col">
           <AnimatePresence mode="wait">
             {activeTab === "request" && (
-              <TabsContent value="request" key="request" forceMount className="mt-0 space-y-4">
+              <TabsContent
+                value="request"
+                key="request"
+                forceMount
+                className="mt-0 flex-1 overflow-y-auto p-4 pt-2 space-y-4"
+              >
                 <motion.div
                   initial={{ opacity: 0, y: 2 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -569,7 +578,12 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             )}
 
             {activeTab === "response" && (
-              <TabsContent value="response" key="response" forceMount className="mt-0 space-y-4">
+              <TabsContent
+                value="response"
+                key="response"
+                forceMount
+                className="mt-0 flex-1 overflow-y-auto p-4 pt-2 space-y-4"
+              >
                 <motion.div
                   initial={{ opacity: 0, y: 2 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -610,33 +624,89 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 value="messages"
                 key="messages"
                 forceMount
-                className="mt-0 h-full flex flex-col"
+                className="mt-0 flex-1 flex flex-col overflow-hidden p-2"
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.99 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.99 }}
                   transition={{ duration: 0.15 }}
-                  className="flex-1 flex flex-col h-full"
+                  className="flex-1 flex flex-col min-h-0"
                 >
-                  <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-xl border border-border/40 overflow-hidden">
+                  <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-lg border border-border/40 overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20">
                       <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.15em]">
                         {t("traffic.websocket.frames")}
                       </h3>
-                      <span className="text-xs text-muted-foreground/60">
-                        {t("traffic.websocket.messages_count", {
-                          count: flow._rc.websocketFrameCount || 0,
-                        })}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground/60">
+                          {t("traffic.websocket.messages_count", {
+                            count: flow._rc.websocketFrameCount || 0,
+                          })}
+                        </span>
+                        <button
+                          onClick={async () => {
+                            const { loadDetail, selectedFlow } = useTrafficStore.getState();
+                            if (selectedFlow) {
+                              const refreshedFlow = await loadDetail(selectedFlow.id, true);
+                              if (refreshedFlow) {
+                                useTrafficStore.setState({ selectedFlow: refreshedFlow });
+                              }
+                            }
+                          }}
+                          className="p-1 rounded hover:bg-muted/40 transition-colors text-muted-foreground/60 hover:text-foreground"
+                          title={t("common.refresh", "Refresh")}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto scrollbar-thin">
-                      {flow._rc.websocketFrameCount && flow._rc.websocketFrameCount > 0 ? (
+                      {flow._rc.websocketFrames && flow._rc.websocketFrames.length > 0 ? (
                         <div className="divide-y divide-border/20">
-                          {/* WebSocket frames would be loaded separately */}
-                          <div className="p-4 text-center text-muted-foreground text-xs">
-                            WebSocket frames are stored separately and loaded on demand.
-                          </div>
+                          {flow._rc.websocketFrames.map((frame, index) => (
+                            <div
+                              key={frame.id || index}
+                              className="group flex items-start gap-3 px-3 py-2 hover:bg-muted/10 transition-colors"
+                            >
+                              <div className="flex-shrink-0 mt-0.5">
+                                {frame.fromClient ? (
+                                  <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
+                                ) : (
+                                  <ArrowDown className="w-3.5 h-3.5 text-green-500" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span
+                                    className={`text-tiny font-medium px-1.5 py-0.5 rounded ${
+                                      frame.type === "text"
+                                        ? "bg-blue-500/10 text-blue-600"
+                                        : frame.type === "binary"
+                                          ? "bg-purple-500/10 text-purple-600"
+                                          : frame.type === "close"
+                                            ? "bg-red-500/10 text-red-600"
+                                            : "bg-muted/20 text-muted-foreground"
+                                    }`}
+                                  >
+                                    {frame.type.toUpperCase()}
+                                  </span>
+                                  <span className="text-tiny text-muted-foreground/60">
+                                    {frame.length} bytes
+                                  </span>
+                                  <span className="text-tiny text-muted-foreground/40">
+                                    {new Date(frame.timestamp).toLocaleTimeString()}
+                                  </span>
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <CopyButton text={frame.content} />
+                                  </div>
+                                </div>
+                                <div className="text-xs font-mono text-foreground/80 break-all whitespace-pre-wrap">
+                                  {frame.content}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center p-8 text-center">

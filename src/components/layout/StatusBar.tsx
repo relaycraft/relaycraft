@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Bell, BellOff, Database, Globe, Server } from "lucide-react";
+import { Bell, BellOff, Database, Globe, Server, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { version as APP_VERSION } from "../../../package.json";
@@ -12,7 +12,7 @@ import { Tooltip } from "../common/Tooltip";
 import { BreakpointManager } from "../traffic/BreakpointManager";
 
 export function StatusBar() {
-  const { active, port } = useProxyStore();
+  const { running, active, port } = useProxyStore();
   const { indices } = useTrafficStore();
   const { breakpoints } = useBreakpointStore();
   const [showBreakpoints, setShowBreakpoints] = useState(false);
@@ -46,27 +46,55 @@ export function StatusBar() {
     return () => document.removeEventListener("click", handler);
   }, [showBreakpoints]);
 
+  // Engine health status - shows running state (engine process health)
+  // active state is shown in TitleBar, this is for engine health only
+  const getEngineStatus = () => {
+    if (running && active) {
+      return {
+        status: "healthy",
+        color: "text-success",
+        tooltip: t("status_bar.engine_healthy", "Engine healthy, capturing"),
+      };
+    }
+    if (running && !active) {
+      return {
+        status: "idle",
+        color: "text-muted-foreground/50",
+        tooltip: t("status_bar.engine_idle", "Engine idle"),
+      };
+    }
+    return {
+      status: "error",
+      color: "text-error",
+      tooltip: t("status_bar.engine_error", "Engine not running"),
+    };
+  };
+
+  const engineStatus = getEngineStatus();
+
   return (
     <div className="h-7 bg-primary/5 border-t border-border flex items-center justify-between px-3 text-xs select-none relative z-50">
       <div className="flex items-center gap-4">
         {/* Plugin Slot: Left */}
         {renderSlot(PLUGIN_SLOTS.STATUS_BAR_LEFT)}
 
-        {/* Proxy Status Icon */}
-        <Tooltip content={active ? t("status_bar.listening") : t("status_bar.stopped")}>
+        {/* Engine Health Status - shows running state */}
+        <Tooltip content={engineStatus.tooltip}>
           <div className="flex items-center justify-center w-6 overflow-visible">
             <AnimatePresence mode="wait">
-              {active ? (
+              {running ? (
                 <motion.div
                   key="running"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-success filter drop-shadow-[0_0_2px_rgba(16,185,129,0.6)]"
+                  className={engineStatus.color}
                 >
                   <div className="relative">
-                    <div className="absolute inset-0 bg-success rounded-full blur-[4px] opacity-20 animate-pulse" />
-                    <Activity className="w-3.5 h-3.5 relative z-10" />
+                    {active && (
+                      <div className="absolute inset-0 bg-success rounded-full blur-[4px] opacity-20 animate-pulse" />
+                    )}
+                    <Zap className="w-3.5 h-3.5 relative z-10" />
                   </div>
                 </motion.div>
               ) : (
@@ -74,9 +102,11 @@ export function StatusBar() {
                   key="stopped"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-muted-foreground/30"
+                  className="text-error/60"
                 >
-                  <Activity className="w-3.5 h-3.5" />
+                  <div className="relative">
+                    <Zap className="w-3.5 h-3.5" />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

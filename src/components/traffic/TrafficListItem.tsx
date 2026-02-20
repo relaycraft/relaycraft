@@ -46,8 +46,8 @@ export const TrafficListItem = memo(
       index.clientIp === "::1" ||
       index.clientIp === "localhost";
 
-    // Determine HTTP version from contentType or default to HTTP/1.1
-    const httpVersion = "HTTP/1.1"; // FlowIndex doesn't have this, use default
+    // Use httpVersion from backend, fallback to HTTP/1.1
+    const httpVersion = index.httpVersion || "HTTP/1.1";
 
     return (
       <div

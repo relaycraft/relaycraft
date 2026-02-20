@@ -208,6 +208,7 @@ export interface RcExtension {
   // WebSocket
   isWebsocket: boolean;
   websocketFrameCount: number;
+  websocketFrames?: RcWebSocketFrame[];
 
   // 匹配
   hits: RcMatchedHit[];
@@ -264,6 +265,7 @@ export interface FlowIndex {
 
   // 响应摘要
   status: number;
+  httpVersion: string;
   contentType: string;
 
   // 元信息

@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS flow_indices (
     host TEXT NOT NULL,
     path TEXT NOT NULL,
     status INTEGER NOT NULL,
+    http_version TEXT,
     content_type TEXT,
     started_datetime TEXT NOT NULL,
     time REAL NOT NULL,
@@ -617,13 +618,13 @@ class FlowDatabase:
                 # Store index
                 conn.execute("""
                     INSERT OR REPLACE INTO flow_indices (
-                        id, session_id, method, url, host, path, status,
+                        id, session_id, method, url, host, path, status, http_version,
                         content_type, started_datetime, time, size, client_ip,
                         app_name, app_display_name,
                         has_error, has_request_body, has_response_body,
                         is_websocket, websocket_frame_count, is_intercepted,
                         hits, msg_ts
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     index_data['id'],
                     index_data['session_id'],
@@ -632,6 +633,7 @@ class FlowDatabase:
                     index_data['host'],
                     index_data['path'],
                     index_data['status'],
+                    index_data['http_version'],
                     index_data['content_type'],
                     index_data['started_datetime'],
                     index_data['time'],
@@ -707,10 +709,11 @@ class FlowDatabase:
             'host': flow_data.get('host', ''),
             'path': flow_data.get('path', ''),
             'status': res.get('status', 0),
+            'http_version': flow_data.get('httpVersion', '') or req.get('httpVersion', ''),
             'content_type': flow_data.get('contentType', ''),
             'started_datetime': flow_data.get('startedDateTime', ''),
             'time': flow_data.get('time', 0),
-            'size': flow_data.get('size', 0),
+            'size': flow_data.get('size') or (flow_data.get('response') or {}).get('content', {}).get('size', 0),
             'client_ip': rc.get('clientIp', '') or flow_data.get('clientIp', ''),
             'app_name': rc.get('appName', '') or flow_data.get('appName', ''),
             'app_display_name': rc.get('appDisplayName', '') or flow_data.get('appDisplayName', ''),
