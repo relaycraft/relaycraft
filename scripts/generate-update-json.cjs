@@ -17,7 +17,7 @@ if (!version) {
 
 const tag = `v${version.replace(/^v/, "")}`;
 const output = {
-  version: tag,
+  version: version.replace(/^v/, ""),
   notes: `Release ${tag}`,
   pub_date: new Date().toISOString(),
   platforms: {},

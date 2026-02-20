@@ -244,7 +244,8 @@ export function AISettingsPanel() {
               )}
               {connectionStatus !== "idle" &&
                 connectionMessage &&
-                !connectionMessage.toLowerCase().includes("success") && (
+                !connectionMessage.toLowerCase().includes("success") &&
+                connectionMessage.toLowerCase() !== "connection failed" && (
                   <div
                     className="text-xs text-muted-foreground/60 max-w-[200px] truncate"
                     title={connectionMessage}
