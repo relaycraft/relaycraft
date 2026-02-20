@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.19](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.18...v0.99.19) (2026-02-20)
+
+
+### Bug Fixes
+
+* **release:** move cargo update to precommit hook for reliable staging ([de2d93f](https://github-relaycraft/relaycraft/relaycraft/commit/de2d93fa8e71077129cdeb7ed66055fa2318b3a1))
+
 ### [0.99.18](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.17...v0.99.18) (2026-02-20)
 
 
