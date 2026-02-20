@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.17](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.16...v0.99.17) (2026-02-20)
+
+
+### Bug Fixes
+
+* update macos platform keys to darwin-* for tauri updater ([4d0b3d4](https://github-relaycraft/relaycraft/relaycraft/commit/4d0b3d4e833e5dd56ae45adb69351bd61ecb5e88))
+
 ### [0.99.16](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.15...v0.99.16) (2026-02-20)
 
 
