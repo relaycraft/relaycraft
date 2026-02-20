@@ -186,11 +186,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           # Enable signing for all platforms, including self-hosted Windows
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'RelayCraft v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
           args: ${{ matrix.args }}
 
       - name: Sign Windows Binaries
@@ -571,8 +566,11 @@ jobs:
           # Move all files from subdirectories (created by download-artifact pattern) to the root of all-bundles
           find all-bundles -type f -mindepth 2 -exec mv -t all-bundles/ {} +
 
-          # Use the helper script to generate a unified latest.json
+          # Extract version to environment for subsequent steps
           VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          # Use the helper script to generate a unified latest.json
           node scripts/generate-update-json.cjs all-bundles $VERSION
 
           echo "Files collected and metadata generated:"
@@ -590,15 +588,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: |
-             all-bundles/*.dmg
-             all-bundles/*.tar.gz
-             all-bundles/*.msi
-             all-bundles/*.exe
-             all-bundles/*.deb
-             all-bundles/*.AppImage
-             all-bundles/*.sig
-             all-bundles/latest.json
-             all-bundles/latest.json.sig
+          name: 'RelayCraft v${{ env.VERSION }}'
+          body: 'See the assets to download this version and install.'
+          files: all-bundles/*
           draft: true
           token: ${{ github.token }}
