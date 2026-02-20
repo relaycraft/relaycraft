@@ -100,19 +100,19 @@ export function BasicInfo({
       <div className="flex items-center gap-2.5 mb-2">
         <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
         <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest py-1">
-          {t("rule_editor.sections.core")}
+          {t("rules.editor.sections.core")}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
-          <label className={LABEL_STYLE}>{t("rule_editor.core.name")}</label>
+          <label className={LABEL_STYLE}>{t("rules.editor.core.name")}</label>
           <div className="relative group/nameinput">
             <Input
               type="text"
               value={name}
               onChange={(e) => onChangeName(e.target.value)}
-              placeholder={t("rule_editor.core.name_placeholder")}
+              placeholder={t("rules.editor.core.name_placeholder")}
               className="pr-10"
               autoFocus={!name}
             />
@@ -142,7 +142,7 @@ export function BasicInfo({
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className={LABEL_STYLE}>{t("rule_editor.core.group")}</label>
+            <label className={LABEL_STYLE}>{t("rules.editor.core.group")}</label>
             <Select
               value={groupId}
               onChange={onChangeGroup}
@@ -150,7 +150,7 @@ export function BasicInfo({
               containerClassName="w-full"
               placeholder={t("common.select_placeholder")}
             >
-              <option value="">{t("rule_editor.core.no_group")}</option>
+              <option value="">{t("rules.editor.core.no_group")}</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -163,63 +163,63 @@ export function BasicInfo({
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <label className={LABEL_STYLE}>{t("rule_editor.core.type")}</label>
+          <label className={LABEL_STYLE}>{t("rules.editor.core.type")}</label>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {[
             {
               id: "rewrite_body",
-              label: t("rule_editor.core.types.rewrite_body_label"),
+              label: t("rules.editor.core.types.rewrite_body_label"),
               icon: FileSignature,
               color: "text-purple-500",
               bg: "bg-purple-500/10",
               border: "border-purple-200 dark:border-purple-900",
-              desc: t("rule_editor.core.types.rewrite_body_desc"),
+              desc: t("rules.editor.core.types.rewrite_body_desc"),
             },
             {
               id: "rewrite_header",
-              label: t("rule_editor.core.types.rewrite_label"),
+              label: t("rules.editor.core.types.rewrite_label"),
               icon: LayoutList,
               color: "text-orange-500",
               bg: "bg-orange-500/10",
               border: "border-orange-200 dark:border-orange-900",
-              desc: t("rule_editor.core.types.rewrite_desc"),
+              desc: t("rules.editor.core.types.rewrite_desc"),
             },
             {
               id: "map_local",
-              label: t("rule_editor.core.types.map_local_label"),
+              label: t("rules.editor.core.types.map_local_label"),
               icon: FileCode,
               color: "text-blue-500",
               bg: "bg-blue-500/10",
               border: "border-blue-200 dark:border-blue-900",
-              desc: t("rule_editor.core.types.map_local_desc"),
+              desc: t("rules.editor.core.types.map_local_desc"),
             },
             {
               id: "map_remote",
-              label: t("rule_editor.core.types.map_remote_label"),
+              label: t("rules.editor.core.types.map_remote_label"),
               icon: Globe,
               color: "text-emerald-500",
               bg: "bg-emerald-500/10",
               border: "border-emerald-200 dark:border-emerald-900",
-              desc: t("rule_editor.core.types.map_remote_desc"),
+              desc: t("rules.editor.core.types.map_remote_desc"),
             },
             {
               id: "throttle",
-              label: t("rule_editor.core.types.throttle_label"),
+              label: t("rules.editor.core.types.throttle_label"),
               icon: Wifi,
               color: "text-cyan-500",
               bg: "bg-cyan-500/10",
               border: "border-cyan-200 dark:border-cyan-900",
-              desc: t("rule_editor.core.types.throttle_desc"),
+              desc: t("rules.editor.core.types.throttle_desc"),
             },
             {
               id: "block_request",
-              label: t("rule_editor.core.types.block_label"),
+              label: t("rules.editor.core.types.block_label"),
               icon: Ban,
               color: "text-rose-500",
               bg: "bg-rose-500/10",
               border: "border-rose-200 dark:border-rose-900",
-              desc: t("rule_editor.core.types.block_desc"),
+              desc: t("rules.editor.core.types.block_desc"),
             },
           ].map((type) => (
             <Tooltip key={type.id} content={type.desc} side="top">
@@ -261,10 +261,10 @@ export function BasicInfo({
           <Info className="w-3.5 h-3.5 shrink-0" />
           <span className="text-xs font-medium leading-tight">
             {ruleType === "block_request"
-              ? t("rule_editor.core.hints.terminal")
+              ? t("rules.editor.core.hints.terminal")
               : ruleType === "map_local"
-                ? t("rule_editor.core.hints.request_terminal")
-                : t("rule_editor.core.hints.modify")}
+                ? t("rules.editor.core.hints.request_terminal")
+                : t("rules.editor.core.hints.modify")}
           </span>
         </div>
       </div>

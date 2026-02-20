@@ -86,12 +86,12 @@ export function AIScriptAssistant({
             role: "system",
             content: SCRIPT_EXPLAIN_SYSTEM_PROMPT.replace(/{{LANGUAGE}}/g, langInfo.name)
               .replace(/{{TERMINOLOGY}}/g, "RelayCraft, mitmproxy, Addon")
-              .replace(/{{SUMMARY}}/g, t("script_editor.ai.summary_header", "Summary"))
-              .replace(/{{KEY_LOGIC}}/g, t("script_editor.ai.logic_header", "Key Logic"))
-              .replace(/{{SUGGESTIONS}}/g, t("script_editor.ai.suggestions_header", "Suggestions"))
+              .replace(/{{SUMMARY}}/g, t("scripts.editor.ai.summary_header", "Summary"))
+              .replace(/{{KEY_LOGIC}}/g, t("scripts.editor.ai.logic_header", "Key Logic"))
+              .replace(/{{SUGGESTIONS}}/g, t("scripts.editor.ai.suggestions_header", "Suggestions"))
               .replace(
                 /{{RESTART_NOTICE}}/g,
-                t("script_editor.ai.restart_notice", "Restart Required"),
+                t("scripts.editor.ai.restart_notice", "Restart Required"),
               ),
           };
           userMsg = {
@@ -222,7 +222,7 @@ export function AIScriptAssistant({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleGenerate("generate")}
-            placeholder={t("script_editor.ai.placeholder")}
+            placeholder={t("scripts.editor.ai.placeholder")}
             className="flex-1 bg-transparent border-none outline-none text-xs placeholder:text-muted-foreground/30 h-8"
             autoComplete="off"
             disabled={generating}
@@ -262,7 +262,7 @@ export function AIScriptAssistant({
             <div className="flex-1 space-y-2 min-w-0">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-primary uppercase tracking-[0.2em] opacity-80">
-                  {t("script_editor.ai.insight_title", "RelayCraft AI Insight")}
+                  {t("scripts.editor.ai.insight_title", "RelayCraft AI Insight")}
                 </span>
                 <div className="flex items-center gap-2">
                   {tempCode && (
@@ -272,7 +272,9 @@ export function AIScriptAssistant({
                         animate={{ opacity: 1, scale: 1 }}
                         className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${generating ? "text-primary bg-primary/5 border-primary/10" : "text-green-500 bg-green-500/5 border-green-500/10"}`}
                         title={
-                          generating ? t("script_editor.ai.syncing") : t("script_editor.ai.synced")
+                          generating
+                            ? t("scripts.editor.ai.syncing")
+                            : t("scripts.editor.ai.synced")
                         }
                       >
                         <div className="relative flex items-center justify-center">
@@ -331,14 +333,14 @@ export function AIScriptAssistant({
             {isCreateMode ? (
               <>
                 <QuickAction
-                  label={t("script_editor.ai.chip_create")}
-                  onClick={() => setPrompt(t("script_editor.ai.prompt_create"))}
+                  label={t("scripts.editor.ai.chip_create")}
+                  onClick={() => setPrompt(t("scripts.editor.ai.prompt_create"))}
                 />
                 <QuickAction
-                  label={t("script_editor.ai.chip_custom_logic", "Generate specific logic...")}
+                  label={t("scripts.editor.ai.chip_custom_logic", "Generate specific logic...")}
                   onClick={() =>
                     setPrompt(
-                      t("script_editor.ai.prompt_custom_logic", "Help me write a logic that: "),
+                      t("scripts.editor.ai.prompt_custom_logic", "Help me write a logic that: "),
                     )
                   }
                 />
@@ -346,16 +348,16 @@ export function AIScriptAssistant({
             ) : (
               <>
                 <QuickAction
-                  label={t("script_editor.ai.chip_explain")}
+                  label={t("scripts.editor.ai.chip_explain")}
                   onClick={() => handleGenerate("explain")}
                 />
                 <QuickAction
-                  label={t("script_editor.ai.chip_modify")}
-                  onClick={() => setPrompt(t("script_editor.ai.prompt_modify"))}
+                  label={t("scripts.editor.ai.chip_modify")}
+                  onClick={() => setPrompt(t("scripts.editor.ai.prompt_modify"))}
                 />
                 <QuickAction
-                  label={t("script_editor.ai.chip_fix")}
-                  onClick={() => setPrompt(t("script_editor.ai.prompt_fix"))}
+                  label={t("scripts.editor.ai.chip_fix")}
+                  onClick={() => setPrompt(t("scripts.editor.ai.prompt_fix"))}
                 />
               </>
             )}

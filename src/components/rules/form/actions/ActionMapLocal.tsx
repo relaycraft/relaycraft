@@ -53,16 +53,16 @@ export function ActionMapLocal({
     <div className="space-y-4 p-3.5 bg-muted/20 rounded-xl border border-border/40">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className={LABEL_STYLE}>{t("rule_editor.action.map_local.source")}</label>
+          <label className={LABEL_STYLE}>{t("rules.editor.action.map_local.source")}</label>
           <SegmentedControl
             name="map-local-source"
             options={[
               {
-                label: t("rule_editor.action.map_local.source_file"),
+                label: t("rules.editor.action.map_local.source_file"),
                 value: "file",
               },
               {
-                label: t("rule_editor.action.map_local.source_manual"),
+                label: t("rules.editor.action.map_local.source_manual"),
                 value: "manual",
               },
             ]}
@@ -73,7 +73,7 @@ export function ActionMapLocal({
 
         {source === "file" ? (
           <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className={LABEL_STYLE}>{t("rule_editor.action.map_local.path")}</label>
+            <label className={LABEL_STYLE}>{t("rules.editor.action.map_local.path")}</label>
             <div className="flex gap-2">
               <Input
                 type="text"
@@ -90,7 +90,7 @@ export function ActionMapLocal({
           </div>
         ) : (
           <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className={LABEL_STYLE}>{t("rule_editor.action.map_local.content")}</label>
+            <label className={LABEL_STYLE}>{t("rules.editor.action.map_local.content")}</label>
             <textarea
               value={content}
               onChange={(e) => onChangeContent(e.target.value)}
@@ -103,7 +103,9 @@ export function ActionMapLocal({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className={LABEL_STYLE}>{t("rule_editor.action.map_local.status_code")}</label>
+              <label className={LABEL_STYLE}>
+                {t("rules.editor.action.map_local.status_code")}
+              </label>
               <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                 {t("common.optional")}
               </span>
@@ -121,7 +123,7 @@ export function ActionMapLocal({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className={LABEL_STYLE}>
-                {t("rule_editor.action.map_local.content_type")}
+                {t("rules.editor.action.map_local.content_type")}
               </label>
               <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                 {t("common.optional")}

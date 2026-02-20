@@ -591,148 +591,6 @@
     "restart_success_msg": "Proxy engine restarted successfully on port {{port}}.",
     "restart_success_title": "Proxy Engine Restarted"
   },
-  "rule_editor": {
-    "action": {
-      "map_local": {
-        "content": "Mock Body Content",
-        "content_type": "Content-Type",
-        "path": "File Path",
-        "source": "Map Source",
-        "source_file": "Local File",
-        "source_manual": "Manual Data (Mock)",
-        "status_code": "Status Code"
-      },
-      "map_remote": {
-        "preserve_path": "Preserve Path",
-        "preserve_path_desc": "Append original path to target URL",
-        "url": "Target URL"
-      },
-      "rewrite": {
-        "json_ops_append": "Append",
-        "json_ops_delete": "Delete",
-        "json_ops_set": "Set",
-        "json_value_placeholder": "Value (JSON)",
-        "jsonpath_hint": "Hint: Path supports JSON Path (e.g. $.data.user.id)",
-        "modes_json": "JSON Modify",
-        "modes_regex": "Regex Replace",
-        "modes_replace": "String Replace",
-        "modes_set": "Set Content",
-        "placeholders_content": "Enter new body content...",
-        "placeholders_pattern": "String to find...",
-        "placeholders_regex_pattern": "Regex pattern...",
-        "placeholders_replacement": "Replacement string...",
-        "req": "Request",
-        "req_headers": "Request Headers",
-        "res": "Response",
-        "res_headers": "Response Headers",
-        "status_code": "Status Code",
-        "type": "Rewrite Mode"
-      },
-      "throttle": {
-        "bandwidth": "Bandwidth (kbps)",
-        "delay": "Delay (ms)",
-        "packet_loss": "Packet Loss (%)",
-        "placeholders_unlimited": "Unlimited"
-      }
-    },
-    "advanced_assistant": "Advanced Assistant",
-    "ai": {
-      "analysis_title": "Smart Analysis",
-      "apply": "Apply Code",
-      "apply_yaml": "Apply YAML",
-      "chip_create": "Create Rule",
-      "chip_explain": "Explain Rule",
-      "chip_import": "Import External Rules",
-      "chip_modify": "Modify Rule",
-      "edit_yaml": "Edit YAML",
-      "fill_form": "Fill Form",
-      "generate_fail": "AI Rule Generation Failed",
-      "parse_error_hint": "Failed to parse generated rule. Switched to YAML mode for manual adjustment.",
-      "placeholder": "Enter instructions, e.g., block all requests to target domain",
-      "script": {
-        "create_btn": "Create Python Script",
-        "disable_rule": "Disable original rule",
-        "enable_script": "Enable new script"
-      },
-      "tab_ai": "Smart Mode",
-      "tab_script": "Script Preview"
-    },
-    "convert_script_confirm": "Are you sure you want to convert this rule to a Python script?",
-    "convert_script_confirm_disable_rule": "The original rule will be disabled.",
-    "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
-    "convert_script_confirm_enable_script": "The new script will be enabled.",
-    "convert_script_confirm_restart": "Note: Enabling script requires proxy engine restart.",
-    "convert_script_title": "Confirm Conversion",
-    "core": {
-      "group": "Group",
-      "hints": {
-        "modify": "Non-terminal Action: Executes modifications and continues matching subsequent rules.",
-        "request_terminal": "Terminal Action: Intercepts and returns a response. All subsequent request and response rules will be skipped.",
-        "terminal": "Terminal Action: Successfully matched, stops all subsequent request and response rules."
-      },
-      "name": "Rule Name",
-      "name_placeholder": "Enter rule name",
-      "no_group": "Uncategorized",
-      "type": "Rule Type",
-      "types": {
-        "block_desc": "Abort request immediately",
-        "block_label": "Block Request",
-        "map_local_desc": "Redirect request to local file",
-        "map_local_label": "Map Local",
-        "map_remote_desc": "Redirect request to remote server",
-        "map_remote_label": "Map Remote",
-        "rewrite_body_desc": "Modify request or response body content",
-        "rewrite_body_label": "Rewrite Body",
-        "rewrite_desc": "Add, modify or delete request/response headers",
-        "rewrite_label": "Rewrite Header",
-        "throttle_desc": "Simulate network delay, packet loss and bandwidth limit",
-        "throttle_label": "Network Throttling"
-      }
-    },
-    "match": {
-      "headers": {
-        "add": "Add Condition",
-        "label": "Header Matching (Optional)",
-        "tooltip": "Match only when request contains specific headers"
-      },
-      "headers_list": {
-        "add": "Add Header",
-        "key": "Key",
-        "value": "Value"
-      },
-      "label": "Match Label",
-      "test": {
-        "label": "Live Match Test",
-        "matched": "MATCHED",
-        "not_matched": "NOT MATCHED",
-        "placeholder": "Enter a URL to test..."
-      },
-      "url_match_type": {
-        "contains": "Contains",
-        "exact": "Exact",
-        "regex": "Regex",
-        "wildcard": "Wildcard"
-      },
-      "url_placeholder": "Enter match pattern..."
-    },
-    "sections": {
-      "action": "Action Config",
-      "core": "Basic Info",
-      "match": "Match Configuration"
-    },
-    "title_create": "Create New Rule",
-    "title_edit": "Edit Rule"
-  },
-  "rule_group": {
-    "delete_group": "Delete Group",
-    "delete_msg": "Are you sure you want to delete group \"{{name}}\"? Rules will become 'Uncategorized'.",
-    "delete_title": "Delete Group",
-    "disable_group": "Disable Group",
-    "edit_name": "Edit Name",
-    "enable_group": "Enable Group",
-    "move_down": "Move Down",
-    "move_up": "Move Up"
-  },
   "rules": {
     "add_group": "Add New Group",
     "alerts": {
@@ -748,6 +606,138 @@
       "shadowed": "Rule Shadowed",
       "shadowed_desc": "The terminal rule \"{{name}}\" above captures this traffic, so this rule will not execute. Try moving it up."
     },
+    "editor": {
+      "action": {
+        "map_local": {
+          "content": "Mock Body Content",
+          "content_type": "Content-Type",
+          "path": "File Path",
+          "source": "Map Source",
+          "source_file": "Local File",
+          "source_manual": "Manual Data (Mock)",
+          "status_code": "Status Code"
+        },
+        "map_remote": {
+          "preserve_path": "Preserve Path",
+          "preserve_path_desc": "Append original path to target URL",
+          "url": "Target URL"
+        },
+        "rewrite": {
+          "json_ops_append": "Append",
+          "json_ops_delete": "Delete",
+          "json_ops_set": "Set",
+          "json_value_placeholder": "Value (JSON)",
+          "jsonpath_hint": "Hint: Path supports JSON Path (e.g. $.data.user.id)",
+          "modes_json": "JSON Modify",
+          "modes_regex": "Regex Replace",
+          "modes_replace": "String Replace",
+          "modes_set": "Set Content",
+          "placeholders_content": "Enter new body content...",
+          "placeholders_pattern": "String to find...",
+          "placeholders_regex_pattern": "Regex pattern...",
+          "placeholders_replacement": "Replacement string...",
+          "req": "Request",
+          "req_headers": "Request Headers",
+          "res": "Response",
+          "res_headers": "Response Headers",
+          "status_code": "Status Code",
+          "type": "Rewrite Mode"
+        },
+        "throttle": {
+          "bandwidth": "Bandwidth (kbps)",
+          "delay": "Delay (ms)",
+          "packet_loss": "Packet Loss (%)",
+          "placeholders_unlimited": "Unlimited"
+        }
+      },
+      "advanced_assistant": "Advanced Assistant",
+      "ai": {
+        "analysis_title": "Smart Analysis",
+        "apply": "Apply Code",
+        "apply_yaml": "Apply YAML",
+        "chip_create": "Create Rule",
+        "chip_explain": "Explain Rule",
+        "chip_import": "Import External Rules",
+        "chip_modify": "Modify Rule",
+        "edit_yaml": "Edit YAML",
+        "fill_form": "Fill Form",
+        "generate_fail": "AI Rule Generation Failed",
+        "parse_error_hint": "Failed to parse generated rule. Switched to YAML mode for manual adjustment.",
+        "placeholder": "Enter instructions, e.g., block all requests to target domain",
+        "script": {
+          "create_btn": "Create Python Script",
+          "disable_rule": "Disable original rule",
+          "enable_script": "Enable new script"
+        },
+        "tab_ai": "Smart Mode",
+        "tab_script": "Script Preview"
+      },
+      "convert_script_confirm": "Are you sure you want to convert this rule to a Python script?",
+      "convert_script_confirm_disable_rule": "The original rule will be disabled.",
+      "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
+      "convert_script_confirm_enable_script": "The new script will be enabled.",
+      "convert_script_confirm_restart": "Note: Enabling script requires proxy engine restart.",
+      "convert_script_title": "Confirm Conversion",
+      "core": {
+        "group": "Group",
+        "hints": {
+          "modify": "Non-terminal Action: Executes modifications and continues matching subsequent rules.",
+          "request_terminal": "Terminal Action: Intercepts and returns a response. All subsequent request and response rules will be skipped.",
+          "terminal": "Terminal Action: Successfully matched, stops all subsequent request and response rules."
+        },
+        "name": "Rule Name",
+        "name_placeholder": "Enter rule name",
+        "no_group": "Uncategorized",
+        "type": "Rule Type",
+        "types": {
+          "block_desc": "Abort request immediately",
+          "block_label": "Block Request",
+          "map_local_desc": "Redirect request to local file",
+          "map_local_label": "Map Local",
+          "map_remote_desc": "Redirect request to remote server",
+          "map_remote_label": "Map Remote",
+          "rewrite_body_desc": "Modify request or response body content",
+          "rewrite_body_label": "Rewrite Body",
+          "rewrite_desc": "Add, modify or delete request/response headers",
+          "rewrite_label": "Rewrite Header",
+          "throttle_desc": "Simulate network delay, packet loss and bandwidth limit",
+          "throttle_label": "Network Throttling"
+        }
+      },
+      "match": {
+        "headers": {
+          "add": "Add Condition",
+          "label": "Header Matching (Optional)",
+          "tooltip": "Match only when request contains specific headers"
+        },
+        "headers_list": {
+          "add": "Add Header",
+          "key": "Key",
+          "value": "Value"
+        },
+        "label": "Match Label",
+        "test": {
+          "label": "Live Match Test",
+          "matched": "MATCHED",
+          "not_matched": "NOT MATCHED",
+          "placeholder": "Enter a URL to test..."
+        },
+        "url_match_type": {
+          "contains": "Contains",
+          "exact": "Exact",
+          "regex": "Regex",
+          "wildcard": "Wildcard"
+        },
+        "url_placeholder": "Enter match pattern..."
+      },
+      "sections": {
+        "action": "Action Config",
+        "core": "Basic Info",
+        "match": "Match Configuration"
+      },
+      "title_create": "Create New Rule",
+      "title_edit": "Edit Rule"
+    },
     "empty": {
       "create_first_group": "Create First Group",
       "desc": "Use 'New Rule' in the title bar or the button below to create a group.",
@@ -755,6 +745,16 @@
       "title": "No Rules or Groups"
     },
     "export_zip_success": "Rules exported to {{path}}",
+    "group": {
+      "delete_group": "Delete Group",
+      "delete_msg": "Are you sure you want to delete group \"{{name}}\"? Rules will become 'Uncategorized'.",
+      "delete_title": "Delete Group",
+      "disable_group": "Disable Group",
+      "edit_name": "Edit Name",
+      "enable_group": "Enable Group",
+      "move_down": "Move Down",
+      "move_up": "Move Up"
+    },
     "import_zip_extracting": "Extracting...",
     "import_zip_success": "Successfully imported {{count}} rules",
     "match_all": "Match All Requests",
@@ -819,40 +819,40 @@
       "minutes_ago": "{{count}}m ago"
     }
   },
-  "script_editor": {
-    "ai": {
-      "chip_create": "Create Script",
-      "chip_custom_logic": "Generate specific logic...",
-      "chip_explain": "Explain Script",
-      "chip_fix": "Fix Bugs",
-      "chip_modify": "Modify Script",
-      "insight_title": "AI Script Analysis",
-      "logic_header": "Key Logic",
-      "placeholder": "Enter instructions, e.g., intercept google.com and modify response...",
-      "prompt_create": "Create a script: ",
-      "prompt_custom_logic": "Help me write a logic that: ",
-      "prompt_fix": "Fix errors in current script: ",
-      "prompt_modify": "Modify current script: ",
-      "restart_notice": "Restart Required",
-      "suggestions_header": "Optimization Suggestions",
-      "summary_header": "Script Summary",
-      "synced": "Synced to editor",
-      "syncing": "Syncing to editor in real-time..."
-    },
-    "ai_helper": "AI Helper",
-    "revert": "Revert Changes",
-    "revert_fail": "Failed to revert script",
-    "revert_hint": "Discard unsaved changes and restore to last saved state",
-    "revert_success": "Script reverted successfully",
-    "save_hint": "Save",
-    "saved": "Saved",
-    "saving": "Saving..."
-  },
   "scripts": {
     "content_modified": "Content modified, restart required",
     "create_script": "New Script",
     "delete_confirm": "Are you sure you want to delete script \"{{name}}\"? This will permanently delete the file from disk.",
     "delete_title": "Delete Script",
+    "editor": {
+      "ai": {
+        "chip_create": "Create Script",
+        "chip_custom_logic": "Generate specific logic...",
+        "chip_explain": "Explain Script",
+        "chip_fix": "Fix Bugs",
+        "chip_modify": "Modify Script",
+        "insight_title": "AI Script Analysis",
+        "logic_header": "Key Logic",
+        "placeholder": "Enter instructions, e.g., intercept google.com and modify response...",
+        "prompt_create": "Create a script: ",
+        "prompt_custom_logic": "Help me write a logic that: ",
+        "prompt_fix": "Fix errors in current script: ",
+        "prompt_modify": "Modify current script: ",
+        "restart_notice": "Restart Required",
+        "suggestions_header": "Optimization Suggestions",
+        "summary_header": "Script Summary",
+        "synced": "Synced to editor",
+        "syncing": "Syncing to editor in real-time..."
+      },
+      "ai_helper": "AI Helper",
+      "revert": "Revert Changes",
+      "revert_fail": "Failed to revert script",
+      "revert_hint": "Discard unsaved changes and restore to last saved state",
+      "revert_success": "Script reverted successfully",
+      "save_hint": "Save",
+      "saved": "Saved",
+      "saving": "Saving..."
+    },
     "empty": {
       "create": "Create Script",
       "desc": "Create a Python script to intercept and modify traffic.",

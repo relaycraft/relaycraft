@@ -74,8 +74,8 @@ export function ActionRewrite({
           <SegmentedControl
             name="rewrite-target"
             options={[
-              { label: t("rule_editor.action.rewrite.req"), value: "request" },
-              { label: t("rule_editor.action.rewrite.res"), value: "response" },
+              { label: t("rules.editor.action.rewrite.req"), value: "request" },
+              { label: t("rules.editor.action.rewrite.res"), value: "response" },
             ]}
             value={target}
             onChange={(val) => onChangeTarget(val as any)}
@@ -88,7 +88,7 @@ export function ActionRewrite({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className={LABEL_STYLE}>
-                  {t("rule_editor.action.map_local.content_type")}
+                  {t("rules.editor.action.map_local.content_type")}
                 </label>
                 <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                   {t("common.optional")}
@@ -104,7 +104,9 @@ export function ActionRewrite({
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.status_code")}</label>
+                <label className={LABEL_STYLE}>
+                  {t("rules.editor.action.rewrite.status_code")}
+                </label>
                 <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
                   {t("common.optional")}
                 </span>
@@ -124,24 +126,24 @@ export function ActionRewrite({
         )}
 
         <div className="space-y-1">
-          <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.type")}</label>
+          <label className={LABEL_STYLE}>{t("rules.editor.action.rewrite.type")}</label>
           <SegmentedControl
             name="rewrite-mode"
             options={[
               {
-                label: t("rule_editor.action.rewrite.modes_set"),
+                label: t("rules.editor.action.rewrite.modes_set"),
                 value: "set",
               },
               {
-                label: t("rule_editor.action.rewrite.modes_replace"),
+                label: t("rules.editor.action.rewrite.modes_replace"),
                 value: "replace",
               },
               {
-                label: t("rule_editor.action.rewrite.modes_regex"),
+                label: t("rules.editor.action.rewrite.modes_regex"),
                 value: "regex_replace",
               },
               {
-                label: t("rule_editor.action.rewrite.modes_json"),
+                label: t("rules.editor.action.rewrite.modes_json"),
                 value: "json",
               },
             ]}
@@ -153,12 +155,12 @@ export function ActionRewrite({
         {type === "set" && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
-              <label className={LABEL_STYLE}>{t("rule_editor.action.rewrite.modes_set")}</label>
+              <label className={LABEL_STYLE}>{t("rules.editor.action.rewrite.modes_set")}</label>
               <textarea
                 value={content}
                 onChange={(e) => onChangeContent(e.target.value)}
                 className="w-full h-40 bg-background border border-input rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all resize-none"
-                placeholder={t("rule_editor.action.rewrite.placeholders_content")}
+                placeholder={t("rules.editor.action.rewrite.placeholders_content")}
               />
             </div>
           </div>
@@ -173,8 +175,8 @@ export function ActionRewrite({
             <div className="space-y-1">
               <label className={LABEL_STYLE}>
                 {type === "regex_replace"
-                  ? t("rule_editor.action.rewrite.placeholders_regex_pattern")
-                  : t("rule_editor.action.rewrite.placeholders_pattern")}
+                  ? t("rules.editor.action.rewrite.placeholders_regex_pattern")
+                  : t("rules.editor.action.rewrite.placeholders_pattern")}
               </label>
               <Input
                 type="text"
@@ -186,7 +188,7 @@ export function ActionRewrite({
             </div>
             <div className="space-y-1">
               <label className={LABEL_STYLE}>
-                {t("rule_editor.action.rewrite.placeholders_replacement")}
+                {t("rules.editor.action.rewrite.placeholders_replacement")}
               </label>
               <Input
                 type="text"
@@ -205,7 +207,7 @@ export function ActionRewrite({
               <div className="flex items-start gap-3 px-3 py-2.5 bg-primary/5 border border-primary/10 border-l-2 border-l-primary rounded-lg mb-4 animate-in fade-in slide-in-from-top-1">
                 <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-primary/80 leading-relaxed font-medium">
-                  {t("rule_editor.action.rewrite.jsonpath_hint")}
+                  {t("rules.editor.action.rewrite.jsonpath_hint")}
                 </p>
               </div>
               {jsonModifications.map((mod, i) => (
@@ -237,13 +239,13 @@ export function ActionRewrite({
                       containerClassName="w-24 shrink-0"
                     >
                       <option value="set">
-                        {t("rule_editor.action.rewrite.json_ops_set", "Set")}
+                        {t("rules.editor.action.rewrite.json_ops_set", "Set")}
                       </option>
                       <option value="delete">
-                        {t("rule_editor.action.rewrite.json_ops_delete", "Delete")}
+                        {t("rules.editor.action.rewrite.json_ops_delete", "Delete")}
                       </option>
                       <option value="append">
-                        {t("rule_editor.action.rewrite.json_ops_append", "Append")}
+                        {t("rules.editor.action.rewrite.json_ops_append", "Append")}
                       </option>
                     </Select>
                     {mod.operation !== "delete" && (

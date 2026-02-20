@@ -38,8 +38,8 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     showConfirm({
-      title: t("rule_group.delete_title"),
-      message: t("rule_group.delete_msg", { name: group.name }),
+      title: t("rules.group.delete_title"),
+      message: t("rules.group.delete_msg", { name: group.name }),
       variant: "danger",
       onConfirm: () => deleteGroup(group.id),
     });
@@ -88,7 +88,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
 
       <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-1 opacity-0 group-hover/group-header:opacity-100 transition-all duration-200">
-          <Tooltip content={t("rule_group.move_up")}>
+          <Tooltip content={t("rules.group.move_up")}>
             <button
               onClick={() => moveGroup(group.id, "up")}
               disabled={groups.sort((a, b) => a.priority - b.priority)[0]?.id === group.id}
@@ -97,7 +97,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
               <ChevronUp className="w-3.5 h-3.5" />
             </button>
           </Tooltip>
-          <Tooltip content={t("rule_group.move_down")}>
+          <Tooltip content={t("rules.group.move_down")}>
             <button
               onClick={() => moveGroup(group.id, "down")}
               disabled={
@@ -109,7 +109,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
             </button>
           </Tooltip>
           <div className="h-3 w-px bg-border/40 mx-1" />
-          <Tooltip content={t("rule_group.edit_name")}>
+          <Tooltip content={t("rules.group.edit_name")}>
             <button
               onClick={() => setIsEditing(true)}
               className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-primary"
@@ -117,7 +117,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
               <Edit className="w-3.5 h-3.5" />
             </button>
           </Tooltip>
-          <Tooltip content={t("rule_group.delete_group")}>
+          <Tooltip content={t("rules.group.delete_group")}>
             <button
               onClick={handleDelete}
               className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive"
@@ -130,7 +130,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
         <div className="h-4 w-px bg-border/40 mx-1" />
 
         <Tooltip
-          content={group.enabled ? t("rule_group.disable_group") : t("rule_group.enable_group")}
+          content={group.enabled ? t("rules.group.disable_group") : t("rules.group.enable_group")}
         >
           <Switch size="sm" checked={group.enabled} onCheckedChange={() => toggleGroup(group.id)} />
         </Tooltip>

@@ -127,7 +127,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
             )}
           </div>
           <h3 className="text-ui font-semibold text-foreground">
-            {rule?.id ? t("rule_editor.title_edit") : t("rule_editor.title_create")}
+            {rule?.id ? t("rules.editor.title_edit") : t("rules.editor.title_create")}
           </h3>
         </div>
         <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
             className={`gap-1.5 ${showAIAssistant ? "bg-primary/10 text-primary border-primary/20" : ""}`}
           >
             <Bot className="w-3.5 h-3.5" />
-            {t("rule_editor.advanced_assistant")}
+            {t("rules.editor.advanced_assistant")}
           </Button>
           <Button size="sm" onClick={handleSave} className="gap-1.5">
             <Save className="w-3.5 h-3.5" />
@@ -213,7 +213,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]" />
               <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest">
-                {t("rule_editor.sections.action")}
+                {t("rules.editor.sections.action")}
               </span>
             </div>
 
@@ -303,7 +303,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-0.5 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
               <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest py-1">
-                {t("rule_editor.sections.action")}
+                {t("rules.editor.sections.action")}
               </span>
             </div>
             <ActionBlock />

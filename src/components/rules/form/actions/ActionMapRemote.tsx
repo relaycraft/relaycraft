@@ -36,7 +36,7 @@ export function ActionMapRemote({
       <div className="space-y-3">
         <div className="space-y-1">
           <label htmlFor="map-remote-url" className={LABEL_STYLE}>
-            {t("rule_editor.action.map_remote.url")}
+            {t("rules.editor.action.map_remote.url")}
           </label>
           <Input
             id="map-remote-url"
@@ -54,10 +54,10 @@ export function ActionMapRemote({
               htmlFor="map-remote-preserve-path"
               className="text-xs font-medium text-foreground block"
             >
-              {t("rule_editor.action.map_remote.preserve_path")}
+              {t("rules.editor.action.map_remote.preserve_path")}
             </label>
             <p className="text-xs text-muted-foreground">
-              {t("rule_editor.action.map_remote.preserve_path_desc")}
+              {t("rules.editor.action.map_remote.preserve_path_desc")}
             </p>
           </div>
           <Switch

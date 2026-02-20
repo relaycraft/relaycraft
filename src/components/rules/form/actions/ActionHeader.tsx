@@ -30,14 +30,14 @@ export function ActionHeader({
       <div className="space-y-4">
         {showRequest && (
           <HeaderEditor
-            label={t("rule_editor.action.rewrite.req_headers")}
+            label={t("rules.editor.action.rewrite.req_headers")}
             operations={headersRequest}
             onChange={onChangeHeadersRequest}
           />
         )}
         {showResponse && (
           <HeaderEditor
-            label={t("rule_editor.action.rewrite.res_headers")}
+            label={t("rules.editor.action.rewrite.res_headers")}
             operations={headersResponse}
             onChange={onChangeHeadersResponse}
           />

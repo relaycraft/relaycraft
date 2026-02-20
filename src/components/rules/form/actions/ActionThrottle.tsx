@@ -28,7 +28,7 @@ export function ActionThrottle({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-delay" className={LABEL_STYLE}>
-              {t("rule_editor.action.throttle.delay")}
+              {t("rules.editor.action.throttle.delay")}
             </label>
             <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
               {t("common.optional")}
@@ -50,7 +50,7 @@ export function ActionThrottle({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-loss" className={LABEL_STYLE}>
-              {t("rule_editor.action.throttle.packet_loss")}
+              {t("rules.editor.action.throttle.packet_loss")}
             </label>
             <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
               {t("common.optional")}
@@ -73,7 +73,7 @@ export function ActionThrottle({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-bandwidth" className={LABEL_STYLE}>
-              {t("rule_editor.action.throttle.bandwidth")}
+              {t("rules.editor.action.throttle.bandwidth")}
             </label>
             <span className="text-xs text-muted-foreground/40 font-medium mb-0.5 uppercase tracking-tighter">
               {t("common.optional")}
@@ -88,7 +88,7 @@ export function ActionThrottle({
               const val = e.target.value;
               onChangeBandwidthKbps(val === "" ? 0 : parseInt(val, 10));
             }}
-            placeholder={t("rule_editor.action.throttle.placeholders_unlimited")}
+            placeholder={t("rules.editor.action.throttle.placeholders_unlimited")}
             className="font-mono text-xs"
           />
         </div>

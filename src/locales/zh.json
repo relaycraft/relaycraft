@@ -591,148 +591,6 @@
     "restart_success_msg": "代理引擎已在端口 {{port}} 上成功重启。",
     "restart_success_title": "代理引擎已重启"
   },
-  "rule_editor": {
-    "action": {
-      "map_local": {
-        "content": "响应内容",
-        "content_type": "Content-Type",
-        "path": "文件路径",
-        "source": "映射方式",
-        "source_file": "本地文件",
-        "source_manual": "手动数据",
-        "status_code": "状态码"
-      },
-      "map_remote": {
-        "preserve_path": "保留原有路径",
-        "preserve_path_desc": "将原请求的 Path 拼接到目标 URL 后",
-        "url": "目标 URL"
-      },
-      "rewrite": {
-        "json_ops_append": "追加",
-        "json_ops_delete": "删除",
-        "json_ops_set": "设置",
-        "json_value_placeholder": "值",
-        "jsonpath_hint": "提示：路径支持 JSON Path (例如 $.data.user.id)",
-        "modes_json": "JSON 修改",
-        "modes_regex": "正则替换",
-        "modes_replace": "文本替换",
-        "modes_set": "设置内容",
-        "placeholders_content": "输入新的 Body 内容...",
-        "placeholders_pattern": "查找内容...",
-        "placeholders_regex_pattern": "正则匹配表达式...",
-        "placeholders_replacement": "替换为...",
-        "req": "请求",
-        "req_headers": "请求头",
-        "res": "响应",
-        "res_headers": "响应头",
-        "status_code": "响应状态码",
-        "type": "重写模式"
-      },
-      "throttle": {
-        "bandwidth": "带宽限制 (kbps)",
-        "delay": "延迟时间 (ms)",
-        "packet_loss": "丢包率 (%)",
-        "placeholders_unlimited": "不限制"
-      }
-    },
-    "advanced_assistant": "高级规则助手",
-    "ai": {
-      "analysis_title": "智能分析",
-      "apply": "应用代码",
-      "apply_yaml": "应用 YAML",
-      "chip_create": "创建规则",
-      "chip_explain": "解释规则",
-      "chip_import": "导入外部规则",
-      "chip_modify": "修改规则",
-      "edit_yaml": "编辑 YAML",
-      "fill_form": "填入表单",
-      "generate_fail": "AI 规则生成失败",
-      "parse_error_hint": "规则解析失败，已为您切换到 YAML 模式以进行手动调整。",
-      "placeholder": "输入指令，例如：拦截目标域名并修改响应内容...",
-      "script": {
-        "create_btn": "创建 Python 脚本",
-        "disable_rule": "禁用原规则",
-        "enable_script": "立即启用脚本"
-      },
-      "tab_ai": "智能模式",
-      "tab_script": "脚本预览"
-    },
-    "convert_script_confirm": "确定要将此规则转换为 Python 脚本吗？",
-    "convert_script_confirm_disable_rule": "原规则将被禁用。",
-    "convert_script_confirm_dynamic": "确定要创建脚本 \"{{name}}\" 吗？",
-    "convert_script_confirm_enable_script": "新脚本将被启用。",
-    "convert_script_confirm_restart": "注意：启用脚本需要重启代理引擎。",
-    "convert_script_title": "确认转换",
-    "core": {
-      "group": "所属分组",
-      "hints": {
-        "modify": "非终结动作：执行修改后，系统将继续匹配并执行后续规则。",
-        "request_terminal": "终结动作：拦截并直接返回响应，匹配后将跳过后续所有的请求和响应规则。",
-        "terminal": "终结动作：匹配成功后，将停止处理后续所有的请求和响应规则。"
-      },
-      "name": "规则名称",
-      "name_placeholder": "请输入规则名称",
-      "no_group": "未分组",
-      "type": "规则类型",
-      "types": {
-        "block_desc": "拦截并阻止请求发送",
-        "block_label": "请求阻断",
-        "map_local_desc": "将请求映射到本地文件",
-        "map_local_label": "本地映射",
-        "map_remote_desc": "将请求转发到其他 URL",
-        "map_remote_label": "远程映射",
-        "rewrite_body_desc": "修改请求或响应的所有内容 (JSON/Text/Regex)",
-        "rewrite_body_label": "内容重写",
-        "rewrite_desc": "修改请求或响应头部",
-        "rewrite_label": "头部重写",
-        "throttle_desc": "模拟延迟、丢包等网络状况",
-        "throttle_label": "弱网模拟"
-      }
-    },
-    "match": {
-      "headers": {
-        "add": "添加条件",
-        "label": "Header 匹配",
-        "tooltip": "仅当请求包含特定 Header 时命中此规则"
-      },
-      "headers_list": {
-        "add": "Add Header",
-        "key": "Key",
-        "value": "Value"
-      },
-      "label": "匹配规则",
-      "test": {
-        "label": "实时匹配测试",
-        "matched": "匹配成功",
-        "not_matched": "未匹配",
-        "placeholder": "输入一个测试 URL 以验证规则..."
-      },
-      "url_match_type": {
-        "contains": "包含",
-        "exact": "精确",
-        "regex": "正则",
-        "wildcard": "通配符"
-      },
-      "url_placeholder": "输入匹配路径..."
-    },
-    "sections": {
-      "action": "动作配置",
-      "core": "基本信息",
-      "match": "匹配配置"
-    },
-    "title_create": "创建新规则",
-    "title_edit": "编辑规则"
-  },
-  "rule_group": {
-    "delete_group": "删除分组",
-    "delete_msg": "确定要删除分组 \"{{name}}\" 吗？该操作不会删除组内规则，规则将变为“未分组”状态。",
-    "delete_title": "删除分组",
-    "disable_group": "禁用整个分组",
-    "edit_name": "编辑名称",
-    "enable_group": "启用整个分组",
-    "move_down": "下移分组",
-    "move_up": "上移分组"
-  },
   "rules": {
     "add_group": "添加新分组",
     "alerts": {
@@ -748,13 +606,155 @@
       "shadowed": "规则已被遮挡",
       "shadowed_desc": "上方的终结规则 \"{{name}}\" 已捕获此流量，该规则将不会执行。请尝试上移此规则。"
     },
+    "editor": {
+      "action": {
+        "map_local": {
+          "content": "响应内容",
+          "content_type": "Content-Type",
+          "path": "文件路径",
+          "source": "映射方式",
+          "source_file": "本地文件",
+          "source_manual": "手动数据",
+          "status_code": "状态码"
+        },
+        "map_remote": {
+          "preserve_path": "保留原有路径",
+          "preserve_path_desc": "将原请求的 Path 拼接到目标 URL 后",
+          "url": "目标 URL"
+        },
+        "rewrite": {
+          "json_ops_append": "追加",
+          "json_ops_delete": "删除",
+          "json_ops_set": "设置",
+          "json_value_placeholder": "值",
+          "jsonpath_hint": "提示：路径支持 JSON Path (例如 $.data.user.id)",
+          "modes_json": "JSON 修改",
+          "modes_regex": "正则替换",
+          "modes_replace": "文本替换",
+          "modes_set": "设置内容",
+          "placeholders_content": "输入新的 Body 内容...",
+          "placeholders_pattern": "查找内容...",
+          "placeholders_regex_pattern": "正则匹配表达式...",
+          "placeholders_replacement": "替换为...",
+          "req": "请求",
+          "req_headers": "请求头",
+          "res": "响应",
+          "res_headers": "响应头",
+          "status_code": "响应状态码",
+          "type": "重写模式"
+        },
+        "throttle": {
+          "bandwidth": "带宽限制 (kbps)",
+          "delay": "延迟时间 (ms)",
+          "packet_loss": "丢包率 (%)",
+          "placeholders_unlimited": "不限制"
+        }
+      },
+      "advanced_assistant": "高级规则助手",
+      "ai": {
+        "analysis_title": "智能分析",
+        "apply": "应用代码",
+        "apply_yaml": "应用 YAML",
+        "chip_create": "创建规则",
+        "chip_explain": "解释规则",
+        "chip_import": "导入外部规则",
+        "chip_modify": "修改规则",
+        "edit_yaml": "编辑 YAML",
+        "fill_form": "填入表单",
+        "generate_fail": "AI 规则生成失败",
+        "parse_error_hint": "规则解析失败，已为您切换到 YAML 模式以进行手动调整。",
+        "placeholder": "输入指令，例如：拦截目标域名并修改响应内容...",
+        "script": {
+          "create_btn": "创建 Python 脚本",
+          "disable_rule": "禁用原规则",
+          "enable_script": "立即启用脚本"
+        },
+        "tab_ai": "智能模式",
+        "tab_script": "脚本预览"
+      },
+      "convert_script_confirm": "确定要将此规则转换为 Python 脚本吗？",
+      "convert_script_confirm_disable_rule": "原规则将被禁用。",
+      "convert_script_confirm_dynamic": "确定要创建脚本 \"{{name}}\" 吗？",
+      "convert_script_confirm_enable_script": "新脚本将被启用。",
+      "convert_script_confirm_restart": "注意：启用脚本需要重启代理引擎。",
+      "convert_script_title": "确认转换",
+      "core": {
+        "group": "所属分组",
+        "hints": {
+          "modify": "非终结动作：执行修改后，系统将继续匹配并执行后续规则。",
+          "request_terminal": "终结动作：拦截并直接返回响应，匹配后将跳过后续所有的请求和响应规则。",
+          "terminal": "终结动作：匹配成功后，将停止处理后续所有的请求和响应规则。"
+        },
+        "name": "规则名称",
+        "name_placeholder": "请输入规则名称",
+        "no_group": "未分组",
+        "type": "规则类型",
+        "types": {
+          "block_desc": "拦截并阻止请求发送",
+          "block_label": "请求阻断",
+          "map_local_desc": "将请求映射到本地文件",
+          "map_local_label": "本地映射",
+          "map_remote_desc": "将请求转发到其他 URL",
+          "map_remote_label": "远程映射",
+          "rewrite_body_desc": "修改请求或响应的所有内容 (JSON/Text/Regex)",
+          "rewrite_body_label": "内容重写",
+          "rewrite_desc": "修改请求或响应头部",
+          "rewrite_label": "头部重写",
+          "throttle_desc": "模拟延迟、丢包等网络状况",
+          "throttle_label": "弱网模拟"
+        }
+      },
+      "match": {
+        "headers": {
+          "add": "添加条件",
+          "label": "Header 匹配",
+          "tooltip": "仅当请求包含特定 Header 时命中此规则"
+        },
+        "headers_list": {
+          "add": "Add Header",
+          "key": "Key",
+          "value": "Value"
+        },
+        "label": "匹配规则",
+        "test": {
+          "label": "实时匹配测试",
+          "matched": "匹配成功",
+          "not_matched": "未匹配",
+          "placeholder": "输入一个测试 URL 以验证规则..."
+        },
+        "url_match_type": {
+          "contains": "包含",
+          "exact": "精确",
+          "regex": "正则",
+          "wildcard": "通配符"
+        },
+        "url_placeholder": "输入匹配路径..."
+      },
+      "sections": {
+        "action": "动作配置",
+        "core": "基本信息",
+        "match": "匹配配置"
+      },
+      "title_create": "创建新规则",
+      "title_edit": "编辑规则"
+    },
     "empty": {
       "create_first_group": "创建第一个分组",
-      "desc": "使用“新建规则”按钮或下方按钮创建分组。",
+      "desc": "使用「新建规则」按钮或下方按钮创建分组。",
       "group_empty": "该分组内暂无规则",
       "title": "暂无规则或分组"
     },
     "export_zip_success": "规则已导出到 {{path}}",
+    "group": {
+      "delete_group": "删除分组",
+      "delete_msg": "确定要删除分组 \"{{name}}\" 吗？该操作不会删除组内规则，规则将变为「未分组」状态。",
+      "delete_title": "删除分组",
+      "disable_group": "禁用整个分组",
+      "edit_name": "编辑名称",
+      "enable_group": "启用整个分组",
+      "move_down": "下移分组",
+      "move_up": "上移分组"
+    },
     "import_zip_extracting": "正在解压...",
     "import_zip_success": "成功导入 {{count}} 条规则",
     "match_all": "匹配所有请求",
@@ -819,40 +819,40 @@
       "minutes_ago": "{{count}}分钟前"
     }
   },
-  "script_editor": {
-    "ai": {
-      "chip_create": "创建脚本",
-      "chip_custom_logic": "生成特定逻辑...",
-      "chip_explain": "解释脚本",
-      "chip_fix": "修复 Bug",
-      "chip_modify": "修改脚本",
-      "insight_title": "AI 脚本分析",
-      "logic_header": "核心逻辑",
-      "placeholder": "输入指令，例如：拦截 google.com 并修改响应...",
-      "prompt_create": "创建一个脚本: ",
-      "prompt_custom_logic": "帮我写一个逻辑，功能是：",
-      "prompt_fix": "修复当前脚本中的错误: ",
-      "prompt_modify": "修改当前脚本: ",
-      "restart_notice": "重启提示",
-      "suggestions_header": "优化建议",
-      "summary_header": "功能摘要",
-      "synced": "已同步到编辑器",
-      "syncing": "正在实时同步到编辑器..."
-    },
-    "ai_helper": "智能助手",
-    "revert": "撤销更改",
-    "revert_fail": "还原脚本失败",
-    "revert_hint": "放弃未保存的更改并恢复到上次保存的状态",
-    "revert_success": "脚本已成功恢复",
-    "save_hint": "保存脚本",
-    "saved": "已保存",
-    "saving": "保存中..."
-  },
   "scripts": {
     "content_modified": "内容已修改，需重启生效",
     "create_script": "新建脚本",
     "delete_confirm": "确定要删除脚本 \"{{name}}\" 吗？该操作将物理删除磁盘上的文件且不可恢复。",
     "delete_title": "删除脚本",
+    "editor": {
+      "ai": {
+        "chip_create": "创建脚本",
+        "chip_custom_logic": "生成特定逻辑...",
+        "chip_explain": "解释脚本",
+        "chip_fix": "修复 Bug",
+        "chip_modify": "修改脚本",
+        "insight_title": "AI 脚本分析",
+        "logic_header": "核心逻辑",
+        "placeholder": "输入指令，例如：拦截 google.com 并修改响应...",
+        "prompt_create": "创建一个脚本: ",
+        "prompt_custom_logic": "帮我写一个逻辑，功能是：",
+        "prompt_fix": "修复当前脚本中的错误: ",
+        "prompt_modify": "修改当前脚本: ",
+        "restart_notice": "重启提示",
+        "suggestions_header": "优化建议",
+        "summary_header": "功能摘要",
+        "synced": "已同步到编辑器",
+        "syncing": "正在实时同步到编辑器..."
+      },
+      "ai_helper": "智能助手",
+      "revert": "撤销更改",
+      "revert_fail": "还原脚本失败",
+      "revert_hint": "放弃未保存的更改并恢复到上次保存的状态",
+      "revert_success": "脚本已成功恢复",
+      "save_hint": "保存脚本",
+      "saved": "已保存",
+      "saving": "保存中..."
+    },
     "empty": {
       "create": "创建脚本",
       "desc": "创建一个 Python 脚本来拦截和修改流量。",

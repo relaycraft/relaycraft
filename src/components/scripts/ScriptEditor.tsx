@@ -165,7 +165,7 @@ addons = [Addon()]
       saveScript(targetName, content);
       setSaved(true);
       onSave?.();
-      notify.success(t("script_editor.saved"), { toastOnly: true });
+      notify.success(t("scripts.editor.saved"), { toastOnly: true });
       setTimeout(() => setSaved(false), 2000);
     } catch (_error) {
       notify.error(t("scripts.save_failed"));
@@ -183,9 +183,9 @@ addons = [Addon()]
     try {
       const code = await getScriptContent(scriptName);
       setContent(code || DefaultTemplate);
-      notify.success(t("script_editor.revert_success"), { toastOnly: true });
+      notify.success(t("scripts.editor.revert_success"), { toastOnly: true });
     } catch (_error) {
-      notify.error(t("script_editor.revert_fail"));
+      notify.error(t("scripts.editor.revert_fail"));
     } finally {
       setLoading(false);
     }
@@ -258,10 +258,10 @@ addons = [Addon()]
 
         <div className="flex items-center gap-2">
           {aiSettings.enabled && (
-            <Tooltip content={t("script_editor.ai_helper")}>
+            <Tooltip content={t("scripts.editor.ai_helper")}>
               <Button variant="quiet" size="sm" onClick={() => setShowAI(true)} className="gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
-                {t("script_editor.ai_helper")}
+                {t("scripts.editor.ai_helper")}
               </Button>
             </Tooltip>
           )}
@@ -279,7 +279,7 @@ addons = [Addon()]
           )}
 
           {scriptName && (
-            <Tooltip content={t("script_editor.revert_hint")}>
+            <Tooltip content={t("scripts.editor.revert_hint")}>
               <Button
                 onClick={handleRevert}
                 variant="quiet"
@@ -313,10 +313,10 @@ addons = [Addon()]
             {!scriptName
               ? t("scripts.save_script")
               : saving
-                ? t("script_editor.saving")
+                ? t("scripts.editor.saving")
                 : saved
-                  ? t("script_editor.saved")
-                  : t("script_editor.save_hint")}
+                  ? t("scripts.editor.saved")
+                  : t("scripts.editor.save_hint")}
           </Button>
         </div>
       </div>

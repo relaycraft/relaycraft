@@ -87,7 +87,7 @@ export function MatchConfig({
       <div className="flex items-center gap-2.5 mb-2">
         <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
         <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest py-1">
-          {t("rule_editor.sections.match")}
+          {t("rules.editor.sections.match")}
         </span>
       </div>
 
@@ -99,19 +99,19 @@ export function MatchConfig({
               name="url-match-type"
               options={[
                 {
-                  label: t("rule_editor.match.url_match_type.contains"),
+                  label: t("rules.editor.match.url_match_type.contains"),
                   value: "contains",
                 },
                 {
-                  label: t("rule_editor.match.url_match_type.exact"),
+                  label: t("rules.editor.match.url_match_type.exact"),
                   value: "exact",
                 },
                 {
-                  label: t("rule_editor.match.url_match_type.regex"),
+                  label: t("rules.editor.match.url_match_type.regex"),
                   value: "regex",
                 },
                 {
-                  label: t("rule_editor.match.url_match_type.wildcard"),
+                  label: t("rules.editor.match.url_match_type.wildcard"),
                   value: "wildcard",
                 },
               ]}
@@ -124,7 +124,7 @@ export function MatchConfig({
                 type="text"
                 value={urlPattern}
                 onChange={(e) => onChangeUrlPattern(e.target.value)}
-                placeholder={t("rule_editor.match.url_placeholder")}
+                placeholder={t("rules.editor.match.url_placeholder")}
                 className="h-8 font-mono text-ui placeholder:font-sans placeholder:text-xs pr-10 bg-background/50"
               />
               {urlMatchType === "regex" && (
@@ -146,7 +146,7 @@ export function MatchConfig({
             <div className="mt-1 space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-foreground/60 uppercase tracking-widest">
-                  {t("rule_editor.match.test.label")}
+                  {t("rules.editor.match.test.label")}
                 </label>
                 {testUrl && (
                   <div
@@ -158,8 +158,8 @@ export function MatchConfig({
                       <AlertCircle className="w-2.5 h-2.5" />
                     )}
                     {isMatch
-                      ? t("rule_editor.match.test.matched")
-                      : t("rule_editor.match.test.not_matched")}
+                      ? t("rules.editor.match.test.matched")
+                      : t("rules.editor.match.test.not_matched")}
                   </div>
                 )}
               </div>
@@ -167,7 +167,7 @@ export function MatchConfig({
                 type="text"
                 value={testUrl}
                 onChange={(e) => setTestUrl(e.target.value)}
-                placeholder={t("rule_editor.match.test.placeholder")}
+                placeholder={t("rules.editor.match.test.placeholder")}
                 className="h-8 bg-background/30 border-dashed border-input transition-all focus:border-solid text-ui placeholder:text-xs"
               />
             </div>
@@ -219,12 +219,12 @@ export function MatchConfig({
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-foreground/60 uppercase tracking-widest">
-                {t("rule_editor.match.headers.label")}
+                {t("rules.editor.match.headers.label")}
               </label>
               <span className="text-xs text-muted-foreground/40 font-medium uppercase tracking-tighter mb-0.5">
                 {t("common.optional")}
               </span>
-              <Tooltip content={t("rule_editor.match.headers.tooltip")}>
+              <Tooltip content={t("rules.editor.match.headers.tooltip")}>
                 <AlertCircle className="w-3 h-3 text-muted-foreground/40 cursor-help" />
               </Tooltip>
             </div>
@@ -261,13 +261,13 @@ export function MatchConfig({
                           containerClassName="w-full"
                         >
                           <option value="exact">
-                            {t("rule_editor.match.url_match_type.exact")}
+                            {t("rules.editor.match.url_match_type.exact")}
                           </option>
                           <option value="contains">
-                            {t("rule_editor.match.url_match_type.contains")}
+                            {t("rules.editor.match.url_match_type.contains")}
                           </option>
                           <option value="regex">
-                            {t("rule_editor.match.url_match_type.regex")}
+                            {t("rules.editor.match.url_match_type.regex")}
                           </option>
                         </Select>
                       </div>
@@ -303,7 +303,7 @@ export function MatchConfig({
               className="w-full py-2 flex items-center justify-center gap-1 border border-dashed border-border rounded-lg text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
-              {t("rule_editor.match.headers.add")}
+              {t("rules.editor.match.headers.add")}
             </button>
           </div>
         </div>

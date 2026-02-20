@@ -368,14 +368,14 @@ export function AIRuleAssistant({
         setMode("yaml");
         setExplanation(null);
         setYamlErrors([
-          `${t("rule_editor.ai.generate_fail")}: ${t("rule_editor.ai.parse_error_hint")}`,
+          `${t("rules.editor.ai.generate_fail")}: ${t("rules.editor.ai.parse_error_hint")}`,
         ]);
       } else if (!preview) {
         setExplanation(fullResponse);
       }
     } catch (error) {
       console.error("AI Rule Generation failed", error);
-      setYamlErrors([t("rule_editor.ai.generate_fail")]);
+      setYamlErrors([t("rules.editor.ai.generate_fail")]);
     } finally {
       setGenerating(false);
     }
@@ -429,20 +429,20 @@ export function AIRuleAssistant({
     if (!(scriptContent && scriptName.trim())) return;
 
     // Construct dynamic message
-    let message = t("rule_editor.convert_script_confirm_dynamic", {
+    let message = t("rules.editor.convert_script_confirm_dynamic", {
       name: scriptName,
     });
     if (disableOriginal && initialRule?.id) {
-      message += ` ${t("rule_editor.convert_script_confirm_disable_rule")}`;
+      message += ` ${t("rules.editor.convert_script_confirm_disable_rule")}`;
     }
     if (enableScript) {
-      message += ` ${t("rule_editor.convert_script_confirm_enable_script")}`;
-      message += `\n\n${t("rule_editor.convert_script_confirm_restart")}`;
+      message += ` ${t("rules.editor.convert_script_confirm_enable_script")}`;
+      message += `\n\n${t("rules.editor.convert_script_confirm_restart")}`;
     }
 
     // Confirmation before proceeding
     useUIStore.getState().showConfirm({
-      title: t("rule_editor.convert_script_title"),
+      title: t("rules.editor.convert_script_title"),
       message: message,
       variant: "warning",
       onConfirm: async () => {
@@ -487,7 +487,7 @@ export function AIRuleAssistant({
                 className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "ai" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Sparkles className="w-3 h-3" />
-                {t("rule_editor.ai.tab_ai")}
+                {t("rules.editor.ai.tab_ai")}
               </button>
             )}
             <button
@@ -502,7 +502,7 @@ export function AIRuleAssistant({
               className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "script" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <FileCode className="w-3 h-3" />
-              {t("rule_editor.ai.tab_script")}
+              {t("rules.editor.ai.tab_script")}
             </button>
           </div>
 
@@ -521,7 +521,7 @@ export function AIRuleAssistant({
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                    placeholder={t("rule_editor.ai.placeholder")}
+                    placeholder={t("rules.editor.ai.placeholder")}
                     className="pr-10 text-xs rounded-xl h-8 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40"
                     autoFocus
                   />
@@ -546,28 +546,28 @@ export function AIRuleAssistant({
               </div>
               <div className="flex gap-2 flex-wrap">
                 <button
-                  onClick={() => setPrompt(t("rule_editor.ai.chip_explain"))}
+                  onClick={() => setPrompt(t("rules.editor.ai.chip_explain"))}
                   className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
-                  {t("rule_editor.ai.chip_explain")}
+                  {t("rules.editor.ai.chip_explain")}
                 </button>
                 <button
-                  onClick={() => setPrompt(`${t("rule_editor.ai.chip_modify")}: `)}
+                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
                   className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
-                  {t("rule_editor.ai.chip_modify")}
+                  {t("rules.editor.ai.chip_modify")}
                 </button>
                 <button
-                  onClick={() => setPrompt(`${t("rule_editor.ai.chip_create")}: `)}
+                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_create")}: `)}
                   className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
-                  {t("rule_editor.ai.chip_create")}
+                  {t("rules.editor.ai.chip_create")}
                 </button>
                 <button
-                  onClick={() => setPrompt(`${t("rule_editor.ai.chip_import")}: `)}
+                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_import")}: `)}
                   className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
-                  {t("rule_editor.ai.chip_import")}
+                  {t("rules.editor.ai.chip_import")}
                 </button>
               </div>
 
@@ -601,7 +601,7 @@ export function AIRuleAssistant({
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground font-mono truncate">
-                      {t("rule_editor.match.label", "Match")}:{" "}
+                      {t("rules.editor.match.label", "Match")}:{" "}
                       {preview.match?.request?.find((a) => a.type === "url")?.value || ""}
                     </div>
                   </div>
@@ -618,7 +618,7 @@ export function AIRuleAssistant({
                       className="text-xs h-8"
                     >
                       <Code className="w-3 h-3 mr-1" />
-                      {t("rule_editor.ai.edit_yaml")}
+                      {t("rules.editor.ai.edit_yaml")}
                     </Button>
                     <Button
                       size="sm"
@@ -626,7 +626,7 @@ export function AIRuleAssistant({
                       className="flex-shrink-0 gap-1.5 shadow-sm shadow-primary/20"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
-                      {t("rule_editor.ai.fill_form")}
+                      {t("rules.editor.ai.fill_form")}
                     </Button>
                   </div>
                 </div>
@@ -642,7 +642,7 @@ export function AIRuleAssistant({
                     <div className="space-y-2 flex-1 overflow-hidden">
                       {detectedIntent === "explain" && (
                         <h4 className="text-xs font-bold text-primary tracking-widest uppercase">
-                          {t("rule_editor.ai.analysis_title")}
+                          {t("rules.editor.ai.analysis_title")}
                         </h4>
                       )}
                       <div>
@@ -716,7 +716,7 @@ export function AIRuleAssistant({
                     disabled={!initialRule || yamlContent === stringifyYAML(initialRule)}
                   >
                     <Check className="w-3.5 h-3.5" />
-                    {t("rule_editor.ai.apply_yaml")}
+                    {t("rules.editor.ai.apply_yaml")}
                   </Button>
                 </div>
               </div>
@@ -759,7 +759,7 @@ export function AIRuleAssistant({
                       htmlFor="disable-rule"
                       className={`text-xs select-none cursor-pointer ${!initialRule?.id ? "opacity-50" : ""}`}
                     >
-                      {t("rule_editor.ai.script.disable_rule")}
+                      {t("rules.editor.ai.script.disable_rule")}
                     </label>
                   </div>
                   <div className="flex items-center gap-2">
@@ -770,13 +770,13 @@ export function AIRuleAssistant({
                       onCheckedChange={setEnableScript}
                     />
                     <label htmlFor="enable-script" className="text-xs select-none cursor-pointer">
-                      {t("rule_editor.ai.script.enable_script")}
+                      {t("rules.editor.ai.script.enable_script")}
                     </label>
                   </div>
                 </div>
                 <Button size="sm" onClick={handleCreateScript} className="gap-1.5 h-8">
                   <FileCode className="w-3.5 h-3.5" />
-                  {t("rule_editor.ai.script.create_btn")}
+                  {t("rules.editor.ai.script.create_btn")}
                 </Button>
               </div>
             </div>

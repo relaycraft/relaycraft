@@ -132,9 +132,9 @@ export function AIAssistant({
         content: REGEX_EXPLAIN_SYSTEM_PROMPT.replace(/{{LANGUAGE}}/g, langInfo.name)
           .replace(/{{TERMINOLOGY}}/g, langInfo.terminology)
           .replace(/{{ACTIVE_TAB}}/g, useUIStore.getState().activeTab)
-          .replace(/{{SUMMARY}}/g, t("script_editor.ai.summary_header"))
-          .replace(/{{BREAKDOWN}}/g, t("script_editor.ai.logic_header"))
-          .replace(/{{SAMPLES}}/g, t("script_editor.ai.insight_title")),
+          .replace(/{{SUMMARY}}/g, t("scripts.editor.ai.summary_header"))
+          .replace(/{{BREAKDOWN}}/g, t("scripts.editor.ai.logic_header"))
+          .replace(/{{SAMPLES}}/g, t("scripts.editor.ai.insight_title")),
       };
 
       const userMsg = {
