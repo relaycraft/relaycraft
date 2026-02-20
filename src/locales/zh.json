@@ -2,6 +2,45 @@
   "ai": {
     "api_key": "API Key",
     "api_key_desc": "访问 API 所需的密钥",
+    "assistant": {
+      "analyzing": "智能助手正在思考...",
+      "naming": {
+        "desc": "更具描述性的命名",
+        "placeholder": "描述规则用途...",
+        "suggestions": {
+          "auto": "基于配置自动命名",
+          "desc": "更具描述性的命名",
+          "tech": "更具技术性的命名"
+        },
+        "tech": "更具技术性的命名",
+        "title": "智能命名助手"
+      },
+      "regex": {
+        "domain": "匹配 example.com 及其所有子域名",
+        "error": "不区分大小写匹配包含 status:error 的内容",
+        "explain_btn": "正则含义解读",
+        "path": "匹配所有 api/v1 开头的路径",
+        "placeholder": "描述匹配规则 (如: 以 .png 结尾)",
+        "suggestions": {
+          "domain": "匹配 example.com 及其所有子域名",
+          "error": "不区分大小写匹配包含 status:error 的内容",
+          "path": "匹配所有 api/v1 开头的路径"
+        },
+        "title": "智能正则助手"
+      },
+      "search": {
+        "error": "查找所有 4xx 或 5xx 错误请求",
+        "json": "搜索所有 JSON 格式的响应",
+        "placeholder": "描述过滤条件 (如: 查找所有404请求)",
+        "slow": "找出耗时超过 500ms 的请求",
+        "suggestions": {
+          "error": "查找所有 4xx 或 5xx 错误请求",
+          "json": "搜索所有 JSON 格式的响应",
+          "slow": "找出耗时超过 500ms 的请求"
+        },
+        "title": "智能搜索助手"
+      }
+    },
     "clear_memory": "清空对话记忆",
     "connection": {
       "failure": "连接失败，请检查运行日志",
@@ -23,50 +62,19 @@
     "model_desc": "例如: gpt-5, qwen3-max, llama3",
     "provider": "API 提供商",
     "provider_desc": "选择 AI 服务提供商",
+    "providers": {
+      "aliyun": "阿里云百炼",
+      "anthropic": "Anthropic",
+      "custom": "自定义接口",
+      "deepseek": "DeepSeek",
+      "google": "Google",
+      "moonshot": "月之暗面",
+      "openai": "OpenAI",
+      "openrouter": "OpenRouter"
+    },
     "temperature": "生成温度",
     "temperature_desc": "控制生成结果的随机性 (0.0 - 2.0)",
-    "title": "AI 助手配置",
-    "providers": {
-      "openai": "OpenAI",
-      "anthropic": "Anthropic",
-      "google": "Google",
-      "deepseek": "DeepSeek",
-      "aliyun": "阿里云百炼",
-      "moonshot": "月之暗面",
-      "openrouter": "OpenRouter",
-      "custom": "自定义接口"
-    }
-  },
-  "ai_assistant": {
-    "analyzing": "智能助手正在思考...",
-    "naming": {
-      "placeholder": "描述规则用途...",
-      "suggestions": {
-        "auto": "基于配置自动命名",
-        "desc": "更具描述性的命名",
-        "tech": "更具技术性的命名"
-      },
-      "title": "智能命名助手"
-    },
-    "regex": {
-      "explain_btn": "正则含义解读",
-      "placeholder": "描述匹配规则 (如: 以 .png 结尾)",
-      "suggestions": {
-        "domain": "匹配 example.com 及其所有子域名",
-        "error": "不区分大小写匹配包含 status:error 的内容",
-        "path": "匹配所有 api/v1 开头的路径"
-      },
-      "title": "智能正则助手"
-    },
-    "search": {
-      "placeholder": "描述过滤条件 (如: 查找所有404请求)",
-      "suggestions": {
-        "error": "查找所有 4xx 或 5xx 错误请求",
-        "json": "搜索所有 JSON 格式的响应",
-        "slow": "找出耗时超过 500ms 的请求"
-      },
-      "title": "智能搜索助手"
-    }
+    "title": "AI 助手配置"
   },
   "breakpoint": {
     "abort": "终止",
@@ -780,35 +788,35 @@
       "missing_name": "缺少或无效的 'name'"
     }
   },
-  "save_session": {
-    "desc": "备注描述 (可选)",
-    "desc_placeholder": "输入关于此会话的备注信息...",
-    "name": "会话名称",
-    "name_placeholder": "输入会话名称...",
-    "save_btn": "保存会话",
-    "saving": "保存中...",
-    "title": "保存当前会话"
-  },
   "session": {
+    "all_cleared": "所有历史会话已清除",
+    "clear_all": "清空全部历史记录",
+    "clear_all_confirm": "确认清空全部历史记录？",
+    "clear_all_msg": "这将删除所有历史会话记录（当前正在记录的会话除外）。此操作无法撤销。",
+    "clear_error": "清除历史会话失败",
     "current": "当前",
     "delete_confirm": "确定删除此会话？",
     "delete_confirm_msg": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
     "delete_title": "删除会话",
-    "all_cleared": "所有历史会话已清除",
-    "clear_error": "清除历史会话失败",
-    "clear_all": "清空全部历史记录",
-    "clear_all_confirm": "确认清空全部历史记录？",
-    "clear_all_msg": "这将删除所有历史会话记录（当前正在记录的会话除外）。此操作无法撤销。",
     "flow_count": "{{count}} 记录",
     "historical_mode": "查看历史会话",
     "history": "会话历史",
     "latest": "最新",
+    "save": {
+      "desc": "备注描述 (可选)",
+      "desc_placeholder": "输入关于此会话的备注信息...",
+      "name": "会话名称",
+      "name_placeholder": "输入会话名称...",
+      "save_btn": "保存会话",
+      "saving": "保存中...",
+      "title": "保存当前会话"
+    },
     "switch_hint": "切换到历史会话",
     "time": {
-      "just_now": "刚刚",
-      "minutes_ago": "{{count}}分钟前",
+      "days_ago": "{{count}}天前",
       "hours_ago": "{{count}}小时前",
-      "days_ago": "{{count}}天前"
+      "just_now": "刚刚",
+      "minutes_ago": "{{count}}分钟前"
     }
   },
   "script_editor": {

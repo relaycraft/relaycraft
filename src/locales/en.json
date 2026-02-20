@@ -2,6 +2,45 @@
   "ai": {
     "api_key": "API Key",
     "api_key_desc": "Key for accessing the API",
+    "assistant": {
+      "analyzing": "Smart Assistant is thinking...",
+      "naming": {
+        "desc": "More descriptive naming",
+        "placeholder": "Describe rule purpose...",
+        "suggestions": {
+          "auto": "Auto-name based on config",
+          "desc": "More descriptive naming",
+          "tech": "More technical naming"
+        },
+        "tech": "More technical naming",
+        "title": "Smart Naming Assistant"
+      },
+      "regex": {
+        "domain": "Match example.com and its subdomains",
+        "error": "Case-insensitive match for status:error",
+        "explain_btn": "Explain Regex Meaning",
+        "path": "Match paths starting with api/v1",
+        "placeholder": "Describe match rule (e.g. paths starting with api/v1)",
+        "suggestions": {
+          "domain": "Match example.com and its subdomains",
+          "error": "Case-insensitive match for status:error",
+          "path": "Match paths starting with api/v1"
+        },
+        "title": "Smart Regex Assistant"
+      },
+      "search": {
+        "error": "Find all 4xx or 5xx error requests",
+        "json": "Search all JSON responses",
+        "placeholder": "Describe filter (e.g. find all 404 requests)",
+        "slow": "Find requests taking over 500ms",
+        "suggestions": {
+          "error": "Find all 4xx or 5xx error requests",
+          "json": "Search all JSON responses",
+          "slow": "Find requests taking over 500ms"
+        },
+        "title": "Smart Search Assistant"
+      }
+    },
     "clear_memory": "Clear Memory",
     "connection": {
       "failure": "Connection failed, check logs",
@@ -23,50 +62,19 @@
     "model_desc": "e.g. gpt-5, qwen3-max, llama3",
     "provider": "API Provider",
     "provider_desc": "Select AI service provider",
+    "providers": {
+      "aliyun": "Aliyun Bailian",
+      "anthropic": "Anthropic",
+      "custom": "Custom",
+      "deepseek": "DeepSeek",
+      "google": "Google",
+      "moonshot": "Moonshot AI",
+      "openai": "OpenAI",
+      "openrouter": "OpenRouter"
+    },
     "temperature": "Temperature",
     "temperature_desc": "Randomness (0.0 - 2.0)",
-    "title": "AI Assistant Config",
-    "providers": {
-      "openai": "OpenAI",
-      "anthropic": "Anthropic",
-      "google": "Google",
-      "deepseek": "DeepSeek",
-      "aliyun": "Aliyun Bailian",
-      "moonshot": "Moonshot AI",
-      "openrouter": "OpenRouter",
-      "custom": "Custom"
-    }
-  },
-  "ai_assistant": {
-    "analyzing": "Smart Assistant is thinking...",
-    "naming": {
-      "placeholder": "Describe rule purpose...",
-      "suggestions": {
-        "auto": "Auto-name based on config",
-        "desc": "More descriptive naming",
-        "tech": "More technical naming"
-      },
-      "title": "Smart Naming Assistant"
-    },
-    "regex": {
-      "explain_btn": "Explain Regex Meaning",
-      "placeholder": "Describe match rule (e.g. paths starting with api/v1)",
-      "suggestions": {
-        "domain": "Match example.com and its subdomains",
-        "error": "Case-insensitive match for status:error",
-        "path": "Match paths starting with api/v1"
-      },
-      "title": "Smart Regex Assistant"
-    },
-    "search": {
-      "placeholder": "Describe filter (e.g. find all 404 requests)",
-      "suggestions": {
-        "error": "Find all 4xx or 5xx error requests",
-        "json": "Search all JSON responses",
-        "slow": "Find requests taking over 500ms"
-      },
-      "title": "Smart Search Assistant"
-    }
+    "title": "AI Assistant Config"
   },
   "breakpoint": {
     "abort": "Abort",
@@ -780,35 +788,35 @@
       "missing_name": "Missing or invalid 'name'"
     }
   },
-  "save_session": {
-    "desc": "Description (Optional)",
-    "desc_placeholder": "Enter notes about this session...",
-    "name": "Session Name",
-    "name_placeholder": "Enter session name...",
-    "save_btn": "Save Session",
-    "saving": "Saving...",
-    "title": "Save Current Session"
-  },
   "session": {
+    "all_cleared": "All historical sessions have been cleared",
+    "clear_all": "Clear All History",
+    "clear_all_confirm": "Clear All History?",
+    "clear_all_msg": "This will delete all historical sessions (excluding the active recording session). This action cannot be undone.",
+    "clear_error": "Failed to clear historical sessions",
     "current": "Current",
     "delete_confirm": "Delete this session?",
     "delete_confirm_msg": "Are you sure you want to delete session \"{{name}}\"? This action cannot be undone.",
     "delete_title": "Delete Session",
-    "all_cleared": "All historical sessions have been cleared",
-    "clear_error": "Failed to clear historical sessions",
-    "clear_all": "Clear All History",
-    "clear_all_confirm": "Clear All History?",
-    "clear_all_msg": "This will delete all historical sessions (excluding the active recording session). This action cannot be undone.",
     "flow_count": "{{count}} entries",
     "historical_mode": "Viewing historical session",
     "history": "Session History",
     "latest": "LATEST",
+    "save": {
+      "desc": "Description (Optional)",
+      "desc_placeholder": "Enter notes about this session...",
+      "name": "Session Name",
+      "name_placeholder": "Enter session name...",
+      "save_btn": "Save Session",
+      "saving": "Saving...",
+      "title": "Save Current Session"
+    },
     "switch_hint": "Switch session",
     "time": {
-      "just_now": "Just now",
-      "minutes_ago": "{{count}}m ago",
+      "days_ago": "{{count}}d ago",
       "hours_ago": "{{count}}h ago",
-      "days_ago": "{{count}}d ago"
+      "just_now": "Just now",
+      "minutes_ago": "{{count}}m ago"
     }
   },
   "script_editor": {

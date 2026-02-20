@@ -42,7 +42,7 @@ export function SaveSessionModal() {
     <Modal
       isOpen={saveSessionModalOpen}
       onClose={() => setSaveSessionModalOpen(false)}
-      title={t("save_session.title")}
+      title={t("session.save.title")}
       className="max-w-md"
       icon={<Save className="w-4 h-4 text-primary" />}
     >
@@ -53,14 +53,14 @@ export function SaveSessionModal() {
             className="text-ui font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <Type className="w-3 h-3 opacity-70" />
-            {t("save_session.name")} <span className="text-destructive/80">*</span>
+            {t("session.save.name")} <span className="text-destructive/80">*</span>
           </label>
           <input
             id="session-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t("save_session.name_placeholder")}
+            placeholder={t("session.save.name_placeholder")}
             className="w-full px-3 py-2 bg-muted/30 border border-border/60 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground/30 font-medium"
           />
         </div>
@@ -71,13 +71,13 @@ export function SaveSessionModal() {
             className="text-ui font-medium text-muted-foreground flex items-center gap-1.5 ml-0.5"
           >
             <AlignLeft className="w-3 h-3 opacity-70" />
-            {t("save_session.desc")}
+            {t("session.save.desc")}
           </label>
           <textarea
             id="session-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("save_session.desc_placeholder")}
+            placeholder={t("session.save.desc_placeholder")}
             rows={3}
             className="w-full px-3 py-2 bg-muted/30 border border-border/60 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all resize-none placeholder:text-muted-foreground/30"
           />
@@ -101,12 +101,12 @@ export function SaveSessionModal() {
             {loading ? (
               <>
                 <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {t("save_session.saving")}
+                {t("session.save.saving")}
               </>
             ) : (
               <>
                 <Save className="w-3.5 h-3.5" />
-                {t("save_session.save_btn")}
+                {t("session.save.save_btn")}
               </>
             )}
           </Button>

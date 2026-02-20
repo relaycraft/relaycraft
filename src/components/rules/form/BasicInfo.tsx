@@ -118,7 +118,7 @@ export function BasicInfo({
             />
             <div className="absolute right-1 top-1 bottom-1 flex items-center justify-center z-30">
               {aiSettings.enabled && (
-                <Tooltip content={t("ai_assistant.naming.suggestions.auto")} side="left">
+                <Tooltip content={t("ai.assistant.naming.suggestions.auto")} side="left">
                   <button
                     onClick={handleAutoName}
                     disabled={isGeneratingName}

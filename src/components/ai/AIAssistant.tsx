@@ -92,7 +92,7 @@ export function AIAssistant({
       };
 
       let userContent = prompt;
-      if (mode === "naming" && (prompt === t("ai_assistant.naming.suggestions.auto") || !prompt)) {
+      if (mode === "naming" && (prompt === t("ai.assistant.naming.suggestions.auto") || !prompt)) {
         userContent = `Please suggest a name for this rule config: ${JSON.stringify(context || {})}`;
       } else if (mode === "regex") {
         userContent = `[REGEX ONLY] ${prompt}`;
@@ -157,28 +157,28 @@ export function AIAssistant({
 
   const config = {
     filter: {
-      title: t("ai_assistant.search.title"),
-      placeholder: t("ai_assistant.search.placeholder"),
+      title: t("ai.assistant.search.title"),
+      placeholder: t("ai.assistant.search.placeholder"),
       suggestions: [
-        t("ai_assistant.search.suggestions.error"),
-        t("ai_assistant.search.suggestions.json"),
+        t("ai.assistant.search.suggestions.error"),
+        t("ai.assistant.search.suggestions.json"),
       ],
     },
     regex: {
-      title: t("ai_assistant.regex.title"),
-      placeholder: t("ai_assistant.regex.placeholder"),
+      title: t("ai.assistant.regex.title"),
+      placeholder: t("ai.assistant.regex.placeholder"),
       suggestions: [
-        t("ai_assistant.regex.suggestions.path"),
-        t("ai_assistant.regex.suggestions.domain"),
+        t("ai.assistant.regex.suggestions.path"),
+        t("ai.assistant.regex.suggestions.domain"),
       ],
     },
     naming: {
-      title: t("ai_assistant.naming.title"),
-      placeholder: t("ai_assistant.naming.placeholder"),
+      title: t("ai.assistant.naming.title"),
+      placeholder: t("ai.assistant.naming.placeholder"),
       suggestions: [
-        t("ai_assistant.naming.suggestions.auto"),
-        t("ai_assistant.naming.suggestions.tech"),
-        t("ai_assistant.naming.suggestions.desc"),
+        t("ai.assistant.naming.suggestions.auto"),
+        t("ai.assistant.naming.suggestions.tech"),
+        t("ai.assistant.naming.suggestions.desc"),
       ],
     },
   }[mode];
@@ -291,7 +291,7 @@ export function AIAssistant({
                       className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs font-bold mt-1 px-1"
                     >
                       <BookOpen className="w-3 h-3" />
-                      {t("ai_assistant.regex.explain_btn")}
+                      {t("ai.assistant.regex.explain_btn")}
                     </button>
                   )}
                 </>
