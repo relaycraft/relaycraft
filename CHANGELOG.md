@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.16](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.15...v0.99.16) (2026-02-20)
+
+
+### Bug Fixes
+
+* refine rule editor ui and finalize update metadata filtering ([6d3faae](https://github-relaycraft/relaycraft/relaycraft/commit/6d3faaef64e98542cc88b3127778115c49e6e999))
+
 ### [0.99.15](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.14...v0.99.15) (2026-02-20)
 
 
