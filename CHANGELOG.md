@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.18](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.17...v0.99.18) (2026-02-20)
+
+
+### Bug Fixes
+
+* internationalize update dialog and downloading text ([fdbfc13](https://github-relaycraft/relaycraft/relaycraft/commit/fdbfc1339860a772aeade8f4d2663fb05b2173da))
+
 ### [0.99.17](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.16...v0.99.17) (2026-02-20)
 
 
