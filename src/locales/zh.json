@@ -188,7 +188,7 @@
         ]
       },
       "tabs": {
-        "desktop": "电脑端 (PC)",
+        "desktop": "桌面端",
         "mobile": "移动端 (iOS/Android)"
       }
     },
@@ -972,14 +972,14 @@
   "sidebar": {
     "certificate": "证书管理",
     "composer": "请求构造",
-    "plugins": "插件中心",
+    "plugins": "插件",
     "rules": "规则管理",
     "scripts": "脚本管理",
     "settings": "设置",
     "traffic": "流量监控"
   },
   "status_bar": {
-    "breakpoints": "点击管理活跃断点",
+    "breakpoints": "管理断点",
     "captured": "捕获请求数",
     "ip": "本机 IP",
     "listening": "监听中",

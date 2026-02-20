@@ -188,7 +188,7 @@
         ]
       },
       "tabs": {
-        "desktop": "Desktop (PC)",
+        "desktop": "Desktop",
         "mobile": "Mobile (iOS/Android)"
       }
     },
@@ -336,7 +336,7 @@
       "rewrite_header": "Rewrite Header",
       "rules": "Rules",
       "scripts": "Scripts",
-      "throttle": "Throttling",
+      "throttle": "Network Throttling",
       "traffic": "Traffic"
     },
     "try_another_search": "Try another search term",
