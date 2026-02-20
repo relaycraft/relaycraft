@@ -559,7 +559,11 @@ jobs:
         run: |
           echo "📦 Collecting all bundles and metadata..."
           # Move only relevant bundle files and signatures to the root, avoiding internal app files
-          find all-bundles -type f \( -name "*.dmg" -o -name "*.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.sig" -o -name "latest.json" \) ! -path "*/RelayCraft.app/*" -exec mv -t all-bundles/ {} +
+          find all-bundles -type f \( -name "*.dmg" -o -name "*.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.sig" -o -name "latest.json" \) \
+            ! -path "*/RelayCraft.app/*" \
+            ! -name "control.tar.gz" \
+            ! -name "data.tar.gz" \
+            -exec mv -t all-bundles/ {} +
           # Clean up subdirectories
           find all-bundles -mindepth 1 -type d -exec rm -rf {} +
 
@@ -576,7 +580,8 @@ jobs:
       - name: Sign latest.json
         run: |
           # Use npx to avoid needing to install pnpm dependencies in this job
-          npx @tauri-apps/cli signer sign all-bundles/latest.json
+          # Redirect output to generate the .sig file for the merged latest.json
+          npx @tauri-apps/cli signer sign all-bundles/latest.json > all-bundles/latest.json.sig
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}

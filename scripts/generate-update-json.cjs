@@ -85,13 +85,15 @@ files.forEach((file) => {
   const lowerFile = file.toLowerCase();
   // We only care about the archives/installers that Tauri updater uses
   if (
-    lowerFile.endsWith(".zip") ||
-    lowerFile.endsWith(".tar.gz") ||
-    lowerFile.endsWith(".gz") ||
-    lowerFile.endsWith(".msi") ||
-    lowerFile.endsWith(".exe") ||
-    lowerFile.endsWith(".appimage") ||
-    lowerFile.endsWith(".deb")
+    (lowerFile.endsWith(".zip") ||
+      lowerFile.endsWith(".tar.gz") ||
+      lowerFile.endsWith(".gz") ||
+      lowerFile.endsWith(".msi") ||
+      lowerFile.endsWith(".exe") ||
+      lowerFile.endsWith(".appimage") ||
+      lowerFile.endsWith(".deb")) &&
+    !lowerFile.includes("control.tar.gz") &&
+    !lowerFile.includes("data.tar.gz")
   ) {
     if (lowerFile.endsWith(".sig")) return; // handled by getSignature
 

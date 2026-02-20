@@ -692,8 +692,7 @@
       "match": {
         "headers": {
           "add": "添加条件",
-          "label": "Header 匹配",
-          "tooltip": "仅当请求包含特定 Header 时命中此规则"
+          "label": "Header 匹配"
         },
         "headers_list": {
           "add": "Add Header",

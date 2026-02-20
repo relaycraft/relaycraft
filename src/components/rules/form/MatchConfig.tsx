@@ -8,7 +8,6 @@ import { Button } from "../../common/Button";
 import { Input } from "../../common/Input";
 import { SegmentedControl } from "../../common/SegmentedControl";
 import { Select } from "../../common/Select";
-import { Tooltip } from "../../common/Tooltip";
 
 interface HeaderMatch {
   key: string;
@@ -217,17 +216,12 @@ export function MatchConfig({
         {/* Headers Match */}
         <div className="pt-2">
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-foreground/60 uppercase tracking-widest">
-                {t("rules.editor.match.headers.label")}
-              </label>
-              <span className="text-xs text-muted-foreground/40 font-medium uppercase tracking-tighter mb-0.5">
-                {t("common.optional")}
-              </span>
-              <Tooltip content={t("rules.editor.match.headers.tooltip")}>
-                <AlertCircle className="w-3 h-3 text-muted-foreground/40 cursor-help" />
-              </Tooltip>
-            </div>
+            <label className="text-xs font-bold text-foreground/60 uppercase tracking-widest">
+              {t("rules.editor.match.headers.label")}
+            </label>
+            <span className="text-xs text-muted-foreground/40 font-medium uppercase tracking-tighter mb-0.5">
+              {t("common.optional")}
+            </span>
           </div>
 
           <div className="space-y-4 p-4 bg-muted/20 rounded-xl border border-border/40">

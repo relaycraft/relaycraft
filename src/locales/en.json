@@ -692,8 +692,7 @@
       "match": {
         "headers": {
           "add": "Add Condition",
-          "label": "Header Matching (Optional)",
-          "tooltip": "Match only when request contains specific headers"
+          "label": "Header Matching"
         },
         "headers_list": {
           "add": "Add Header",

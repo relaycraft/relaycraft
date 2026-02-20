@@ -448,12 +448,13 @@ export function SettingsView() {
                         } catch (e) {
                           console.error("Update check failed:", e);
                           const { notify } = await import("../../lib/notify");
-                          notify.error(t("settings.about.error_fetch"));
+                          const errorMsg = e instanceof Error ? e.message : String(e);
+                          notify.error(`${t("settings.about.error_fetch")}\n${errorMsg}`);
                           btn.innerText = t("settings.about.check_failed");
                           setTimeout(() => {
                             btn.innerText = originalText;
                             btn.removeAttribute("disabled");
-                          }, 2000);
+                          }, 3000);
                         }
                       }
                     }}
