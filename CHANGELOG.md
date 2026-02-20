@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.15](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.14...v0.99.15) (2026-02-20)
+
+
+### Bug Fixes
+
+* resolve windows signing file lock and complete signature collection ([b9b6344](https://github-relaycraft/relaycraft/relaycraft/commit/b9b6344a06f4542c9599d697d22270968363e030))
+
 ### [0.99.14](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.13...v0.99.14) (2026-02-20)
 
 ### [0.99.13](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.12...v0.99.13) (2026-02-20)
