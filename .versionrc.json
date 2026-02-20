@@ -63,6 +63,6 @@
   ],
   "hooks": {
     "prebump": "cd src-tauri && cargo metadata --format-version 1 --offline",
-    "postbump": "cd src-tauri && cargo update --workspace && git add Cargo.lock"
+    "precommit": "cd src-tauri && cargo update --workspace && git add Cargo.lock"
   }
 }
