@@ -283,6 +283,7 @@
     "confirm_delete_desc": "此操作不可撤销，确定要继续吗？",
     "confirm_delete_title": "确认删除",
     "copy": "复制",
+    "copied": "已复制",
     "copy_json": "复制 JSON",
     "delete": "删除",
     "disable": "禁用",
@@ -387,10 +388,6 @@
     "url_builder_error": "URL 构造错误 ({{url}})",
     "url_placeholder": "输入请求 URL..."
   },
-  "confirmation_modal": {
-    "cancel": "取消",
-    "confirm": "确定"
-  },
   "content_preview": {
     "base64": "Base64 编码内容",
     "binary": "二进制内容",
@@ -401,10 +398,6 @@
     "large_content_warning": "大文件 ({{size}})。仅显示前 {{max}} 字符。",
     "show_all": "显示全部",
     "collapse": "收起"
-  },
-  "copy_button": {
-    "copied": "已复制",
-    "copy": "复制"
   },
   "flow": {
     "analysis": {
@@ -446,14 +439,6 @@
     "op_remove": "删除",
     "op_set": "设置",
     "title": "Header 操作列表"
-  },
-  "import_modal": {
-    "action": "执行导入",
-    "desc": "支持单条规则 JSON 或完整备份包",
-    "placeholder": "在此粘贴 JSON 内容...",
-    "select": "选择文件...",
-    "success": "成功导入 {{count}} 条规则与分组结构！",
-    "title": "导入规则"
   },
   "log_viewer": {
     "app_logs": "系统日志",
@@ -754,6 +739,14 @@
       "enable_group": "启用整个分组",
       "move_down": "下移分组",
       "move_up": "上移分组"
+    },
+    "import": {
+      "action": "导入",
+      "desc": "支持单个规则 JSON 或完整备份包",
+      "placeholder": "在此粘贴 JSON 内容...",
+      "select": "选择文件...",
+      "success": "成功导入 {{count}} 条规则和分组！",
+      "title": "导入规则"
     },
     "import_zip_extracting": "正在解压...",
     "import_zip_success": "成功导入 {{count}} 条规则",

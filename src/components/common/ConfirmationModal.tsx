@@ -90,8 +90,8 @@ export function ConfirmationModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onConfirm, isLoading]);
 
-  const finalConfirmLabel = confirmLabel || t("confirmation_modal.confirm");
-  const finalCancelLabel = cancelLabel || t("confirmation_modal.cancel");
+  const finalConfirmLabel = confirmLabel || t("common.confirm");
+  const finalCancelLabel = cancelLabel || t("common.cancel");
 
   const headerTitle = React.useMemo(() => {
     switch (variant) {

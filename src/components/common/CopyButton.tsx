@@ -27,7 +27,7 @@ export function CopyButton({
   const { t } = useTranslation();
 
   // Default label logic
-  const displayLabel = label || t("copy_button.copy");
+  const displayLabel = label || t("common.copy");
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,7 +50,7 @@ export function CopyButton({
   };
 
   return (
-    <Tooltip content={copied ? t("copy_button.copied") : displayLabel} side={tooltipSide}>
+    <Tooltip content={copied ? t("common.copied") : displayLabel} side={tooltipSide}>
       <button
         type="button"
         onClick={handleCopy}
@@ -74,9 +74,7 @@ export function CopyButton({
           />
         </div>
         {showLabel && (
-          <span className="text-xs font-medium">
-            {copied ? t("copy_button.copied") : displayLabel}
-          </span>
+          <span className="text-xs font-medium">{copied ? t("common.copied") : displayLabel}</span>
         )}
       </button>
     </Tooltip>

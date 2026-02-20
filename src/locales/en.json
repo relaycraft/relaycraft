@@ -283,6 +283,7 @@
     "confirm_delete_desc": "This action cannot be undone.",
     "confirm_delete_title": "Confirm Delete Item?",
     "copy": "Copy",
+    "copied": "Copied",
     "copy_json": "Copy JSON",
     "delete": "Delete",
     "disable": "Disable",
@@ -387,10 +388,6 @@
     "url_builder_error": "Builder error for URL ({{url}})",
     "url_placeholder": "Enter request URL..."
   },
-  "confirmation_modal": {
-    "cancel": "Cancel",
-    "confirm": "Confirm"
-  },
   "content_preview": {
     "base64": "Base64 Encoded Content",
     "binary": "Binary Content",
@@ -401,10 +398,6 @@
     "large_content_warning": "Large content ({{size}}). Displaying first {{max}} characters.",
     "show_all": "Show All",
     "collapse": "Collapse"
-  },
-  "copy_button": {
-    "copied": "Copied",
-    "copy": "Copy"
   },
   "flow": {
     "analysis": {
@@ -446,14 +439,6 @@
     "op_remove": "Remove",
     "op_set": "Set",
     "title": "Header Operations"
-  },
-  "import_modal": {
-    "action": "Import",
-    "desc": "Support single rule JSON or full backup Bundle",
-    "placeholder": "Paste JSON content here...",
-    "select": "Select File...",
-    "success": "Successfully imported {{count}} rules and groups!",
-    "title": "Import Rules"
   },
   "log_viewer": {
     "app_logs": "System Log",
@@ -754,6 +739,14 @@
       "enable_group": "Enable Group",
       "move_down": "Move Down",
       "move_up": "Move Up"
+    },
+    "import": {
+      "action": "Import",
+      "desc": "Support single rule JSON or full backup Bundle",
+      "placeholder": "Paste JSON content here...",
+      "select": "Select File...",
+      "success": "Successfully imported {{count}} rules and groups!",
+      "title": "Import Rules"
     },
     "import_zip_extracting": "Extracting...",
     "import_zip_success": "Successfully imported {{count}} rules",

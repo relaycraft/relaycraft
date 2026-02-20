@@ -26,7 +26,7 @@ export function ImportRuleModal() {
       if (data.bundle || (data.rules && Array.isArray(data.rules))) {
         const result = importBundle(jsonText);
         if (result.success) {
-          notify.success(t("import_modal.success", { count: result.count }), t("sidebar.rules"));
+          notify.success(t("rules.import.success", { count: result.count }), t("sidebar.rules"));
           setImportModalOpen(false);
           setJsonText("");
         } else {
@@ -41,7 +41,7 @@ export function ImportRuleModal() {
         const bundle = { rules: [data], groups: [] };
         const result = importBundle(JSON.stringify(bundle));
         if (result.success) {
-          notify.success(t("import_modal.success", { count: result.count }), t("sidebar.rules"));
+          notify.success(t("rules.import.success", { count: result.count }), t("sidebar.rules"));
           setImportModalOpen(false);
           setJsonText("");
         } else {
@@ -106,7 +106,7 @@ export function ImportRuleModal() {
     <Modal
       isOpen={importModalOpen}
       onClose={() => setImportModalOpen(false)}
-      title={t("import_modal.title")}
+      title={t("rules.import.title")}
       icon={<FileJson className="w-4 h-4 text-primary" />}
     >
       <div className="space-y-3">
@@ -116,11 +116,11 @@ export function ImportRuleModal() {
               htmlFor="rule-import-json"
               className="text-ui font-medium text-muted-foreground block"
             >
-              {t("import_modal.desc")}
+              {t("rules.import.desc")}
             </label>
             <Button variant="secondary" size="xs" onClick={handleSelectFile} className="gap-1.5">
               <FolderOpen className="w-3.5 h-3.5" />
-              {t("import_modal.select")}
+              {t("rules.import.select")}
             </Button>
           </div>
           <textarea
@@ -129,7 +129,7 @@ export function ImportRuleModal() {
             onChange={(e) => {
               setJsonText(e.target.value);
             }}
-            placeholder={t("import_modal.placeholder")}
+            placeholder={t("rules.import.placeholder")}
             className="w-full h-52 p-3 bg-muted/30 border border-border/60 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all resize-none placeholder:text-muted-foreground/40 placeholder:font-sans"
           />
         </div>
@@ -143,7 +143,7 @@ export function ImportRuleModal() {
             disabled={!jsonText.trim()}
             className="shadow-sm shadow-primary/20"
           >
-            {t("import_modal.action")}
+            {t("rules.import.action")}
           </Button>
         </div>
       </div>
