@@ -423,15 +423,18 @@ export function SettingsView() {
                           const update = await check();
                           if (update) {
                             const yes = await ask(
-                              `New version ${update.version} is available!\n\n${update.body || ""}\n\nDo you want to update now?`,
+                              t("settings.about.update_available.message", {
+                                version: update.version,
+                                body: update.body || "",
+                              }),
                               {
-                                title: "Update Available",
+                                title: t("settings.about.update_available.title"),
                                 kind: "info",
                               },
                             );
 
                             if (yes) {
-                              btn.innerText = "Downloading...";
+                              btn.innerText = t("settings.about.downloading");
                               await update.downloadAndInstall();
                               await relaunch();
                             } else {

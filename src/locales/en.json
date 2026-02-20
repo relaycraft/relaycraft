@@ -869,6 +869,11 @@
       "check_update_btn": "Check for Updates",
       "checking": "Checking...",
       "checking_updates": "Check for the latest version",
+      "downloading": "Downloading...",
+      "update_available": {
+        "message": "New version {{version}} is available!\n\n{{body}}\n\nDo you want to update now?",
+        "title": "Update Available"
+      },
       "dev_tools": "Developer Tools",
       "error_fetch": "Failed to fetch version info. Please check your network.",
       "github": "Repository",
