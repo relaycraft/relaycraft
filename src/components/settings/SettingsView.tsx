@@ -241,7 +241,6 @@ export function SettingsView() {
                     )}
                   </span>
                 }
-                danger={config.ssl_insecure}
               >
                 <SettingsToggle
                   checked={config.ssl_insecure}

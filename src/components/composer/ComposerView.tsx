@@ -285,7 +285,7 @@ export function ComposerView() {
                   value={bodyType}
                   onChange={(val) => setBodyType(val as any)}
                   align="right"
-                  className="bg-muted/40 h-7 !text-xs !font-black uppercase border-border/20 min-w-[80px]"
+                  className="bg-muted/40 h-7 !text-tiny !font-bold uppercase tracking-wider border-border/20 min-w-[80px]"
                 >
                   <option value="none">None</option>
                   <option value="x-www-form-urlencoded">Form-data</option>

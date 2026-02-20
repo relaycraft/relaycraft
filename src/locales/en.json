@@ -927,7 +927,7 @@
       "title": "General"
     },
     "network": {
-      "mitm_risk": "Risk of Man-in-the-Middle Attack",
+      "mitm_risk": "Connection security reduced; recommended only for trusted environments",
       "port": "Proxy Port",
       "port_desc": "Proxy Server Port (1024-65535)",
       "restart_hint": "Port, SSL & upstream proxy changes require engine restart",
@@ -936,7 +936,7 @@
       "restart_now": "Restart Now",
       "restarting": "Restarting...",
       "ssl_insecure": "Ignore SSL Certificate Validation",
-      "ssl_insecure_desc": "For intranet or self-signed certificate environments",
+      "ssl_insecure_desc": "For enterprise intranets, self-signed certificates, or dev environments",
       "title": "Network & Proxy",
       "upstream_check": "Check Connection",
       "upstream_check_failed": "Connection failed",

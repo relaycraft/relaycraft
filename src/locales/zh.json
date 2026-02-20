@@ -927,7 +927,7 @@
       "title": "常规设置"
     },
     "network": {
-      "mitm_risk": "存在中间人攻击风险",
+      "mitm_risk": "连接安全性已降低，仅建议在受信任环境开启",
       "port": "代理端口",
       "port_desc": "代理端口范围为 (1024-65535)",
       "restart_hint": "端口、SSL 或上游代理变更后需重启引擎生效",
@@ -936,7 +936,7 @@
       "restart_now": "立即重启",
       "restarting": "重启中...",
       "ssl_insecure": "忽略 SSL 证书验证",
-      "ssl_insecure_desc": "适用于公司内网或自签名证书环境",
+      "ssl_insecure_desc": "适用于企业内网、自签名证书或开发调试环境",
       "title": "网络与代理",
       "upstream_check": "检查代理连接",
       "upstream_check_failed": "连接失败",

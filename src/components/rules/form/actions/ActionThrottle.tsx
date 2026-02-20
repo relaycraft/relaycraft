@@ -23,9 +23,10 @@ export function ActionThrottle({
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-4 p-3.5 bg-muted/20 rounded-xl border border-border/40">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-1">
+    <div className="space-y-4 p-4 bg-muted/20 rounded-xl border border-border/40">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+        {/* Row 1: Delay and Packet Loss */}
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-delay" className={LABEL_STYLE}>
               {t("rules.editor.action.throttle.delay")}
@@ -44,10 +45,11 @@ export function ActionThrottle({
               onChangeDelayMs(val === "" ? 0 : parseInt(val, 10));
             }}
             placeholder="0"
-            className="font-mono text-xs"
+            className="font-mono text-xs h-9 bg-background/50 focus:bg-background transition-colors"
           />
         </div>
-        <div className="space-y-1">
+
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-loss" className={LABEL_STYLE}>
               {t("rules.editor.action.throttle.packet_loss")}
@@ -67,10 +69,12 @@ export function ActionThrottle({
               onChangePacketLoss(val === "" ? 0 : parseInt(val, 10));
             }}
             placeholder="0"
-            className="font-mono text-xs"
+            className="font-mono text-xs h-9 bg-background/50 focus:bg-background transition-colors"
           />
         </div>
-        <div className="space-y-1">
+
+        {/* Row 2: Bandwidth (Full Width) */}
+        <div className="grid col-span-2 space-y-1.5 pt-1 border-t border-border/10">
           <div className="flex items-center justify-between">
             <label htmlFor="throttle-bandwidth" className={LABEL_STYLE}>
               {t("rules.editor.action.throttle.bandwidth")}
@@ -89,7 +93,7 @@ export function ActionThrottle({
               onChangeBandwidthKbps(val === "" ? 0 : parseInt(val, 10));
             }}
             placeholder={t("rules.editor.action.throttle.placeholders_unlimited")}
-            className="font-mono text-xs"
+            className="font-mono text-xs h-9 bg-background/50 focus:bg-background transition-colors"
           />
         </div>
       </div>

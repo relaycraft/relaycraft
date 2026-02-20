@@ -142,6 +142,7 @@ class FlowDatabase:
     SQLite-based flow persistence layer.
 
     Thread-safe via connection-per-thread and lock for writes.
+    Cleanup runs in a background thread to avoid blocking the main event loop.
     """
 
     def __init__(self, db_path: str = None, body_dir: str = None):
@@ -155,7 +156,10 @@ class FlowDatabase:
 
         # Thread-local storage for connections
         self._local = threading.local()
+        # Main lock for write operations (store_flow, session management)
         self._lock = threading.Lock()
+        # Separate lock for cleanup operations (allows reads during cleanup)
+        self._cleanup_lock = threading.Lock()
 
         # Initialize database
         self._init_db()
@@ -165,10 +169,16 @@ class FlowDatabase:
         self._current_session_id = self._get_or_reuse_session_id()
 
         # Cleanup old sessions (keep 5 most recent, delete after 7 days)
+        # Run initial cleanup synchronously during init
         self._cleanup_old_sessions(keep_count=5, max_age_days=7)
 
         # Last cleanup time
         self._last_cleanup = time.time()
+        
+        # Start background cleanup thread
+        self._cleanup_thread = None
+        self._cleanup_stop_event = threading.Event()
+        self._start_cleanup_thread()
 
     def _get_or_reuse_session_id(self) -> str:
         """Get or reuse session ID without creating new one.
@@ -1174,17 +1184,70 @@ class FlowDatabase:
         ).fetchone()
         return row[0] if row else 0
 
-    # ==================== Cleanup ====================
+    # ==================== Background Cleanup Thread ====================
+    
+    def _start_cleanup_thread(self):
+        """Start the background cleanup thread."""
+        def cleanup_worker():
+            self.logger.info("Background cleanup thread started")
+            while not self._cleanup_stop_event.is_set():
+                try:
+                    # Sleep for the cleanup interval, but check for stop every 10 seconds
+                    for _ in range(int(Config.CLEANUP_INTERVAL / 10)):
+                        if self._cleanup_stop_event.is_set():
+                            break
+                        self._cleanup_stop_event.wait(10)
+                    
+                    if self._cleanup_stop_event.is_set():
+                        break
+                    
+                    # Run cleanup in background thread (doesn't block main event loop)
+                    self._run_cleanup_background()
+                    
+                except Exception as e:
+                    self.logger.error(f"Error in cleanup thread: {e}")
+                    # Continue running even after errors
+            
+            self.logger.info("Background cleanup thread stopped")
+        
+        self._cleanup_thread = threading.Thread(
+            target=cleanup_worker,
+            name="FlowDatabase-Cleanup",
+            daemon=True  # Daemon thread so it doesn't prevent app exit
+        )
+        self._cleanup_thread.start()
+    
+    def _stop_cleanup_thread(self):
+        """Stop the background cleanup thread."""
+        if self._cleanup_thread and self._cleanup_thread.is_alive():
+            self._cleanup_stop_event.set()
+            self._cleanup_thread.join(timeout=5.0)
+            if self._cleanup_thread.is_alive():
+                self.logger.warning("Cleanup thread did not stop gracefully")
 
     def _maybe_cleanup(self):
-        """Run cleanup if interval has passed"""
-        now = time.time()
-        # Also run periodic WAL checkpoint more frequently than full cleanup
-        if now - self._last_cleanup > 60:  # Every 60 seconds
-            self._run_wal_checkpoint()
-        if now - self._last_cleanup > Config.CLEANUP_INTERVAL:
-            self._last_cleanup = now
-            self._run_cleanup()
+        """Schedule cleanup - now just updates timestamp, actual cleanup runs in background.
+        
+        This method is kept for compatibility but no longer blocks the main thread.
+        """
+        # Just update the timestamp to indicate activity
+        # The background thread will handle actual cleanup
+        pass
+
+    # ==================== Cleanup ====================
+
+    def _run_cleanup_background(self):
+        """Run cleanup in background thread context.
+        
+        This is called by the background cleanup thread, not from store_flow().
+        Uses a separate lock to avoid blocking normal database operations.
+        """
+        with self._cleanup_lock:
+            try:
+                self._run_cleanup()
+                self._last_cleanup = time.time()
+            except Exception as e:
+                self.logger.error(f"Background cleanup error: {e}")
 
     def _run_wal_checkpoint(self):
         """Run WAL checkpoint to prevent WAL file from growing too large.
@@ -1204,7 +1267,12 @@ class FlowDatabase:
     def _run_cleanup(self):
         """Clean up old data and enforce total flow limit
         
-        This runs periodically (every CLEANUP_INTERVAL seconds) and performs:
+        This runs periodically (every CLEANUP_INTERVAL seconds) in a background thread.
+        
+        IMPORTANT: This method uses _cleanup_lock (not _lock) to avoid blocking
+        normal database operations like store_flow and get_indices.
+        
+        Performs:
         1. Delete flows older than MAX_FLOW_AGE_DAYS
         2. Enforce total flow limit (delete oldest if exceeds MAX_TOTAL_FLOWS)
         3. Clean up empty sessions (0 flows)
@@ -1214,7 +1282,10 @@ class FlowDatabase:
         7. Index optimization (PRAGMA optimize)
         8. Integrity check (quick)
         """
-        with self._lock:
+        # Use cleanup lock - this allows normal operations to continue
+        # while cleanup is running. The cleanup lock only prevents
+        # concurrent cleanup operations.
+        with self._cleanup_lock:
             conn = self._get_conn()
             cleanup_start = time.time()
             deleted_flows = 0
@@ -1300,9 +1371,16 @@ class FlowDatabase:
                 pass
 
             # 6. Perform WAL checkpoint to merge WAL file into main database
+            # Use PASSIVE mode to avoid blocking - it will checkpoint what it can
+            # without waiting for readers. TRUNCATE mode can block indefinitely
+            # when there are continuous readers (like frontend polling).
             checkpoint_result = None
             try:
-                checkpoint_result = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                # PASSIVE: checkpoint without blocking readers/writers
+                checkpoint_result = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                # result is (busy, log, checkpointed)
+                if checkpoint_result and checkpoint_result[0] > 0:
+                    self.logger.debug(f"WAL checkpoint partial: {checkpoint_result}")
             except Exception as e:
                 pass  # Ignore checkpoint errors
 
@@ -1491,7 +1569,10 @@ class FlowDatabase:
                 self.logger.error(f"REINDEX failed: {e}")
 
     def close(self):
-        """Close database connection"""
+        """Close database connection and stop cleanup thread"""
+        # Stop the background cleanup thread first
+        self._stop_cleanup_thread()
+        
         if hasattr(self._local, 'conn') and self._local.conn:
             self._local.conn.close()
             self._local.conn = None

@@ -204,10 +204,10 @@ export function FilterBar({
                   "method:POST",
                   "status:4xx",
                   "type:json",
-                  "h:cookie",
+                  "header:cookie",
                   "body:error",
-                  "s:>1mb",
-                  "dur:>500ms",
+                  "size:>1mb",
+                  "duration:>500ms",
                   "-domain:google",
                 ].map((filter) => (
                   <button

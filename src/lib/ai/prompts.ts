@@ -515,20 +515,21 @@ LANGUAGE RULE:
 - header:key:value (e.g. header:content-type:application/json)
 - body:text (Response body search)
 - reqbody:text (Request body search)
-- size:>100kb (or <1mb, s:500)
-- dur:>1s (or <100ms, dur:>500ms)
+- size:>100kb (supports kb, mb, gb units)
+- duration:>1s (supports ms, s, m units; alias: dur)
 - ip:127.0.0.1 (Client/Server IP matching)
+- source:192.168.1.1 (Client IP only; alias: src)
 
 ## Logic:
-1. Negative matching: Use ! or - prefix. Example: "-status:200", "!domain:google".
+1. Negative matching: Use - prefix. Example: "-status:200", "-domain:google".
 2. Combine multiple keywords with spaces (implied AND).
-3. MANDATORY: ALWAYS include a keyword prefix (e.g., status:, dur:, s:, type:). NEVER return a raw value or operator like ">500" without its keyword.
+3. MANDATORY: ALWAYS include a keyword prefix (e.g., status:, duration:, size:, type:). NEVER return a raw value or operator like ">500" without its keyword.
 4. Numerical comparison: Use >, <, >=, <= for size and duration.
 5. DO NOT return raw regex pattern unless explicitly mention "regex".
 
 ## Examples:
 User: "duration over 500ms"
-Response: dur:>500ms
+Response: duration:>500ms
 
 User: "404 errors"
 Response: status:404
@@ -537,17 +538,17 @@ Response: status:404
 - RETURN ONLY THE RAW FILTER STRING.
 - DO NOT include labels like "Filter:", "Query:", or "Response:".
 - No markdown, no explanations, no quotes.
-- CRITICAL: The output MUST start with a valid keyword (e.g. "dur:", "status:", "method:").
+- CRITICAL: The output MUST start with a valid keyword (e.g. "duration:", "status:", "method:").
 - NEVER start with a colon (e.g. ":404" is INVALID).
 - INVALID: ">500ms", ":4xx", "200", ":status:200"
-- VALID: "dur:>500ms", "status:4xx", "status:200"
+- VALID: "duration:>500ms", "status:4xx", "status:200"
 
 ## Few-Shot Examples:
 User: "404 errors"
 Response: status:404
 
 User: "slow requests"
-Response: dur:>1s
+Response: duration:>1s
 
 User: "post methods"
 Response: method:POST
@@ -560,6 +561,12 @@ Response: size:>1mb
 
 User: "json responses"
 Response: type:json
+
+User: "requests from specific client"
+Response: source:192.168.1.1
+
+User: "exclude google"
+Response: -domain:google
 `;
 
 export const REGEX_ASSISTANT_SYSTEM_PROMPT = `
