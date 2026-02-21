@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.20](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.19...v0.99.20) (2026-02-21)
+
+
+### Bug Fixes
+
+* update traffic filter UI and AI prompt ([091a3c0](https://github-relaycraft/relaycraft/relaycraft/commit/091a3c013a899b1d6be7ef3932d48baccfc3d6ce))
+
 ### [0.99.19](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.18...v0.99.19) (2026-02-20)
 
 
