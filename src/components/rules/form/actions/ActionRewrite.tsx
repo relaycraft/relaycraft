@@ -255,7 +255,7 @@ export function ActionRewrite({
                         }
                         onChange={(e) => updateJsonMod(i, "value", e.target.value)}
                         placeholder={t(
-                          "rule_editor.action.rewrite.json_value_placeholder",
+                          "rules.editor.action.rewrite.json_value_placeholder",
                           "Value (JSON)",
                         )}
                         className="flex-1 h-7 text-ui font-mono px-2"

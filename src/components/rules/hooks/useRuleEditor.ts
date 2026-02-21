@@ -596,7 +596,7 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       )
         labelKey = ruleType;
 
-      const rawLabel = t(`rule_editor.core.types.${labelKey}_label`);
+      const rawLabel = t(`rules.editor.core.types.${labelKey}_label`);
       const prettyUrl = urlPattern
         ? urlPattern.length > 30
           ? `${urlPattern.substring(0, 28)}...`
