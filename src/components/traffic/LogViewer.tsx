@@ -109,10 +109,6 @@ export function LogViewer({ onClose }: LogViewerProps) {
         '<span class="text-rose-500 font-bold bg-rose-500/10 px-1 rounded-sm">$1$2$3</span>',
       );
       html = html.replace(
-        /(\[)?\b(CRASH)\b(\])?/gi,
-        '<span class="text-rose-600 font-black bg-rose-600/20 px-1 rounded-sm">$1$2$3</span>',
-      );
-      html = html.replace(
         /(\[)?\b(WARN|WARNING)\b(\])?/gi,
         '<span class="text-amber-500 font-bold bg-amber-500/10 px-1 rounded-sm">$1$2$3</span>',
       );
@@ -141,6 +137,10 @@ export function LogViewer({ onClose }: LogViewerProps) {
       html = html.replace(
         /\[PLUGIN\]/g,
         '<span class="text-pink-500 font-bold border-b border-pink-500/30 bg-pink-500/5 px-1 rounded-sm">[PLUGIN]</span>',
+      );
+      html = html.replace(
+        /\[CRASH\]/g,
+        '<span class="text-rose-600 font-bold border-b border-rose-600/30 bg-rose-600/5 px-1 rounded-sm">[CRASH]</span>',
       );
 
       // 3. Highlight Module Names (third bracket in unified format) as secondary

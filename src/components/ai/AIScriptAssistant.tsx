@@ -200,6 +200,7 @@ export function AIScriptAssistant({
     }
   }, [tempCode, generating, onApply]);
 
+  // Auto-scroll for AI analysis as it streams
   useEffect(() => {
     if (scrollRef.current && generating) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -213,7 +214,10 @@ export function AIScriptAssistant({
       exit={{ height: 0, opacity: 0 }}
       className="border-b border-border bg-muted/30 overflow-hidden flex flex-col"
     >
-      <div className="flex flex-col w-full p-4 gap-4">
+      <div
+        ref={scrollRef}
+        className="flex flex-col w-full p-4 gap-4 overflow-y-auto max-h-[500px] scroll-smooth"
+      >
         {/* Input Area */}
         <div className="flex items-center gap-2 px-3.5 bg-muted/30 border border-border/20 shadow-sm rounded-xl transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/40">
           <input

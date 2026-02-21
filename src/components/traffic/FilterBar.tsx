@@ -189,12 +189,13 @@ export function FilterBar({
       </div>
 
       {/* Advanced Filters Help / Quick Chips */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showHelp && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden"
           >
             <div className="bg-muted/50 rounded-lg p-2 text-xs border border-border/50 text-muted-foreground">
@@ -204,8 +205,6 @@ export function FilterBar({
                   "method:POST",
                   "status:4xx",
                   "type:json",
-                  "header:cookie",
-                  "body:error",
                   "size:>1mb",
                   "duration:>500ms",
                   "-domain:google",
@@ -235,14 +234,6 @@ export function FilterBar({
                 <div>
                   • <b>{t("traffic.filter.compare")}</b>{" "}
                   <span className="opacity-60 text-tiny">(e.g. size:&gt;1mb)</span>
-                </div>
-                <div>
-                  • <b>{t("traffic.filter.headers")}</b>{" "}
-                  <span className="opacity-60 text-tiny">(e.g. h:ua:mozilla)</span>
-                </div>
-                <div>
-                  • <b>{t("traffic.filter.body")}</b>{" "}
-                  <span className="opacity-60 text-tiny">(e.g. body:error)</span>
                 </div>
               </div>
             </div>

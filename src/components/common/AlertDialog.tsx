@@ -3,8 +3,17 @@ import { ConfirmationModal } from "./ConfirmationModal";
 
 export function AlertDialog() {
   const { alertDialog, closeConfirm } = useUIStore();
-  const { isOpen, title, message, confirmLabel, cancelLabel, variant, onConfirm, onCancel } =
-    alertDialog;
+  const {
+    isOpen,
+    title,
+    message,
+    confirmLabel,
+    cancelLabel,
+    variant,
+    onConfirm,
+    onCancel,
+    customIcon,
+  } = alertDialog;
 
   return (
     <ConfirmationModal
@@ -17,6 +26,7 @@ export function AlertDialog() {
       cancelLabel={cancelLabel}
       variant={variant}
       onCancel={onCancel}
+      customIcon={customIcon}
     />
   );
 }

@@ -39,7 +39,7 @@ import {
 
 export function SettingsView() {
   const { t } = useTranslation();
-  const { availableLanguages, settingsTab, setSettingsTab } = useUIStore();
+  const { availableLanguages, settingsTab, setSettingsTab, showConfirm } = useUIStore();
   const {
     config,
     updateProxyPort,
@@ -416,30 +416,42 @@ export function SettingsView() {
 
                         try {
                           const { check } = await import("@tauri-apps/plugin-updater");
-                          const { ask } = await import("@tauri-apps/plugin-dialog");
                           const { relaunch } = await import("@tauri-apps/plugin-process");
 
                           const update = await check();
                           if (update) {
-                            const yes = await ask(
-                              t("settings.about.update_available.message", {
+                            showConfirm({
+                              title: t("settings.about.update_available.title"),
+                              message: t("settings.about.update_available.message", {
                                 version: update.version,
                                 body: update.body || "",
                               }),
-                              {
-                                title: t("settings.about.update_available.title"),
-                                kind: "info",
+                              confirmLabel: t("common.yes"),
+                              cancelLabel: t("common.no"),
+                              variant: "info",
+                              onConfirm: async () => {
+                                btn.innerText = t("settings.about.downloading");
+                                try {
+                                  await update.downloadAndInstall();
+                                  await relaunch();
+                                } catch (error) {
+                                  console.error("Installation failed:", error);
+                                  const { notify } = await import("../../lib/notify");
+                                  notify.error(t("settings.about.error_fetch"));
+                                  btn.innerText = originalText;
+                                  btn.removeAttribute("disabled");
+                                }
                               },
-                            );
-
-                            if (yes) {
-                              btn.innerText = t("settings.about.downloading");
-                              await update.downloadAndInstall();
-                              await relaunch();
-                            } else {
-                              btn.innerText = originalText;
-                              btn.removeAttribute("disabled");
-                            }
+                              onCancel: () => {
+                                btn.innerText = originalText;
+                                btn.removeAttribute("disabled");
+                              },
+                              customIcon: (
+                                <div className="p-1 bg-primary/10 rounded-lg">
+                                  <AppLogo size={24} />
+                                </div>
+                              ),
+                            });
                           } else {
                             btn.innerText = t("settings.about.up_to_date");
                             setTimeout(() => {

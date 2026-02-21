@@ -134,15 +134,16 @@ export function AIRuleAssistant({
     setIsDirty(isYamlDirty || hasPreview || hasExplanation || isScriptDirty || generating);
   }, [yamlContent, preview, explanation, scriptContent, generating, initialRule, setIsDirty]);
 
-  // Auto-scroll for AI analysis
+  // Auto-scroll for AI analysis as it streams
   useEffect(() => {
     if (scrollRef.current && generating) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [generating]);
 
-  const handleGenerate = async () => {
-    if (!prompt || generating) return;
+  const handleGenerate = async (overridePrompt?: string) => {
+    const activePrompt = overridePrompt || prompt;
+    if (!activePrompt || generating) return;
     setGenerating(true);
     setExplanation(""); // Prepare for streaming
     setPreview(null);
@@ -165,14 +166,14 @@ export function AIRuleAssistant({
       };
 
       // Inject context if modifying or explaining
-      let finalPrompt = prompt;
+      let finalPrompt = activePrompt;
       if (yamlContent && yamlContent.trim() !== "") {
         // Truncate YAML context if too large (e.g. > 20KB) to prevent token overflow/lag
         let contextYaml = yamlContent;
         if (contextYaml.length > 20000) {
           contextYaml = `${contextYaml.slice(0, 20000)}\n...[YAML_TRUNCATED_FOR_AI_CONTEXT]`;
         }
-        finalPrompt = `Current Rule YAML:\n${contextYaml}\n\nUser Request: ${prompt}`;
+        finalPrompt = `Current Rule YAML:\n${contextYaml}\n\nUser Request: ${activePrompt}`;
       }
 
       const userMsg = { role: "user" as const, content: finalPrompt };
@@ -511,7 +512,10 @@ export function AIRuleAssistant({
           </Button>
         </div>
 
-        <div className="px-6 py-4 space-y-4">
+        <div
+          ref={scrollRef}
+          className="px-6 py-4 space-y-4 overflow-y-auto max-h-[500px] scroll-smooth"
+        >
           {mode === "ai" && aiSettings.enabled && (
             <>
               <div className="flex gap-2">
@@ -534,7 +538,7 @@ export function AIRuleAssistant({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        onClick={handleGenerate}
+                        onClick={() => handleGenerate()}
                         disabled={!prompt}
                         className="hover:bg-transparent"
                       >
@@ -546,29 +550,39 @@ export function AIRuleAssistant({
               </div>
               <div className="flex gap-2 flex-wrap">
                 <button
-                  onClick={() => setPrompt(t("rules.editor.ai.chip_explain"))}
+                  onClick={() => {
+                    const p = t("rules.editor.ai.chip_explain");
+                    setPrompt(p);
+                    handleGenerate(p);
+                  }}
                   className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
                 >
                   {t("rules.editor.ai.chip_explain")}
                 </button>
-                <button
-                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
-                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                >
-                  {t("rules.editor.ai.chip_modify")}
-                </button>
-                <button
-                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_create")}: `)}
-                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                >
-                  {t("rules.editor.ai.chip_create")}
-                </button>
-                <button
-                  onClick={() => setPrompt(`${t("rules.editor.ai.chip_import")}: `)}
-                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                >
-                  {t("rules.editor.ai.chip_import")}
-                </button>
+
+                {initialRule?.id ? (
+                  <button
+                    onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
+                    className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                  >
+                    {t("rules.editor.ai.chip_modify")}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_create")}: `)}
+                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                    >
+                      {t("rules.editor.ai.chip_create")}
+                    </button>
+                    <button
+                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_import")}: `)}
+                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                    >
+                      {t("rules.editor.ai.chip_import")}
+                    </button>
+                  </>
+                )}
               </div>
 
               {generating && detectedIntent === "rule" && (

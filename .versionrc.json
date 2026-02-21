@@ -13,6 +13,10 @@
       "updater": "scripts/cargo-updater.cjs"
     },
     {
+      "filename": "src-tauri/Cargo.lock",
+      "updater": "scripts/lock-updater.cjs"
+    },
+    {
       "filename": "public/splash.html",
       "updater": "scripts/html-updater.cjs"
     }
@@ -63,6 +67,6 @@
   ],
   "hooks": {
     "prebump": "cd src-tauri && cargo metadata --format-version 1 --offline",
-    "precommit": "cd src-tauri && cargo update --workspace && git add Cargo.lock"
+    "precommit": "cd src-tauri && cargo update --workspace"
   }
 }

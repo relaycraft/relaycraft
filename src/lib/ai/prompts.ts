@@ -88,7 +88,7 @@ Use GitHub-style markdown. Be concise and professional.
 `;
 
 export const getScriptExplanationPrompt = (code: string) => {
-  return "Please explain the following mitmproxy script:\n\n```python\n" + code + "\n```";
+  return `Please explain the following mitmproxy script:\n\n\`\`\`python\n${code}\n\`\`\``;
 };
 
 export const COMPOSER_SCHEMA_DEFINITION = `
@@ -122,6 +122,8 @@ The "rule" object MUST strictly follow this TypeScript interface.
 
 \`\`\`typescript
 // Core Rule Engine terminology mappings (MUST use these labels in explanations):
+// match -> "Match Configuration" (匹配配置)
+// actions -> "Action Configuration" (动作配置)
 // map_local -> "Local Mapping" (本地映射)
 // map_remote -> "Remote Mapping" (远程映射)
 // rewrite_header -> "Rewrite Header" (头部重写)
@@ -233,6 +235,11 @@ LANGUAGE RULE:
 - Use "Remote Mapping" (远程映射) INSTEAD OF "Redirect" or "Forwarding".
 - Use "Rewrite Content" (内容重写) INSTEAD OF "Redefinition".
 - Refer to features only by their UI names: {{TERMINOLOGY}}
+- CRITICAL: When providing messages or explanations, NEVER use internal JSON field names like "actions", "match", "execution", or "priority". Refer to them by their UI labels:
+  - "match" -> "Match Configuration" (匹配配置)
+  - "actions" -> "Action Configuration" (动作配置)
+  - "name" -> "Rule Name" (规则名称)
+  - "execution" -> "Basic Info" (基本信息)
 
 ## Capabilities & Intents:
 1. **GENERATE_RULE**: The user wants to create a new rule or modify traffic behavior.
@@ -299,7 +306,7 @@ ${RULE_SCHEMA_DEFINITION}
 `;
 
 export const getRuleGenerationPrompt = (requirement: string) => {
-  return "Convert the following requirement into a RelayCraft rule: " + requirement;
+  return `Convert the following requirement into a RelayCraft rule: ${requirement}`;
 };
 
 export const GLOBAL_COMMAND_SYSTEM_PROMPT = `
@@ -314,6 +321,7 @@ LANGUAGE RULE:
 - Use "Remote Mapping" (远程映射) INSTEAD OF "Redirect" or "Forwarding".
 - Use "Rewrite Content" (内容重写) INSTEAD OF "Redefinition" or "Rewrite Body".
 - Refer to features only by their UI names: {{TERMINOLOGY}}
+- CRITICAL: When providing explanations or chat messages, NEVER use internal JSON field names like "actions", "match", "execution", or "priority". Use UI labels like "动作配置", "匹配配置", "基本信息".
 - CRITICAL: "Scripts" (脚本) are developed in **Python** (using mitmproxy API).
 - NEVER suggest that scripts use JavaScript.
 - BEHAVIOR RULE: **Rules** (规则) take effect in real-time. **Scripts** (脚本) are **NOT** real-time effective; they require restarting the proxy service to apply changes.
@@ -463,7 +471,8 @@ LANGUAGE RULE:
 3. Use "Remote Mapping" (远程映射) INSTEAD OF "Redirect" or "Forwarding".
 4. Use "Rewrite Content" (内容重写) INSTEAD OF "Redefinition" or "Rewrite Body".
 5. Use "Scripts" (脚本) INSTEAD OF "Plugins" (插件).
-6. CRITICAL: "Scripts" (脚本) are developed in **Python** (for mitmproxy), NOT JavaScript.
+6. CRITICAL: NEVER use technical field names like "actions", "match", "execution" in chat. Use UI labels: "动作配置", "匹配配置", "基本信息".
+7. CRITICAL: "Scripts" (脚本) are developed in **Python** (for mitmproxy), NOT JavaScript.
 7. BEHAVIOR: **Rules** (规则) take effect immediately (**实时生效**). **Scripts** (脚本) require a proxy restart to take effect (**非实时生效，需重启代理**).
 8. If the user asks about the current state/traffic/rules, use the provided context to give specific details.
 9. Keep the tone friendly and supportive.
@@ -512,9 +521,6 @@ LANGUAGE RULE:
 - status:200 (or 404, 500, ranges like 4xx, 5xx)
 - domain:google.com (matches substring in hostname)
 - type:json (or image, js, css, html, font)
-- header:key:value (e.g. header:content-type:application/json)
-- body:text (Response body search)
-- reqbody:text (Request body search)
 - size:>100kb (supports kb, mb, gb units)
 - duration:>1s (supports ms, s, m units; alias: dur)
 - ip:127.0.0.1 (Client/Server IP matching)

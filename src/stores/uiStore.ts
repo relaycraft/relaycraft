@@ -9,6 +9,7 @@ interface AlertDialogState {
   variant: "danger" | "warning" | "info" | "success";
   onConfirm: () => void;
   onCancel: () => void;
+  customIcon?: React.ReactNode;
 }
 
 export type TabType =
@@ -60,6 +61,7 @@ interface UIStore {
     variant?: "danger" | "warning" | "info" | "success";
     onConfirm: () => void;
     onCancel?: () => void;
+    customIcon?: React.ReactNode;
   }) => void;
   closeConfirm: () => void;
   draftScriptPrompt: string | null;
@@ -141,6 +143,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
           options.onCancel?.();
           get().closeConfirm();
         },
+        customIcon: options.customIcon,
       },
     });
   },

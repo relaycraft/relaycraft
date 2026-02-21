@@ -1525,14 +1525,15 @@ class TrafficMonitor:
     width: 100%;
     max-width: 520px;
   }}
-  .logo {{
-    width: 36px; height: 36px;
+  .logo-container {{
+    width: 40px; height: 40px;
     background: var(--primary-dim);
     border: 1px solid rgba(96,165,250,0.2);
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    padding: 4px;
   }}
+  .logo-svg {{ width: 100%; height: 100%; }}
   .header-text h1 {{ font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }}
   .header-text p {{ font-size: 12px; color: var(--muted); }}
   /* Proxy badge */
@@ -1574,10 +1575,10 @@ class TrafficMonitor:
     display: flex;
     gap: 6px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
   }}
   .tab {{
-    padding: 6px 14px;
+    flex: 1;
+    padding: 8px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: transparent;
@@ -1586,6 +1587,7 @@ class TrafficMonitor:
     font-family: var(--font);
     cursor: pointer;
     transition: all 0.15s;
+    text-align: center;
   }}
   .tab:hover {{ background: var(--surface2); color: var(--fg); }}
   .tab.active {{
@@ -1598,17 +1600,13 @@ class TrafficMonitor:
   .panel {{ display: none; }}
   .panel.active {{ display: block; }}
   /* Steps */
-  .steps {{ list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }}
-  .step {{
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }}
+  .steps {{ list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }}
+  .step {{ display: flex; gap: 12px; align-items: flex-start; }}
   .step-num {{
     width: 22px; height: 22px;
     border-radius: 50%;
-    background: var(--primary-dim);
-    border: 1px solid rgba(96,165,250,0.25);
+    background: var(--surface2);
+    border: 1px solid var(--border);
     color: var(--primary);
     font-size: 11px;
     font-weight: 700;
@@ -1616,17 +1614,8 @@ class TrafficMonitor:
     flex-shrink: 0;
     margin-top: 1px;
   }}
-  .step-text {{ font-size: 13px; color: var(--fg); line-height: 1.5; }}
+  .step-text {{ font-size: 13px; color: var(--fg); opacity: 0.9; line-height: 1.5; }}
   .step-text strong {{ color: var(--fg); font-weight: 600; }}
-  .step-text code {{
-    font-family: var(--mono);
-    font-size: 11px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 5px;
-    color: var(--primary);
-  }}
   /* Download button */
   .dl-btn {{
     display: flex;
@@ -1645,141 +1634,134 @@ class TrafficMonitor:
     cursor: pointer;
     text-decoration: none;
     transition: opacity 0.15s, transform 0.1s;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
   }}
-  .dl-btn:hover {{ opacity: 0.88; }}
-  .dl-btn:active {{ transform: scale(0.98); }}
-  .dl-btn-secondary {{
+  .dl-btn:hover {{ opacity: 0.9; transform: translateY(-1px); }}
+  .dl-btn:active {{ transform: translateY(0); }}
+  /* Advanced */
+  .advanced {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; }}
+  .dl-secondary {{
     background: var(--surface2);
     border: 1px solid var(--border);
     color: var(--muted);
-    font-size: 12px;
-    padding: 9px 16px;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.15s;
   }}
-  .dl-btn-secondary:hover {{ color: var(--fg); opacity: 1; background: var(--surface2); border-color: rgba(255,255,255,0.15); }}
-  /* Warning box */
+  .dl-secondary:hover {{ color: var(--fg); border-color: rgba(255,255,255,0.15); }}
+  /* Warning */
   .warn-box {{
-    display: flex;
-    gap: 10px;
+    display: flex; gap: 10px;
     background: rgba(245,158,11,0.06);
     border: 1px solid rgba(245,158,11,0.2);
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-top: 16px;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 24px;
     font-size: 12px;
     color: rgba(245,158,11,0.85);
     line-height: 1.5;
   }}
-  .warn-icon {{ flex-shrink: 0; font-size: 14px; margin-top: 1px; }}
-  /* Divider */
-  .divider {{ border: none; border-top: 1px solid var(--border); margin: 20px 0; }}
-  /* Footer */
-  .footer {{
-    margin-top: 28px;
-    font-size: 11px;
-    color: var(--muted);
-    text-align: center;
-    opacity: 0.6;
-  }}
+  .warn-icon {{ flex-shrink: 0; font-size: 16px; }}
+  .footer {{ margin-top: 32px; font-size: 11px; color: var(--muted); opacity: 0.5; }}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">🔀</div>
+  <div class="logo-container">
+    <svg class="logo-svg" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mainGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="100" fill="url(#mainGradient)"/>
+      <g transform="translate(111, 96)">
+        <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95"/>
+        <rect x="80" y="30" width="50" height="260" rx="25" fill="white"/>
+        <rect x="160" y="0" width="50" height="320" rx="25" fill="white"/>
+        <rect x="240" y="60" width="50" height="200" rx="25" fill="white" fill-opacity="0.95"/>
+      </g>
+    </svg>
+  </div>
   <div class="header-text">
     <h1>RelayCraft</h1>
-    <p>relay.guide · 证书安装向导</p>
+    <p>Mobile Certificate Guide</p>
   </div>
 </div>
 
 <div class="card">
   <div class="proxy-badge">
     <div class="dot"></div>
-    <span class="label">代理已连接 ·</span>
+    <span class="label">Proxy Connected ·</span>
     <code>{proxy_addr}</code>
   </div>
 
-  <p class="section-title">选择您的设备系统</p>
+  <p class="section-title">Device System</p>
   <div class="tabs">
-    <button class="tab" data-os="ios" onclick="switchTab('ios')">📱 iOS</button>
-    <button class="tab" data-os="android" onclick="switchTab('android')">🤖 Android</button>
-    <button class="tab" data-os="macos" onclick="switchTab('macos')">🍎 macOS</button>
-    <button class="tab" data-os="windows" onclick="switchTab('windows')">🪟 Windows</button>
+    <div class="tab" id="tab-ios" onclick="switchTab('ios')">iOS</div>
+    <div class="tab" id="tab-android" onclick="switchTab('android')">Android</div>
+    <div class="tab" id="tab-harmony" onclick="switchTab('harmony')">HarmonyOS</div>
   </div>
 
-  <!-- iOS -->
   <div class="panel" id="panel-ios">
-    <a class="dl-btn" href="/cert.crt" download>
-      ⬇ 下载证书（iOS 推荐）
-    </a>
-    <ol class="steps">
-      <li class="step"><div class="step-num">1</div><div class="step-text">点击上方按钮下载证书文件，Safari 会提示"已下载描述文件"</div></li>
-      <li class="step"><div class="step-num">2</div><div class="step-text">前往 <strong>设置 → 已下载的描述文件</strong>，点击安装</div></li>
-      <li class="step"><div class="step-num">3</div><div class="step-text">前往 <strong>设置 → 通用 → 关于本机 → 证书信任设置</strong></div></li>
-      <li class="step"><div class="step-num">4</div><div class="step-text">找到 <strong>RelayCraft CA</strong>，开启完全信任</div></li>
-    </ol>
+    <a href="/cert.crt" class="dl-btn">Download for iOS</a>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Allow download in <strong>Safari</strong></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Install in <strong>Settings → Profile Downloaded</strong></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Go to <strong>General → About → Trust Settings</strong></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Enable trust for <strong>RelayCraft CA</strong></div></div>
+    </div>
   </div>
 
-  <!-- Android -->
   <div class="panel" id="panel-android">
-    <a class="dl-btn" href="/cert.crt" download>
-      ⬇ 下载证书（Android 推荐）
-    </a>
-    <ol class="steps">
-      <li class="step"><div class="step-num">1</div><div class="step-text">点击上方按钮下载 <code>.crt</code> 证书文件</div></li>
-      <li class="step"><div class="step-num">2</div><div class="step-text">前往 <strong>设置 → 安全 → 加密与凭据 → 安装证书</strong></div></li>
-      <li class="step"><div class="step-num">3</div><div class="step-text">选择 <strong>CA 证书</strong>，找到下载的文件并安装</div></li>
-      <li class="step"><div class="step-num">4</div><div class="step-text">部分机型路径不同，可在设置中搜索「证书」或「CA 证书」</div></li>
-    </ol>
+    <a href="/cert.crt" class="dl-btn">Download for Android</a>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Download the <code>.crt</code> file</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Go to <strong>Security → Install from storage</strong></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Select <strong>CA Certificate</strong></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Choose the RelayCraft file to confirm</div></div>
+    </div>
   </div>
 
-  <!-- macOS -->
-  <div class="panel" id="panel-macos">
-    <a class="dl-btn" href="/cert.pem" download>
-      ⬇ 下载证书（macOS）
-    </a>
-    <ol class="steps">
-      <li class="step"><div class="step-num">1</div><div class="step-text">下载证书后，双击 <code>.pem</code> 文件打开「钥匙串访问」</div></li>
-      <li class="step"><div class="step-num">2</div><div class="step-text">在「系统」钥匙串中找到 <strong>RelayCraft CA</strong></div></li>
-      <li class="step"><div class="step-num">3</div><div class="step-text">双击证书 → 展开「信任」→ 将「使用此证书时」设为 <strong>始终信任</strong></div></li>
-      <li class="step"><div class="step-num">4</div><div class="step-text">关闭窗口，输入系统密码确认</div></li>
-    </ol>
+  <div class="panel" id="panel-harmony">
+    <a href="/cert.pem" class="dl-btn">Download for HarmonyOS</a>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">下载 <code>.pem</code> 证书文件</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">设置 → 安全 → 更多安全设置 → 加密和凭据</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">点击 <strong>从存储设备安装</strong> → <strong>CA证书</strong></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">在下载目录选择证书并确认安装</div></div>
+    </div>
   </div>
 
-  <!-- Windows -->
-  <div class="panel" id="panel-windows">
-    <a class="dl-btn" href="/cert.crt" download>
-      ⬇ 下载证书（Windows）
-    </a>
-    <ol class="steps">
-      <li class="step"><div class="step-num">1</div><div class="step-text">下载证书后，双击 <code>.crt</code> 文件</div></li>
-      <li class="step"><div class="step-num">2</div><div class="step-text">点击「安装证书」→ 选择「本地计算机」→ 下一步</div></li>
-      <li class="step"><div class="step-num">3</div><div class="step-text">选择「将所有证书放入下列存储」→ 浏览 → 选择 <strong>受信任的根证书颁发机构</strong></div></li>
-      <li class="step"><div class="step-num">4</div><div class="step-text">完成安装，重启浏览器</div></li>
-    </ol>
+  <p class="section-title">Manual Install</p>
+  <div class="advanced">
+    <a href="/cert.pem" class="dl-secondary">PEM Format</a>
+    <a href="/cert.crt" class="dl-secondary">CRT Format</a>
   </div>
-
-  <hr class="divider">
-
-  <p class="section-title">其他格式</p>
-  <a class="dl-btn dl-btn-secondary" href="/cert.pem" download>⬇ 下载 PEM 格式</a>
-  <a class="dl-btn dl-btn-secondary" href="/cert.crt" download>⬇ 下载 CRT 格式</a>
 
   <div class="warn-box">
-    <span class="warn-icon">⚠</span>
-    <span>此证书仅用于本地抓包调试，请勿在生产环境或不受信任的设备上安装。</span>
+    <div class="warn-icon">⚠</div>
+    <div>For local debugging only. Do not install on untrusted devices.</div>
   </div>
 </div>
 
-<div class="footer">RelayCraft · {proxy_addr} · relay.guide</div>
+<div class="footer">RelayCraft · Professional Traffic Lab</div>
 
 <script>
   function switchTab(os) {{
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.os === os));
-    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + os));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const t = document.getElementById('tab-' + os) || document.getElementById('tab-android');
+    const p = document.getElementById('panel-' + os) || document.getElementById('panel-android');
+    t.classList.add('active');
+    p.classList.add('active');
   }}
-  switchTab('{detected_os}');
+  switchTab('{"ios" if detected_os == "macos" else ("android" if detected_os == "windows" else detected_os)}');
 </script>
 </body>
 </html>"""
