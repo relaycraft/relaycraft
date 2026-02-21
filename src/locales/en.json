@@ -515,7 +515,7 @@
       "timeout": "Request Timeout"
     },
     "guide": {
-      "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy engine</span> in the title bar.",
+      "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy engine</span> to make changes take effect.",
       "title": "Plugin Management"
     },
     "install_local": "Install from File",
@@ -614,7 +614,7 @@
           "json_ops_delete": "Delete",
           "json_ops_set": "Set",
           "json_value_placeholder": "Value (JSON)",
-          "jsonpath_hint": "Hint: Path supports JSON Path (e.g. $.data.user.id)",
+          "jsonpath_hint": "Path supports JSON Path (e.g. $.data.user.id)",
           "modes_json": "JSON Modify",
           "modes_regex": "Regex Replace",
           "modes_replace": "String Replace",
@@ -932,7 +932,6 @@
       "mitm_risk": "Connection security reduced; recommended only for trusted environments",
       "port": "Proxy Port",
       "port_desc": "Proxy Server Port (1024-65535)",
-      "restart_hint": "Port, SSL & upstream proxy changes require engine restart",
       "pending_restart_title": "Restart Required to Apply Changes",
       "pending_restart_desc": "Port, SSL, or upstream proxy settings have changed.",
       "restart_now": "Restart Now",

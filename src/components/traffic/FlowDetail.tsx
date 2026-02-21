@@ -516,20 +516,20 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           <TabsList className="p-1 rounded-xl h-auto bg-muted/30 border border-border/40">
             <TabsTrigger
               value="request"
-              className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="py-1 px-5 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
             >
               {t("flow.tabs.request")}
             </TabsTrigger>
             <TabsTrigger
               value="response"
-              className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="py-1 px-5 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
             >
               {t("flow.tabs.response")}
             </TabsTrigger>
             {flow._rc.isWebsocket && (
               <TabsTrigger
                 value="messages"
-                className="py-1 px-5 text-tiny font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                className="py-1 px-5 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
               >
                 {t("flow.tabs.messages")}
               </TabsTrigger>

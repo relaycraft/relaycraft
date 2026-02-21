@@ -363,18 +363,6 @@ export function SettingsView() {
                     </div>
                   </motion.div>
                 )}
-                {!networkChanged && (
-                  <motion.div
-                    key="hint"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="px-4 py-3 text-xs text-muted-foreground/40 text-center border-t border-border/30 flex items-center justify-center gap-1.5"
-                  >
-                    <RefreshCcw className="w-3 h-3 opacity-50" />
-                    {t("settings.network.restart_hint")}
-                  </motion.div>
-                )}
               </AnimatePresence>
             </SettingsSection>
           )}

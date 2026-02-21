@@ -18,6 +18,7 @@ import React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { usePluginSettingsStore } from "../../stores/pluginSettingsStore";
 import { usePluginStore } from "../../stores/pluginStore";
+import { useProxyStore } from "../../stores/proxyStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { PluginInfo } from "../../types/plugin";
 import { Button } from "../common/Button";
@@ -226,8 +227,19 @@ export const PluginSettings: React.FC = () => {
   const fetchPlugins = usePluginStore((state) => state.fetchPlugins);
   const installPluginLocal = usePluginStore((state) => state.installPluginLocal);
   const setMarketOpen = useUIStore((state) => state.setMarketOpen);
+  const { running, restartProxy } = useProxyStore();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showLoading, setShowLoading] = React.useState(false);
+  const [restarting, setRestarting] = React.useState(false);
+
+  const handleRestartEngine = async () => {
+    setRestarting(true);
+    try {
+      await restartProxy();
+    } finally {
+      setRestarting(false);
+    }
+  };
 
   // Stabilize loading state to prevent flash
   React.useEffect(() => {
@@ -363,6 +375,20 @@ export const PluginSettings: React.FC = () => {
                   }}
                 />
               </p>
+              {running && (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={handleRestartEngine}
+                  disabled={restarting}
+                  className="h-7 px-3 gap-1.5 text-xs border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60"
+                >
+                  <RefreshCw className={`w-3 h-3 ${restarting ? "animate-spin" : ""}`} />
+                  {restarting
+                    ? t("settings.network.restarting")
+                    : t("settings.network.restart_now")}
+                </Button>
+              )}
             </div>
           </div>
         </div>

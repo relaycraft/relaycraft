@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { NotificationItem } from "../../stores/notificationStore";
 import { Button } from "../common/Button";
+import { Tooltip } from "../common/Tooltip";
 import { formatRelativeTime, getCategoryConfig, getPriorityConfig } from "./NotificationHelpers";
 
 interface NotificationItemCardProps {
@@ -58,21 +59,25 @@ export function NotificationItemCard({
                   style={{ backgroundColor: priorityConfig.color }}
                 />
               )}
-              <h4
-                className={`text-ui font-semibold leading-snug truncate ${
-                  notification.read ? "text-muted-foreground" : "text-foreground"
-                }`}
-              >
-                {notification.title}
-              </h4>
+              <Tooltip content={notification.title} side="bottom">
+                <h4
+                  className={`text-ui font-semibold leading-snug truncate ${
+                    notification.read ? "text-muted-foreground" : "text-foreground"
+                  }`}
+                >
+                  {notification.title}
+                </h4>
+              </Tooltip>
             </div>
           </div>
 
           {/* 消息内容 */}
           {notification.message && (
-            <p className="text-ui text-muted-foreground/80 leading-relaxed line-clamp-2">
-              {notification.message}
-            </p>
+            <Tooltip content={notification.message} multiline side="bottom" className="w-full">
+              <p className="text-ui text-muted-foreground/80 leading-relaxed line-clamp-2 w-full">
+                {notification.message}
+              </p>
+            </Tooltip>
           )}
 
           {/* 底部信息 */}

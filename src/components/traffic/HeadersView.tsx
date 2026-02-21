@@ -38,7 +38,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
           {entries.map(([name, value], index) => (
             <tr key={index} className="border-t border-border hover:bg-muted/50 transition">
               <td
-                className="px-2 font-mono text-tiny break-all text-foreground/80"
+                className="px-2 font-mono text-xs break-all text-foreground/80"
                 style={{
                   paddingTop: "var(--density-p, 8px)",
                   paddingBottom: "var(--density-p, 8px)",
@@ -47,7 +47,7 @@ export function HeadersView({ headers }: HeadersViewProps) {
                 {name}
               </td>
               <td
-                className="px-2 font-mono text-tiny break-all text-foreground/90"
+                className="px-2 font-mono text-xs break-all text-foreground/90"
                 style={{
                   paddingTop: "var(--density-p, 8px)",
                   paddingBottom: "var(--density-p, 8px)",

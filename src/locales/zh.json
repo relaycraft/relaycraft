@@ -515,7 +515,7 @@
       "timeout": "请求超时"
     },
     "guide": {
-      "desc": "插件可以动态扩展核心功能。启用包含 Python 逻辑的插件后，请确保在顶部标题栏<span>重启代理进程</span>以使更改生效。",
+      "desc": "插件可以动态扩展核心功能。启用包含 Python 逻辑的插件后，请<span>重启代理引擎</span>以使更改生效。",
       "title": "插件管理说明"
     },
     "install_local": "从文件安装",
@@ -614,7 +614,7 @@
           "json_ops_delete": "删除",
           "json_ops_set": "设置",
           "json_value_placeholder": "值",
-          "jsonpath_hint": "提示：路径支持 JSON Path (例如 $.data.user.id)",
+          "jsonpath_hint": "路径支持 JSON Path (例如 $.data.user.id)",
           "modes_json": "JSON 修改",
           "modes_regex": "正则替换",
           "modes_replace": "文本替换",
@@ -932,7 +932,6 @@
       "mitm_risk": "连接安全性已降低，仅建议在受信任环境开启",
       "port": "代理端口",
       "port_desc": "代理端口范围为 (1024-65535)",
-      "restart_hint": "端口、SSL 或上游代理变更后需重启引擎生效",
       "pending_restart_title": "配置已变更，需重启引擎",
       "pending_restart_desc": "端口、SSL 或上游代理设置已修改。",
       "restart_now": "立即重启",

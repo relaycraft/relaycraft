@@ -485,7 +485,7 @@ export function AIRuleAssistant({
             {aiSettings.enabled && (
               <button
                 onClick={() => setMode("ai")}
-                className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "ai" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg transition-all ${mode === "ai" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Sparkles className="w-3 h-3" />
                 {t("rules.editor.ai.tab_ai")}
@@ -493,14 +493,14 @@ export function AIRuleAssistant({
             )}
             <button
               onClick={() => setMode("yaml")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "yaml" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg transition-all ${mode === "yaml" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Code className="w-3 h-3" />
               YAML
             </button>
             <button
               onClick={() => setMode("script")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-ui font-bold rounded-lg transition-all ${mode === "script" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg transition-all ${mode === "script" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <FileCode className="w-3 h-3" />
               {t("rules.editor.ai.tab_script")}
