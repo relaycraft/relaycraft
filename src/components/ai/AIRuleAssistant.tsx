@@ -76,12 +76,13 @@ export function AIRuleAssistant({
   const [disableOriginal, setDisableOriginal] = useState(true);
   const [enableScript, setEnableScript] = useState(true);
 
-  // Sync initial rule to YAML content when initialRule changes (especially for rule switching)
+  // Sync initial rule to YAML content when initialRule changes (especially for rule switching or opening)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only trigger sync when rule ID changes to avoid overwriting edits or AI results during form typing
   useEffect(() => {
     if (initialRule) {
       setYamlContent(stringifyYAML(initialRule));
     }
-  }, [initialRule?.id, initialRule]); // Only trigger sync when rule ID changes to avoid overwriting edits during form typing
+  }, [initialRule?.id]);
 
   // Generate script when entering script mode
   useEffect(() => {
@@ -492,7 +493,14 @@ export function AIRuleAssistant({
               </button>
             )}
             <button
-              onClick={() => setMode("yaml")}
+              onClick={() => {
+                // If we don't have a preview (AI result), sync current form state to YAML
+                // otherwise keep the AI result in the YAML editor
+                if (!preview && initialRule) {
+                  setYamlContent(stringifyYAML(initialRule));
+                }
+                setMode("yaml");
+              }}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg transition-all ${mode === "yaml" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Code className="w-3 h-3" />

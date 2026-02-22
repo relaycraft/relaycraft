@@ -214,6 +214,8 @@ export interface Rule {
     type: RuleType;
     execution: { enabled: boolean; priority: number; stopOnMatch?: boolean };
     match: {
+        // IMPORTANT: For each type (url, host, path, etc.), provide ONLY ONE entry in the request array.
+        // If multiple constraints are needed, combine them into a single 'regex' type atom.
         request: MatchAtom[];
         response: MatchAtom[];
     };
@@ -297,10 +299,11 @@ User: "为 target-domain.com 添加 Authorization 头部" -> {
 }
 User: "帮我构造一个业务代理" -> { "message": "RelayCraft 允许你通过规则来实现代理...", "rule": null }
 
-IMPORTANT: 
 - NEVER leave "value" as an empty string ("") if the user mentioned a target (e.g. google, /api/user).
 - ALWAYS include the "execution" object in your "rule" output.
 - For header operations, ALWAYS include the "operation" field ('add', 'set', or 'remove').
+- **Match Constraint Rule**: For any single type (like 'url' or 'path'), provide ONLY ONE entry in the request array. If multiple constraints apply to the same field (e.g., "domain A" and "path B" and "regex C"), you MUST merge them into a single 'regex' type atom that covers all requirements.
+- **Impossible Request Rule**: If a user request is fundamentally impossible to implement as a rule (e.g., "Change the color of all buttons on the web"), or is too ambiguous, use the "message" field to explain the limitation or ask for clarification instead of generating a broken rule.
 
 ${RULE_SCHEMA_DEFINITION}
 `;
@@ -338,6 +341,8 @@ LANGUAGE RULE:
    - You MUST extract all relevant information from the user command (e.g. domains, URLs, status codes, content).
    - NEVER leave the "value" field in match.request empty if a target was mentioned.
    - ALWAYS include the "execution" object in your "rule" output.
+   - **Match Constraint Rule**: For any single type (like 'url' or 'path'), provide ONLY ONE entry in the request array. Combine multiple logic into a single 'regex' atom.
+   - **Impossible Request Rule**: If a request cannot be fulfilled by a rule, use "CHAT" intent with an explanation.
    
    ${RULE_SCHEMA_DEFINITION}
 3. "CREATE_SCRIPT": User wants to write a python script (powered by mitmdump) for advanced automation.
