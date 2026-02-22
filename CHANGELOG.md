@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.99.23](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.22...v0.99.23) (2026-02-22)
+
+
+### Bug Fixes
+
+* **ai:** resolve YAML sync issue in Rule Assistant and optimize rule generation prompts ([6e22a58](https://github-relaycraft/relaycraft/relaycraft/commit/6e22a58508225fb08483db9e644399c57b3dfad4))
+
 ### [0.99.22](https://github-relaycraft/relaycraft/relaycraft/compare/v0.99.21...v0.99.22) (2026-02-21)
 
 
