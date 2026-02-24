@@ -1,0 +1,95 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior | 报告问题或意外行为
+title: "[Bug] "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        感谢您填写错误报告！
+
+        Before submitting, please check that this issue hasn't been reported already.
+        提交前请确认此问题尚未被其他人报告。
+
+  - type: input
+    id: version
+    attributes:
+      label: RelayCraft Version | 版本
+      description: Which version are you using? You can find it in the app's About page.
+      placeholder: e.g. 1.0.0-rc1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating System | 操作系统
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version | 系统版本
+      placeholder: e.g. macOS 15.3, Windows 11 24H2, Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description | 问题描述
+      description: A clear and concise description of what the bug is. | 清晰简洁地描述发生了什么问题。
+      placeholder: When I do X, Y happens instead of Z...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce | 复现步骤
+      description: How can we reproduce this issue? | 如何复现此问题？
+      placeholder: |
+        1. Open RelayCraft
+        2. Go to '...'
+        3. Click on '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior | 预期行为
+      description: What did you expect to happen? | 您期望发生什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior | 实际行为
+      description: What actually happened? | 实际发生了什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Screenshots | 错误日志 / 截图
+      description: |
+        Paste any relevant logs or attach screenshots.
+        粘贴相关日志或附上截图。
+        You can find logs at: macOS `~/Library/Logs/com.relaycraft.app/`, Windows `%APPDATA%\com.relaycraft.app\logs\`
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context | 其他信息
+      description: Any other context about your setup, proxy configuration, or network environment. | 其他背景信息，如代理配置、网络环境等。

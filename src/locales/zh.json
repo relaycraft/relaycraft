@@ -1,0 +1,1112 @@
+{
+  "ai": {
+    "api_key": "API Key",
+    "api_key_desc": "访问 API 所需的密钥",
+    "assistant": {
+      "analyzing": "智能助手正在思考...",
+      "naming": {
+        "desc": "更具描述性的命名",
+        "placeholder": "描述规则用途...",
+        "suggestions": {
+          "auto": "基于配置自动命名",
+          "desc": "更具描述性的命名",
+          "tech": "更具技术性的命名"
+        },
+        "tech": "更具技术性的命名",
+        "title": "智能命名助手"
+      },
+      "regex": {
+        "domain": "匹配 example.com 及其所有子域名",
+        "error": "不区分大小写匹配包含 status:error 的内容",
+        "explain_btn": "正则含义解读",
+        "path": "匹配所有 api/v1 开头的路径",
+        "placeholder": "描述匹配规则 (如: 以 .png 结尾)",
+        "suggestions": {
+          "domain": "匹配 example.com 及其所有子域名",
+          "error": "不区分大小写匹配包含 status:error 的内容",
+          "path": "匹配所有 api/v1 开头的路径"
+        },
+        "title": "智能正则助手"
+      },
+      "search": {
+        "error": "查找所有 4xx 或 5xx 错误请求",
+        "json": "搜索所有 JSON 格式的响应",
+        "placeholder": "描述过滤条件 (如: 查找所有404请求)",
+        "slow": "找出耗时超过 500ms 的请求",
+        "suggestions": {
+          "error": "查找所有 4xx 或 5xx 错误请求",
+          "json": "搜索所有 JSON 格式的响应",
+          "slow": "找出耗时超过 500ms 的请求"
+        },
+        "title": "智能搜索助手"
+      }
+    },
+    "clear_memory": "清空对话记忆",
+    "connection": {
+      "failure": "连接失败，请检查运行日志",
+      "placeholder_openai": "sk-...",
+      "placeholder_optional": "可选",
+      "save": "保存配置",
+      "success": "连接成功",
+      "test": "测试连接"
+    },
+    "enable": "启用 AI 功能",
+    "enable_desc": "开启后可使用 AI 辅助脚本生成、规则创建等功能",
+    "endpoint": "API 端点地址",
+    "endpoint_desc": "支持 Ollama、LocalAI 等兼容 OpenAI API 规范的服务",
+    "max_tokens": "最大 Token 数",
+    "max_tokens_desc": "单次请求允许的最大词元数量",
+    "memory_turns": "对话上下文轮数",
+    "memory_turns_desc": "AI 将记住最近的对话轮数以保持上下文连贯 (仅在命令中心生效)",
+    "model": "模型名称",
+    "model_desc": "例如: gpt-5, qwen3-max, llama3",
+    "provider": "API 提供商",
+    "provider_desc": "选择 AI 服务提供商",
+    "providers": {
+      "aliyun": "阿里云百炼",
+      "anthropic": "Anthropic",
+      "custom": "自定义接口",
+      "deepseek": "DeepSeek",
+      "google": "Google",
+      "moonshot": "月之暗面",
+      "openai": "OpenAI",
+      "openrouter": "OpenRouter"
+    },
+    "temperature": "生成温度",
+    "temperature_desc": "控制内容生成的随机性。仅在命令中心 (AI 会话) 中生效。",
+    "title": "AI 助手配置"
+  },
+  "breakpoint": {
+    "abort": "终止",
+    "abort_all": "终止全部",
+    "active_manager": "断点管理器",
+    "body_content": "正文内容",
+    "clear_all": "全部清除",
+    "control_center": "拦截控制中心",
+    "headers": "请求头",
+    "hint": "匹配以上域名的请求将被自动挂起...",
+    "method_protocol": "方法 / 协议",
+    "queue": "拦截队列",
+    "remove_one": "删除此断点",
+    "request": "请求",
+    "request_phase": "请求阶段",
+    "response": "响应",
+    "response_phase": "响应阶段",
+    "resume": "放行请求",
+    "resume_all": "全部放行",
+    "status_code": "状态码",
+    "add_title": "添加断点",
+    "pattern": "URL 路径模式",
+    "pattern_placeholder": "例如: api.example.com 或 /auth",
+    "pattern_hint": "输入要匹配的域名、路径或完整 URL",
+    "match_type_label": "匹配方式",
+    "match_types": {
+      "contains": "包含",
+      "exact": "完全匹配",
+      "regex": "正则表达式"
+    },
+    "break_on": "挂起时机",
+    "preview": "规则预览",
+    "preview_contains": "URL 包含",
+    "preview_equals": "URL 等于",
+    "preview_matches": "URL 匹配正则",
+    "preview_both": "将在请求和响应阶段双向挂起",
+    "preview_request": "仅在请求阶段挂起 (发送前)",
+    "preview_response": "仅在响应阶段挂起 (返回前)",
+    "preview_none": "未选择任何阶段，该断点将不会生效",
+    "add": "立即添加"
+  },
+  "cert": {
+    "format": {
+      "label": "格式"
+    },
+    "actions": {
+      "install": "安装并信任证书",
+      "regenerate": "重新生成根证书",
+      "remove": "从系统中移除信任"
+    },
+    "ca_name": "根证书",
+    "info": {
+      "expires": "过期时间",
+      "fingerprint": "指纹",
+      "ip": "IP 地址:",
+      "port": "端口:"
+    },
+    "manual": {
+      "desktop": {
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows"
+      },
+      "guides": {
+        "android": [
+          "进入 [设置] → [安全/加密与凭据]",
+          "点击 [安装证书] → [CA 证书]",
+          "选择刚才下载的文件并确认安装"
+        ],
+        "ios": [
+          "进入 [设置] → [已下载描述文件] 点击安装",
+          "进入 [设置] → [通用] → [关于本机]",
+          "滑到底部点击 [证书信任设置] (关键步骤)",
+          "手动开启 [RelayCraft] 证书的完全信任开关 (必做)"
+        ],
+        "linux_arch": "Arch Linux / Manjaro",
+        "linux_arch_cmd": "sudo trust anchor \"{{path}}\"",
+        "linux_debian": "Ubuntu / Debian / Kali",
+        "linux_debian_cmd": "sudo cp \"{{path}}\" /usr/local/share/ca-certificates/RelayCraft_CA.crt && sudo update-ca-certificates",
+        "linux_fedora": "Fedora / CentOS / RHEL",
+        "linux_fedora_cmd": "sudo cp \"{{path}}\" /etc/pki/ca-trust/source/anchors/RelayCraft_CA.crt && sudo update-ca-trust",
+        "macos": [
+          "点击左侧的 <strong class=\"text-primary font-bold\">安装并信任证书</strong> 唤起证书预览",
+          "在弹出的钥匙串访问中，双击 RelayCraft 证书",
+          "展开 [信任] 下拉菜单，将 [使用此证书时] 设置为 [始终信任]",
+          "关闭窗口并输入系统密码完成操作"
+        ],
+        "macos_sequoia_hint_desc": "由于系统权限限制，自动安装并信任在 Sequoia 上已失效。建议使用下方的<strong>终端快捷命令</strong>，这是目前最可靠的信任方式。",
+        "macos_sequoia_hint_title": "macOS 15 (Sequoia) 自动化限制",
+        "mobile_android_hint": "注意：现代 Android 系统拥有更严格的内置安全策略，可能需要 Root 权限或特定的调试配置才能进行流量解密。",
+        "mobile_browser_access": "2. 浏览器访问（或扫码）地址",
+        "mobile_manual_transfer_tip": "提示：如果连接不通，可将电脑上的证书直接发送到手机端安装（最稳妥方案）。",
+        "mobile_qr_code_hint": "扫码快速打开下载链接",
+        "mobile_step1": "第一步：获取证书",
+        "mobile_step1_desc": "确保移动设备与电脑在同一局域网，且已配置好代理。",
+        "mobile_step2": "第二步：安装与信任",
+        "mobile_troubleshooting_app_pinning": "某些应用 (如金融、政务类) 使用了证书固定技术，无法直接解密。",
+        "mobile_troubleshooting_ios_trust": "iOS 必须在 [关于本机] → [证书信任设置] 中开启完全信任。",
+        "mobile_troubleshooting_title": "依旧无法抓包？",
+        "mobile_wifi_config": "1. 配置 Wi-Fi 代理",
+        "terminal_copy": "复制命令",
+        "terminal_hint": "更快的方式：终端一键信任",
+        "title": "安装指南",
+        "windows": [
+          "点击左侧的 <strong class=\"text-primary font-bold\">打开存储目录</strong>",
+          "双击打开 <code class=\"bg-muted px-1.5 py-0.5 rounded text-xs font-mono border border-border\">mitmproxy-ca-cert.pem</code>",
+          "在导入向导中，选择 [当前用户] → [下一步]，密码为空直接下一步",
+          "选择 <strong>[将所有的证书都放入下列存储]</strong>",
+          "点击 [浏览] 选择 <strong>[受信任的根证书颁发机构]</strong> → [确定]",
+          "完成导入并在安全警告中点击 [是]"
+        ]
+      },
+      "tabs": {
+        "desktop": "桌面端",
+        "mobile": "移动端 (iOS/Android)"
+      }
+    },
+    "state": {
+      "trusted_desc": "RelayCraft 根证书已被系统信任。无需其他操作。",
+      "untrusted_desc": "安装根证书以拦截并安全分析 HTTPS 流量。"
+    },
+    "status": {
+      "trusted": "此计算机已信任根证书。",
+      "untrusted": "系统尚未信任此证书，无法解密 HTTPS。"
+    },
+    "storage": {
+      "open": "打开存储目录",
+      "title": "证书存储位置"
+    }
+  },
+  "command_center": {
+    "actions": {
+      "chat": "智能响应",
+      "clear_traffic": "清空流量",
+      "create_rule": "创建规则",
+      "create_script": "编写脚本",
+      "navigate": "页面跳转",
+      "open_settings": "偏好设置",
+      "toggle_proxy": "代理开关"
+    },
+    "ai_integrated": "RelayCraft AI 已集成",
+    "confirm_action": "确认执行",
+    "confirm_required": "操作确认",
+    "default_explanation": "此操作需要您的确认才能继续。",
+    "error_generic": "指令执行遇到错误",
+    "explanations": {
+      "clear": "正在清空流量列表...",
+      "nav_composer": "正在跳转到请求构造器...",
+      "nav_plugins": "正在跳转到插件市场...",
+      "nav_rules": "正在跳转到规则管理...",
+      "nav_scripts": "正在跳转到脚本管理...",
+      "nav_settings": "正在跳转到系统设置...",
+      "nav_traffic": "正在跳转到流量监控...",
+      "start": "正在启动代理引擎...",
+      "stop": "正在停止代理引擎..."
+    },
+    "loading": {
+      "ai": "AI 正在解析意图...",
+      "default": "正在处理指令..."
+    },
+    "not_enabled_warning": "> [!WARNING]\n> **AI 功能未启用**。自然语言解析需要开启 AI。你可以使用 `/` 开头的快捷指令（如 `/start`, `/clear` 等）。",
+    "placeholder": {
+      "ai": "输入指令或描述任务...",
+      "default": "输入指令 (如 /start) 或进行搜索...",
+      "editing_rule": "正在修改当前规则，输入指令进行调整..."
+    },
+    "status": {
+      "editing": "正在修改"
+    },
+    "suggestions": {
+      "ai_composer_upload": "AI 上传文档构造",
+      "ai_explain_rule": "解释当前规则",
+      "ai_plugin_dev": "AI 辅助插件开发",
+      "ai_plugin_recommend": "AI 插件分析与推荐",
+      "clear": "/clear 清空流量",
+      "composer_post_example": "构造一个发往目标服务器的 POST 请求",
+      "go_to": "跳转到",
+      "nav_composer": "/composer 构造请求",
+      "nav_plugins": "/plugins 插件管理",
+      "nav_rules": "/rules 规则管理",
+      "nav_scripts": "/scripts 脚本管理",
+      "nav_traffic": "/traffic 流量监控",
+      "proxy_start": "/start 开始监听",
+      "proxy_stop": "/stop 停止监听",
+      "rule_block_example": "拦截特定域名的所有请求",
+      "rule_conflict": "检查规则冲突",
+      "script_auth_example": "自动为目标域名添加认证令牌",
+      "script_login_example": "拦截特定域名的所有登录请求",
+      "settings": "/settings 打开设置",
+      "traffic_analyze": "分析此 {{method}} 请求",
+      "traffic_anomalies": "查找异常或失败请求",
+      "traffic_security": "分析此请求的安全风险",
+      "traffic_trends": "分析当前流量趋势"
+    }
+  },
+  "common": {
+    "add": "添加",
+    "beautify": "美化",
+    "breakpoint": "断点",
+    "browse": "浏览",
+    "cancel": "取消",
+    "clear": "清空",
+    "clear_filter": "清除过滤条件",
+    "close": "关闭",
+    "confirm": "确认",
+    "confirm_delete_desc": "此操作不可撤销，确定要继续吗？",
+    "confirm_delete_title": "确认删除",
+    "copy": "复制",
+    "copied": "已复制",
+    "copy_json": "复制 JSON",
+    "delete": "删除",
+    "disable": "禁用",
+    "disabled": "禁用",
+    "dismiss": "不再提示",
+    "double_click_rename": "双击重命名",
+    "edit": "编辑",
+    "enable": "启用",
+    "error": "错误",
+    "export": "导出",
+    "export_har": "导出 HAR",
+    "failed": "失败",
+    "format": "格式化",
+    "generate": "生成",
+    "headers": "请求头",
+    "help": "帮助",
+    "import": "导入",
+    "import_har": "导入 HAR",
+    "import_har_hint": "导入 HAR (追加)",
+    "loading": "加载中...",
+    "move_down": "下移",
+    "move_up": "上移",
+    "name": "名称",
+    "no_content": "暂无内容",
+    "no_results": "无搜索结果",
+    "none": "无",
+    "not_loaded": "未加载",
+    "no": "否",
+    "ok": "确定",
+    "open": "打开会话",
+    "optional": "可选",
+    "pending_restart": "等待重启 (未生效)",
+    "reset": "重置",
+    "rule": "规则",
+    "restarting": "正在重启...",
+    "save": "保存",
+    "save_success": "保存成功",
+    "script": "脚本",
+    "search": "搜索...",
+    "select": "请选择...",
+    "select_placeholder": "请选择...",
+    "settings": "设置",
+    "success": "成功",
+    "yes": "是",
+    "terminology": {
+      "block_request": "请求阻断",
+      "map_local": "本地映射",
+      "map_remote": "远程映射",
+      "proxy": "代理服务",
+      "rewrite": "重写规则",
+      "rewrite_body": "内容重写",
+      "rewrite_header": "头部重写",
+      "rules": "规则管理",
+      "scripts": "脚本",
+      "throttle": "弱网模拟",
+      "traffic": "流量监控"
+    },
+    "try_another_search": "请尝试搜索其他关键字",
+    "unknown": "未知",
+    "value": "值",
+    "warning": "警告"
+  },
+  "composer": {
+    "body": "请求体",
+    "body_none": "该请求不包含正文内容",
+    "clear_error": "清除错误",
+    "curl_modal": {
+      "desc": "粘贴完整的 cURL 命令到下方，系统将为您自动提取 URL、请求头和请求体。",
+      "error_empty": "请输入 cURL 命令",
+      "error_format": "无法解析该命令，请确保它是标准的 curl 格式",
+      "parse_btn": "立即解析",
+      "placeholder": "curl 'https://api.service.com/v1/resource' -H 'Accept: */*' ...",
+      "title": "从 cURL 粘贴并解析"
+    },
+    "error_sending_request": "请求发送失败 ({{url}})",
+    "form_data": "表单数据",
+    "form_editor": {
+      "add_param": "添加参数",
+      "empty": "未定义参数",
+      "key": "键名",
+      "title": "表单数据",
+      "value": "键值"
+    },
+    "generic_builder_error": "请求构建失败，请检查 URL 格式",
+    "headers": "请求头",
+    "headers_list": {
+      "add": "添加 Header",
+      "empty": "尚无 Header",
+      "key": "键名",
+      "value": "键值"
+    },
+    "parse_curl_tooltip": "从 cURL 解析",
+    "preview": "预览",
+    "raw": "原文",
+    "raw_json": "JSON 源码",
+    "request_failed": "请求发送失败",
+    "reset": "重置表单",
+    "response": "响应内容",
+    "send": "发送",
+    "send_desc": "尚未发送请求",
+    "sending": "发送中...",
+    "title": "请求构造",
+    "url": "URL",
+    "url_builder_error": "URL 构造错误 ({{url}})",
+    "url_placeholder": "输入请求 URL..."
+  },
+  "content_preview": {
+    "base64": "Base64 编码内容",
+    "binary": "二进制内容",
+    "download": "下载文件",
+    "no_content": "暂无内容",
+    "view_parsed": "查看格式化",
+    "view_source": "查看源码",
+    "large_content_warning": "大文件 ({{size}})。仅显示前 {{max}} 字符。",
+    "show_all": "显示全部",
+    "collapse": "收起"
+  },
+  "flow": {
+    "analysis": {
+      "btn": "智能分析",
+      "check_settings": "检查设置",
+      "diagnostics_title": "专家诊断",
+      "error": "分析过程中发生错误",
+      "error_auth": "AI 认证失败，请检查 API Key",
+      "error_quota": "AI 配额不足，请检查账户余额",
+      "optimization_title": "建议与优化",
+      "summary_title": "AI 摘要",
+      "title": "AI 智能分析"
+    },
+    "map_local": {
+      "fallback_hint": "已自动回退至远程响应",
+      "file_not_found": "本地文件缺失"
+    },
+    "replay": "重放请求",
+    "replay_btn": "重发",
+    "sections": {
+      "request_body": "请求体",
+      "request_headers": "请求头",
+      "response_body": "响应体",
+      "response_headers": "响应头"
+    },
+    "tabs": {
+      "messages": "消息",
+      "request": "请求",
+      "response": "响应"
+    },
+    "websocket": {
+      "empty": "尚未捕获到 WebSocket 帧",
+      "title": "WebSocket 帧"
+    }
+  },
+  "header_editor": {
+    "add": "添加操作",
+    "op_add": "增加",
+    "op_remove": "删除",
+    "op_set": "设置",
+    "title": "Header 操作列表"
+  },
+  "log_viewer": {
+    "app_logs": "系统日志",
+    "audit_logs": "审计日志",
+    "crash_logs": "崩溃日志",
+    "empty_or_no_log": "暂无日志或日志文件为空",
+    "plugin_logs": "插件日志",
+    "proxy_logs": "代理日志",
+    "refresh": "刷新日志",
+    "script_logs": "脚本日志",
+    "sensitive_warning": "日志文件中可能包含敏感信息（如 Token），请妥善处理，切勿在不安全的环境下展示。",
+    "title": "运行日志"
+  },
+  "notifications": {
+    "all_processed": "所有通知都已处理完毕",
+    "category": {
+      "network": "网络",
+      "plugin": "插件",
+      "script": "脚本",
+      "security": "安全",
+      "system": "系统",
+      "update": "更新"
+    },
+    "clear_all": "清空通知",
+    "count": "{{count}} 条通知",
+    "delete_title": "删除",
+    "disable": "关闭通知 (免打扰)",
+    "dnd_on": "免打扰模式已开启",
+    "empty": "暂无通知",
+    "enable": "开启通知",
+    "mark_all_read": "全部已读",
+    "priority": {
+      "critical": "严重",
+      "high": "高",
+      "low": "低",
+      "normal": "正常"
+    },
+    "relative_time": {
+      "days_ago": "{{count}} 天前",
+      "hours_ago": "{{count}} 小时前",
+      "just_now": "刚刚",
+      "minutes_ago": "{{count}} 分钟前"
+    },
+    "title": "通知中心"
+  },
+  "plugins": {
+    "api_error": "插件 API 加载失败: {{pluginId}}",
+    "browse_market": "浏览市场",
+    "confirm_uninstall": "确定要卸载此插件吗？",
+    "disable": "禁用",
+    "empty": {
+      "desc": "将插件放置在数据目录的 plugins 文件夹中",
+      "rescan": "重新扫描",
+      "title": "未发现插件"
+    },
+    "enable": "启用",
+    "errors": {
+      "already_exists_msg": "该插件已经安装。如需重新安装,请先卸载现有版本。",
+      "already_exists_title": "插件已存在",
+      "download_failed": "下载失败",
+      "file_not_found_msg": "无法找到或访问所选文件。请确认文件路径是否正确。",
+      "file_not_found_title": "文件未找到",
+      "generic": "错误: {{error}}",
+      "help_text": "请检查网络连接或稍后重试。",
+      "install_failed": "安装失败",
+      "invalid_format_msg": "plugin.json 文件格式错误或包含语法错误。请检查插件包的完整性。\n\n详细信息: {{error}}",
+      "invalid_format_title": "插件格式无效",
+      "invalid_pkg_msg": "plugin.json 文件包含多余的字符或格式错误。这可能不是一个有效的 RelayCraft 插件包。\n\n提示:请确保您选择的是 .rcplugin 或包含正确 plugin.json 的 .zip 文件。",
+      "not_found": "插件未找到",
+      "permission_denied_msg": "无法访问该文件。请检查文件权限设置。",
+      "permission_denied_title": "权限被拒绝",
+      "timeout": "请求超时"
+    },
+    "guide": {
+      "desc": "插件可以动态扩展核心功能。启用包含 Python 逻辑的插件后，请<span>重启代理引擎</span>以使更改生效。",
+      "title": "插件管理说明"
+    },
+    "install_local": "从文件安装",
+    "installing": "正在安装...",
+    "market": {
+      "empty_tip": "没有找到符合条件的插件或主题",
+      "install": "安装",
+      "installed": "已安装",
+      "loading": "正在获取市场数据...",
+      "no_preview": "暂无预览",
+      "sync": "同步云端市场",
+      "title_plugin": "插件管理",
+      "title_theme": "主题方案"
+    },
+    "market_desc": "发现并安装社区插件以扩展 RelayCraft 能力",
+    "market_desc_theme": "发现并安装社区主题以定制 RelayCraft 外观",
+    "no_description": "暂无描述",
+    "notifications": {
+      "disabled_msg": "插件 \"{{name}}\" 已禁用。",
+      "disabled_title": "插件已禁用",
+      "enabled_msg": "插件 \"{{name}}\" 已成功启用。",
+      "enabled_title": "插件已启用",
+      "install_success_msg": "插件 \"{{id}}\" 已成功安装并启用。",
+      "install_success_title": "安装成功",
+      "load_failed_msg": "无法获取插件列表: {{error}}",
+      "load_failed_title": "加载插件失败",
+      "toggle_failed_msg": "无法{{action}}插件 \"{{id}}\"。错误: {{error}}",
+      "toggle_failed_title": "插件操作失败",
+      "uninstall_failed_msg": "无法卸载插件 \"{{id}}\"。\n\n错误信息: {{error}}",
+      "uninstall_failed_title": "卸载失败",
+      "uninstall_success_msg": "插件 \"{{name}}\" 已成功卸载。",
+      "uninstall_success_title": "插件已卸载"
+    },
+    "redesign": {
+      "homepage": "项目主页"
+    },
+    "running": "运行中",
+    "scanning": "正在扫描插件...",
+    "search_placeholder": "搜索市场列表...",
+    "search_placeholder_plugin": "搜索市场插件...",
+    "search_placeholder_theme": "搜索主题方案...",
+    "settings": {
+      "no_schema": "该插件未定义配置架构"
+    },
+    "title": "插件管理",
+    "uninstall": "卸载"
+  },
+  "proxy_store": {
+    "scripts_loaded": "已加载 {{count}} 个脚本。",
+    "start_fail_msg": "无法开始监听。错误: {{error}}",
+    "start_fail_title": "监听启动失败",
+    "start_success_msg": "已在端口 {{port}} 上开始监听流量。",
+    "start_success_title": "正在监听",
+    "stop_fail_msg": "无法停止监听。错误: {{error}}",
+    "stop_fail_title": "停止监听失败",
+    "stop_success_msg": "已停止监听流量。",
+    "stop_success_title": "已停止监听",
+    "restart_fail_msg": "无法重启代理引擎。错误: {{error}}",
+    "restart_fail_title": "代理引擎重启失败",
+    "restart_success_msg": "代理引擎已在端口 {{port}} 上成功重启。",
+    "restart_success_title": "代理引擎已重启"
+  },
+  "rules": {
+    "add_group": "添加新分组",
+    "alerts": {
+      "delete_msg": "确定要删除此规则吗？此操作无法撤销。",
+      "delete_title": "删除规则",
+      "discard_msg": "正在编辑的规则有未保存的修改，切换到其他规则将丢失这些更改。确定要继续吗？",
+      "discard_title": "放弃当前修改？",
+      "load_error_msg": "磁盘上的部分规则文件无法解析，已跳过。请手动修复这些文件。",
+      "load_error_title": "发现损坏的规则文件",
+      "more_items": "...以及另外 {{count}} 项"
+    },
+    "conflict": {
+      "overridden": "覆盖",
+      "shadowed": "规则已被遮挡",
+      "shadowed_desc": "上方的终结规则 \"{{name}}\" 已捕获此流量，该规则将不会执行。请尝试上移此规则。"
+    },
+    "editor": {
+      "action": {
+        "map_local": {
+          "content": "响应内容",
+          "content_type": "Content-Type",
+          "path": "文件路径",
+          "source": "映射方式",
+          "source_file": "本地文件",
+          "source_manual": "手动数据",
+          "status_code": "状态码"
+        },
+        "map_remote": {
+          "preserve_path": "保留原有路径",
+          "preserve_path_desc": "将原请求的 Path 拼接到目标 URL 后",
+          "url": "目标 URL"
+        },
+        "rewrite": {
+          "json_ops_append": "追加",
+          "json_ops_delete": "删除",
+          "json_ops_set": "设置",
+          "json_value_placeholder": "值",
+          "jsonpath_hint": "路径支持 JSON Path (例如 $.data.user.id)",
+          "modes_json": "JSON 修改",
+          "modes_regex": "正则替换",
+          "modes_replace": "文本替换",
+          "modes_set": "设置内容",
+          "placeholders_content": "输入新的 Body 内容...",
+          "placeholders_pattern": "查找内容...",
+          "placeholders_regex_pattern": "正则匹配表达式...",
+          "placeholders_replacement": "替换为...",
+          "req": "请求",
+          "req_headers": "请求头",
+          "res": "响应",
+          "res_headers": "响应头",
+          "status_code": "响应状态码",
+          "type": "重写模式"
+        },
+        "throttle": {
+          "bandwidth": "带宽限制 (kbps)",
+          "delay": "延迟时间 (ms)",
+          "packet_loss": "丢包率 (%)",
+          "placeholders_unlimited": "不限制"
+        }
+      },
+      "advanced_assistant": "高级规则助手",
+      "ai": {
+        "analysis_title": "智能分析",
+        "apply": "应用代码",
+        "apply_yaml": "应用 YAML",
+        "chip_create": "创建规则",
+        "chip_explain": "解释规则",
+        "chip_import": "导入外部规则",
+        "chip_modify": "修改规则",
+        "edit_yaml": "编辑 YAML",
+        "fill_form": "填入表单",
+        "generate_fail": "AI 规则生成失败",
+        "parse_error_hint": "规则解析失败，已为您切换到 YAML 模式以进行手动调整。",
+        "placeholder": "输入指令，例如：拦截目标域名并修改响应内容...",
+        "script": {
+          "create_btn": "创建 Python 脚本",
+          "disable_rule": "禁用原规则",
+          "enable_script": "立即启用脚本"
+        },
+        "tab_ai": "智能模式",
+        "tab_script": "脚本预览"
+      },
+      "convert_script_confirm": "确定要将此规则转换为 Python 脚本吗？",
+      "convert_script_confirm_disable_rule": "原规则将被禁用。",
+      "convert_script_confirm_dynamic": "确定要创建脚本 \"{{name}}\" 吗？",
+      "convert_script_confirm_enable_script": "新脚本将被启用。",
+      "convert_script_confirm_restart": "注意：启用脚本需要重启代理引擎。",
+      "convert_script_title": "确认转换",
+      "core": {
+        "group": "所属分组",
+        "hints": {
+          "modify": "非终结动作：执行修改后，系统将继续匹配并执行后续规则。",
+          "request_terminal": "终结动作：拦截并直接返回响应，匹配后将跳过后续所有的请求和响应规则。",
+          "terminal": "终结动作：匹配成功后，将停止处理后续所有的请求和响应规则。"
+        },
+        "name": "规则名称",
+        "name_placeholder": "请输入规则名称",
+        "no_group": "未分组",
+        "type": "规则类型",
+        "types": {
+          "block_desc": "拦截并阻止请求发送",
+          "block_label": "请求阻断",
+          "map_local_desc": "将请求映射到本地文件",
+          "map_local_label": "本地映射",
+          "map_remote_desc": "将请求转发到其他 URL",
+          "map_remote_label": "远程映射",
+          "rewrite_body_desc": "修改请求或响应的所有内容 (JSON/Text/Regex)",
+          "rewrite_body_label": "内容重写",
+          "rewrite_desc": "修改请求或响应头部",
+          "rewrite_label": "头部重写",
+          "throttle_desc": "模拟延迟、丢包等网络状况",
+          "throttle_label": "弱网模拟"
+        }
+      },
+      "match": {
+        "headers": {
+          "add": "添加条件",
+          "label": "Header 匹配"
+        },
+        "headers_list": {
+          "add": "Add Header",
+          "key": "Key",
+          "value": "Value"
+        },
+        "label": "匹配规则",
+        "test": {
+          "label": "实时匹配测试",
+          "matched": "匹配成功",
+          "not_matched": "未匹配",
+          "placeholder": "输入一个测试 URL 以验证规则..."
+        },
+        "url_match_type": {
+          "contains": "包含",
+          "exact": "精确",
+          "regex": "正则",
+          "wildcard": "通配符"
+        },
+        "url_placeholder": "输入匹配路径..."
+      },
+      "sections": {
+        "action": "动作配置",
+        "core": "基本信息",
+        "match": "匹配配置"
+      },
+      "title_create": "创建新规则",
+      "title_edit": "编辑规则"
+    },
+    "empty": {
+      "create_first_group": "创建第一个分组",
+      "desc": "使用「新建规则」按钮或下方按钮创建分组。",
+      "group_empty": "该分组内暂无规则",
+      "title": "暂无规则或分组"
+    },
+    "export_zip_success": "规则已导出到 {{path}}",
+    "group": {
+      "delete_group": "删除分组",
+      "delete_msg": "确定要删除分组 \"{{name}}\" 吗？该操作不会删除组内规则，规则将变为「未分组」状态。",
+      "delete_title": "删除分组",
+      "disable_group": "禁用整个分组",
+      "edit_name": "编辑名称",
+      "enable_group": "启用整个分组",
+      "move_down": "下移分组",
+      "move_up": "上移分组"
+    },
+    "import": {
+      "action": "导入",
+      "desc": "支持单个规则 JSON 或完整备份包",
+      "placeholder": "在此粘贴 JSON 内容...",
+      "select": "选择文件...",
+      "success": "成功导入 {{count}} 条规则和分组！",
+      "title": "导入规则"
+    },
+    "import_zip_extracting": "正在解压...",
+    "import_zip_success": "成功导入 {{count}} 条规则",
+    "match_all": "匹配所有请求",
+    "new": "新建规则",
+    "new_group_name": "新规则分组",
+    "summary": {
+      "block": "阻断请求",
+      "manual_mock": "手动模拟",
+      "map_local": "本地映射: {{path}}",
+      "map_remote": "重定向至: {{url}}",
+      "more_actions": " (+{{count}} 更多)",
+      "rewrite_body": "重写{{target}}正文: {{type}}",
+      "rewrite_header": "修改 {{req}} 请求头 / {{res}} 响应头",
+      "throttle": "网络延迟: {{delay}}ms",
+      "types": {
+        "request": "请求",
+        "response": "响应",
+        "set": "设置",
+        "replace": "替换",
+        "regex": "正则",
+        "json": "JSON"
+      }
+    },
+    "uncategorized": "未分组规则",
+    "validation": {
+      "actions_array": "'actions' 必须是一个数组",
+      "empty": "规则对象不能为空",
+      "invalid_type": "无效或缺失的 'type'。必须是以下之一: {{types}}",
+      "match_request_array": "'match.request' 必须是一个数组",
+      "min_actions": "规则至少需要包含一个操作 (action)",
+      "missing_match": "缺少或无效的 'match' 配置",
+      "missing_name": "缺少或无效的 'name'"
+    }
+  },
+  "session": {
+    "all_cleared": "所有历史会话已清除",
+    "clear_all": "清空全部历史记录",
+    "clear_all_confirm": "确认清空全部历史记录？",
+    "clear_all_msg": "这将删除所有历史会话记录（当前正在记录的会话除外）。此操作无法撤销。",
+    "clear_error": "清除历史会话失败",
+    "current": "当前",
+    "delete_confirm": "确定删除此会话？",
+    "delete_confirm_msg": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
+    "delete_title": "删除会话",
+    "flow_count": "{{count}} 记录",
+    "historical_mode": "查看历史会话",
+    "history": "会话历史",
+    "latest": "最新",
+    "save": {
+      "desc": "备注描述 (可选)",
+      "desc_placeholder": "输入关于此会话的备注信息...",
+      "name": "会话名称",
+      "name_placeholder": "输入会话名称...",
+      "save_btn": "保存会话",
+      "saving": "保存中...",
+      "title": "保存当前会话"
+    },
+    "switch_hint": "切换到历史会话",
+    "time": {
+      "days_ago": "{{count}}天前",
+      "hours_ago": "{{count}}小时前",
+      "just_now": "刚刚",
+      "minutes_ago": "{{count}}分钟前"
+    }
+  },
+  "scripts": {
+    "content_modified": "内容已修改，需重启生效",
+    "create_script": "新建脚本",
+    "delete_confirm": "确定要删除脚本 \"{{name}}\" 吗？该操作将物理删除磁盘上的文件且不可恢复。",
+    "delete_title": "删除脚本",
+    "editor": {
+      "ai": {
+        "chip_create": "创建脚本",
+        "chip_custom_logic": "生成特定逻辑...",
+        "chip_explain": "解释脚本",
+        "chip_fix": "修复脚本错误",
+        "chip_modify": "修改脚本",
+        "insight_title": "AI 脚本分析",
+        "logic_header": "核心逻辑",
+        "placeholder": "输入指令，例如：拦截 google.com 并修改响应...",
+        "prompt_create": "创建一个脚本: ",
+        "prompt_custom_logic": "帮我写一个逻辑，功能是：",
+        "prompt_fix": "修复当前脚本中的错误: ",
+        "prompt_modify": "修改当前脚本: ",
+        "restart_notice": "重启提示",
+        "suggestions_header": "优化建议",
+        "summary_header": "功能摘要",
+        "synced": "已同步到编辑器",
+        "syncing": "正在实时同步到编辑器..."
+      },
+      "ai_helper": "智能助手",
+      "revert": "撤销更改",
+      "revert_fail": "还原脚本失败",
+      "revert_hint": "放弃未保存的更改并恢复到上次保存的状态",
+      "revert_success": "脚本已成功恢复",
+      "save_hint": "保存脚本",
+      "saved": "已保存",
+      "saving": "保存中..."
+    },
+    "empty": {
+      "create": "创建脚本",
+      "desc": "创建一个 Python 脚本来拦截和修改流量。",
+      "title": "暂无脚本"
+    },
+    "name_exists": "脚本名称已存在",
+    "restart_btn": "重启代理引擎",
+    "restart_hint": "更改需要重启代理引擎以生效",
+    "save_failed": "保存脚本失败",
+    "save_script": "保存脚本",
+    "select_desc": "从左侧列表选择脚本以编辑，或创建新脚本。",
+    "select_title": "选择脚本",
+    "status": {
+      "draft": "草稿"
+    },
+    "subtitle": "基于 mitmproxy 驱动，通过 Python 脚本实现高度自定义的流量控制与自动化编排。",
+    "title": "Python 脚本"
+  },
+  "settings": {
+    "about": {
+      "check_failed": "检查失败",
+      "check_update_btn": "检查更新",
+      "checking": "检查中...",
+      "checking_updates": "检查是否有新版本发布",
+      "downloading": "正在下载...",
+      "update_available": {
+        "message": "发现新版本 {{version}}！\n\n{{body}}\n\n是否立即更新？",
+        "title": "更新可用"
+      },
+      "dev_tools": "开发者工具",
+      "error_fetch": "获取版本信息失败，请检查网络设置。",
+      "github": "代码仓库",
+      "github_desc": "访问项目开源主页，浏览源代码或参与社区讨论",
+      "homepage": "产品主页",
+      "homepage_desc": "RelayCraft 官方产品主页",
+      "links": "相关资源",
+      "mitmproxy": "代理引擎仓库",
+      "mitmproxy_desc": "基于优秀的开源项目 mitmproxy 驱动",
+      "open_config": "打开配置目录",
+      "open_config_desc": "在资源管理器中定位配置文件",
+      "open_data": "打开数据目录",
+      "open_data_desc": "管理应用生成的所有数据文件",
+      "open_logs": "打开日志目录",
+      "open_logs_desc": "查看系统运行时日志",
+      "title": "关于与支持",
+      "troubleshooting": "故障排查",
+      "up_to_date": "已是最新版本",
+      "verbose": "详细模式",
+      "verbose_desc": "记录应用及底层核心的详细运行日志，用于深度故障诊断与排查",
+      "view_logs": "查看系统日志",
+      "visit_engine": "访问引擎仓库",
+      "visit_github": "访问代码仓库",
+      "visit_website": "访问主页"
+    },
+    "appearance": {
+      "active": "当前使用",
+      "apply": "应用",
+      "density": "信息密度",
+      "density_comfortable": "舒适模式",
+      "density_compact": "紧凑模式",
+      "density_relaxed": "宽松模式",
+      "discover_themes_desc": "浏览已上架的社区主题，打造专属于你的个性化界面。",
+      "discover_themes_title": "发现社区主题",
+      "exit_confirm_message": "确定要退出 RelayCraft 吗？\n代理服务将会停止。",
+      "exit_confirm_title": "确认退出",
+      "import_zip": "导入本地主题",
+      "market_btn": "浏览市场",
+      "mode_custom": "自定义主题",
+      "mode_dark": "深色模式",
+      "mode_light": "浅色模式",
+      "mode_system": "跟随系统",
+      "theme": "主题方案",
+      "title": "外观定制"
+    },
+    "footer": "RelayCraft · 正在加载系统内核...",
+    "general": {
+      "always_on_top": "置顶显示",
+      "always_on_top_desc": "始终将窗口置于最前方",
+      "auto_start_proxy": "自动开始监听",
+      "auto_start_proxy_desc": "应用启动时自动开始监听流量。",
+      "confirm_exit": "退出前确认",
+      "confirm_exit_desc": "关闭应用窗口时弹出确认对话框，防止误触导致代理中断",
+      "language": "界面语言",
+      "language_desc": "选择 RelayCraft 的显示语言",
+      "title": "常规设置"
+    },
+    "network": {
+      "mitm_risk": "连接安全性已降低，仅建议在受信任环境开启",
+      "port": "代理端口",
+      "port_desc": "代理端口范围为 (1024-65535)",
+      "pending_restart_title": "配置已变更，需重启引擎",
+      "pending_restart_desc": "端口、SSL 或上游代理设置已修改。",
+      "restart_now": "立即重启",
+      "restarting": "重启中...",
+      "ssl_insecure": "忽略 SSL 证书验证",
+      "ssl_insecure_desc": "适用于企业内网、自签名证书或开发调试环境",
+      "title": "网络与代理",
+      "upstream_check": "检查代理连接",
+      "upstream_check_failed": "连接失败",
+      "upstream_check_success": "连接成功",
+      "upstream_checking": "正在测试连接...",
+      "upstream_desc": "在企业内网或特殊网络环境下，RelayCraft 可能需要配置上游代理才能连接互联网。",
+      "upstream_placeholder": "http://127.0.0.1:7890",
+      "upstream_title": "上游代理",
+      "upstream_url": "代理地址",
+      "upstream_url_desc": "支持 HTTP/HTTPS 协议，例如 http://127.0.0.1:7890"
+    }
+  },
+  "setup_guide": {
+    "copy_address": "复制地址",
+    "current_proxy": "当前代理地址",
+    "got_it": "我知道了",
+    "install_cert": "安装证书",
+    "install_cert_desc": "配置代理后，使用手机浏览器访问 <strong>http://relay.guide</strong> 下载并信任证书，否则无法查看 HTTPS 内容。",
+    "install_cert_step1": "配置 Wi-Fi 代理",
+    "install_cert_step1_desc": "确保手机与电脑在同一 Wi-Fi。进入 Wi-Fi 详情 → 配置代理 → <strong>手动</strong>，填入 IP 地址 <code>{{ip}}</code>，端口 <code>{{port}}</code>。",
+    "install_cert_step2": "访问证书安装页面",
+    "install_cert_step2_desc": "代理配置完成后，用手机浏览器访问（或扫描右侧二维码）：",
+    "install_cert_fallback": "连接不通？",
+    "install_cert_fallback_desc": "可将电脑上的证书文件直接发送到手机端安装（最稳妥方案）。",
+    "mobile_config": "移动端配置 (iOS/Android)",
+    "pc_config": "PC / 浏览器配置",
+    "switchy_omega": "推荐：SwitchyOmega",
+    "switchy_omega_desc": "安装 Chrome/Edge 插件 SwitchyOmega，新建 <strong>HTTP</strong> 代理，地址填入 <code>{{ip}}</code>，端口 <code>{{port}}</code>。",
+    "system_proxy": "系统级代理",
+    "system_proxy_desc": "在系统设置中搜索「代理」，开启「使用代理服务器」，填入上述地址与端口。",
+    "title": "代理配置指南",
+    "trouble": "遇到问题？",
+    "trouble_desc": "检查防火墙设置，确保 {{port}} 端口未被其他程序占用。",
+    "wifi_manual": "Wi-Fi 手动配置",
+    "wifi_manual_desc": "确保手机与电脑在同一 Wi-Fi。进入 Wi-Fi 详情 → 配置代理 → <strong>手动</strong>。"
+  },
+  "sidebar": {
+    "certificate": "证书管理",
+    "composer": "请求构造",
+    "plugins": "插件",
+    "rules": "规则管理",
+    "scripts": "脚本管理",
+    "settings": "设置",
+    "traffic": "流量监控"
+  },
+  "status_bar": {
+    "breakpoints": "管理断点",
+    "captured": "捕获请求数",
+    "ip": "本机 IP",
+    "listening": "监听中",
+    "port": "监听端口",
+    "stopped": "已停止",
+    "engine_healthy": "引擎工作中",
+    "engine_idle": "引擎空闲",
+    "engine_error": "引擎未运行"
+  },
+  "titlebar": {
+    "close": "关闭",
+    "maximize": "最大化",
+    "minimize": "最小化",
+    "restore": "还原",
+    "running": "监听中",
+    "search_placeholder": "输入指令或搜索 ({{hotkey}})",
+    "start_proxy": "开始监听",
+    "stop_proxy": "停止监听",
+    "stopped": "已停止"
+  },
+  "traffic": {
+    "breakpoint_hit_tooltip": "此域名已开启断点拦截",
+    "hit_detail": "{{name}} ({{type}})",
+    "context_menu": {
+      "body_truncated": "正文过大已截断",
+      "copy_curl": "复制为 cURL",
+      "copy_req_body": "复制请求体",
+      "copy_res_body": "复制响应体",
+      "copy_url": "复制链接",
+      "create_rule": "基于此请求创建规则",
+      "curl_copied": "cURL 已复制",
+      "edit_composer": "在构造器中编辑",
+      "replay": "重新发送请求",
+      "req_body_copied": "请求体已复制",
+      "res_body_copied": "响应体已复制",
+      "set_breakpoint": "为此域名设置断点",
+      "url_copied": "链接已复制"
+    },
+    "empty_search": "没有匹配的请求",
+    "file_not_found": "文件未找到",
+    "filter": {
+      "and": "组合查询",
+      "and_desc": "不同类型取交集",
+      "body": "正文查询",
+      "case_tooltip": "区分大小写",
+      "autoscroll": "跟踪最新数据",
+      "compare": "数值比较",
+      "current": "当前过滤条件:",
+      "headers": "头部查询",
+      "matched_tooltip": "仅显示已匹配",
+      "neg": "排除查询",
+      "or": "多值查询",
+      "or_desc": "同类型取并集",
+      "placeholder": "请输入过滤条件...",
+      "quick": "快速过滤",
+      "regex_tooltip": "正则匹配"
+    },
+    "headers_list": {
+      "add": "添加 Header",
+      "encrypted": "加密 (HTTPS)",
+      "failed": "失败",
+      "key": "键名",
+      "pending": "等待中"
+    },
+    "jump_to_latest": "回到最新",
+    "list_cleared": "流量列表已清空",
+    "listening": "正在监听网络流量...",
+    "new_requests": "条新请求",
+    "proxy_error": "监听启动错误",
+    "proxy_stopped": "监听未启动",
+    "replay_failed": "重发失败",
+    "replay_success": "请求已重发",
+    "security": {
+      "fix_now": "立即安装",
+      "untrusted_desc": "在安装并信任根证书之前，HTTPS 流量将无法正常解密。",
+      "untrusted_title": "根证书未信任"
+    },
+    "server_status": "运行中",
+    "setup": {
+      "cert": "证书管理",
+      "guide": "配置指南",
+      "mobile": "移动设备",
+      "mobile_desc": "在您的手机上设置手动代理以解密应用流量。",
+      "system": "系统代理",
+      "system_desc": "将您电脑的 HTTP/HTTPS 流量通过 RelayCraft 转发。"
+    },
+    "source": {
+      "local": "本机",
+      "remote": "远程设备"
+    },
+    "start_hint": "点击右上角的开始监听按钮或使用快捷键开始捕获流量。",
+    "start_proxy": "开始监听",
+    "status": {
+      "encrypted": "加密 (HTTPS)",
+      "failed": "失败",
+      "label": "状态",
+      "pending": "等待中"
+    },
+    "websocket": {
+      "frames": "WebSocket 帧",
+      "messages_count": "{{count}} 条消息",
+      "no_frames": "尚未捕获到 WebSocket 帧"
+    }
+  },
+  "init": {
+    "status_os": "正在检查系统特性...",
+    "status_config": "正在加载基础配置...",
+    "status_data": "正在初始化数据存储...",
+    "status_ai": "正在同步 AI 设置...",
+    "status_rules": "正在加载拦截规则...",
+    "status_scripts": "正在加载扩展脚本...",
+    "status_proxy": "正在检查代理状态...",
+    "status_certs": "正在验证证书信任...",
+    "status_themes": "正在加载自定义主题...",
+    "status_plugins": "正在初始化插件系统...",
+    "status_complete": "准备就绪"
+  }
+}

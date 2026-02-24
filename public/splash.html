@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelayCraft Loading</title>
+    <style>
+        :root {
+            /* Dark Theme - Default */
+            --color-card-bg: #1e1e24;
+            --color-card-border: rgba(255, 255, 255, 0.1);
+            --color-primary: #60a5fa;
+            --color-accent: #7c3aed;
+            --color-foreground: #e6edf3;
+            --loader-bg: rgba(255, 255, 255, 0.15);
+            --text-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            --muted-text: rgba(230, 237, 243, 0.6);
+            --shadow-color: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Light Theme - only when explicitly set */
+        .theme-light {
+            --color-card-bg: #ffffff;
+            --color-card-border: rgba(0, 0, 0, 0.1);
+            --color-primary: #4f46e5;
+            --color-accent: #7c3aed;
+            --color-foreground: #1a1c23;
+            --loader-bg: rgba(0, 0, 0, 0.12);
+            --text-gradient: linear-gradient(135deg, #1a1c23 0%, #4f46e5 100%);
+            --muted-text: rgba(26, 28, 35, 0.6);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: default;
+        }
+
+        /* Body background transparent — window is transparent,
+           rounded corners come from .splash-card border-radius */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: transparent;
+        }
+
+        /* 圆角卡片容器 - fills entire window */
+        .splash-card {
+            width: 100%;
+            height: 100%;
+            padding: 32px 40px;
+            background: var(--color-card-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .logo-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            animation: logo-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes logo-entrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 12px rgba(96, 165, 250, 0.3));
+        }
+
+        .text-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .app-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: var(--text-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slogan {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            color: var(--muted-text);
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        .loader-bar {
+            width: 180px;
+            height: 3px;
+            background: var(--loader-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .loader-progress {
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+            animation: loading 1.5s infinite ease-in-out;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(350%);
+            }
+        }
+
+        .status-text {
+            font-size: 11px;
+            color: var(--muted-text);
+            height: 16px;
+            text-align: center;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .version {
+            font-size: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0.05em;
+            color: var(--muted-text);
+            opacity: 0.8;
+        }
+
+        .copyright {
+            font-size: 9px;
+            color: var(--muted-text);
+            opacity: 0.6;
+        }
+
+        /* Relay dot pulse animation */
+        .relay-dot-pulse {
+            animation: relay-dot-pulse 3s ease-in-out infinite;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+
+        @keyframes relay-dot-pulse {
+
+            0%,
+            100% {
+                r: 14px;
+                opacity: 0.9;
+            }
+
+            50% {
+                r: 16px;
+                opacity: 1;
+            }
+        }
+
+        /* Flow particles */
+        .flow-particle-1 {
+            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
+            animation: flow-move 4s linear infinite, flow-fade 4s ease-in-out infinite;
+        }
+
+        .flow-particle-2 {
+            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
+            animation: flow-move 4s linear infinite, flow-fade-2 4s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes flow-move {
+            0% {
+                offset-distance: 0%;
+            }
+
+            100% {
+                offset-distance: 100%;
+            }
+        }
+
+        @keyframes flow-fade {
+            0% {
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.8;
+            }
+
+            80% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes flow-fade-2 {
+            0% {
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.6;
+            }
+
+            80% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+    <script>
+        // Synchronize with App Theme from localStorage before paint
+        (function () {
+            try {
+                const mode = localStorage.getItem('themeMode');
+                // Only switch to light theme when explicitly set to 'light'
+                if (mode === 'light') {
+                    document.documentElement.classList.add('theme-light');
+                    // Also update body background immediately for light mode
+                    document.documentElement.style.background = '#ffffff';
+                }
+            } catch (e) {
+                console.warn('Theme sync failed', e);
+            }
+        })();
+
+        // Show the window only after the first frame has been painted.
+        // On Windows (WebView2): called from JS to avoid blank-window flash.
+        // On macOS: Rust already called show() in setup(), so this is a no-op
+        // (calling show() on an already-visible window is harmless).
+        var _splashShown = false;
+        function showWindowWhenReady() {
+            if (_splashShown) return;
+            _splashShown = true;
+            requestAnimationFrame(function () {
+                setTimeout(function () {
+                    try {
+                        if (window.__TAURI__) {
+                            window.__TAURI__.window.getCurrentWindow().show();
+                        }
+                    } catch (e) {
+                        console.warn('Failed to show splash window:', e);
+                    }
+                }, 0);
+            });
+        }
+
+        // Listen for initialization status updates
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('status');
+            const sloganEl = document.getElementById('slogan');
+
+            // Initial localized text based on browser language
+            const isZh = navigator.language.startsWith('zh');
+            if (statusEl) {
+                statusEl.textContent = isZh ? '正在启动...' : 'Starting...';
+            }
+            if (sloganEl) {
+                sloganEl.textContent = isZh ? 'AI 原生网络流量调试工具' : 'AI-Native Network Debugging Tool';
+            }
+
+            if (window.__TAURI__) {
+                const { listen } = window.__TAURI__.event;
+
+                listen('init-status', (event) => {
+                    if (statusEl) {
+                        statusEl.textContent = event.payload;
+                    }
+                });
+            } else {
+                console.warn('Tauri API not found. withGlobalTauri might be disabled.');
+            }
+
+            // Show the window now that content is ready
+            showWindowWhenReady();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="splash-card">
+        <div class="logo-wrapper">
+            <svg class="logo-svg" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="mainGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#4F46E5" />
+                        <stop offset="100%" stop-color="#7C3AED" />
+                    </linearGradient>
+                    <linearGradient id="flowGradient" x1="0" y1="0" x2="100%" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="white" stop-opacity="0" />
+                        <stop offset="50%" stop-color="white" stop-opacity="0.5" />
+                        <stop offset="100%" stop-color="white" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Group wrapper for scaling/padding -->
+                <g transform="translate(44.8, 44.8) scale(0.825)">
+                    <!-- Modern Squircle Background -->
+                    <rect x="0" y="0" width="512" height="512" rx="100" fill="url(#mainGradient)" />
+
+                    <!-- Subtle Data Stream (Background) -->
+                    <path d="M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300"
+                        stroke="url(#flowGradient)" stroke-width="60" stroke-linecap="round" stroke-opacity="0.15"
+                        fill="none" />
+
+                    <!-- Signal/Data Flow Elements -->
+                    <g transform="translate(111, 96)">
+                        <!-- Bar 1: Input -->
+                        <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95" />
+
+                        <!-- Bar 2: Processing -->
+                        <rect x="80" y="30" width="50" height="260" rx="25" fill="white" fill-opacity="1" />
+
+                        <!-- Bar 3: Peak/Relay -->
+                        <rect x="160" y="0" width="50" height="320" rx="25" fill="white" fill-opacity="1" />
+
+                        <!-- Bar 4: Output -->
+                        <rect x="240" y="60" width="50" height="200" rx="25" fill="white" fill-opacity="0.95" />
+
+                        <!-- Animated Pulse Dot -->
+                        <circle cx="265" cy="296" r="14" fill="white" class="relay-dot-pulse" />
+                    </g>
+
+                    <!-- Flow Particles -->
+                    <circle r="8" fill="white" opacity="0" class="flow-particle-1"
+                        style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
+                    <circle r="6" fill="white" opacity="0" class="flow-particle-2"
+                        style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
+                </g>
+            </svg>
+        </div>
+
+        <div class="text-group">
+            <div class="app-name">RelayCraft</div>
+            <div id="slogan" class="slogan">AI-Native Network Debugging Tool</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+            <div id="status" class="status-text"></div>
+        </div>
+
+        <div class="footer">
+            <div class="version">v0.99.24</div>
+            <div class="copyright">© 2026 RelayCraft Team</div>
+        </div>
+    </div>
+</body>
+
+</html>

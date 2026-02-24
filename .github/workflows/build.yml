@@ -1,0 +1,597 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: "--target universal-apple-darwin"
+            target: 'universal-apple-darwin'
+            rustup_targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ""
+            target: 'x86_64-unknown-linux-gnu'
+            rustup_targets: 'x86_64-unknown-linux-gnu'
+          - platform: 'self-hosted'
+            args: ""
+            target: 'x86_64-pc-windows-msvc'
+            rustup_targets: 'x86_64-pc-windows-msvc'
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Cache & Setup Node ---
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure pnpm store
+        shell: bash
+        run: pnpm config set store-dir .pnpm-store
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: ${{ runner.os }}-pnpm-local-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-local-store-
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
+      - name: Test Frontend
+        run: pnpm test
+
+      # --- Cache & Setup Rust ---
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustup_targets }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+
+
+      # --- Cache & Setup Python ---
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Get Pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          # Robust check for pip cache dir
+          DIR=$(python -m pip cache dir 2>/dev/null || echo "")
+          if [ -z "$DIR" ]; then
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              DIR="${LOCALAPPDATA//\\//}/pip/Cache"
+            elif [[ "$RUNNER_OS" == "macOS" ]]; then
+              DIR="$HOME/Library/Caches/pip"
+            else
+              DIR="$HOME/.cache/pip"
+            fi
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Setup Pip cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-v4-${{ hashFiles('engine-core/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-v4-
+
+      - name: Install Python Dependencies
+        shell: bash
+        run: |
+          # Minimal recovery for corrupted Windows toolcache
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python -m ensurepip --upgrade || true
+            python -m pip install --upgrade pip || true
+          fi
+          python -m pip install -r engine-core/requirements.txt
+
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      # --- Python Sidecar Build ---
+      - name: Build Python Sidecar
+        run: |
+          python engine-core/build.py
+
+      - name: Prepare Sidecar (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path src-tauri/binaries
+          Move-Item engine-core/dist/engine.exe src-tauri/binaries/engine-${{ matrix.target }}.exe
+          ls src-tauri/binaries
+
+      - name: Prepare Sidecar (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p src-tauri/binaries
+          mv engine-core/dist/engine src-tauri/binaries/engine-${{ matrix.target }}
+          chmod +x src-tauri/binaries/engine-${{ matrix.target }}
+          ls -l src-tauri/binaries
+
+      - name: Prepare Sidecar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p src-tauri/resources/engine
+          # macOS build.py output is 'onedir' in engine-core/dist/engine (folder)
+          cp -r engine-core/dist/engine/* src-tauri/resources/engine/
+
+          # RPATH fixing is now handled universally in build.py
+          ls -R src-tauri/resources/engine
+
+          # Install create-dmg for manual packaging
+          brew install create-dmg
+
+      # --- macOS Code Signing ---
+      - name: Import Code-Signing Certificates (macOS)
+        if: runner.os == 'macOS'
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+
+
+      - name: Test Backend
+        run: cargo test
+        working-directory: src-tauri
+
+      # --- Tauri Build ---
+      - name: Tauri Build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          # Enable signing for all platforms, including self-hosted Windows
+        with:
+          args: ${{ matrix.args }}
+
+      - name: Sign Linux Binaries
+        if: runner.os == 'Linux'
+        run: |
+          find src-tauri/target/release/bundle/appimage/ -name "*.AppImage" -exec pnpm exec tauri signer sign {} \;
+          find src-tauri/target/release/bundle/deb/ -name "*.deb" -exec pnpm exec tauri signer sign {} \;
+
+      - name: Sign Windows Binaries
+        if: matrix.platform == 'self-hosted'
+        shell: powershell
+        run: |
+          $VERSION = (Get-Content package.json | ConvertFrom-Json).version
+          $NSIS_PATH = "src-tauri/target/release/bundle/nsis"
+          $MSI_PATH = "src-tauri/target/release/bundle/msi"
+
+          # Find the actual files (using wildcards to handle potential architecture naming)
+          $EXE = Get-ChildItem "$NSIS_PATH/*.exe" | Select-Object -First 1
+          $MSI = Get-ChildItem "$MSI_PATH/*.msi" | Select-Object -First 1
+
+          if ($EXE -and $MSI) {
+            echo "🔍 Authenticode Signing: $($EXE.Name) and $($MSI.Name)"
+            # 1. Authenticode Sign
+            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
+            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
+
+            echo "🔍 Regenerating Tauri Updater Signatures (.sig)"
+            # 2. Regenerate Tauri Updater Signatures (.sig)
+            # The binaries have been modified by signtool, so we MUST re-sign for the updater.
+            # Use pnpm exec to skip the custom tauri script in package.json
+            pnpm exec tauri signer sign $EXE.FullName
+            pnpm exec tauri signer sign $MSI.FullName
+
+            echo "✅ Windows signing and signature regeneration complete!"
+          } else {
+            echo "❌ ERROR: Could not find EXE or MSI to sign!"
+            exit 1
+          }
+
+      # --- Post-Build macOS Signing & Notarization ---
+      - name: Sign and Notarize macOS App
+        if: runner.os == 'macOS'
+        run: |
+          # ============================================================
+          # DETERMINISTIC PATH RELOCATION (Fix for CI confusion)
+          # ============================================================
+          APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app"
+          echo "🔍 Step 0: Target App Bundle: $APP_PATH"
+
+          if [ ! -d "$APP_PATH" ]; then
+             echo "❌ CRITICAL ERROR: App bundle not found at expected path: $APP_PATH"
+             echo "   Listing target dir for debugging:"
+             ls -R src-tauri/target/ || true
+             exit 1
+          fi
+
+          echo "🔍 Step 1: Locating engine sidecar for relocation..."
+          # We know Tauri puts it here by default
+          OLD_ENGINE_PATH="$APP_PATH/Contents/Resources/resources/engine"
+          NEW_ENGINE_PATH="$APP_PATH/Contents/SharedSupport/engine"
+
+          if [ -d "$OLD_ENGINE_PATH" ]; then
+            echo "🚚 Moving engine: $OLD_ENGINE_PATH -> $NEW_ENGINE_PATH"
+            mkdir -p "$APP_PATH/Contents/SharedSupport"
+            rm -rf "$NEW_ENGINE_PATH"
+            mv "$OLD_ENGINE_PATH" "$NEW_ENGINE_PATH"
+
+            # Cleanup source directories to avoid 'Code has no resources' error if left empty
+            rmdir "$APP_PATH/Contents/Resources/resources" 2>/dev/null || true
+          else
+            echo "❗ WARNING: Engine not found in Resources at $OLD_ENGINE_PATH"
+            echo "   Checking if valid engine already exists in SharedSupport..."
+            if [ ! -d "$NEW_ENGINE_PATH" ]; then
+              echo "❌ ERROR: Engine sidecar missing from bundle entirely!"
+              ls -R "$APP_PATH/Contents"
+              exit 1
+            fi
+            echo "   ✅ Found existing engine in Contents/SharedSupport"
+          fi
+
+          ENGINE_PATH="$NEW_ENGINE_PATH"
+
+          # CRITICAL: Remove ALL existing signatures before starting fresh
+          echo "🧹 Step 1.5: Purging all existing signatures and extended attributes..."
+          xattr -rc "$APP_PATH"
+          find "$APP_PATH" -name "_CodeSignature" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          # ============================================================
+          # Step 2: Sanitize and Sign Components in SharedSupport/engine
+          # ============================================================
+          echo "📦 Step 2: Sanitizing and signing engine components in Contents/SharedSupport..."
+
+          # 2a. PURGE Metadata & Noise (DE-FEATURE STRATEGY)
+          echo "  Purging Info.plist and misleading bundle metadata..."
+          find "$ENGINE_PATH" -name "Info.plist" -delete 2>/dev/null || true
+
+          # NOTE: Do NOT rename python3.12 directory - PyInstaller depends on this exact name
+          # for module resolution. Renaming it breaks _struct and other stdlib modules.
+
+          # Remove other metadata
+          find "$ENGINE_PATH" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$ENGINE_PATH" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$ENGINE_PATH" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$ENGINE_PATH" -name "*.typed" -delete 2>/dev/null || true
+          find "$ENGINE_PATH" -name "py.typed" -delete 2>/dev/null || true
+          find "$ENGINE_PATH" -name "*.app" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$ENGINE_PATH" -name "*.framework" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          # 2b. Sign all Mach-O files in SharedSupport/engine (Bottom-Up / Depth-First)
+          echo "  Signing engine Mach-O files using depth-first strategy..."
+
+          # IMPORTANT: We use a temp file + for loop instead of pipe | while read
+          # because pipe creates a subshell where failures are silently swallowed.
+          SIGN_FAIL=0
+          SIGN_COUNT=0
+
+          # Collect all Mach-O files first (depth-first order)
+          MACHO_LIST=$(mktemp)
+          find -d "$ENGINE_PATH" -type f -exec sh -c '
+            for f; do
+              if file "$f" | grep -q "Mach-O"; then
+                echo "$f"
+              fi
+            done
+          ' _ {} + > "$MACHO_LIST"
+
+          echo "  Found $(wc -l < "$MACHO_LIST" | tr -d ' ') Mach-O files to sign"
+
+          while IFS= read -r file; do
+            SIGN_COUNT=$((SIGN_COUNT + 1))
+            # Check if it's an executable to apply entitlements
+            if file "$file" | grep -q "executable"; then
+              echo "  [$SIGN_COUNT] Signing Executable: ${file#$ENGINE_PATH/}"
+              if ! codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                --identifier "com.beta.relaycraft.engine" \
+                --options runtime \
+                --timestamp \
+                --entitlements src-tauri/entitlements.plist \
+                "$file"; then
+                echo "  ❌ FAILED to sign: $file"
+                SIGN_FAIL=$((SIGN_FAIL + 1))
+              fi
+            else
+              echo "  [$SIGN_COUNT] Signing Library: ${file#$ENGINE_PATH/}"
+              if ! codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                --identifier "com.beta.relaycraft.engine" \
+                --options runtime \
+                --timestamp \
+                "$file"; then
+                echo "  ❌ FAILED to sign: $file"
+                SIGN_FAIL=$((SIGN_FAIL + 1))
+              fi
+            fi
+          done < "$MACHO_LIST"
+          rm -f "$MACHO_LIST"
+
+          if [ "$SIGN_FAIL" -gt 0 ]; then
+            echo "❌ ERROR: $SIGN_FAIL out of $SIGN_COUNT Mach-O files failed to sign!"
+            exit 1
+          fi
+
+          echo "  ✅ All $SIGN_COUNT engine Mach-O components signed successfully"
+
+          # ============================================================
+          # Step 3: Sign Tauri Frameworks & Main Executable
+          # ============================================================
+          echo "📦 Step 3: Signing Tauri frameworks and main binary..."
+
+          # Sign other Frameworks (if any)
+          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
+            find -d "$APP_PATH/Contents/Frameworks" -type f ! -type l 2>/dev/null | while IFS= read -r file; do
+              if file "$file" | grep -q "Mach-O"; then
+                echo "  Signing Framework component: ${file#$APP_PATH/}"
+                codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                  --options runtime \
+                  --timestamp \
+                  "$file" || { echo "❌ FAILED to sign framework: $file"; exit 1; }
+              fi
+            done
+          fi
+
+          # Sign main executable
+          if [ -f "$APP_PATH/Contents/MacOS/RelayCraft" ]; then
+            echo "  Signing main executable..."
+            codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+              --options runtime \
+              --timestamp \
+              --entitlements src-tauri/entitlements.plist \
+              "$APP_PATH/Contents/MacOS/RelayCraft"
+          fi
+
+          # ============================================================
+          # Step 4: Sign .app Bundle Shell
+          # ============================================================
+          echo "📦 Step 4: Signing final application bundle..."
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --timestamp \
+            --entitlements src-tauri/entitlements.plist \
+            "$APP_PATH"
+
+          # ============================================================
+          # Step 5: Verification & Notarization
+          # ============================================================
+          echo "🔍 Step 5: Verifying signature integrity..."
+          # CRITICAL: Do NOT use --deep here, as it enforces bundle structure we intentionally broke.
+          # Instead, verify the bundle AND key inner components separately.
+
+          echo "  Verifying bundle signature..."
+          codesign -vvv --strict "$APP_PATH"
+
+          echo "  Verifying main executable..."
+          codesign -vvv --strict "$APP_PATH/Contents/MacOS/RelayCraft"
+
+          echo "  Verifying engine binary..."
+          codesign -vvv --strict "$ENGINE_PATH/engine"
+
+          # Spot-check: verify a few random Mach-O files in engine to catch signing gaps
+          echo "  Spot-checking engine Mach-O signatures..."
+          SPOT_FAIL=0
+          find "$ENGINE_PATH" -type f -name "*.so" | head -5 | while IFS= read -r f; do
+            if ! codesign -v --strict "$f" 2>/dev/null; then
+              echo "  ❌ Unsigned .so found: $f"
+              SPOT_FAIL=1
+            fi
+          done
+          find "$ENGINE_PATH" -type f -name "*.dylib" | head -5 | while IFS= read -r f; do
+            if ! codesign -v --strict "$f" 2>/dev/null; then
+              echo "  ❌ Unsigned .dylib found: $f"
+              SPOT_FAIL=1
+            fi
+          done
+
+          echo "📤 Notarizing application..."
+          ditto -c -k --keepParent "$APP_PATH" "$APP_PATH.zip"
+
+          xcrun notarytool submit "$APP_PATH.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          echo "📌 Stapling notarization ticket..."
+          xcrun stapler staple "$APP_PATH"
+
+          echo "🔍 Final Gatekeeper Assessment..."
+          # spctl may fail in CI environments where Gatekeeper is not fully functional
+          # This is informational only - notarization success is the real validation
+          spctl --assess --verbose=4 --type execute "$APP_PATH" || echo "⚠️ spctl assessment failed (may be expected in CI). Notarization was successful."
+
+          # ============================================================
+          # Step 6: Manual Packaging (Re-create artifacts from corrected .app)
+          # ============================================================
+          echo "📦 Step 6: Re-packaging artifacts..."
+
+          # 6a. Create .dmg (Release Format)
+          echo "  Creating .dmg disk image..."
+          VERSION=$(jq -r .version package.json)
+          DMG_NAME="RelayCraft_${VERSION}_${{ matrix.target }}.dmg"
+          DMG_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/$DMG_NAME"
+          rm -f "src-tauri/target/${{ matrix.target }}/release/bundle/macos/"*.dmg 2>/dev/null || true
+
+          # Use create-dmg if available, otherwise hdiutil fallback
+          if command -v create-dmg &> /dev/null; then
+             echo "  Using create-dmg..."
+             # create-dmg returns exit code 2 when it can't set background (common in CI)
+             # but the DMG is still created successfully, so we allow exit code 2
+             set +e
+             create-dmg \
+               --volname "RelayCraft Installer" \
+               --volicon "src-tauri/icons/icon.icns" \
+               --window-pos 200 120 \
+               --window-size 800 400 \
+               --icon-size 100 \
+               --icon "RelayCraft.app" 200 190 \
+               --hide-extension "RelayCraft.app" \
+               --app-drop-link 600 185 \
+               "$DMG_PATH" \
+               "$APP_PATH"
+             CREATE_DMG_EXIT=$?
+             set -e
+             if [ "$CREATE_DMG_EXIT" -ne 0 ] && [ "$CREATE_DMG_EXIT" -ne 2 ]; then
+               echo "❌ create-dmg failed with exit code $CREATE_DMG_EXIT"
+               exit 1
+             fi
+          else
+             echo "  Using hdiutil fallback..."
+             hdiutil create -volname "RelayCraft" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
+          fi
+
+          if [ ! -f "$DMG_PATH" ]; then
+            echo "❌ DMG file was not created!"
+            exit 1
+          fi
+
+          # Notarize the DMG as well (Optional but recommended for distribution)
+          echo "📤 Notarizing DMG..."
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          echo "📌 Stapling DMG..."
+          xcrun stapler staple "$DMG_PATH"
+
+          echo "  Signing DMG for updater/verification..."
+          pnpm exec tauri signer sign "$DMG_PATH"
+
+          echo "📦 Re-creating and signing .tar.gz for updater..."
+          # The original .tar.gz from tauri-action is missing notarization and engine relocation.
+          # We must recreate it from the corrected RelayCraft.app.
+          cd "src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          tar -czf RelayCraft.app.tar.gz RelayCraft.app
+          # Return to root for signer
+          cd -
+          pnpm exec tauri signer sign "src-tauri/target/universal-apple-darwin/release/bundle/macos/RelayCraft.app.tar.gz"
+
+          echo "🎉 macOS signing, notarization, and packaging complete!"
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      # --- Upload Artifacts for Metadata ---
+      - name: Upload Bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundles-${{ matrix.platform }}-${{ matrix.target }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.zip*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.tar.gz*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb*
+            src-tauri/target/${{ matrix.target }}/release/latest.json*
+            src-tauri/target/release/bundle/**/*.msi*
+            src-tauri/target/release/bundle/**/*.exe*
+            src-tauri/target/release/bundle/**/*.zip*
+            src-tauri/target/release/bundle/**/*.dmg*
+            src-tauri/target/release/bundle/**/*.tar.gz*
+            src-tauri/target/release/bundle/**/*.AppImage*
+            src-tauri/target/release/bundle/**/*.deb*
+            src-tauri/target/release/latest.json*
+          if-no-files-found: warn
+
+  finalize-release:
+    needs: build-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all bundles
+        uses: actions/download-artifact@v4
+        with:
+          path: all-bundles
+          pattern: bundles-*
+          merge-multiple: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Flatten Bundles
+        run: |
+          echo "📦 Collecting all bundles and metadata..."
+          # Move only relevant bundle files and signatures to the root, avoiding internal app files
+          find all-bundles -type f \( -name "*.dmg" -o -name "*.tar.gz" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.sig" -o -name "latest.json" \) \
+            ! -path "*/RelayCraft.app/*" \
+            ! -name "control.tar.gz" \
+            ! -name "data.tar.gz" \
+            -exec mv -t all-bundles/ {} +
+          # Clean up subdirectories
+          find all-bundles -mindepth 1 -type d -exec rm -rf {} +
+
+          # Extract version to environment for subsequent steps
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+          # Use the helper script to generate a unified latest.json
+          node scripts/generate-update-json.cjs all-bundles $VERSION
+
+          echo "Files collected and metadata generated:"
+          ls -la all-bundles/
+
+      - name: Sign latest.json
+        run: |
+          # Use npx to avoid needing to install pnpm dependencies in this job
+          # Redirect output to generate the .sig file for the merged latest.json
+          npx @tauri-apps/cli signer sign all-bundles/latest.json > all-bundles/latest.json.sig
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 'RelayCraft v${{ env.VERSION }}'
+          body: 'See the assets to download this version and install.'
+          files: all-bundles/*
+          draft: true
+          token: ${{ github.token }}

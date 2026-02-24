@@ -1,0 +1,22 @@
+name: 📚 Documentation Issue
+description: Report missing, incorrect, or unclear documentation | 报告文档问题
+title: "[Docs] "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What is missing or incorrect? | 缺少或不正确的内容是什么？
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Documentation location | 文档位置
+      placeholder: e.g. README, wiki page URL, in-app help text
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement | 改进建议

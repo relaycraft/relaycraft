@@ -1,0 +1,1112 @@
+{
+  "ai": {
+    "api_key": "API Key",
+    "api_key_desc": "Key for accessing the API",
+    "assistant": {
+      "analyzing": "Smart Assistant is thinking...",
+      "naming": {
+        "desc": "More descriptive naming",
+        "placeholder": "Describe rule purpose...",
+        "suggestions": {
+          "auto": "Auto-name based on config",
+          "desc": "More descriptive naming",
+          "tech": "More technical naming"
+        },
+        "tech": "More technical naming",
+        "title": "Smart Naming Assistant"
+      },
+      "regex": {
+        "domain": "Match example.com and its subdomains",
+        "error": "Case-insensitive match for status:error",
+        "explain_btn": "Explain Regex Meaning",
+        "path": "Match paths starting with api/v1",
+        "placeholder": "Describe match rule (e.g. paths starting with api/v1)",
+        "suggestions": {
+          "domain": "Match example.com and its subdomains",
+          "error": "Case-insensitive match for status:error",
+          "path": "Match paths starting with api/v1"
+        },
+        "title": "Smart Regex Assistant"
+      },
+      "search": {
+        "error": "Find all 4xx or 5xx error requests",
+        "json": "Search all JSON responses",
+        "placeholder": "Describe filter (e.g. find all 404 requests)",
+        "slow": "Find requests taking over 500ms",
+        "suggestions": {
+          "error": "Find all 4xx or 5xx error requests",
+          "json": "Search all JSON responses",
+          "slow": "Find requests taking over 500ms"
+        },
+        "title": "Smart Search Assistant"
+      }
+    },
+    "clear_memory": "Clear Memory",
+    "connection": {
+      "failure": "Connection failed, check logs",
+      "placeholder_openai": "sk-...",
+      "placeholder_optional": "Optional (if not required)",
+      "save": "Save Config",
+      "success": "Connected",
+      "test": "Test Connection"
+    },
+    "enable": "Enable AI Features",
+    "enable_desc": "Enable AI-powered script generation and rule creation",
+    "endpoint": "API Endpoint",
+    "endpoint_desc": "Support Ollama, LocalAI (OpenAI compatible)",
+    "max_tokens": "Max Tokens",
+    "max_tokens_desc": "Max tokens per request",
+    "memory_turns": "Memory Turns",
+    "memory_turns_desc": "Number of recent turns AI will remember for context (Command Center only)",
+    "model": "Model Name",
+    "model_desc": "e.g. gpt-5, qwen3-max, llama3",
+    "provider": "API Provider",
+    "provider_desc": "Select AI service provider",
+    "providers": {
+      "aliyun": "Aliyun Bailian",
+      "anthropic": "Anthropic",
+      "custom": "Custom",
+      "deepseek": "DeepSeek",
+      "google": "Google",
+      "moonshot": "Moonshot AI",
+      "openai": "OpenAI",
+      "openrouter": "OpenRouter"
+    },
+    "temperature": "Temperature",
+    "temperature_desc": "Controls generation randomness. Only applies to Command Center (AI Chat).",
+    "title": "AI Assistant Config"
+  },
+  "breakpoint": {
+    "abort": "Abort",
+    "abort_all": "Abort All",
+    "active_manager": "Breakpoint Manager",
+    "body_content": "Body Content",
+    "clear_all": "Clear All",
+    "control_center": "Intercept Control Center",
+    "headers": "Headers",
+    "hint": "Requests matching domains above will be suspended...",
+    "method_protocol": "Method / Protocol",
+    "queue": "Intercept Queue",
+    "remove_one": "Remove this breakpoint",
+    "request": "Request",
+    "request_phase": "Request Phase",
+    "response": "Response",
+    "response_phase": "Response Phase",
+    "resume": "Resume",
+    "resume_all": "Resume All",
+    "status_code": "Status Code",
+    "add_title": "Add Breakpoint",
+    "pattern": "URL Pattern",
+    "pattern_placeholder": "e.g. api.example.com or /auth",
+    "pattern_hint": "Enter domain, path, or full URL to match",
+    "match_type_label": "Match Type",
+    "match_types": {
+      "contains": "Contains",
+      "exact": "Exact Match",
+      "regex": "Regular Expression"
+    },
+    "break_on": "Break Phase",
+    "preview": "Rule Preview",
+    "preview_contains": "URL contains",
+    "preview_equals": "URL equals",
+    "preview_matches": "URL matches regex",
+    "preview_both": "Will break on both request and response",
+    "preview_request": "Will break on request only (outgoing)",
+    "preview_response": "Will break on response only (incoming)",
+    "preview_none": "No break phase selected, this breakpoint will not trigger",
+    "add": "Add Breakpoint"
+  },
+  "cert": {
+    "format": {
+      "label": "Format"
+    },
+    "actions": {
+      "install": "Install & Trust Certificate",
+      "regenerate": "Regenerate Root CA",
+      "remove": "Remove Trust from System"
+    },
+    "ca_name": "Root Certificate",
+    "info": {
+      "expires": "Expires",
+      "fingerprint": "Fingerprint (SHA256)",
+      "ip": "IP:",
+      "port": "Port:"
+    },
+    "manual": {
+      "desktop": {
+        "linux": "Linux",
+        "macos": "macOS",
+        "windows": "Windows"
+      },
+      "guides": {
+        "android": [
+          "Go to [Settings] → [Security/Encryption & Credentials]",
+          "Click [Install Certificate] → [CA Certificate]",
+          "Select the downloaded file and confirm installation"
+        ],
+        "ios": [
+          "Go to [Settings] → [Profile Downloaded] and install",
+          "Go to [Settings] → [General] → [About]",
+          "Scroll to bottom and click [Certificate Trust Settings] (Crucial)",
+          "Enable full trust for [RelayCraft] certificate (Required)"
+        ],
+        "linux_arch": "Arch Linux / Manjaro",
+        "linux_arch_cmd": "sudo trust anchor \"{{path}}\"",
+        "linux_debian": "Ubuntu / Debian / Kali",
+        "linux_debian_cmd": "sudo cp \"{{path}}\" /usr/local/share/ca-certificates/RelayCraft_CA.crt && sudo update-ca-certificates",
+        "linux_fedora": "Fedora / CentOS / RHEL",
+        "linux_fedora_cmd": "sudo cp \"{{path}}\" /etc/pki/ca-trust/source/anchors/RelayCraft_CA.crt && sudo update-ca-trust",
+        "macos": [
+          "Click <strong>Install & Trust Certificate</strong> on the left to open certificate preview",
+          "In Keychain Access, double click RelayCraft certificate",
+          "Expand [Trust] dropdown, set [When using this certificate] to [Always Trust]",
+          "Close window and enter system password"
+        ],
+        "macos_sequoia_hint_desc": "Due to system restrictions, auto-install may fail on Sequoia. We recommend using the <strong>Terminal Command</strong> below.",
+        "macos_sequoia_hint_title": "macOS 15 (Sequoia) Automation Limit",
+        "mobile_android_hint": "Note: Modern Android systems have strict built-in security policies; Root access or specialized debugging configurations may be required for traffic decryption.",
+        "mobile_browser_access": "2. Browser Access (or Scan) Link",
+        "mobile_manual_transfer_tip": "Tip: If connection fails, send the certificate file from computer to phone directly (most reliable).",
+        "mobile_qr_code_hint": "Scan to open download link",
+        "mobile_step1": "Step 1: Get Certificate",
+        "mobile_step1_desc": "Ensure mobile device is on the same LAN and proxy is configured.",
+        "mobile_step2": "Step 2: Install & Trust",
+        "mobile_troubleshooting_app_pinning": "Some apps (banking, enterprise) use SSL Pinning and cannot be easily decrypted.",
+        "mobile_troubleshooting_ios_trust": "iOS MUST enable full trust in [About] → [Certificate Trust Settings].",
+        "mobile_troubleshooting_title": "Still can't capture?",
+        "mobile_wifi_config": "1. Configure Wi-Fi Proxy",
+        "terminal_copy": "Copy Command",
+        "terminal_hint": "Faster Way: Terminal One-Click Trust",
+        "title": "Installation Guides",
+        "windows": [
+          "Click <strong>Open Storage Directory</strong> on the left",
+          "Double click <code class=\"bg-muted px-1.5 py-0.5 rounded text-xs font-mono border border-border\">mitmproxy-ca-cert.pem</code>",
+          "In Import Wizard, select [Current User] → [Next], leave password empty",
+          "Select <strong>[Place all certificates in the following store]</strong>",
+          "Click [Browse] and select <strong>[Trusted Root Certification Authorities]</strong> → [OK]",
+          "Finish import and click [Yes] in security warning"
+        ]
+      },
+      "tabs": {
+        "desktop": "Desktop",
+        "mobile": "Mobile (iOS/Android)"
+      }
+    },
+    "state": {
+      "trusted_desc": "RelayCraft Root CA is trusted by your system. No further action is required.",
+      "untrusted_desc": "Install the root certificate to intercept and analyze HTTPS traffic securely."
+    },
+    "status": {
+      "trusted": "This computer trusts the root certificate.",
+      "untrusted": "The system does not yet trust this certificate, HTTPS cannot be decrypted."
+    },
+    "storage": {
+      "open": "Open Storage Directory",
+      "title": "Certificate Storage"
+    }
+  },
+  "command_center": {
+    "actions": {
+      "chat": "AI Chat",
+      "clear_traffic": "Clear Traffic",
+      "create_rule": "Create Rule",
+      "create_script": "Create Script",
+      "navigate": "Navigate",
+      "open_settings": "Settings",
+      "toggle_proxy": "Toggle Proxy"
+    },
+    "ai_integrated": "RelayCraft AI Integrated",
+    "confirm_action": "Confirm Action",
+    "confirm_required": "Confirmation Required",
+    "default_explanation": "This action requires your confirmation to proceed.",
+    "error_generic": "Command execution error",
+    "explanations": {
+      "clear": "Clearing traffic list...",
+      "nav_composer": "Navigating to Request Composer...",
+      "nav_plugins": "Navigating to Plugin Market...",
+      "nav_rules": "Navigating to Rules...",
+      "nav_scripts": "Navigating to Scripts...",
+      "nav_settings": "Navigating to Settings...",
+      "nav_traffic": "Navigating to Traffic Monitor...",
+      "start": "Starting proxy engine...",
+      "stop": "Stopping proxy engine..."
+    },
+    "loading": {
+      "ai": "AI analyzing intent...",
+      "default": "Processing command..."
+    },
+    "not_enabled_warning": "> [!WARNING]\n> **AI Disabled**. Enable AI for natural language. Use commands starting with `/` (e.g. `/start`, `/clear`).",
+    "placeholder": {
+      "ai": "Enter instructions or describe task...",
+      "default": "Enter command (e.g. /start) or search...",
+      "editing_rule": "Editing current rule, enter command to adjust..."
+    },
+    "status": {
+      "editing": "Editing Mode"
+    },
+    "suggestions": {
+      "ai_composer_upload": "AI Build from Document",
+      "ai_explain_rule": "Explain this rule",
+      "ai_plugin_dev": "AI Assisted Plugin Dev",
+      "ai_plugin_recommend": "AI Plugin Analysis & Recommend",
+      "clear": "/clear (Clear Traffic)",
+      "composer_post_example": "Construct a POST request to target server",
+      "go_to": "Go to",
+      "nav_composer": "/composer (Request Composer)",
+      "nav_plugins": "/plugins (Plugins Market)",
+      "nav_rules": "/rules (Go to Rules)",
+      "nav_scripts": "/scripts (Go to Scripts)",
+      "nav_traffic": "/traffic (Go to Traffic)",
+      "proxy_start": "/start (Start Capture)",
+      "proxy_stop": "/stop (Stop Capture)",
+      "rule_block_example": "Block all requests from target domain",
+      "rule_conflict": "Check for rule conflicts",
+      "script_auth_example": "Auto add authorization token for target domain",
+      "script_login_example": "Intercept login requests for target domain",
+      "settings": "/settings (Open Settings)",
+      "traffic_analyze": "Analyze this {{method}} request",
+      "traffic_anomalies": "Find anomalies or failed requests",
+      "traffic_security": "Analyze security risks",
+      "traffic_trends": "Analyze traffic trends"
+    }
+  },
+  "common": {
+    "add": "Add",
+    "beautify": "Beautify",
+    "breakpoint": "Breakpoint",
+    "browse": "Browse",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "clear_filter": "Clear Filter",
+    "close": "Close",
+    "confirm": "Confirm",
+    "confirm_delete_desc": "This action cannot be undone.",
+    "confirm_delete_title": "Confirm Delete Item?",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copy_json": "Copy JSON",
+    "delete": "Delete",
+    "disable": "Disable",
+    "disabled": "Disabled",
+    "dismiss": "Don't show again",
+    "double_click_rename": "Double click to rename",
+    "edit": "Edit",
+    "enable": "Enable",
+    "error": "Error",
+    "export": "Export",
+    "export_har": "Export HAR",
+    "failed": "Failed",
+    "format": "Format",
+    "generate": "Generate",
+    "headers": "Headers",
+    "help": "Help",
+    "import": "Import",
+    "import_har": "Import HAR",
+    "import_har_hint": "Import HAR (Append)",
+    "loading": "Loading...",
+    "move_down": "Move Down",
+    "move_up": "Move Up",
+    "name": "Name",
+    "no": "No",
+    "no_content": "No content",
+    "no_results": "No results found",
+    "none": "None",
+    "not_loaded": "Not Loaded",
+    "ok": "OK",
+    "open": "Open Session",
+    "optional": "Optional",
+    "pending_restart": "Pending Restart (Not Active)",
+    "reset": "Reset",
+    "rule": "Rule",
+    "restarting": "Restarting...",
+    "save": "Save",
+    "save_success": "Saved successfully",
+    "script": "Script",
+    "search": "Search...",
+    "select": "Select...",
+    "select_placeholder": "Please select...",
+    "settings": "Settings",
+    "success": "Success",
+    "yes": "Yes",
+    "terminology": {
+      "block_request": "Block Request",
+      "map_local": "Map Local",
+      "map_remote": "Map Remote",
+      "proxy": "Proxy",
+      "rewrite": "Rewrite",
+      "rewrite_body": "Rewrite Body",
+      "rewrite_header": "Rewrite Header",
+      "rules": "Rules",
+      "scripts": "Scripts",
+      "throttle": "Network Throttling",
+      "traffic": "Traffic"
+    },
+    "try_another_search": "Try another search term",
+    "unknown": "Unknown",
+    "value": "Value",
+    "warning": "Warning"
+  },
+  "composer": {
+    "body": "Body",
+    "body_none": "This request has no body content",
+    "clear_error": "Clear Error",
+    "curl_modal": {
+      "desc": "Paste the complete cURL command below to extract URL, headers, and body.",
+      "error_empty": "Please enter a cURL command",
+      "error_format": "Could not parse command, please ensure it is standard curl format",
+      "parse_btn": "Parse",
+      "placeholder": "curl 'https://api.service.com/v1/resource' -H 'Accept: */*' ...",
+      "title": "Parse from cURL"
+    },
+    "error_sending_request": "Error sending request for URL ({{url}})",
+    "form_data": "Form Data",
+    "form_editor": {
+      "add_param": "Add Parameter",
+      "empty": "No parameters defined",
+      "key": "Key",
+      "title": "Form Data (x-www-form-urlencoded)",
+      "value": "Value"
+    },
+    "generic_builder_error": "Request build failed, please check URL format",
+    "headers": "Headers",
+    "headers_list": {
+      "add": "Add Header",
+      "empty": "No headers",
+      "key": "Key",
+      "value": "Value"
+    },
+    "parse_curl_tooltip": "Parse from cURL",
+    "preview": "PREVIEW",
+    "raw": "RAW",
+    "raw_json": "Raw JSON",
+    "request_failed": "Request Failed",
+    "reset": "Reset Form",
+    "response": "Response",
+    "send": "Send",
+    "send_desc": "No request sent",
+    "sending": "Sending...",
+    "title": "Request Composer",
+    "url": "URL",
+    "url_builder_error": "Builder error for URL ({{url}})",
+    "url_placeholder": "Enter request URL..."
+  },
+  "content_preview": {
+    "base64": "Base64 Encoded Content",
+    "binary": "Binary Content",
+    "download": "Download File",
+    "no_content": "No content available",
+    "view_parsed": "View Parsed",
+    "view_source": "View Source",
+    "large_content_warning": "Large content ({{size}}). Displaying first {{max}} characters.",
+    "show_all": "Show All",
+    "collapse": "Collapse"
+  },
+  "flow": {
+    "analysis": {
+      "btn": "AI Analysis",
+      "check_settings": "Check Settings",
+      "diagnostics_title": "Expert Diagnostics",
+      "error": "Error occurred during analysis",
+      "error_auth": "AI authentication failed, check API Key",
+      "error_quota": "AI quota exceeded, check balance",
+      "optimization_title": "Suggestions & Optimization",
+      "summary_title": "AI Summary",
+      "title": "AI Analysis"
+    },
+    "map_local": {
+      "fallback_hint": "Automatically fell back to remote response",
+      "file_not_found": "Local File Missing"
+    },
+    "replay": "Replay Request",
+    "replay_btn": "Replay",
+    "sections": {
+      "request_body": "Request body",
+      "request_headers": "Request Headers",
+      "response_body": "Response body",
+      "response_headers": "Response Headers"
+    },
+    "tabs": {
+      "messages": "Messages",
+      "request": "Request",
+      "response": "Response"
+    },
+    "websocket": {
+      "empty": "No WebSocket frames captured yet",
+      "title": "WebSocket Frames"
+    }
+  },
+  "header_editor": {
+    "add": "Add Operation",
+    "op_add": "Add",
+    "op_remove": "Remove",
+    "op_set": "Set",
+    "title": "Header Operations"
+  },
+  "log_viewer": {
+    "app_logs": "System Log",
+    "audit_logs": "Audit Log",
+    "crash_logs": "Crash Log",
+    "empty_or_no_log": "No logs available or log file is empty",
+    "plugin_logs": "Plugin Log",
+    "proxy_logs": "Proxy Log",
+    "refresh": "Refresh Logs",
+    "script_logs": "Script Log",
+    "sensitive_warning": "Logs may contain sensitive information (e.g. Tokens). Please handle with care and do not display in insecure environments.",
+    "title": "Runtime Logs"
+  },
+  "notifications": {
+    "all_processed": "You are all caught up",
+    "category": {
+      "network": "Network",
+      "plugin": "Plugin",
+      "script": "Script",
+      "security": "Security",
+      "system": "System",
+      "update": "Update"
+    },
+    "clear_all": "Clear all",
+    "count": "{{count}} notifications",
+    "delete_title": "Delete",
+    "disable": "Disable notifications (DND)",
+    "dnd_on": "Do Not Disturb On",
+    "empty": "No notifications",
+    "enable": "Enable notifications",
+    "mark_all_read": "Mark all as read",
+    "priority": {
+      "critical": "Critical",
+      "high": "High",
+      "low": "Low",
+      "normal": "Normal"
+    },
+    "relative_time": {
+      "days_ago": "{{count}}d ago",
+      "hours_ago": "{{count}}h ago",
+      "just_now": "Just now",
+      "minutes_ago": "{{count}}m ago"
+    },
+    "title": "Notifications"
+  },
+  "plugins": {
+    "api_error": "Failed to load API for plugin: {{pluginId}}",
+    "browse_market": "Browse Market",
+    "confirm_uninstall": "Are you sure you want to uninstall this plugin?",
+    "disable": "Disable",
+    "empty": {
+      "desc": "Place plugins in the 'plugins' folder in data directory",
+      "rescan": "Rescan",
+      "title": "No Plugins Found"
+    },
+    "enable": "Enable",
+    "errors": {
+      "already_exists_msg": "This plugin is already installed. To reinstall, please uninstall the existing version first.",
+      "already_exists_title": "Plugin Already Exists",
+      "download_failed": "Download Failed",
+      "file_not_found_msg": "Could not find or access the selected file. Please verify the file path.",
+      "file_not_found_title": "File Not Found",
+      "generic": "Error: {{error}}",
+      "help_text": "Please check your network connection or try again later.",
+      "install_failed": "Installation Failed",
+      "invalid_format_msg": "plugin.json format is incorrect or contains syntax errors. Please check the plugin package integrity.\n\nDetails: {{error}}",
+      "invalid_format_title": "Invalid Plugin Format",
+      "invalid_pkg_msg": "plugin.json contains trailing characters or format errors. This may not be a valid RelayCraft plugin package.\n\nTip: Ensure you selected a .rcplugin or .zip file containing a valid plugin.json.",
+      "not_found": "Plugin Not Found",
+      "permission_denied_msg": "Cannot access the file. Please check file permissions.",
+      "permission_denied_title": "Permission Denied",
+      "timeout": "Request Timeout"
+    },
+    "guide": {
+      "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy engine</span> to make changes take effect.",
+      "title": "Plugin Management"
+    },
+    "install_local": "Install from File",
+    "installing": "Installing...",
+    "market": {
+      "empty_tip": "No matching plugins or themes found",
+      "install": "Install",
+      "installed": "Installed",
+      "loading": "Fetching market data...",
+      "no_preview": "No Preview",
+      "sync": "Sync Market",
+      "title_plugin": "Plugin Manager",
+      "title_theme": "Theme Market"
+    },
+    "market_desc": "Discover and install community plugins to extend RelayCraft capabilities.",
+    "market_desc_theme": "Discover and install community themes to customize RelayCraft appearance.",
+    "no_description": "No description",
+    "notifications": {
+      "disabled_msg": "Plugin \"{{name}}\" has been disabled.",
+      "disabled_title": "Plugin Disabled",
+      "enabled_msg": "Plugin \"{{name}}\" has been successfully enabled.",
+      "enabled_title": "Plugin Enabled",
+      "install_success_msg": "Plugin \"{{id}}\" has been successfully installed and enabled.",
+      "install_success_title": "Installation Successful",
+      "load_failed_msg": "Could not fetch plugin list: {{error}}",
+      "load_failed_title": "Plugin Load Failed",
+      "toggle_failed_msg": "Could not {{action}} plugin \"{{id}}\". Error: {{error}}",
+      "toggle_failed_title": "Plugin Operation Failed",
+      "uninstall_failed_msg": "Could not uninstall plugin \"{{id}}\".\n\nError: {{error}}",
+      "uninstall_failed_title": "Uninstall Failed",
+      "uninstall_success_msg": "Plugin \"{{name}}\" has been successfully uninstalled.",
+      "uninstall_success_title": "Plugin Uninstalled"
+    },
+    "redesign": {
+      "homepage": "Homepage"
+    },
+    "running": "Running",
+    "scanning": "Scanning plugins...",
+    "search_placeholder": "Search market...",
+    "search_placeholder_plugin": "Search plugins...",
+    "search_placeholder_theme": "Search themes...",
+    "settings": {
+      "no_schema": "Plugin has no settings schema defined"
+    },
+    "title": "Plugins",
+    "uninstall": "Uninstall"
+  },
+  "proxy_store": {
+    "scripts_loaded": "Loaded {{count}} scripts.",
+    "start_fail_msg": "Failed to start traffic capture. Error: {{error}}",
+    "start_fail_title": "Capture Start Failed",
+    "start_success_msg": "Traffic capture started on port {{port}}.",
+    "start_success_title": "Capturing Traffic",
+    "stop_fail_msg": "Failed to stop traffic capture. Error: {{error}}",
+    "stop_fail_title": "Capture Stop Failed",
+    "stop_success_msg": "Traffic capture stopped.",
+    "stop_success_title": "Capture Stopped",
+    "restart_fail_msg": "Failed to restart proxy engine. Error: {{error}}",
+    "restart_fail_title": "Proxy Engine Restart Failed",
+    "restart_success_msg": "Proxy engine restarted successfully on port {{port}}.",
+    "restart_success_title": "Proxy Engine Restarted"
+  },
+  "rules": {
+    "add_group": "Add New Group",
+    "alerts": {
+      "delete_msg": "Are you sure you want to delete this rule? This action cannot be undone.",
+      "delete_title": "Delete Rule",
+      "discard_msg": "You have unsaved changes. Switching rules will lose these changes. Continue?",
+      "discard_title": "Discard Changes?",
+      "load_error_msg": "Some rule files on disk could not be parsed and were skipped. Please fix them manually.",
+      "load_error_title": "Corrupted Rules Detected",
+      "more_items": "...and {{count}} more"
+    },
+    "conflict": {
+      "overridden": "Overridden",
+      "shadowed": "Rule Shadowed",
+      "shadowed_desc": "The terminal rule \"{{name}}\" above captures this traffic, so this rule will not execute. Try moving it up."
+    },
+    "editor": {
+      "action": {
+        "map_local": {
+          "content": "Mock Body Content",
+          "content_type": "Content-Type",
+          "path": "File Path",
+          "source": "Map Source",
+          "source_file": "Local File",
+          "source_manual": "Manual Data (Mock)",
+          "status_code": "Status Code"
+        },
+        "map_remote": {
+          "preserve_path": "Preserve Path",
+          "preserve_path_desc": "Append original path to target URL",
+          "url": "Target URL"
+        },
+        "rewrite": {
+          "json_ops_append": "Append",
+          "json_ops_delete": "Delete",
+          "json_ops_set": "Set",
+          "json_value_placeholder": "Value (JSON)",
+          "jsonpath_hint": "Path supports JSON Path (e.g. $.data.user.id)",
+          "modes_json": "JSON Modify",
+          "modes_regex": "Regex Replace",
+          "modes_replace": "String Replace",
+          "modes_set": "Set Content",
+          "placeholders_content": "Enter new body content...",
+          "placeholders_pattern": "String to find...",
+          "placeholders_regex_pattern": "Regex pattern...",
+          "placeholders_replacement": "Replacement string...",
+          "req": "Request",
+          "req_headers": "Request Headers",
+          "res": "Response",
+          "res_headers": "Response Headers",
+          "status_code": "Status Code",
+          "type": "Rewrite Mode"
+        },
+        "throttle": {
+          "bandwidth": "Bandwidth (kbps)",
+          "delay": "Delay (ms)",
+          "packet_loss": "Packet Loss (%)",
+          "placeholders_unlimited": "Unlimited"
+        }
+      },
+      "advanced_assistant": "Advanced Assistant",
+      "ai": {
+        "analysis_title": "Smart Analysis",
+        "apply": "Apply Code",
+        "apply_yaml": "Apply YAML",
+        "chip_create": "Create Rule",
+        "chip_explain": "Explain Rule",
+        "chip_import": "Import External Rules",
+        "chip_modify": "Modify Rule",
+        "edit_yaml": "Edit YAML",
+        "fill_form": "Fill Form",
+        "generate_fail": "AI Rule Generation Failed",
+        "parse_error_hint": "Failed to parse generated rule. Switched to YAML mode for manual adjustment.",
+        "placeholder": "Enter instructions, e.g., block all requests to target domain",
+        "script": {
+          "create_btn": "Create Python Script",
+          "disable_rule": "Disable original rule",
+          "enable_script": "Enable new script"
+        },
+        "tab_ai": "Smart Mode",
+        "tab_script": "Script Preview"
+      },
+      "convert_script_confirm": "Are you sure you want to convert this rule to a Python script?",
+      "convert_script_confirm_disable_rule": "The original rule will be disabled.",
+      "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
+      "convert_script_confirm_enable_script": "The new script will be enabled.",
+      "convert_script_confirm_restart": "Note: Enabling script requires proxy engine restart.",
+      "convert_script_title": "Confirm Conversion",
+      "core": {
+        "group": "Group",
+        "hints": {
+          "modify": "Non-terminal Action: Executes modifications and continues matching subsequent rules.",
+          "request_terminal": "Terminal Action: Intercepts and returns a response. All subsequent request and response rules will be skipped.",
+          "terminal": "Terminal Action: Successfully matched, stops all subsequent request and response rules."
+        },
+        "name": "Rule Name",
+        "name_placeholder": "Enter rule name",
+        "no_group": "Uncategorized",
+        "type": "Rule Type",
+        "types": {
+          "block_desc": "Abort request immediately",
+          "block_label": "Block Request",
+          "map_local_desc": "Redirect request to local file",
+          "map_local_label": "Map Local",
+          "map_remote_desc": "Redirect request to remote server",
+          "map_remote_label": "Map Remote",
+          "rewrite_body_desc": "Modify request or response body content",
+          "rewrite_body_label": "Rewrite Body",
+          "rewrite_desc": "Add, modify or delete request/response headers",
+          "rewrite_label": "Rewrite Header",
+          "throttle_desc": "Simulate network delay, packet loss and bandwidth limit",
+          "throttle_label": "Network Throttling"
+        }
+      },
+      "match": {
+        "headers": {
+          "add": "Add Condition",
+          "label": "Header Matching"
+        },
+        "headers_list": {
+          "add": "Add Header",
+          "key": "Key",
+          "value": "Value"
+        },
+        "label": "Match Label",
+        "test": {
+          "label": "Live Match Test",
+          "matched": "MATCHED",
+          "not_matched": "NOT MATCHED",
+          "placeholder": "Enter a URL to test..."
+        },
+        "url_match_type": {
+          "contains": "Contains",
+          "exact": "Exact",
+          "regex": "Regex",
+          "wildcard": "Wildcard"
+        },
+        "url_placeholder": "Enter match pattern..."
+      },
+      "sections": {
+        "action": "Action Config",
+        "core": "Basic Info",
+        "match": "Match Configuration"
+      },
+      "title_create": "Create New Rule",
+      "title_edit": "Edit Rule"
+    },
+    "empty": {
+      "create_first_group": "Create First Group",
+      "desc": "Use 'New Rule' in the title bar or the button below to create a group.",
+      "group_empty": "No rules in this group",
+      "title": "No Rules or Groups"
+    },
+    "export_zip_success": "Rules exported to {{path}}",
+    "group": {
+      "delete_group": "Delete Group",
+      "delete_msg": "Are you sure you want to delete group \"{{name}}\"? Rules will become 'Uncategorized'.",
+      "delete_title": "Delete Group",
+      "disable_group": "Disable Group",
+      "edit_name": "Edit Name",
+      "enable_group": "Enable Group",
+      "move_down": "Move Down",
+      "move_up": "Move Up"
+    },
+    "import": {
+      "action": "Import",
+      "desc": "Support single rule JSON or full backup Bundle",
+      "placeholder": "Paste JSON content here...",
+      "select": "Select File...",
+      "success": "Successfully imported {{count}} rules and groups!",
+      "title": "Import Rules"
+    },
+    "import_zip_extracting": "Extracting...",
+    "import_zip_success": "Successfully imported {{count}} rules",
+    "match_all": "Match All Requests",
+    "new": "New Rule",
+    "new_group_name": "New Rule Group",
+    "summary": {
+      "block": "Blocked",
+      "manual_mock": "Manual Mock",
+      "map_local": "Map Local: {{path}}",
+      "map_remote": "Redirect to: {{url}}",
+      "more_actions": " (+{{count}} more)",
+      "rewrite_body": "Rewrite {{target}} body: {{type}}",
+      "rewrite_header": "Modify {{req}} req / {{res}} res headers",
+      "throttle": "Throttle: {{delay}}ms",
+      "types": {
+        "request": "Request",
+        "response": "Response",
+        "set": "Set",
+        "replace": "Replace",
+        "regex": "Regex",
+        "json": "JSON"
+      }
+    },
+    "uncategorized": "Uncategorized Rules",
+    "validation": {
+      "actions_array": "'actions' must be an array",
+      "empty": "Rule object is empty",
+      "invalid_type": "Invalid or missing 'type'. Must be one of: {{types}}",
+      "match_request_array": "'match.request' must be an array",
+      "min_actions": "Rule must have at least one action",
+      "missing_match": "Missing or invalid 'match' configuration",
+      "missing_name": "Missing or invalid 'name'"
+    }
+  },
+  "session": {
+    "all_cleared": "All historical sessions have been cleared",
+    "clear_all": "Clear All History",
+    "clear_all_confirm": "Clear All History?",
+    "clear_all_msg": "This will delete all historical sessions (excluding the active recording session). This action cannot be undone.",
+    "clear_error": "Failed to clear historical sessions",
+    "current": "Current",
+    "delete_confirm": "Delete this session?",
+    "delete_confirm_msg": "Are you sure you want to delete session \"{{name}}\"? This action cannot be undone.",
+    "delete_title": "Delete Session",
+    "flow_count": "{{count}} entries",
+    "historical_mode": "Viewing historical session",
+    "history": "Session History",
+    "latest": "LATEST",
+    "save": {
+      "desc": "Description (Optional)",
+      "desc_placeholder": "Enter notes about this session...",
+      "name": "Session Name",
+      "name_placeholder": "Enter session name...",
+      "save_btn": "Save Session",
+      "saving": "Saving...",
+      "title": "Save Current Session"
+    },
+    "switch_hint": "Switch session",
+    "time": {
+      "days_ago": "{{count}}d ago",
+      "hours_ago": "{{count}}h ago",
+      "just_now": "Just now",
+      "minutes_ago": "{{count}}m ago"
+    }
+  },
+  "scripts": {
+    "content_modified": "Content modified, restart required",
+    "create_script": "New Script",
+    "delete_confirm": "Are you sure you want to delete script \"{{name}}\"? This will permanently delete the file from disk.",
+    "delete_title": "Delete Script",
+    "editor": {
+      "ai": {
+        "chip_create": "Create Script",
+        "chip_custom_logic": "Generate specific logic...",
+        "chip_explain": "Explain Script",
+        "chip_fix": "Fix Script Errors",
+        "chip_modify": "Modify Script",
+        "insight_title": "AI Script Analysis",
+        "logic_header": "Key Logic",
+        "placeholder": "Enter instructions, e.g., intercept google.com and modify response...",
+        "prompt_create": "Create a script: ",
+        "prompt_custom_logic": "Help me write a logic that: ",
+        "prompt_fix": "Fix errors in current script: ",
+        "prompt_modify": "Modify current script: ",
+        "restart_notice": "Restart Required",
+        "suggestions_header": "Optimization Suggestions",
+        "summary_header": "Script Summary",
+        "synced": "Synced to editor",
+        "syncing": "Syncing to editor in real-time..."
+      },
+      "ai_helper": "AI Helper",
+      "revert": "Revert Changes",
+      "revert_fail": "Failed to revert script",
+      "revert_hint": "Discard unsaved changes and restore to last saved state",
+      "revert_success": "Script reverted successfully",
+      "save_hint": "Save",
+      "saved": "Saved",
+      "saving": "Saving..."
+    },
+    "empty": {
+      "create": "Create Script",
+      "desc": "Create a Python script to intercept and modify traffic.",
+      "title": "No Scripts"
+    },
+    "name_exists": "Script name already exists",
+    "restart_btn": "Restart Proxy Engine",
+    "restart_hint": "Changes require proxy engine restart to take effect",
+    "save_failed": "Failed to save script",
+    "save_script": "Save Script",
+    "select_desc": "Select a script from the list to edit, or create a new one.",
+    "select_title": "Select Script",
+    "status": {
+      "draft": "Draft"
+    },
+    "subtitle": "Powered by mitmproxy. Use Python scripts for advanced control and workflow automation.",
+    "title": "Python Scripting"
+  },
+  "settings": {
+    "about": {
+      "check_failed": "Check Failed",
+      "check_update_btn": "Check for Updates",
+      "checking": "Checking...",
+      "checking_updates": "Check for the latest version",
+      "downloading": "Downloading...",
+      "update_available": {
+        "message": "New version {{version}} is available!\n\n{{body}}\n\nDo you want to update now?",
+        "title": "Update Available"
+      },
+      "dev_tools": "Developer Tools",
+      "error_fetch": "Failed to fetch version info. Please check your network.",
+      "github": "Repository",
+      "github_desc": "Visit the open-source repository to browse code or join community discussions",
+      "homepage": "Product Home",
+      "homepage_desc": "Official RelayCraft product website",
+      "links": "Resources",
+      "mitmproxy": "Engine Repository",
+      "mitmproxy_desc": "Powered by the excellent open-source project mitmproxy",
+      "open_config": "Open Config Folder",
+      "open_config_desc": "Locate configuration files",
+      "open_data": "Open Data Folder",
+      "open_data_desc": "Manage all data files generated by the application",
+      "open_logs": "Open Logs Folder",
+      "open_logs_desc": "View internal runtime logs",
+      "title": "Support & About",
+      "troubleshooting": "Troubleshooting",
+      "up_to_date": "Up to date",
+      "verbose": "Verbose Mode",
+      "verbose_desc": "Record detailed runtime logs for the application and core for deep troubleshooting",
+      "view_logs": "View System Logs",
+      "visit_engine": "Visit Engine Repo",
+      "visit_github": "Visit Repository",
+      "visit_website": "Visit Website"
+    },
+    "appearance": {
+      "active": "Active",
+      "apply": "Apply",
+      "density": "Information Density",
+      "density_comfortable": "Comfortable",
+      "density_compact": "Compact",
+      "density_relaxed": "Relaxed",
+      "discover_themes_desc": "Browse our growing collection of themes to personalize your experience.",
+      "discover_themes_title": "Discover Community Themes",
+      "exit_confirm_message": "Are you sure you want to exit RelayCraft?\nThe proxy service will be stopped.",
+      "exit_confirm_title": "Confirm Exit",
+      "import_zip": "Import Theme",
+      "market_btn": "Browse Market",
+      "mode_custom": "Custom Theme",
+      "mode_dark": "Dark Mode",
+      "mode_light": "Light Mode",
+      "mode_system": "System Sync",
+      "theme": "Color Theme",
+      "title": "Appearance"
+    },
+    "footer": "RelayCraft · Initializing core engine...",
+    "general": {
+      "always_on_top": "Always on Top",
+      "always_on_top_desc": "Keep window above other windows",
+      "auto_start_proxy": "Auto Start Capture",
+      "auto_start_proxy_desc": "Automatically start traffic capture on launch.",
+      "confirm_exit": "Confirm on Exit",
+      "confirm_exit_desc": "Show a confirmation dialog when closing the app to prevent accidental disruption",
+      "language": "Language",
+      "language_desc": "Select language for RelayCraft",
+      "title": "General"
+    },
+    "network": {
+      "mitm_risk": "Connection security reduced; recommended only for trusted environments",
+      "port": "Proxy Port",
+      "port_desc": "Proxy Server Port (1024-65535)",
+      "pending_restart_title": "Restart Required to Apply Changes",
+      "pending_restart_desc": "Port, SSL, or upstream proxy settings have changed.",
+      "restart_now": "Restart Now",
+      "restarting": "Restarting...",
+      "ssl_insecure": "Ignore SSL Certificate Validation",
+      "ssl_insecure_desc": "For enterprise intranets, self-signed certificates, or dev environments",
+      "title": "Network & Proxy",
+      "upstream_check": "Check Connection",
+      "upstream_check_failed": "Connection failed",
+      "upstream_check_success": "Connected successfully",
+      "upstream_checking": "Testing connection...",
+      "upstream_desc": "In enterprise or restricted network environments, RelayCraft may require an upstream proxy to access the internet. (e.g., for Plugin Market or AI services).",
+      "upstream_placeholder": "http://127.0.0.1:7890",
+      "upstream_title": "Upstream Proxy",
+      "upstream_url": "Proxy URL",
+      "upstream_url_desc": "Supports HTTP/HTTPS protocols, e.g., http://127.0.0.1:7890"
+    }
+  },
+  "setup_guide": {
+    "copy_address": "Copy Address",
+    "current_proxy": "Current Proxy Address",
+    "got_it": "Got it",
+    "install_cert": "Install Certificate",
+    "install_cert_desc": "After setting proxy, visit <strong>http://relay.guide</strong> on mobile browser to install certificate for HTTPS.",
+    "install_cert_step1": "Configure Wi-Fi Proxy",
+    "install_cert_step1_desc": "Make sure your phone and computer are on the same Wi-Fi. Go to Wi-Fi details → Proxy → <strong>Manual</strong>, enter IP <code>{{ip}}</code> and port <code>{{port}}</code>.",
+    "install_cert_step2": "Visit Certificate Page",
+    "install_cert_step2_desc": "After configuring the proxy, open your mobile browser and visit (or scan the QR code):",
+    "install_cert_fallback": "Can't connect?",
+    "install_cert_fallback_desc": "You can send the certificate file from your computer directly to your phone to install it (most reliable option).",
+    "mobile_config": "Mobile Config (iOS/Android)",
+    "pc_config": "PC / Browser Config",
+    "switchy_omega": "Recommended: SwitchyOmega",
+    "switchy_omega_desc": "Install SwitchyOmega extension, create <strong>HTTP</strong> proxy with Host <code>{{ip}}</code> and Port <code>{{port}}</code>.",
+    "system_proxy": "System Proxy",
+    "system_proxy_desc": "Search 'Proxy' in system settings, enable 'Use a proxy server', and enter the address/port above.",
+    "title": "Proxy Setup Guide",
+    "trouble": "Having Issues?",
+    "trouble_desc": "Check firewall settings and ensure port {{port}} is available.",
+    "wifi_manual": "Wi-Fi Manual Config",
+    "wifi_manual_desc": "Ensure mobile is on same Wi-Fi. Go to settings → Wi-Fi details → Proxy → <strong>Manual</strong>."
+  },
+  "sidebar": {
+    "certificate": "Certificates",
+    "composer": "Request Composer",
+    "plugins": "Plugins",
+    "rules": "Rules",
+    "scripts": "Scripts",
+    "settings": "Settings",
+    "traffic": "Traffic Monitor"
+  },
+  "status_bar": {
+    "breakpoints": "Manage Breakpoints",
+    "captured": "Requests Captured",
+    "ip": "Local IP",
+    "listening": "Listening",
+    "port": "Listening Port",
+    "stopped": "Stopped",
+    "engine_healthy": "Engine running",
+    "engine_idle": "Engine idle",
+    "engine_error": "Engine not running"
+  },
+  "titlebar": {
+    "close": "Close",
+    "maximize": "Maximize",
+    "minimize": "Minimize",
+    "restore": "Restore",
+    "running": "Capturing",
+    "search_placeholder": "Command or Search ({{hotkey}})",
+    "start_proxy": "Start Capture",
+    "stop_proxy": "Stop Capture",
+    "stopped": "Stopped"
+  },
+  "traffic": {
+    "breakpoint_hit_tooltip": "This domain has breakpoint enabled",
+    "hit_detail": "{{name}} ({{type}})",
+    "context_menu": {
+      "body_truncated": "Body truncated due to size",
+      "copy_curl": "Copy as cURL",
+      "copy_req_body": "Copy Request Body",
+      "copy_res_body": "Copy Response Body",
+      "copy_url": "Copy URL",
+      "create_rule": "Create Rule from this Flow",
+      "curl_copied": "cURL command copied to clipboard",
+      "edit_composer": "Edit in Composer",
+      "replay": "Replay Request",
+      "req_body_copied": "Request body copied to clipboard",
+      "res_body_copied": "Response body copied",
+      "set_breakpoint": "Set Breakpoint",
+      "url_copied": "URL copied to clipboard"
+    },
+    "empty_search": "No matching requests",
+    "file_not_found": "File not found",
+    "filter": {
+      "and": "Combined (AND)",
+      "and_desc": "Intersection of different types",
+      "body": "Body Search",
+      "case_tooltip": "Match Case",
+      "compare": "Numerical Compare",
+      "current": "Current Filter:",
+      "headers": "Header Search",
+      "matched_tooltip": "Filter Matched",
+      "autoscroll": "Follow Latest Data",
+      "neg": "Negative (Exclude)",
+      "or": "Multi-value (OR)",
+      "or_desc": "Union of same types",
+      "placeholder": "Enter filter conditions...",
+      "quick": "Quick Filters",
+      "regex_tooltip": "Regex"
+    },
+    "headers_list": {
+      "add": "Add Header",
+      "encrypted": "Encrypted (HTTPS)",
+      "failed": "Failed",
+      "key": "Key",
+      "pending": "Pending"
+    },
+    "jump_to_latest": "Jump to latest",
+    "list_cleared": "Traffic list cleared",
+    "listening": "Listening for traffic...",
+    "new_requests": " new requests",
+    "proxy_error": "Capture startup error",
+    "proxy_stopped": "Capture Stopped",
+    "replay_failed": "Replay failed",
+    "replay_success": "Request replayed",
+    "source": {
+      "local": "Local",
+      "remote": "Remote Device"
+    },
+    "security": {
+      "fix_now": "Fix Now",
+      "untrusted_desc": "HTTPS decryption will not work until you install the root certificate.",
+      "untrusted_title": "Root Certificate Not Trusted"
+    },
+    "server_status": "Running",
+    "setup": {
+      "cert": "Certificates",
+      "guide": "Setup Guide",
+      "mobile": "Mobile Proxy",
+      "mobile_desc": "Set the manual proxy on your phone to decrypt your apps.",
+      "system": "System Proxy",
+      "system_desc": "Route your computer's HTTP/HTTPS traffic through RelayCraft."
+    },
+    "start_hint": "Click the \"Start Capture\" button or use shortcut to begin capturing traffic.",
+    "start_proxy": "Start Capture",
+    "status": {
+      "encrypted": "Encrypted (HTTPS)",
+      "failed": "Failed",
+      "label": "Status",
+      "pending": "Pending"
+    },
+    "websocket": {
+      "frames": "WebSocket Frames",
+      "messages_count": "{{count}} messages",
+      "no_frames": "No WebSocket frames captured yet"
+    }
+  },
+  "init": {
+    "status_os": "Checking OS features...",
+    "status_config": "Loading configuration...",
+    "status_data": "Initializing data stores...",
+    "status_ai": "Syncing AI settings...",
+    "status_rules": "Loading intercept rules...",
+    "status_scripts": "Loading extension scripts...",
+    "status_proxy": "Checking proxy status...",
+    "status_certs": "Verifying certificate trust...",
+    "status_themes": "Loading custom themes...",
+    "status_plugins": "Initializing plugins...",
+    "status_complete": "Ready"
+  }
+}

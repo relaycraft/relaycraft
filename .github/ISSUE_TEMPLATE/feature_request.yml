@@ -1,0 +1,55 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement | 建议新功能或改进
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature!
+        感谢您的功能建议！
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Use Case | 问题 / 使用场景
+      description: What problem does this feature solve? | 此功能解决了什么问题？
+      placeholder: I'm frustrated when... / 当我...时感到不方便...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution | 建议的解决方案
+      description: How would you like this to work? | 您希望如何实现？
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered | 已考虑的替代方案
+      description: Any alternative solutions or workarounds you've considered. | 您考虑过的其他方案或临时解决方法。
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category | 功能分类
+      options:
+        - Traffic Inspection | 流量查看
+        - Rules & Rewriting | 规则与重写
+        - AI Analysis | AI 分析
+        - Proxy Configuration | 代理配置
+        - UI / UX
+        - Performance | 性能
+        - Plugin System | 插件系统
+        - Other | 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context | 其他信息
+      description: Screenshots, mockups, or any other context. | 截图、原型或其他背景信息。

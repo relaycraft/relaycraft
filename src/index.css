@@ -1,0 +1,912 @@
+@import "tailwindcss";
+
+/* Local JetBrains Mono Font Definitions */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Local Inter Font Definitions */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  /*
+       DESIGN TOKENS & THEME DEFAULTS
+       These values serve as the fallback "Modern Charcoal" theme.
+       They are dynamically overridden by JS in themeStore.ts.
+    */
+  /* Custom Fonts */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  /* Optimized Monospace Stack: JetBrains Mono (Best for Code) -> Fira Code -> Roboto Mono -> System Fallbacks */
+  --font-mono:
+    "JetBrains Mono", "Fira Code", "Roboto Mono", Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  /* Premium "Modern Charcoal" Palette - Balanced contrast for dev tools */
+  --color-background: #0b0c0f;
+  /* Pure depth for the main workspace */
+  --color-foreground: #e6edf3;
+  /* High legibility soft-white */
+
+  --color-card: #161a22;
+  /* Primary UI surfaces (Flow list, Editor) */
+  --color-card-foreground: #e6edf3;
+
+  --color-primary: #60a5fa;
+  /* Blue 400 - Better Dark Mode Contrast */
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #0d1117;
+  /* Secondary surfaces */
+  --color-secondary-foreground: #8b949e;
+
+  --color-muted: #11141a;
+  /* Sidebar / Tab Bars / Lower hierarchy */
+  --color-muted-foreground: #8b949e;
+
+  --color-accent: #1e2229;
+  /* Hover / Selection states */
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #fb7185;
+  /* Rose 400 - Better Dark Mode Contrast */
+  --color-destructive-foreground: #ffffff;
+
+  --color-success: #10b981;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #000000;
+
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+
+  --color-popover: #161b22;
+  --color-popover-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.08);
+
+  /* Semantic Theme Variables */
+  --color-success: #10b981;
+  /* Emerald-500 */
+  --color-warning: #f59e0b;
+  /* Amber-500 */
+  --color-destructive: #f43f5e;
+  /* Rose-500 */
+  --color-info: #3b82f6;
+  /* Blue-500 */
+
+  /* Rule Type Specific Colors */
+  --color-rule-script: #818cf8;
+  /* Indigo-400 */
+  --color-rule-rewrite-body: #a855f7;
+  /* Purple-500 */
+  --color-rule-map-local: #3b82f6;
+  /* Blue-500 */
+  --color-rule-map-remote: #10b981;
+  /* Emerald-500 */
+  --color-rule-rewrite-header: #f97316;
+  /* Orange-500 */
+  --color-rule-throttle: #06b6d4;
+  /* Cyan-500 */
+  --color-rule-block: #f43f5e;
+  /* Rose-500 */
+  --color-rule-breakpoint: #ef4444;
+  /* Red-500 */
+
+  --color-method-delete: #f43f5e;
+
+  /* Surface & Glass Effects */
+  --surface-opacity-subtle: 0.1;
+  --surface-opacity-glass: 0.4;
+  --surface-opacity-solid: 0.95;
+
+  --blur-sm: 4px;
+  --blur-md: 12px;
+  --blur-lg: 40px;
+  --blur-xl: 64px;
+
+  /* Standardized Border Palette */
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-muted: rgba(255, 255, 255, 0.12);
+
+  /*
+   * Extended Typography Scale - Fills gaps in Tailwind's default scale
+   * Tailwind defaults: xs (12px), sm (14px), base (16px)
+   * Extensions below provide more granular control for UI development:
+   */
+  --text-micro: 0.625rem;
+  /* 10px - Minimum technical size (smaller than xs) */
+  --text-tiny: 0.6875rem;
+  /* 11px - Between micro and xs */
+  --text-ui: 0.8125rem;
+  /* 13px - Between xs and sm, main UI baseline */
+
+  /* Custom Variables for Personalization */
+  --density-p: 8px;
+  /* Default: Comfortable */
+
+  --shadow-premium: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* High-DPI (2K/4K) Premium Visual Enhancements */
+/* biome-ignore lint/correctness/noUnknownMediaFeatureName: Vendor specific prefix for device pixel ratio */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+  :root {
+    /* Finer borders and deeper, multi-layered shadows for high-res displays */
+    --color-border: rgba(255, 255, 255, 0.06);
+    --shadow-premium:
+      0 0 0 1px rgba(255, 255, 255, 0.03), 0 2px 4px rgba(0, 0, 0, 0.2),
+      0 12px 32px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Information Density Overrides */
+[data-density="compact"] {
+  --density-p: 2px;
+  --density-rule-content-gap: 0px;
+}
+
+[data-density="comfortable"] {
+  --density-p: 8px;
+  --density-rule-content-gap: 1px;
+}
+
+[data-density="relaxed"] {
+  --density-p: 16px;
+  --density-rule-content-gap: 4px;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary), transparent 70%);
+  color: var(--color-foreground);
+}
+
+/* Hide number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Premium Typography System */
+* {
+  /* Enable advanced font features for better rendering */
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Specific optimization for macOS + Chinese: Increase base font size via rem-base adjustment */
+html.platform-mac.lang-zh {
+  font-size: 106.25%;
+  /* Scales 16px to 17px equivalent in rem */
+}
+
+/* Typography Hierarchy */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+/* CJK Font Weight Optimization: prevent too bold appearance */
+html.lang-zh body,
+html.lang-ja body,
+html.lang-ko body {
+  --font-weight-bold: 600;
+}
+
+html.lang-zh .font-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+/* Tighter tracking for uppercase labels */
+.uppercase {
+  letter-spacing: 0.05em;
+}
+
+/* UI Textures & Elevation */
+.glass-panel {
+  background-color: color-mix(in srgb, var(--color-popover), transparent 60%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 1px 0 color-mix(in srgb, var(--color-foreground), transparent 98%);
+}
+
+.bg-vibrancy-container {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%,
+      var(--color-input) 0%,
+      var(--color-background) 100%);
+}
+
+.vibrancy-blob {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: all 1s ease-in-out;
+}
+
+.blob-1 {
+  background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
+  top: -200px;
+  right: -100px;
+  animation: blob-float 20s infinite alternate;
+}
+
+.blob-2 {
+  background: radial-gradient(circle, var(--color-success) 0%, transparent 70%);
+  bottom: -150px;
+  left: -50px;
+  animation: blob-float 25s infinite alternate-reverse;
+  opacity: 0.1;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  33% {
+    transform: translate(10%, 15%) rotate(120deg) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-15%, 5%) rotate(240deg) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(360deg) scale(1);
+  }
+}
+
+.animate-vibrancy-drift {
+  animation: drift 40s linear infinite;
+}
+
+/* GPU-accelerated animations for EmptyState component */
+@keyframes radar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.animate-radar-ping {
+  animation: radar-ping 2s ease-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.pro-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-premium);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pro-card:hover {
+  border-color: color-mix(in srgb, var(--color-border), var(--color-foreground) 10%);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  outline-color: var(--color-primary);
+}
+
+/* Refined typography weight for specific elements */
+h1,
+h2,
+h3,
+.font-bold {
+  letter-spacing: -0.01em;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-size: var(--text-ui);
+  line-height: 1.6;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Extreme Font Rendering Optimizations */
+  text-rendering: optimizeLegibility;
+  /* chws: Contextual Half-width Spacing for better CJK punctuation */
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1,
+    "kern" 1,
+    "chws" 1;
+  font-optical-sizing: auto;
+  letter-spacing: 0.005em;
+}
+
+/* Monospace font stack for code and technical data */
+code,
+pre,
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
+}
+
+/* Global Dynamic Scrollbar Profile - v2 (Centralized) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Base State: Subtle but visible thumb */
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 92%);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* Global Visibility: Show on Hover or Scrolling */
+:hover::-webkit-scrollbar-thumb,
+.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 80%);
+}
+
+/* Hovering the thumb itself makes it darker */
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
+}
+
+/* macOS Specific Overrides */
+/* 1. Reset to standard Mac overlay feel (wider track for padding) */
+html.platform-mac ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* 2. Mac thumb: thinner visual appearance via border+background-clip */
+html.platform-mac ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  /* Results in 6px visible thumb with 10px track */
+  background-clip: content-box;
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 90%);
+}
+
+/* 3. Darker on container hover or during scroll */
+html.platform-mac :hover::-webkit-scrollbar-thumb,
+html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 75%);
+}
+
+/* 4. Even darker when hovering the thumb itself */
+html.platform-mac ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 50%);
+}
+
+/* Utility to completely hide */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Select dropdown options dark theme */
+select {
+  border-radius: 8px;
+}
+
+select option {
+  background-color: var(--color-popover);
+  color: var(--color-popover-foreground);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 2px 4px;
+}
+
+select option:checked {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-weight: 500;
+}
+
+select option:hover {
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
+/* Markdown Analysis Styles */
+.markdown-analysis h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: var(--color-primary);
+}
+
+.markdown-analysis h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.25rem;
+}
+
+.markdown-analysis h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.markdown-analysis p {
+  margin-bottom: 0.6rem;
+}
+
+.markdown-analysis ul,
+.markdown-analysis ol {
+  margin-left: 1rem;
+  margin-bottom: 0.75rem;
+  list-style-type: disc;
+}
+
+.markdown-analysis li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-analysis code {
+  background-color: var(--color-muted);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
+.markdown-analysis pre {
+  background-color: var(--color-muted);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
+}
+
+.markdown-analysis strong {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.markdown-analysis blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 0.75rem;
+  font-style: italic;
+  color: var(--color-muted-foreground);
+  margin: 0.75rem 0;
+}
+
+/* Premium Toast Styling (Sonner Overrides) */
+.relaycraft-toast-container {
+  background: color-mix(in srgb, var(--color-popover), transparent 20%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow:
+    0 8px 32px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px 0 color-mix(in srgb, var(--color-background), transparent 95%);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+}
+
+.relaycraft-toast-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+}
+
+.relaycraft-toast-description {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
+}
+
+/* Fix Sonner Close Button positioning and style */
+.relaycraft-toast-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--color-muted-foreground);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+  cursor: pointer;
+  transform: none;
+}
+
+.relaycraft-toast-container:hover .relaycraft-toast-close {
+  opacity: 1;
+}
+
+.relaycraft-toast-close:hover {
+  background: var(--color-accent);
+  color: var(--color-foreground);
+}
+
+/* Success/Error Icon Colors (Since we removed richColors) */
+[data-icon] {
+  margin-right: 0;
+  margin-top: 0;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+[data-type="success"] [data-icon] {
+  color: var(--color-success);
+}
+
+[data-type="error"] [data-icon] {
+  color: var(--color-destructive);
+}
+
+[data-type="warning"] [data-icon] {
+  color: var(--color-warning);
+}
+
+[data-type="info"] [data-icon] {
+  color: var(--color-info);
+}
+
+@layer utilities {
+
+  /* Typography Utilities - Extended font sizes */
+  .text-micro {
+    font-size: var(--text-micro);
+  }
+
+  .text-tiny {
+    font-size: var(--text-tiny);
+  }
+
+  .text-ui {
+    font-size: var(--text-ui);
+  }
+
+  /* Semantic Utilities */
+  .text-success {
+    color: var(--color-success);
+  }
+
+  .text-warning {
+    color: var(--color-warning);
+  }
+
+  .text-error {
+    color: var(--color-destructive);
+  }
+
+  .text-info {
+    color: var(--color-info);
+  }
+
+  .bg-success {
+    background-color: var(--color-success);
+  }
+
+  .bg-warning {
+    background-color: var(--color-warning);
+  }
+
+  .bg-error {
+    background-color: var(--color-destructive);
+  }
+
+  .bg-info {
+    background-color: var(--color-info);
+  }
+
+  .border-success {
+    border-color: var(--color-success);
+  }
+
+  .border-warning {
+    border-color: var(--color-warning);
+  }
+
+  .border-error {
+    border-color: var(--color-destructive);
+  }
+
+  .border-info {
+    border-color: var(--color-info);
+  }
+
+  /* Rule Type Utilities */
+  .text-rule-script {
+    color: var(--color-rule-script);
+  }
+
+  .text-rule-rewrite-body {
+    color: var(--color-rule-rewrite-body);
+  }
+
+  .text-rule-map-local {
+    color: var(--color-rule-map-local);
+  }
+
+  .text-rule-map-remote {
+    color: var(--color-rule-map-remote);
+  }
+
+  .text-rule-rewrite-header {
+    color: var(--color-rule-rewrite-header);
+  }
+
+  .text-rule-throttle {
+    color: var(--color-rule-throttle);
+  }
+
+  .text-rule-block {
+    color: var(--color-rule-block);
+  }
+
+  .text-rule-breakpoint {
+    color: var(--color-rule-breakpoint);
+  }
+
+  .bg-rule-script {
+    background-color: var(--color-rule-script);
+  }
+
+  .bg-rule-rewrite-body {
+    background-color: var(--color-rule-rewrite-body);
+  }
+
+  .bg-rule-map-local {
+    background-color: var(--color-rule-map-local);
+  }
+
+  .bg-rule-map-remote {
+    background-color: var(--color-rule-map-remote);
+  }
+
+  .bg-rule-rewrite-header {
+    background-color: var(--color-rule-rewrite-header);
+  }
+
+  .bg-rule-throttle {
+    background-color: var(--color-rule-throttle);
+  }
+
+  .bg-rule-block {
+    background-color: var(--color-rule-block);
+  }
+
+  .bg-rule-breakpoint {
+    background-color: var(--color-rule-breakpoint);
+  }
+
+  /* Interaction Feedback Utilities */
+  .interactive-pop {
+    @apply transition-all active:scale-95 active:opacity-80;
+  }
+
+  .border-rule-script {
+    border-color: var(--color-rule-script);
+  }
+
+  .border-rule-rewrite-body {
+    border-color: var(--color-rule-rewrite-body);
+  }
+
+  .border-rule-map-local {
+    border-color: var(--color-rule-map-local);
+  }
+
+  .border-rule-map-remote {
+    border-color: var(--color-rule-map-remote);
+  }
+
+  .border-rule-rewrite-header {
+    border-color: var(--color-rule-rewrite-header);
+  }
+
+  .border-rule-throttle {
+    border-color: var(--color-rule-throttle);
+  }
+
+  .border-rule-block {
+    border-color: var(--color-rule-block);
+  }
+
+  /* Method Utilities */
+  .text-method-get {
+    color: var(--color-method-get);
+  }
+
+  .text-method-post {
+    color: var(--color-method-post);
+  }
+
+  .text-method-put {
+    color: var(--color-method-put);
+  }
+
+  .text-method-delete {
+    color: var(--color-method-delete);
+  }
+
+  .bg-method-get {
+    background-color: var(--color-method-get);
+  }
+
+  .bg-method-post {
+    background-color: var(--color-method-post);
+  }
+
+  .bg-method-put {
+    background-color: var(--color-method-put);
+  }
+
+  .bg-method-delete {
+    background-color: var(--color-method-delete);
+  }
+
+  .border-method-get {
+    border-color: var(--color-method-get);
+  }
+
+  .border-method-post {
+    border-color: var(--color-method-post);
+  }
+
+  .border-method-put {
+    border-color: var(--color-method-put);
+  }
+
+  .border-method-delete {
+    border-color: var(--color-method-delete);
+  }
+}

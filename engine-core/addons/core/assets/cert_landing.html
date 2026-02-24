@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        :root {
+            --bg: #0b0c0f;
+            --surface: #161a22;
+            --surface2: #1e2229;
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #60a5fa;
+            --primary-dim: rgba(96, 165, 250, 0.12);
+            --fg: #e6edf3;
+            --muted: #8b949e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+            --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px 60px;
+        }
+
+        code {
+            font-family: var(--mono);
+            font-size: 0.9em;
+            background: var(--surface2);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin: 0 2px;
+            vertical-align: baseline;
+            font-weight: 500;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .logo-container {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-dim);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .header-text h1 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-text p {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* Proxy badge */
+        .proxy-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-dim);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        .proxy-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px var(--success);
+        }
+
+        .proxy-badge code {
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+        }
+
+        .proxy-badge .label {
+            color: var(--muted);
+        }
+
+        /* Section title */
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        /* OS tabs */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .tab:hover {
+            background: var(--surface2);
+            color: var(--fg);
+        }
+
+        .tab.active {
+            background: var(--primary-dim);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Panel */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Steps */
+        .steps {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .step {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .step-text {
+            font-size: 13px;
+            color: var(--fg);
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .step-text strong {
+            color: var(--fg);
+            font-weight: 600;
+        }
+
+        /* Download button */
+        .dl-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.15s, transform 0.1s;
+            margin-bottom: 20px;
+        }
+
+        .dl-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .dl-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Advanced */
+        .advanced {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .dl-secondary {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .dl-secondary:hover {
+            color: var(--fg);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Warning */
+        .warn-box {
+            display: flex;
+            gap: 10px;
+            background: rgba(245, 158, 11, 0.06);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 24px;
+            font-size: 12px;
+            color: rgba(245, 158, 11, 0.85);
+            line-height: 1.5;
+        }
+
+        .warn-icon {
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 11px;
+            color: var(--muted);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="mainGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#4F46E5" />
+                        <stop offset="1" stop-color="#7C3AED" />
+                    </linearGradient>
+                </defs>
+                <rect width="512" height="512" rx="100" fill="url(#mainGradient)" />
+                <g transform="translate(111, 96)">
+                    <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95" />
+                    <rect x="80" y="30" width="50" height="260" rx="25" fill="white" />
+                    <rect x="160" y="0" width="50" height="320" rx="25" fill="white" />
+                    <rect x="240" y="60" width="50" height="200" rx="25" fill="white" fill-opacity="0.95" />
+                </g>
+            </svg>
+        </div>
+        <div class="header-text">
+            <h1>RelayCraft</h1>
+            <p>${tagline}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="proxy-badge">
+            <div class="dot"></div>
+            <span class="label">${proxy_connected_label} ·</span>
+            <code>${proxy_addr}</code>
+        </div>
+
+        <p class="section-title">${device_system_label}</p>
+        <div class="tabs">
+            <div class="tab" id="tab-ios" onclick="switchTab('ios')">iOS</div>
+            <div class="tab" id="tab-android" onclick="switchTab('android')">Android</div>
+            <div class="tab" id="tab-harmony" onclick="switchTab('harmony')">HarmonyOS</div>
+        </div>
+
+        <div class="panel" id="panel-ios">
+            <a href="/cert.crt" class="dl-btn">${dl_ios_btn}</a>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">${step_ios_1}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text">${step_ios_2}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text">${step_ios_3}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-text">${step_ios_4}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="panel-android">
+            <a href="/cert.crt" class="dl-btn">${dl_android_btn}</a>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">${step_android_1}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text">${step_android_2}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text">${step_android_3}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-text">${step_android_4}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="panel-harmony">
+            <a href="/cert.pem" class="dl-btn">${dl_harmony_btn}</a>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">${step_harmony_1}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text">${step_harmony_2}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text">${step_harmony_3}</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-text">${step_harmony_4}</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="section-title">${manual_install_label}</p>
+        <div class="advanced">
+            <a href="/cert.pem" class="dl-secondary">${pem_format_label}</a>
+            <a href="/cert.crt" class="dl-secondary">${crt_format_label}</a>
+        </div>
+
+        <div class="warn-box">
+            <div class="warn-icon">⚠</div>
+            <div>${warning_text}</div>
+        </div>
+    </div>
+
+    <div class="footer">${footer_text}</div>
+
+    <script>
+        function switchTab(os) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            const t = document.getElementById('tab-' + os) || document.getElementById('tab-android');
+            const p = document.getElementById('panel-' + os) || document.getElementById('panel-android');
+            t.classList.add('active');
+            p.classList.add('active');
+        }
+        switchTab('${detected_os}');
+    </script>
+</body>
+
+</html>
