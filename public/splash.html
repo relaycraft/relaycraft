@@ -42,49 +42,33 @@
         body {
             height: 100%;
             width: 100%;
-            background: transparent;
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
             cursor: default;
         }
 
+        /* Body background matches card to avoid frame flash on Windows */
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* 圆角卡片容器 */
-        .splash-card {
-            width: 420px;
-            padding: 32px 40px;
             background: var(--color-card-bg);
             border-radius: 20px;
-            border: 1px solid var(--color-card-border);
-            box-shadow:
-                0 25px 50px -12px var(--shadow-color),
-                0 0 0 1px var(--color-card-border);
+        }
+
+        /* 圆角卡片容器 - fills entire window on Windows */
+        .splash-card {
+            width: 100%;
+            height: 100%;
+            padding: 32px 40px;
+            background: var(--color-card-bg);
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 16px;
-            animation: card-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        @keyframes card-entrance {
-            0% {
-                opacity: 0;
-                transform: scale(0.9) translateY(20px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
         }
 
         .logo-wrapper {
@@ -310,6 +294,7 @@
 
             if (window.__TAURI__) {
                 const { listen } = window.__TAURI__.event;
+
                 listen('init-status', (event) => {
                     if (statusEl) {
                         statusEl.textContent = event.payload;
