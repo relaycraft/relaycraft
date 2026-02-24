@@ -1,7 +1,7 @@
 {
   "name": "relaycraft",
   "private": true,
-  "version": "0.99.23",
+  "version": "0.99.24",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "author": "RelayCraft Team",
