@@ -7,7 +7,7 @@
     },
     {
       "filename": "src-tauri/tauri.conf.json",
-      "updater": "scripts/tauri-windows-updater.cjs"
+      "type": "json"
     },
     {
       "filename": "src-tauri/Cargo.toml",
@@ -29,15 +29,42 @@
     }
   ],
   "types": [
-    { "type": "feat",     "section": "Features" },
-    { "type": "fix",      "section": "Bug Fixes" },
-    { "type": "perf",     "section": "Performance Improvements" },
-    { "type": "chore",    "hidden": true },
-    { "type": "docs",     "hidden": true },
-    { "type": "style",    "hidden": true },
-    { "type": "refactor", "hidden": true },
-    { "type": "test",     "hidden": true },
-    { "type": "ci",       "hidden": true }
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance Improvements"
+    },
+    {
+      "type": "chore",
+      "hidden": true
+    },
+    {
+      "type": "docs",
+      "hidden": true
+    },
+    {
+      "type": "style",
+      "hidden": true
+    },
+    {
+      "type": "refactor",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "hidden": true
+    }
   ],
   "hooks": {
     "prebump": "cd src-tauri && cargo metadata --format-version 1 --offline",

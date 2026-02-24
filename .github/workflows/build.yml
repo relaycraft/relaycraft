@@ -179,6 +179,22 @@ jobs:
         run: cargo test
         working-directory: src-tauri
 
+      # --- Detect pre-release (RC) version for Windows ---
+      # MSI (WiX) rejects semver pre-release labels like -rc1.
+      # For RC versions, build NSIS only; stable versions build all targets.
+      - name: Set Windows Bundle Args
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "ℹ️ Pre-release version detected ($VERSION), skipping MSI target"
+            echo "WINDOWS_BUNDLE_ARGS=--bundles nsis" >> $GITHUB_ENV
+          else
+            echo "ℹ️ Stable version detected ($VERSION), building all targets"
+            echo "WINDOWS_BUNDLE_ARGS=" >> $GITHUB_ENV
+          fi
+
       # --- Tauri Build ---
       - name: Tauri Build
         uses: tauri-apps/tauri-action@v0
@@ -186,7 +202,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           # Enable signing for all platforms, including self-hosted Windows
         with:
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ env.WINDOWS_BUNDLE_ARGS }}
 
       - name: Sign Linux Binaries
         if: runner.os == 'Linux'
@@ -203,27 +219,31 @@ jobs:
           $MSI_PATH = "src-tauri/target/release/bundle/msi"
 
           # Find the actual files (using wildcards to handle potential architecture naming)
-          $EXE = Get-ChildItem "$NSIS_PATH/*.exe" | Select-Object -First 1
-          $MSI = Get-ChildItem "$MSI_PATH/*.msi" | Select-Object -First 1
+          $EXE = Get-ChildItem "$NSIS_PATH/*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $MSI = Get-ChildItem "$MSI_PATH/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
 
-          if ($EXE -and $MSI) {
-            echo "🔍 Authenticode Signing: $($EXE.Name) and $($MSI.Name)"
-            # 1. Authenticode Sign
-            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
-            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
-
-            echo "🔍 Regenerating Tauri Updater Signatures (.sig)"
-            # 2. Regenerate Tauri Updater Signatures (.sig)
-            # The binaries have been modified by signtool, so we MUST re-sign for the updater.
-            # Use pnpm exec to skip the custom tauri script in package.json
-            pnpm exec tauri signer sign $EXE.FullName
-            pnpm exec tauri signer sign $MSI.FullName
-
-            echo "✅ Windows signing and signature regeneration complete!"
-          } else {
-            echo "❌ ERROR: Could not find EXE or MSI to sign!"
+          if (-not $EXE) {
+            echo "❌ ERROR: Could not find NSIS EXE to sign!"
             exit 1
           }
+
+          # Sign NSIS installer (always present)
+          echo "🔍 Authenticode Signing: $($EXE.Name)"
+          signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
+          echo "🔍 Regenerating Tauri Updater Signature for EXE"
+          pnpm exec tauri signer sign $EXE.FullName
+
+          # Sign MSI installer (stable releases only, not present for RC builds)
+          if ($MSI) {
+            echo "🔍 Authenticode Signing: $($MSI.Name)"
+            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
+            echo "🔍 Regenerating Tauri Updater Signature for MSI"
+            pnpm exec tauri signer sign $MSI.FullName
+          } else {
+            echo "ℹ️ No MSI found (pre-release build), skipping MSI signing"
+          }
+
+          echo "✅ Windows signing and signature regeneration complete!"
 
       # --- Post-Build macOS Signing & Notarization ---
       - name: Sign and Notarize macOS App
