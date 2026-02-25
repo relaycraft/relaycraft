@@ -3,7 +3,6 @@ import { Search, Shield, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
-// @ts-expect-error
 import licensesData from "../../assets/licenses.json";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
