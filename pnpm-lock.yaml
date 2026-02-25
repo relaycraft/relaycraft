@@ -163,8 +163,8 @@ importers:
         specifier: ^4.6.0
         version: 4.7.0(vite@7.3.1(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
       autoprefixer:
-        specifier: ^10.4.23
-        version: 10.4.23(postcss@8.5.6)
+        specifier: ^10.4.25
+        version: 10.4.25(postcss@8.5.6)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -216,6 +216,10 @@ packages:
 
   '@babel/code-frame@7.28.6':
     resolution: {integrity: sha512-JYgintcMjRiCvS8mMECzaEn+m3PfoQiyqukOMCCVQtoJGYJw8j/8LBJEiqkHLkfwCcs74E3pbAUFNg7d9VNJ+Q==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/code-frame@7.29.0':
+    resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/compat-data@7.28.6':
@@ -375,6 +379,9 @@ packages:
   '@codemirror/language@6.12.1':
     resolution: {integrity: sha512-Fa6xkSiuGKc8XC8Cn96T+TQHYj4ZZ7RdFmXA3i9xe/3hLHfwPZdM+dqfX0Cp0zQklBKhVD8Yzc8LS45rkqcwpQ==}
 
+  '@codemirror/language@6.12.2':
+    resolution: {integrity: sha512-jEPmz2nGGDxhRTg3lTpzmIyGKxz3Gp3SJES4b0nAuE5SWQoKdT5GoQ69cwMmFd+wvFUhYirtDTr0/DRHpQAyWg==}
+
   '@codemirror/lint@6.9.3':
     resolution: {integrity: sha512-y3YkYhdnhjDBAe0VIA0c4wVoFOvnp8CnAvfLqi0TqotIv92wIlAAP7HELOpLBsKwjAX6W92rSflA6an/2zBvXw==}
 
@@ -392,6 +399,9 @@ packages:
 
   '@codemirror/view@6.39.12':
     resolution: {integrity: sha512-f+/VsHVn/kOA9lltk/GFzuYwVVAKmOnNjxbrhkk3tPHntFqjWeI2TbIXx006YkBkqC10wZ4NsnWXCQiFPeAISQ==}
+
+  '@codemirror/view@6.39.15':
+    resolution: {integrity: sha512-aCWjgweIIXLBHh7bY6cACvXuyrZ0xGafjQ2VInjp4RM4gMfscK5uESiNdrH0pE+e1lZr2B4ONGsjchl2KsKZzg==}
 
   '@csstools/color-helpers@6.0.1':
     resolution: {integrity: sha512-NmXRccUJMk2AWA5A7e5a//3bCIMyOu2hAtdRYrhPPHjDxINuCwX1w6rnIZ4xjLcp0ayv6h8Pc3X0eJUGiAAXHQ==}
@@ -611,6 +621,9 @@ packages:
 
   '@lezer/common@1.5.0':
     resolution: {integrity: sha512-PNGcolp9hr4PJdXR4ix7XtixDrClScvtSCYW3rQG106oVMOOI+jFb+0+J3mbeL/53g1Zd6s0kJzaw6Ri68GmAA==}
+
+  '@lezer/common@1.5.1':
+    resolution: {integrity: sha512-6YRVG9vBkaY7p1IVxL4s44n5nUnaNnGM2/AckNgYOnxTG2kWh1vR8BMxPseWPjRNpb5VtXnMpeYAEAADoRV1Iw==}
 
   '@lezer/highlight@1.2.3':
     resolution: {integrity: sha512-qXdH7UqTvGfdVBINrgKhDsVTJTxactNNxLk7+UMwZhU13lMHaOBlJe9Vqp907ya56Y3+ed2tlqzys7jDkTmW0g==}
@@ -1163,8 +1176,8 @@ packages:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
 
-  autoprefixer@10.4.23:
-    resolution: {integrity: sha512-YYTXSFulfwytnjAPlw8QHncHJmlvFKtczb8InXaAx9Q0LbfDnfEYDE55omerIJKihhmU61Ft+cAOSzQVaBUmeA==}
+  autoprefixer@10.4.25:
+    resolution: {integrity: sha512-haPdJifHzYbmnDxx0be44kvj89RWIe+1DZBUyM5BIsT/1bpI5pwK+v30cqz+EfxsxanHq8q2YUvy7LfdRXd/rQ==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
@@ -1176,8 +1189,9 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  baseline-browser-mapping@2.9.15:
-    resolution: {integrity: sha512-kX8h7K2srmDyYnXRIppo4AH/wYgzWVCs+eKr3RusRSQ5PvRYoEFmR/I0PbdTjKFAoKqp5+kbxnNTFO9jOfSVJg==}
+  baseline-browser-mapping@2.10.0:
+    resolution: {integrity: sha512-lIyg0szRfYbiy67j9KN8IyeD7q7hcmqnJ1ddWmNt19ItGpNN64mnllmxUNFIOdOm6by97jlL6wfpTTJrmnjWAA==}
+    engines: {node: '>=6.0.0'}
     hasBin: true
 
   bidi-js@1.0.3:
@@ -1206,8 +1220,8 @@ packages:
     resolution: {integrity: sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==}
     engines: {node: '>=6'}
 
-  caniuse-lite@1.0.30001765:
-    resolution: {integrity: sha512-LWcNtSyZrakjECqmpP4qdg0MMGdN368D7X8XvvAqOcqMv0RxnlqVKZl2V6/mBR68oYMxOZPLw/gO7DuisMHUvQ==}
+  caniuse-lite@1.0.30001774:
+    resolution: {integrity: sha512-DDdwPGz99nmIEv216hKSgLD+D4ikHQHjBC/seF98N9CPqRX4M5mSxT9eTV6oyisnJcuzxtZy4n17yKKQYmYQOA==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -1453,8 +1467,8 @@ packages:
     resolution: {integrity: sha512-sCm11ak2oY6DglEPpCB8TixLjWAxd3kJTs6UIcSasNYxXdFPV+YKlye92c8H4kKFqV5qYMIh7d+cYecEg0dIkA==}
     engines: {node: '>=6'}
 
-  electron-to-chromium@1.5.267:
-    resolution: {integrity: sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==}
+  electron-to-chromium@1.5.302:
+    resolution: {integrity: sha512-sM6HAN2LyK82IyPBpznDRqlTQAtuSaO+ShzFiWTvoMJLHyZ+Y39r8VMfHzwbU8MVBzQ4Wdn85+wlZl2TLGIlwg==}
 
   emoji-regex@10.6.0:
     resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
@@ -2888,6 +2902,12 @@ snapshots:
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
+  '@babel/code-frame@7.29.0':
+    dependencies:
+      '@babel/helper-validator-identifier': 7.28.5
+      js-tokens: 4.0.0
+      picocolors: 1.1.1
+
   '@babel/compat-data@7.28.6': {}
 
   '@babel/core@7.28.6':
@@ -3087,6 +3107,15 @@ snapshots:
       '@lezer/lr': 1.4.8
       style-mod: 4.1.3
 
+  '@codemirror/language@6.12.2':
+    dependencies:
+      '@codemirror/state': 6.5.4
+      '@codemirror/view': 6.39.15
+      '@lezer/common': 1.5.1
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.8
+      style-mod: 4.1.3
+
   '@codemirror/lint@6.9.3':
     dependencies:
       '@codemirror/state': 6.5.4
@@ -3113,12 +3142,19 @@ snapshots:
 
   '@codemirror/theme-one-dark@6.1.3':
     dependencies:
-      '@codemirror/language': 6.12.1
+      '@codemirror/language': 6.12.2
       '@codemirror/state': 6.5.4
-      '@codemirror/view': 6.39.12
+      '@codemirror/view': 6.39.15
       '@lezer/highlight': 1.2.3
 
   '@codemirror/view@6.39.12':
+    dependencies:
+      '@codemirror/state': 6.5.4
+      crelt: 1.0.6
+      style-mod: 4.1.3
+      w3c-keyname: 2.2.8
+
+  '@codemirror/view@6.39.15':
     dependencies:
       '@codemirror/state': 6.5.4
       crelt: 1.0.6
@@ -3249,6 +3285,8 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   '@lezer/common@1.5.0': {}
+
+  '@lezer/common@1.5.1': {}
 
   '@lezer/highlight@1.2.3':
     dependencies:
@@ -3522,7 +3560,7 @@ snapshots:
 
   '@testing-library/dom@10.4.1':
     dependencies:
-      '@babel/code-frame': 7.28.6
+      '@babel/code-frame': 7.29.0
       '@babel/runtime': 7.28.6
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
@@ -3745,10 +3783,10 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  autoprefixer@10.4.23(postcss@8.5.6):
+  autoprefixer@10.4.25(postcss@8.5.6):
     dependencies:
       browserslist: 4.28.1
-      caniuse-lite: 1.0.30001765
+      caniuse-lite: 1.0.30001774
       fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.6
@@ -3758,7 +3796,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  baseline-browser-mapping@2.9.15: {}
+  baseline-browser-mapping@2.10.0: {}
 
   bidi-js@1.0.3:
     dependencies:
@@ -3775,9 +3813,9 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.9.15
-      caniuse-lite: 1.0.30001765
-      electron-to-chromium: 1.5.267
+      baseline-browser-mapping: 2.10.0
+      caniuse-lite: 1.0.30001774
+      electron-to-chromium: 1.5.302
       node-releases: 2.0.27
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
 
@@ -3791,7 +3829,7 @@ snapshots:
 
   camelcase@5.3.1: {}
 
-  caniuse-lite@1.0.30001765: {}
+  caniuse-lite@1.0.30001774: {}
 
   ccount@2.0.1: {}
 
@@ -4069,7 +4107,7 @@ snapshots:
       find-up: 3.0.0
       minimatch: 3.1.2
 
-  electron-to-chromium@1.5.267: {}
+  electron-to-chromium@1.5.302: {}
 
   emoji-regex@10.6.0: {}
 
