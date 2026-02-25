@@ -47,7 +47,7 @@ rcgen = "0.13"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
 walkdir = "2"
-zip = "2.2"
+zip = "4.6"
 tauri-plugin-single-instance = "2.3.7"
 thiserror = "2.0"
 sha1 = "0.10.6"
