@@ -102,6 +102,7 @@ export function SettingsView() {
     platform: string;
     arch: string;
     engine: string;
+    build_date: string;
   } | null>(null);
 
   React.useEffect(() => {
@@ -109,6 +110,23 @@ export function SettingsView() {
       .then((info: any) => setSystemInfo(info))
       .catch(console.error);
   }, []);
+
+  // Clear upstream status on unmount
+  React.useEffect(() => {
+    return () => {
+      resetUpstreamStatus();
+    };
+  }, [resetUpstreamStatus]);
+
+  // Auto-clear upstream status after a few seconds
+  React.useEffect(() => {
+    if (upstreamStatus === "success" || upstreamStatus === "error") {
+      const timer = setTimeout(() => {
+        resetUpstreamStatus();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [upstreamStatus, resetUpstreamStatus]);
 
   const sidebar = (
     <>
@@ -385,7 +403,12 @@ export function SettingsView() {
               <div className="flex flex-col items-center justify-center py-5 bg-muted/20 rounded-xl border border-border/40">
                 <AppLogo size={64} className="mb-4" />
                 <h2 className="text-xl font-semibold text-foreground">RelayCraft</h2>
-                <p className="text-sm text-muted-foreground mt-1">Version {systemInfo?.version}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  v{systemInfo?.version}
+                  {systemInfo?.build_date
+                    ? `(${new Date(systemInfo.build_date).toLocaleDateString("zh-CN")})`
+                    : ""}
+                </p>
               </div>
 
               <SettingsSection title={t("settings.about.title")}>

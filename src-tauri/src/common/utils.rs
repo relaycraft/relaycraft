@@ -14,6 +14,7 @@ pub struct SystemInfo {
     pub platform: String,
     pub arch: String,
     pub engine: String,
+    pub build_date: String,
 }
 
 #[tauri::command]
@@ -75,5 +76,6 @@ pub fn get_system_info() -> SystemInfo {
         platform: platform.to_string(),
         arch: arch.to_string(),
         engine: "mitmproxy 12.2.1".to_string(),
+        build_date: env!("BUILD_DATE").to_string(),
     }
 }

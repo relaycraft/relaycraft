@@ -205,8 +205,8 @@ export const TrafficListItem = memo(
                     return (
                       <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
                         {isScript ? (
-                          <div className="w-3 h-3 flex items-center justify-center rounded-full border border-indigo-500 flex-shrink-0">
-                            <Terminal className="w-2 h-2 text-indigo-500" strokeWidth={2.5} />
+                          <div className="w-3 h-3 flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0 shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
+                            <Terminal className="w-[9px] h-[9px]" strokeWidth={2.5} />
                           </div>
                         ) : isBreakpoint ? (
                           <CirclePause

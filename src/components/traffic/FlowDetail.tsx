@@ -350,10 +350,9 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                       >
                         <div className="flex-shrink-0">
                           {hit.type === "script" && (
-                            <Terminal
-                              className="w-4 h-4 text-indigo-500 flex-shrink-0"
-                              strokeWidth={2}
-                            />
+                            <div className="w-[14px] h-[14px] mt-0.5 flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0 shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
+                              <Terminal className="w-[10px] h-[10px]" strokeWidth={2.5} />
+                            </div>
                           )}
                           {hit.type === "breakpoint" && (
                             <CirclePause
