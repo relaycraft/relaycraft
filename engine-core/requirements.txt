@@ -1,8 +1,8 @@
 mitmproxy==12.2.1
 websockets==16.0
-jsonpath-ng==1.7.0
+jsonpath-ng==1.8.0
 h11==0.16.0
 requests==2.32.5
-pyinstaller==6.18.0
+pyinstaller==6.19.0
 beautifulsoup4==4.14.3
 PyYAML==6.0.3
