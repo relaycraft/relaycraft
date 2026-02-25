@@ -42,14 +42,27 @@ try:
                 "timestamp": time.time()
             })
         except Exception as e:
-            print(f"[RELAYCRAFT] _rc_record_hit error: {e}")
+            print(f"[RELAYCRAFT] _rc_record_hit error: {e}", flush=True)
 except Exception as e:
-    print(f"[RELAYCRAFT] Failed to setup _rc_record_hit: {e}")
+    print(f"[RELAYCRAFT] Failed to setup _rc_record_hit: {e}", flush=True)
     def _rc_record_hit(flow, script_path): pass
+
+# Robust logging helper for scripts
+def _rc_log(level, msg):
+    '''Unified logging that works with or without mitmproxy context'''
+    try:
+        from mitmproxy import ctx as _ctx
+        if hasattr(_ctx, 'log') and hasattr(_ctx.log, level):
+            getattr(_ctx.log, level)(f"[SCRIPT] {msg}")
+            return
+    except Exception:
+        pass
+    # Fallback to print with flush for immediate output
+    print(f"[RELAYCRAFT][SCRIPT][{level.upper()}] {msg}", flush=True)
 """
         try:
             helper_ast = ast.parse(helper_code).body
-            
+
             # Preserve module docstring if present
             # A docstring is the first statement and is a constant string expression
             docstring_stmt = None
@@ -62,8 +75,9 @@ except Exception as e:
                 node.body = [docstring_stmt] + helper_ast + remaining_body
             else:
                 node.body = helper_ast + node.body
-        except Exception:
-            pass
+        except Exception as e:
+            # Log the error but continue with original code
+            print(f"[RELAYCRAFT] Failed to inject helper code: {e}", flush=True)
 
         self.generic_visit(node)
         return node
@@ -170,11 +184,13 @@ except Exception as e:
 
 
 
-def inject_tracking(source_code):
+def inject_tracking(source_code, script_path=None):
     """
     Inject record_hit() calls into script hooks.
     Returns the modified source code.
+    If script_path is provided, errors will include the path for debugging.
     """
+    path_info = f" ({script_path})" if script_path else ""
     try:
         # Parse source code
         tree = ast.parse(source_code)
@@ -188,13 +204,22 @@ def inject_tracking(source_code):
 
         # Unparse back to source (Requires Python 3.9+)
         if sys.version_info >= (3, 9):
-            return ast.unparse(new_tree)
+            result = ast.unparse(new_tree)
+            if injector.injected_count > 0:
+                print(f"[RELAYCRAFT] Successfully injected {injector.injected_count} tracking call(s) into script{path_info}", flush=True)
+            return result
         else:
             # Fallback for older python (should not happen in our env)
+            print(f"[RELAYCRAFT] Warning: Python < 3.9, skipping AST injection{path_info}", flush=True)
             return source_code
 
+    except SyntaxError as e:
+        # Script has syntax errors - this is critical
+        print(f"[RELAYCRAFT] Syntax error in script{path_info}: {e}", flush=True)
+        return source_code
     except Exception as e:
-        # print(f"AST Injection failed: {e}")
+        # Other AST errors
+        print(f"[RELAYCRAFT] AST Injection failed{path_info}: {type(e).__name__}: {e}", flush=True)
         return source_code
 
 if __name__ == "__main__":

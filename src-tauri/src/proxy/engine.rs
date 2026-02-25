@@ -539,8 +539,19 @@ impl MitmproxyEngine {
             std::thread::spawn(move || {
                 use std::io::BufRead;
                 for line in reader.lines().flatten() {
-                    let domain = if line.contains("[SCRIPT]") {
+                    // Classify log domain based on content markers
+                    let domain = if line.contains("[SCRIPT]")
+                        || line.contains("[RELAYCRAFT][SCRIPT]")
+                        || line.contains("._rc_")
+                        || line.contains("_rc_record_hit")
+                        || line.contains("_rc_log") {
                         "script"
+                    } else if line.contains("[PLUGIN]") {
+                        "plugin"
+                    } else if line.contains("[AUDIT]") {
+                        "audit"
+                    } else if line.contains("[CRASH]") || line.contains("Traceback") {
+                        "crash"
                     } else {
                         "proxy"
                     };

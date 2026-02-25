@@ -9,7 +9,7 @@ class DebugManager:
     def __init__(self):
         self.logger = setup_logging()
         # List of breakpoint rule objects with format:
-        # { id, pattern, matchType: "contains"|"exact"|"regex", 
+        # { id, pattern, matchType: "contains"|"exact"|"regex",
         #   breakOnRequest: bool, breakOnResponse: bool, enabled: bool }
         self.breakpoints: List[Dict[str, Any]] = []
         self.intercepted_flows: Dict[str, Dict[str, Any]] = {} # flow_id -> {event: asyncio.Event, flow: HTTPFlow, phase: str}
@@ -22,22 +22,22 @@ class DebugManager:
         """
         if not rule:
             return
-        
+
         # Legacy support: if rule is just a pattern string
         if isinstance(rule, str):
             rule = {"pattern": rule, "matchType": "contains"}
-        
+
         pattern = rule.get("pattern")
         if not pattern or not pattern.strip():
             return
-        
+
         # Set defaults
         rule.setdefault("id", pattern)
         rule.setdefault("matchType", "contains")
         rule.setdefault("breakOnRequest", True)
         rule.setdefault("breakOnResponse", False)
         rule.setdefault("enabled", True)
-            
+
         with self.lock:
             # Check if already exists by ID
             rule_id = rule.get("id")
@@ -47,7 +47,7 @@ class DebugManager:
                     self.breakpoints[i] = rule
                     exists = True
                     break
-            
+
             if not exists:
                 self.breakpoints.append(rule)
                 self.logger.info(f"Added breakpoint: {pattern} (matchType: {rule.get('matchType')})")
@@ -56,7 +56,7 @@ class DebugManager:
         """Remove breakpoint by ID or pattern (for backwards compatibility)"""
         with self.lock:
             self.breakpoints = [
-                bp for bp in self.breakpoints 
+                bp for bp in self.breakpoints
                 if bp.get("id") != id_or_pattern and bp.get("pattern") != id_or_pattern
             ]
 
@@ -64,7 +64,7 @@ class DebugManager:
         """Check if URL matches a breakpoint rule based on matchType"""
         pattern = rule.get("pattern", "")
         match_type = rule.get("matchType", "contains")
-        
+
         try:
             if match_type == "exact":
                 return url == pattern
@@ -80,17 +80,17 @@ class DebugManager:
         """Record breakpoint hit in flow metadata for display in traffic list"""
         if not hasattr(flow, "_relaycraft_breakpoint_hits"):
             flow._relaycraft_breakpoint_hits = []
-        
+
         import time
         rule_id = rule.get("id", "unknown") if rule else "unknown"
         rule_name = rule.get("pattern", "Breakpoint") if rule else "Breakpoint"
-        
+
         # Check for duplicate
         hit_id = f"breakpoint:{rule_id}:{phase}"
         for existing in flow._relaycraft_breakpoint_hits:
             if existing.get("id") == hit_id:
                 return
-        
+
         flow._relaycraft_breakpoint_hits.append({
             "id": hit_id,
             "name": rule_name,
@@ -109,14 +109,14 @@ class DebugManager:
         # Never intercept internal requests
         if flow.request.path.startswith("/_relay"):
             return None
-            
+
         url = flow.request.pretty_url
-        
+
         with self.lock:
             for rule in self.breakpoints:
                 if not rule.get("enabled", True):
                     continue
-                
+
                 # Check phase
                 if phase == "request" and not rule.get("breakOnRequest", True):
                     continue
@@ -127,14 +127,14 @@ class DebugManager:
                 if self._match_url(url, rule):
                     self.logger.info(f"Breakpoint matched: {rule.get('pattern')} for {url} ({phase})")
                     return rule
-        
+
         return None
 
     async def wait_for_resume(self, flow: http.HTTPFlow, phase: str, on_pause: Optional[Callable[[], Any]] = None, rule: Optional[Dict[str, Any]] = None) -> None:
         """Suspend execution and wait for user signal"""
         flow_id = flow.id
         event = asyncio.Event()
-        
+
         with self.lock:
             self.intercepted_flows[flow_id] = {
                 "event": event,
@@ -143,16 +143,16 @@ class DebugManager:
                 "status": "paused",
                 "rule": rule
             }
-            
+
         # Record breakpoint hit in flow metadata (for display in traffic list)
         self._record_breakpoint_hit(flow, phase, rule)
-            
+
         self.logger.info(f"Flow {flow_id} INTERCEPTED at {phase}. Waiting for resume...")
-        
+
         # Notify that we are paused (so UI can see 'intercepted: true')
         if on_pause:
             on_pause()
-            
+
         try:
             # Wait for the resume signal
             await event.wait()
@@ -168,7 +168,7 @@ class DebugManager:
             if flow_id in self.intercepted_flows:
                 info = self.intercepted_flows[flow_id]
                 flow = info["flow"]
-                
+
                 if modified_data:
                     # Check for explicit abort action
                     if modified_data.get("action") == "abort":
@@ -195,7 +195,20 @@ class DebugManager:
                             if "statusCode" in modified_data:
                                 flow.response.status_code = int(modified_data["statusCode"])
 
-                # Signal the event
-                asyncio.get_event_loop().call_soon_threadsafe(info["event"].set)
+                # Signal the event safely
+                # Use call_soon_threadsafe with the event's loop to avoid Windows ProactorEventLoop issues
+                try:
+                    loop = info["event"]._loop if hasattr(info["event"], '_loop') else None
+                    if loop is None:
+                        # Fallback: try to get running loop
+                        try:
+                            loop = asyncio.get_running_loop()
+                        except RuntimeError:
+                            loop = asyncio.get_event_loop()
+                    loop.call_soon_threadsafe(info["event"].set)
+                except Exception as e:
+                    # Last resort: set directly (may cause warning but works)
+                    self.logger.warn(f"Could not signal event safely: {e}")
+                    info["event"].set()
                 return True
         return False
