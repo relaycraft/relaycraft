@@ -454,6 +454,14 @@
     "sensitive_warning": "Logs may contain sensitive information (e.g. Tokens). Please handle with care and do not display in insecure environments.",
     "title": "Runtime Logs"
   },
+  "database": {
+    "notifications": {
+      "cleanup_title": "Old Data Cleaned Up",
+      "cleanup_msg": "Automatically removed {{flows}} flow(s) and {{sessions}} session(s) to free storage space.",
+      "storage_warning_title": "Storage Space Warning",
+      "storage_warning_msg": "Traffic database has reached {{size_mb}} MB. Consider clearing old sessions to free up space."
+    }
+  },
   "notifications": {
     "all_processed": "You are all caught up",
     "category": {

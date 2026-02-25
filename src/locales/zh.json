@@ -454,6 +454,14 @@
     "sensitive_warning": "日志文件中可能包含敏感信息（如 Token），请妥善处理，切勿在不安全的环境下展示。",
     "title": "运行日志"
   },
+  "database": {
+    "notifications": {
+      "cleanup_title": "历史数据已自动清理",
+      "cleanup_msg": "已自动删除 {{flows}} 条请求记录和 {{sessions}} 个历史会话以释放存储空间。",
+      "storage_warning_title": "存储空间警告",
+      "storage_warning_msg": "流量数据库已达 {{size_mb}} MB，建议清理历史会话以释放空间。"
+    }
+  },
   "notifications": {
     "all_processed": "所有通知都已处理完毕",
     "category": {

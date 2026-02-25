@@ -6,6 +6,7 @@
  */
 
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+import i18n from "../i18n";
 import { useRuleStore } from "../stores/ruleStore";
 import { useSessionStore } from "../stores/sessionStore";
 import { useTrafficStore } from "../stores/trafficStore";
@@ -279,6 +280,25 @@ async function pollTraffic() {
 
         // Update timestamp
         lastTimestamp = data.server_ts;
+
+        // Consume backend notifications (i18n-keyed, from cleanup/storage events)
+        if (data.notifications && data.notifications.length > 0) {
+          try {
+            const { useNotificationStore } = await import("../stores/notificationStore");
+            for (const n of data.notifications) {
+              useNotificationStore.getState().addNotification({
+                title: i18n.t(n.title_key, n.params ?? {}) as string,
+                message: i18n.t(n.message_key, n.params ?? {}) as string,
+                type: n.type ?? "info",
+                category: "system",
+                priority: n.priority ?? "normal",
+                source: "database",
+              });
+            }
+          } catch (e) {
+            Logger.error(`Failed to load notificationStore: ${e}`);
+          }
+        }
       }
     } else if (response.status === 500) {
       try {

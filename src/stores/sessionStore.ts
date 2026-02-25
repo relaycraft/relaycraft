@@ -1,6 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
+
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
@@ -316,27 +315,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       if (path && typeof path === "string") {
         Logger.info(`Loading session from: ${path}`);
 
-        const session = await invoke<Session>("load_session", { path });
-        Logger.info(`Session loaded: ${session.id}, flows count: ${session.flows?.length || 0}`);
-
-        // Send session data to backend
+        // Send the file PATH to Python — Python reads the file directly.
         const port = useSettingsStore.getState().config.proxy_port;
-        Logger.info(`Sending flows to backend at port ${port}...`);
-
-        const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/import_session`, {
+        const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/import_session_file`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: session.id,
-            name: session.name,
-            description: session.description,
-            metadata: session.metadata,
-            flows: session.flows,
-          }),
+          body: JSON.stringify({ path }),
           cache: "no-store",
         });
 
-        Logger.info(`Import session response: ${response.status}`);
+        Logger.info(`Import session file response: ${response.status}`);
 
         if (response.ok) {
           const data = await response.json();
@@ -346,11 +334,9 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             `Session imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
           );
 
-          // Clear local state and set imported indices
           useTrafficStore.getState().clearLocal();
           useTrafficStore.getState().addIndices(indices);
 
-          // Switch to the imported session (it's a historical session)
           if (session_id) {
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
@@ -440,24 +426,17 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       if (path && typeof path === "string") {
         Logger.info(`Importing HAR from: ${path}`);
 
-        // Read HAR file content
-        const harContent = await readTextFile(path);
-        const harData = JSON.parse(harContent);
-
-        Logger.info(`HAR file parsed, entries count: ${harData?.log?.entries?.length || 0}`);
-
-        // Send to backend for processing
+        // Send the file PATH to Python — Python reads and parses the file directly.
+        // Previously: readTextFile → JSON.parse → JSON.stringify → POST (3× memory).
         const port = useSettingsStore.getState().config.proxy_port;
-        Logger.info(`Sending HAR to backend at port ${port}...`);
-
-        const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/import_har`, {
+        const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/import_har_file`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(harData),
+          body: JSON.stringify({ path }),
           cache: "no-store",
         });
 
-        Logger.info(`HAR import response status: ${response.status}`);
+        Logger.info(`HAR import file response status: ${response.status}`);
 
         if (response.ok) {
           const data = await response.json();
@@ -467,13 +446,10 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             `HAR imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
           );
 
-          // Add indices to traffic store (for immediate view)
           useTrafficStore.getState().addIndices(indices);
 
-          // Update showSessionId to the new session
           if (session_id) {
             set({ showSessionId: session_id });
-            // Refresh session list to include the newly created one
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
           }

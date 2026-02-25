@@ -263,7 +263,6 @@ pub fn run() {
             traffic::replay_request,
             traffic::check_proxy_connectivity,
             session::save_session,
-            session::load_session,
             session::har::export_har,
             session::har::import_har,
             rules::load_all_rules,

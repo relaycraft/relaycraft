@@ -689,6 +689,8 @@ class TrafficMonitor:
                 response_data = {
                     "indices": indices,
                     "server_ts": max_msg_ts if max_msg_ts > 0 else since_ts,
+                    # Pending notifications from background cleanup/WAL threads
+                    "notifications": self.db.drain_notifications(),
                 }
                 json_str = json.dumps(
                     response_data,
@@ -1229,13 +1231,12 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
-        # Import session
-        elif "/_relay/import_session" in flow.request.path:
+        # Import session (data sent in HTTP body — for small sessions / legacy)
+        elif "/_relay/import_session" in flow.request.path and "_file" not in flow.request.path:
             try:
                 if flow.request.method == "POST":
                     data = json.loads(flow.request.content.decode('utf-8'))
-                    
-                    # Handle both old format (array of flows) and new format (object with metadata)
+
                     if isinstance(data, list):
                         flows = data
                         session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
@@ -1244,92 +1245,43 @@ class TrafficMonitor:
                         session_created_at = None
                     else:
                         flows = data.get("flows", [])
-                        # Use original session name and metadata
                         session_name = data.get("name") or f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
                         session_description = data.get("description") or ""
                         session_metadata = data.get("metadata") or {}
                         session_metadata["type"] = "session_import"
-                        # Use original createdAt from metadata (it's in milliseconds)
                         metadata_created = (session_metadata or {}).get("createdAt")
-                        if metadata_created:
-                            session_created_at = metadata_created / 1000.0  # Convert ms to seconds
-                        else:
-                            session_created_at = None
-                    
-                    # Create a new session for this import (as historical/inactive)
-                    session_id = self.db.create_session(
-                        name=session_name,
-                        description=session_description,
-                        metadata=session_metadata,
-                        is_active=False,  # Import as historical session
-                        created_at=session_created_at  # Use original created_at
-                    )
-                    
-                    # Import flows to database and return indices
-                    indices = []
+                        session_created_at = metadata_created / 1000.0 if metadata_created else None
+
+                    # Stamp msg_ts on each flow
                     for idx, f in enumerate(flows):
-                        # Preserve original msg_ts if available, otherwise use startedDateTime
-                        if f.get("msg_ts"):
-                            msg_ts = f["msg_ts"]
-                        elif f.get("startedDateTime"):
-                            try:
-                                from datetime import datetime as dt
-                                # Parse ISO format datetime
-                                dt_str = f["startedDateTime"].replace("Z", "+00:00")
-                                msg_ts = dt.fromisoformat(dt_str).timestamp()
-                            except:
-                                msg_ts = time.time() + idx * 0.001
-                        else:
-                            msg_ts = time.time() + idx * 0.001
-                        
-                        f["msg_ts"] = msg_ts
-                        self.db.store_flow(f, session_id=session_id)
-                        
-                        rc = f.get("_rc") or {}
-                        req = f.get("request") or {}
-                        resp = f.get("response") or {}
-                        
-                        indices.append({
-                            "id": f.get("id"),
-                            "msg_ts": msg_ts,
-                            "method": req.get("method") or "",
-                            "url": req.get("url") or "",
-                            "host": f.get("host") or "",
-                            "path": f.get("path") or "",
-                            "status": resp.get("status") or 0,
-                            "contentType": f.get("contentType") or "",
-                            "startedDateTime": f.get("startedDateTime") or "",
-                            "time": f.get("time") or 0,
-                            "size": f.get("size") or (f.get("response") or {}).get("content", {}).get("size", 0),
-                            "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool((req.get("postData") or {}).get("text")),
-                            "hasResponseBody": bool((resp.get("content") or {}).get("text")),
-                            "isWebsocket": bool(rc.get("isWebsocket")),
-                            "websocketFrameCount": rc.get("websocketFrameCount") or 0,
-                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
-                            "hits": [
-                                {
-                                    "id": (h or {}).get("id") or "",
-                                    "name": (h or {}).get("name") or "",
-                                    "type": (h or {}).get("type") or "",
-                                    "status": (h or {}).get("status"),
-                                }
-                                for h in (rc.get("hits") or [])
-                            ],
-                        })
-                    
-                    # Update session flow count after import
+                        if not f.get("msg_ts"):
+                            if f.get("startedDateTime"):
+                                try:
+                                    from datetime import datetime as dt
+                                    dt_str = f["startedDateTime"].replace("Z", "+00:00")
+                                    f["msg_ts"] = dt.fromisoformat(dt_str).timestamp()
+                                except Exception:
+                                    f["msg_ts"] = time.time() + idx * 0.001
+                            else:
+                                f["msg_ts"] = time.time() + idx * 0.001
+
+                    session_id = self.db.create_session(
+                        name=session_name, description=session_description,
+                        metadata=session_metadata, is_active=False,
+                        created_at=session_created_at
+                    )
+
+                    # Batch write: single transaction per 500 flows
+                    self.db.store_flows_batch(flows, session_id=session_id)
                     self.db.update_session_flow_count(session_id)
-                    
-                    # Return session_id so frontend can switch to it
+
+                    # Build lightweight indices for frontend response (no extra DB round-trip)
+                    indices = self._build_session_indices(flows)
+
                     json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
                     flow.response = Response.make(
-                        200,
-                        json_str.encode("utf-8"),
-                        {
-                            "Content-Type": "application/json",
-                            "Access-Control-Allow-Origin": "*"
-                        }
+                        200, json_str.encode("utf-8"),
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
                     )
                 else:
                     flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
@@ -1338,116 +1290,123 @@ class TrafficMonitor:
                 tb = traceback.format_exc()
                 self.logger.error(f"Import session error: {tb}")
                 flow.response = Response.make(
-                    500,
-                    str(e).encode('utf-8'),
-                    {"Access-Control-Allow-Origin": "*"}
+                    500, str(e).encode('utf-8'), {"Access-Control-Allow-Origin": "*"}
                 )
 
-        # Import HAR
-        elif "/_relay/import_har" in flow.request.path:
+        # Import session FROM FILE (Python reads file directly — no HTTP body overhead)
+        elif "/_relay/import_session_file" in flow.request.path:
             try:
                 if flow.request.method == "POST":
-                    import uuid
+                    req_data = json.loads(flow.request.content.decode('utf-8'))
+                    file_path = req_data.get("path")
+                    if not file_path:
+                        flow.response = Response.make(
+                            400, b'{"error": "Missing path"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    # Security: Normalize path and enforce extension
+                    import os as _os
+                    
+                    try:
+                        file_path = _os.path.abspath(file_path)
+                    except Exception:
+                        pass
+                        
+                    if not (file_path.lower().endswith('.json') or file_path.lower().endswith('.har')):
+                        flow.response = Response.make(
+                            400, b'{"error": "Invalid file type. Only .json or .har allowed"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    # Python reads the file directly — no memory duplication
+                    if not _os.path.exists(file_path):
+                        flow.response = Response.make(
+                            404, b'{"error": "File not found"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    with open(file_path, 'r', encoding='utf-8') as fh:
+                        data = json.load(fh)
+
+                    if isinstance(data, list):
+                        flows = data
+                        session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                        session_description = ""
+                        session_metadata = {"type": "session_import"}
+                        session_created_at = None
+                    else:
+                        flows = data.get("flows", [])
+                        session_name = data.get("name") or f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                        session_description = data.get("description") or ""
+                        session_metadata = data.get("metadata") or {}
+                        session_metadata["type"] = "session_import"
+                        metadata_created = (session_metadata or {}).get("createdAt")
+                        session_created_at = metadata_created / 1000.0 if metadata_created else None
+
+                    for idx, f in enumerate(flows):
+                        if not f.get("msg_ts"):
+                            if f.get("startedDateTime"):
+                                try:
+                                    from datetime import datetime as dt
+                                    dt_str = f["startedDateTime"].replace("Z", "+00:00")
+                                    f["msg_ts"] = dt.fromisoformat(dt_str).timestamp()
+                                except Exception:
+                                    f["msg_ts"] = time.time() + idx * 0.001
+                            else:
+                                f["msg_ts"] = time.time() + idx * 0.001
+
+                    session_id = self.db.create_session(
+                        name=session_name, description=session_description,
+                        metadata=session_metadata, is_active=False,
+                        created_at=session_created_at
+                    )
+                    self.db.store_flows_batch(flows, session_id=session_id)
+                    self.db.update_session_flow_count(session_id)
+
+                    indices = self._build_session_indices(flows)
+                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200, json_str.encode("utf-8"),
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                    )
+                else:
+                    flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                self.logger.error(f"Import session file error: {tb}")
+                flow.response = Response.make(
+                    500, str(e).encode('utf-8'), {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Import HAR (data in HTTP body — legacy)
+        elif "/_relay/import_har" in flow.request.path and "_file" not in flow.request.path:
+            try:
+                if flow.request.method == "POST":
+                    import uuid as _uuid
                     from urllib.parse import urlparse
 
                     har_data = json.loads(flow.request.content.decode('utf-8'))
                     entries = har_data.get("log", {}).get("entries", []) or []
-                    
-                    # Create a new session for this HAR import
-                    import os
-                    from pathlib import Path
+
                     session_id = self.db.create_session(
                         name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                         description="",
                         metadata={"type": "har_import"}
                     )
 
-                    indices = []
-                    for idx, entry in enumerate(entries):
-                        if not entry:
-                            continue
-                        
-                        # Generate unique ID for HAR entry
-                        flow_id = str(uuid.uuid4())
-
-                        # Parse URL to extract host and path
-                        req = entry.get("request") or {}
-                        url = req.get("url") or ""
-                        parsed = urlparse(url) if url else None
-                        
-                        # Get response safely
-                        resp = entry.get("response") or {}
-                        resp_content = resp.get("content") or {}
-                        
-                        # Get _rc safely
-                        rc = entry.get("_rc") or {}
-
-                        # Transform HAR entry to internal format
-                        flow_data = {
-                            "id": flow_id,
-                            "msg_ts": time.time() + idx * 0.001,
-                            "request": req,
-                            "response": resp,
-                            "host": (parsed.hostname if parsed else "") or "",
-                            "path": (parsed.path if parsed else "") or "",
-                            "contentType": resp_content.get("mimeType") or "",
-                            "startedDateTime": entry.get("startedDateTime") or "",
-                            "time": entry.get("time") or 0,
-                            "size": resp_content.get("size") or 0,
-                            "_rc": rc,
-                        }
-
-                        self.db.store_flow(flow_data, session_id=session_id)
-
-                        # Build index for response
-                        req_postdata = req.get("postData") or {}
-                        resp_content_text = resp_content.get("text")
-                        
-                        indices.append({
-                            "id": flow_id,
-                            "msg_ts": flow_data["msg_ts"],
-                            "method": req.get("method") or "",
-                            "url": url,
-                            "host": flow_data["host"],
-                            "path": flow_data["path"],
-                            "status": resp.get("status") or 0,
-                            "contentType": flow_data["contentType"],
-                            "startedDateTime": flow_data["startedDateTime"],
-                            "time": flow_data["time"],
-                            "size": flow_data["size"],
-                            "hasError": bool(rc.get("error")),
-                            "hasRequestBody": bool(req_postdata.get("text")),
-                            "hasResponseBody": bool(resp_content_text),
-                            "isWebsocket": bool(rc.get("isWebsocket")),
-                            "websocketFrameCount": rc.get("websocketFrameCount") or 0,
-                            "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
-                            "hits": [
-                                {
-                                    "id": (h or {}).get("id") or "",
-                                    "name": (h or {}).get("name") or "",
-                                    "type": (h or {}).get("type") or "",
-                                    "status": (h or {}).get("status"),
-                                }
-                                for h in (rc.get("hits") or [])
-                            ],
-                        })
-
-                    # Update session flow count after import
+                    flows, indices = self._normalize_har_entries(entries)
+                    self.db.store_flows_batch(flows, session_id=session_id)
                     self.db.update_session_flow_count(session_id)
 
-                    # Return response with session_id and indices
-                    response_data = {
-                        "session_id": session_id,
-                        "indices": indices
-                    }
-                    json_str = json.dumps(response_data, ensure_ascii=False)
+                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
                     flow.response = Response.make(
-                        200,
-                        json_str.encode("utf-8"),
-                        {
-                            "Content-Type": "application/json",
-                            "Access-Control-Allow-Origin": "*"
-                        }
+                        200, json_str.encode("utf-8"),
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
                     )
                 else:
                     flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
@@ -1456,9 +1415,72 @@ class TrafficMonitor:
                 tb = traceback.format_exc()
                 self.logger.error(f"Import HAR error: {tb}")
                 flow.response = Response.make(
-                    500,
-                    str(e).encode('utf-8'),
-                    {"Access-Control-Allow-Origin": "*"}
+                    500, str(e).encode('utf-8'), {"Access-Control-Allow-Origin": "*"}
+                )
+
+        # Import HAR FROM FILE (Python reads file directly — no HTTP body overhead)
+        elif "/_relay/import_har_file" in flow.request.path:
+            try:
+                if flow.request.method == "POST":
+                    from urllib.parse import urlparse
+                    import os as _os
+
+                    req_data = json.loads(flow.request.content.decode('utf-8'))
+                    file_path = req_data.get("path")
+                    if not file_path:
+                        flow.response = Response.make(
+                            400, b'{"error": "Missing path"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    # Security: Normalize path and enforce extension
+                    try:
+                        file_path = _os.path.abspath(file_path)
+                    except Exception:
+                        pass
+                        
+                    if not file_path.lower().endswith('.har'):
+                        flow.response = Response.make(
+                            400, b'{"error": "Invalid file type. Only .har allowed"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    if not _os.path.exists(file_path):
+                        flow.response = Response.make(
+                            404, b'{"error": "File not found"}',
+                            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                        )
+                        return
+
+                    with open(file_path, 'r', encoding='utf-8') as fh:
+                        har_data = json.load(fh)
+                    entries = har_data.get("log", {}).get("entries", []) or []
+
+                    session_id = self.db.create_session(
+                        name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
+                        description="",
+                        metadata={"type": "har_import"}
+                    )
+
+                    flows, indices = self._normalize_har_entries(entries)
+                    self.db.store_flows_batch(flows, session_id=session_id)
+                    self.db.update_session_flow_count(session_id)
+
+                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
+                    flow.response = Response.make(
+                        200, json_str.encode("utf-8"),
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                    )
+                else:
+                    flow.response = Response.make(405, b"Method Not Allowed", {"Access-Control-Allow-Origin": "*"})
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                self.logger.error(f"Import HAR file error: {tb}")
+                flow.response = Response.make(
+                    500, str(e).encode('utf-8'), {"Access-Control-Allow-Origin": "*"}
                 )
 
         # Certificate serving — relay.guide landing page + direct downloads
@@ -1574,6 +1596,122 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
+
+    # ==================== Import Helpers ====================
+
+    def _build_session_indices(self, flows: list) -> list:
+        """Build lightweight index dicts from already-parsed session flows.
+
+        Called after store_flows_batch() to return indices to the frontend
+        without an extra DB round-trip.
+        """
+        indices = []
+        for f in flows:
+            rc = f.get("_rc") or {}
+            req = f.get("request") or {}
+            resp = f.get("response") or {}
+            indices.append({
+                "id": f.get("id"),
+                "msg_ts": f.get("msg_ts", 0),
+                "method": req.get("method") or "",
+                "url": req.get("url") or "",
+                "host": f.get("host") or "",
+                "path": f.get("path") or "",
+                "status": resp.get("status") or 0,
+                "contentType": f.get("contentType") or "",
+                "startedDateTime": f.get("startedDateTime") or "",
+                "time": f.get("time") or 0,
+                "size": f.get("size") or (resp.get("content") or {}).get("size", 0),
+                "hasError": bool(rc.get("error")),
+                "hasRequestBody": bool((req.get("postData") or {}).get("text")),
+                "hasResponseBody": bool((resp.get("content") or {}).get("text")),
+                "isWebsocket": bool(rc.get("isWebsocket")),
+                "websocketFrameCount": rc.get("websocketFrameCount") or 0,
+                "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
+                "hits": [
+                    {
+                        "id": (h or {}).get("id") or "",
+                        "name": (h or {}).get("name") or "",
+                        "type": (h or {}).get("type") or "",
+                        "status": (h or {}).get("status"),
+                    }
+                    for h in (rc.get("hits") or [])
+                ],
+            })
+        return indices
+
+    def _normalize_har_entries(self, entries: list):
+        """Convert raw HAR log.entries into (flows, indices) ready for store_flows_batch().
+
+        Returns:
+            Tuple of (flows list, indices list)
+        """
+        import uuid as _uuid
+        from urllib.parse import urlparse
+
+        flows = []
+        indices = []
+        base_ts = time.time()
+
+        for idx, entry in enumerate(entries):
+            if not entry:
+                continue
+
+            flow_id = str(_uuid.uuid4())
+            req = entry.get("request") or {}
+            url = req.get("url") or ""
+            parsed = urlparse(url) if url else None
+            resp = entry.get("response") or {}
+            resp_content = resp.get("content") or {}
+            rc = entry.get("_rc") or {}
+
+            msg_ts = base_ts + idx * 0.001
+
+            flow_data = {
+                "id": flow_id,
+                "msg_ts": msg_ts,
+                "request": req,
+                "response": resp,
+                "host": (parsed.hostname if parsed else "") or "",
+                "path": (parsed.path if parsed else "") or "",
+                "contentType": resp_content.get("mimeType") or "",
+                "startedDateTime": entry.get("startedDateTime") or "",
+                "time": entry.get("time") or 0,
+                "size": resp_content.get("size") or 0,
+                "_rc": rc,
+            }
+            flows.append(flow_data)
+
+            indices.append({
+                "id": flow_id,
+                "msg_ts": msg_ts,
+                "method": req.get("method") or "",
+                "url": url,
+                "host": flow_data["host"],
+                "path": flow_data["path"],
+                "status": resp.get("status") or 0,
+                "contentType": flow_data["contentType"],
+                "startedDateTime": flow_data["startedDateTime"],
+                "time": flow_data["time"],
+                "size": flow_data["size"],
+                "hasError": bool(rc.get("error")),
+                "hasRequestBody": bool((req.get("postData") or {}).get("text")),
+                "hasResponseBody": bool(resp_content.get("text")),
+                "isWebsocket": bool(rc.get("isWebsocket")),
+                "websocketFrameCount": rc.get("websocketFrameCount") or 0,
+                "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
+                "hits": [
+                    {
+                        "id": (h or {}).get("id") or "",
+                        "name": (h or {}).get("name") or "",
+                        "type": (h or {}).get("type") or "",
+                        "status": (h or {}).get("status"),
+                    }
+                    for h in (rc.get("hits") or [])
+                ],
+            })
+
+        return flows, indices
 
     def _store_flow(self, flow_data: Dict) -> None:
         """Store flow data to database.

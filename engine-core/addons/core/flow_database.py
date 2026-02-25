@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from contextlib import contextmanager
 from datetime import datetime
+from collections import deque
 from .utils import setup_logging
 
 
@@ -167,12 +168,26 @@ class FlowDatabase:
         # Get or reuse active session (created by frontend on launch)
         self._current_session_id = self._get_or_reuse_session_id()
 
-        # Initial cleanup on startup
-        self._cleanup_old_sessions(keep_count=5, max_age_days=7)
+        # Notification queue: Python → frontend via poll response
+        # deque with maxlen prevents unbounded growth if frontend is slow
+        self._notifications: deque = deque(maxlen=50)
+
+        # Initial cleanup on startup — runs async so it never delays app init
+        def _deferred_startup_cleanup():
+            time.sleep(5)  # give the app time to finish starting up
+            try:
+                self._cleanup_old_sessions()
+            except Exception as e:
+                self.logger.warning(f"Startup cleanup error: {e}")
+        t = threading.Thread(target=_deferred_startup_cleanup,
+                             name="StartupCleanup", daemon=True)
+        t.start()
 
         # Last cleanup time
         self._last_cleanup = time.time()
-        
+        # Last write timestamp (used for WAL idle-TRUNCATE checkpoint)
+        self._last_write_ts = time.time()
+
         # Start background cleanup thread
         self._cleanup_thread = None
         self._cleanup_stop_event = threading.Event()
@@ -340,13 +355,19 @@ class FlowDatabase:
 
         return session_id
 
-    def _cleanup_old_sessions(self, keep_count: int = 5, max_age_days: int = 7):
+    def _cleanup_old_sessions(self, keep_count: int = None, max_age_days: int = None):
         """Clean up old sessions to prevent database bloat.
 
         Args:
-            keep_count: Keep at most this many recent sessions (default 5)
-            max_age_days: Delete sessions older than this many days (default 7)
+            keep_count: Keep at most this many recent sessions
+                        (default: Config.MAX_SESSIONS)
+            max_age_days: Delete sessions older than this many days
+                          (default: Config.MAX_FLOW_AGE_DAYS)
         """
+        if keep_count is None:
+            keep_count = Config.MAX_SESSIONS
+        if max_age_days is None:
+            max_age_days = Config.MAX_FLOW_AGE_DAYS
         conn = self._get_conn()
         now = time.time()
         cutoff_time = now - (max_age_days * 24 * 60 * 60)
@@ -579,15 +600,52 @@ class FlowDatabase:
 
     # ==================== Flow Storage ====================
 
-    def store_flow(self, flow_data: Dict, session_id: str = None) -> bool:
+    def _build_flow_data_clean(self, flow_data: Dict, req_ref: str, res_ref: str) -> str:
+        """Serialize flow data for storage, replacing non-inline bodies with placeholders.
+
+        Avoids the expensive json.loads(json.dumps(flow_data)) round-trip by only
+        copying the body fields that need to be replaced.
+        """
+        # Build a shallow-ish copy: deep-copy only the body fields we need to mutate
+        import copy
+        flow_copy = dict(flow_data)  # shallow copy of top level
+
+        if req_ref != 'inline':
+            req = flow_data.get('request')
+            if req and req.get('postData'):
+                req_copy = dict(req)
+                pd_copy = dict(req.get('postData'))
+                pd_copy['text'] = self._get_placeholder(req_ref)
+                req_copy['postData'] = pd_copy
+                flow_copy['request'] = req_copy
+
+        if res_ref != 'inline':
+            res = flow_data.get('response')
+            if res and res.get('content'):
+                res_copy = dict(res)
+                ct_copy = dict(res.get('content'))
+                ct_copy['text'] = self._get_placeholder(res_ref)
+                res_copy['content'] = ct_copy
+                flow_copy['response'] = res_copy
+
+        return json.dumps(flow_copy, ensure_ascii=False)
+
+    def store_flow(self, flow_data: Dict, session_id: str = None,
+                   update_session_ts: bool = True) -> bool:
         """
         Store a flow with tiered body storage.
 
+        Args:
+            flow_data: Flow data dict
+            session_id: Target session (default: active session)
+            update_session_ts: Whether to update sessions.updated_at (set False
+                               during batch imports; caller updates once at the end)
+
         Returns True if successful.
         """
-        session_id = self._get_session_id(session_id)
+        t0 = time.time()
 
-        # If no session exists, skip storing (frontend will create one)
+        session_id = self._get_session_id(session_id)
         if not session_id:
             return False
 
@@ -595,10 +653,8 @@ class FlowDatabase:
         if not flow_id:
             return False
 
-        # Extract index fields
         index_data = self._extract_index(flow_data, session_id)
 
-        # Use 'or {}' to handle explicit None values
         req = flow_data.get('request') or {}
         res = flow_data.get('response') or {}
         req_body, req_ref = self._process_body(
@@ -612,100 +668,182 @@ class FlowDatabase:
             'response'
         )
 
-        # Update flow data with processed bodies
-        flow_data_clean = json.loads(json.dumps(flow_data))
-        if req_ref != 'inline':
-            req_clean = flow_data_clean.get('request') or {}
-            if req_clean.get('postData'):
-                req_clean['postData']['text'] = self._get_placeholder(req_ref)
-        if res_ref != 'inline':
-            res_clean = flow_data_clean.get('response') or {}
-            if res_clean.get('content'):
-                res_clean['content']['text'] = self._get_placeholder(res_ref)
+        # Serialize without expensive full round-trip deep copy
+        detail_json = self._build_flow_data_clean(flow_data, req_ref, res_ref)
 
         with self._lock:
             conn = self._get_conn()
-
             try:
-                # Store index
-                conn.execute("""
-                    INSERT OR REPLACE INTO flow_indices (
-                        id, session_id, method, url, host, path, status, http_version,
-                        content_type, started_datetime, time, size, client_ip,
-                        app_name, app_display_name,
-                        has_error, has_request_body, has_response_body,
-                        is_websocket, websocket_frame_count, is_intercepted,
-                        hits, msg_ts
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    index_data['id'],
-                    index_data['session_id'],
-                    index_data['method'],
-                    index_data['url'],
-                    index_data['host'],
-                    index_data['path'],
-                    index_data['status'],
-                    index_data['http_version'],
-                    index_data['content_type'],
-                    index_data['started_datetime'],
-                    index_data['time'],
-                    index_data['size'],
-                    index_data['client_ip'],
-                    index_data.get('app_name', ''),
-                    index_data.get('app_display_name', ''),
-                    index_data['has_error'],
-                    index_data['has_request_body'],
-                    index_data['has_response_body'],
-                    index_data['is_websocket'],
-                    index_data['websocket_frame_count'],
-                    index_data['is_intercepted'],
-                    index_data['hits'],
-                    index_data['msg_ts'],
-                ))
+                self._insert_flow_rows(
+                    conn, flow_id, session_id,
+                    index_data, detail_json,
+                    req_body, req_ref, res_body, res_ref
+                )
 
-                # Store detail
-                conn.execute("""
-                    INSERT OR REPLACE INTO flow_details
-                    (id, session_id, data, request_body_ref, response_body_ref)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (
-                    flow_id,
-                    session_id,
-                    json.dumps(flow_data_clean, ensure_ascii=False),
-                    req_ref,
-                    res_ref
-                ))
-
-                # Store compressed bodies
-                if req_ref == 'compressed' and req_body:
-                    conn.execute("""
-                        INSERT OR REPLACE INTO flow_bodies
-                        (id, flow_id, session_id, type, data, original_size)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    """, (f"{flow_id}_req", flow_id, session_id, 'request', req_body, len(req_body)))
-
-                if res_ref == 'compressed' and res_body:
-                    conn.execute("""
-                        INSERT OR REPLACE INTO flow_bodies
-                        (id, flow_id, session_id, type, data, original_size)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    """, (f"{flow_id}_res", flow_id, session_id, 'response', res_body, len(res_body)))
-
-                # Update session timestamp (for session reuse detection)
-                conn.execute("""
-                    UPDATE sessions SET updated_at = ? WHERE id = ?
-                """, (time.time(), session_id))
+                if update_session_ts:
+                    conn.execute(
+                        "UPDATE sessions SET updated_at = ? WHERE id = ?",
+                        (time.time(), session_id)
+                    )
 
                 conn.commit()
+                self._last_write_ts = time.time()
 
             except Exception as e:
                 conn.rollback()
                 raise e
 
-        # Periodic cleanup
-        self._maybe_cleanup()
+        elapsed_ms = (time.time() - t0) * 1000
+        if elapsed_ms > 200:
+            self.logger.warning(
+                f"store_flow SLOW ({elapsed_ms:.0f}ms): flow_id={flow_id}"
+            )
 
+        self._maybe_cleanup()
         return True
+
+    def _insert_flow_rows(self, conn, flow_id: str, session_id: str,
+                          index_data: Dict, detail_json: str,
+                          req_body, req_ref: str, res_body, res_ref: str):
+        """Execute the INSERT statements for one flow (no commit, no lock).
+
+        Factored out so store_flows_batch() can reuse it inside a single transaction.
+        """
+        conn.execute("""
+            INSERT OR REPLACE INTO flow_indices (
+                id, session_id, method, url, host, path, status, http_version,
+                content_type, started_datetime, time, size, client_ip,
+                app_name, app_display_name,
+                has_error, has_request_body, has_response_body,
+                is_websocket, websocket_frame_count, is_intercepted,
+                hits, msg_ts
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            index_data['id'], index_data['session_id'],
+            index_data['method'], index_data['url'],
+            index_data['host'], index_data['path'],
+            index_data['status'], index_data['http_version'],
+            index_data['content_type'], index_data['started_datetime'],
+            index_data['time'], index_data['size'],
+            index_data['client_ip'],
+            index_data.get('app_name', ''), index_data.get('app_display_name', ''),
+            index_data['has_error'], index_data['has_request_body'],
+            index_data['has_response_body'], index_data['is_websocket'],
+            index_data['websocket_frame_count'], index_data['is_intercepted'],
+            index_data['hits'], index_data['msg_ts'],
+        ))
+
+        conn.execute("""
+            INSERT OR REPLACE INTO flow_details
+            (id, session_id, data, request_body_ref, response_body_ref)
+            VALUES (?, ?, ?, ?, ?)
+        """, (flow_id, session_id, detail_json, req_ref, res_ref))
+
+        if req_ref == 'compressed' and req_body:
+            conn.execute("""
+                INSERT OR REPLACE INTO flow_bodies
+                (id, flow_id, session_id, type, data, original_size)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (f"{flow_id}_req", flow_id, session_id, 'request', req_body, len(req_body)))
+
+        if res_ref == 'compressed' and res_body:
+            conn.execute("""
+                INSERT OR REPLACE INTO flow_bodies
+                (id, flow_id, session_id, type, data, original_size)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (f"{flow_id}_res", flow_id, session_id, 'response', res_body, len(res_body)))
+
+    def store_flows_batch(self, flows: List[Dict], session_id: str,
+                          batch_size: int = 500) -> int:
+        """
+        Bulk-insert multiple flows into a session with minimal commits.
+
+        Dramatically faster than calling store_flow() in a loop:
+        - Bodies are processed per-flow (no change)
+        - All INSERTs within a batch share a single transaction / commit
+        - sessions.updated_at is written only once at the very end
+
+        Args:
+            flows: List of flow data dicts
+            session_id: Target session ID (must exist)
+            batch_size: Number of flows per commit (default 500)
+
+        Returns:
+            Number of flows successfully stored.
+        """
+        if not flows or not session_id:
+            return 0
+
+        t0 = time.time()
+        stored = 0
+        errors = 0
+
+        # Pre-process all bodies outside the lock (CPU-bound, can run freely)
+        prepared: List[Tuple] = []
+        for flow_data in flows:
+            flow_id = flow_data.get('id')
+            if not flow_id:
+                continue
+            try:
+                index_data = self._extract_index(flow_data, session_id)
+                req = flow_data.get('request') or {}
+                res = flow_data.get('response') or {}
+                req_body, req_ref = self._process_body(
+                    flow_id, session_id,
+                    (req.get('postData') or {}).get('text', ''), 'request'
+                )
+                res_body, res_ref = self._process_body(
+                    flow_id, session_id,
+                    (res.get('content') or {}).get('text', ''), 'response'
+                )
+                detail_json = self._build_flow_data_clean(flow_data, req_ref, res_ref)
+                prepared.append((flow_id, index_data, detail_json,
+                                  req_body, req_ref, res_body, res_ref))
+            except Exception as e:
+                self.logger.warning(f"store_flows_batch: skipping flow {flow_id}: {e}")
+                errors += 1
+
+        # Write in batches, one commit per batch
+        for batch_start in range(0, len(prepared), batch_size):
+            batch = prepared[batch_start:batch_start + batch_size]
+            with self._lock:
+                conn = self._get_conn()
+                try:
+                    for (flow_id, index_data, detail_json,
+                         req_body, req_ref, res_body, res_ref) in batch:
+                        self._insert_flow_rows(
+                            conn, flow_id, session_id,
+                            index_data, detail_json,
+                            req_body, req_ref, res_body, res_ref
+                        )
+                    conn.commit()
+                    stored += len(batch)
+                    self._last_write_ts = time.time()
+                except Exception as e:
+                    conn.rollback()
+                    self.logger.error(
+                        f"store_flows_batch: batch commit failed at offset "
+                        f"{batch_start}: {e}"
+                    )
+                    errors += len(batch)
+
+        # Update session stats once at the end
+        if stored > 0:
+            with self._lock:
+                conn = self._get_conn()
+                conn.execute(
+                    "UPDATE sessions SET updated_at = ? WHERE id = ?",
+                    (time.time(), session_id)
+                )
+                conn.commit()
+
+        elapsed_ms = (time.time() - t0) * 1000
+        self.logger.info(
+            f"store_flows_batch: {stored} flows stored in {elapsed_ms:.0f}ms "
+            f"({len(flows)} total, {errors} errors, "
+            f"batch_size={batch_size})"
+        )
+        return stored
 
     def _extract_index(self, flow_data: Dict, session_id: str) -> Dict:
         """Extract index fields from flow data"""
@@ -1186,29 +1324,73 @@ class FlowDatabase:
         return row[0] if row else 0
 
     # ==================== Background Cleanup Thread ====================
-    
+
+    # Idle time (seconds) before running a TRUNCATE WAL checkpoint
+    _WAL_IDLE_TRUNCATE_SECS = 60
+    # Minimum write-idle time before allowing a cleanup run
+    _CLEANUP_WRITE_IDLE_SECS = 30
+
+    def push_notification(self, title_key: str, message_key: str,
+                          params: dict = None,
+                          n_type: str = 'info', priority: str = 'normal') -> None:
+        """Push a notification into the queue for the frontend to pick up via poll.
+
+        Args:
+            title_key: i18n key for the title (e.g. 'database.notifications.cleanup_title')
+            message_key: i18n key for the message
+            params: Optional params dict passed to i18n.t(key, params)
+            n_type: 'info' | 'success' | 'warning' | 'error'
+            priority: 'low' | 'normal' | 'high' | 'critical'
+        """
+        self._notifications.append({
+            'title_key': title_key,
+            'message_key': message_key,
+            'params': params or {},
+            'type': n_type,
+            'priority': priority,
+            'ts': time.time(),
+        })
+
+    def drain_notifications(self) -> list:
+        """Return and clear all pending notifications (called by poll endpoint)."""
+        result = list(self._notifications)
+        self._notifications.clear()
+        return result
+
     def _start_cleanup_thread(self):
         """Start the background cleanup thread."""
         def cleanup_worker():
             self.logger.info("Background cleanup thread started")
+            tick = 0  # 10-second tick counter
             while not self._cleanup_stop_event.is_set():
                 try:
-                    # Sleep for the cleanup interval, but check for stop every 10 seconds
-                    for _ in range(int(Config.CLEANUP_INTERVAL / 10)):
-                        if self._cleanup_stop_event.is_set():
-                            break
-                        self._cleanup_stop_event.wait(10)
-                    
+                    self._cleanup_stop_event.wait(10)
                     if self._cleanup_stop_event.is_set():
                         break
-                    
-                    # Run cleanup in background thread (doesn't block main event loop)
-                    self._run_cleanup_background()
-                    
+
+                    tick += 1
+
+                    # WAL idle-TRUNCATE checkpoint every 10s tick when traffic is quiet
+                    idle_secs = time.time() - self._last_write_ts
+                    if idle_secs >= self._WAL_IDLE_TRUNCATE_SECS:
+                        self._run_wal_checkpoint('TRUNCATE')
+
+                    # Full cleanup every CLEANUP_INTERVAL seconds
+                    full_interval_ticks = max(1, int(Config.CLEANUP_INTERVAL / 10))
+                    if tick % full_interval_ticks == 0:
+                        # Skip if there has been recent write activity
+                        write_idle = time.time() - self._last_write_ts
+                        if write_idle < self._CLEANUP_WRITE_IDLE_SECS:
+                            self.logger.debug(
+                                f"Cleanup deferred: write activity {write_idle:.0f}s ago "
+                                f"(threshold: {self._CLEANUP_WRITE_IDLE_SECS}s)"
+                            )
+                        else:
+                            self._run_cleanup_background()
+
                 except Exception as e:
                     self.logger.error(f"Error in cleanup thread: {e}")
-                    # Continue running even after errors
-            
+
             self.logger.info("Background cleanup thread stopped")
         
         self._cleanup_thread = threading.Thread(
@@ -1250,20 +1432,35 @@ class FlowDatabase:
             except Exception as e:
                 self.logger.error(f"Background cleanup error: {e}")
 
-    def _run_wal_checkpoint(self):
-        """Run WAL checkpoint to prevent WAL file from growing too large.
-        
-        This is called more frequently than full cleanup to keep the WAL file small.
+    def _run_wal_checkpoint(self, mode: str = 'PASSIVE'):
+        """Run WAL checkpoint.
+
+        Args:
+            mode: 'PASSIVE' (non-blocking, use during active traffic),
+                  'TRUNCATE' (blocks until all readers done, shrinks WAL file,
+                              use only when traffic is idle).
         """
+        _VALID_WAL_MODES = {'PASSIVE', 'TRUNCATE', 'RESTART', 'FULL'}
+        mode = mode.upper()
+        if mode not in _VALID_WAL_MODES:
+            self.logger.warning(f"Invalid WAL checkpoint mode: {mode}, falling back to PASSIVE")
+            mode = 'PASSIVE'
+
         try:
             conn = self._get_conn()
-            result = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+            result = conn.execute(f"PRAGMA wal_checkpoint({mode})").fetchone()
             # result is (busy, log, checkpointed)
-            if result and result[0] > 0:
-                # If checkpoint was busy, log it
-                self.logger.debug(f"WAL checkpoint busy: {result}")
+            if result:
+                busy, log_pages, checkpointed = result[0], result[1], result[2]
+                if mode == 'TRUNCATE':
+                    self.logger.info(
+                        f"WAL TRUNCATE checkpoint: busy={busy}, "
+                        f"log={log_pages}, checkpointed={checkpointed}"
+                    )
+                elif busy > 0:
+                    self.logger.debug(f"WAL PASSIVE checkpoint busy: {result}")
         except sqlite3.Error as e:
-            self.logger.warning(f"WAL checkpoint error: {e}")
+            self.logger.warning(f"WAL checkpoint ({mode}) error: {e}")
 
     def _run_cleanup(self):
         """Clean up old data and enforce total flow limit
@@ -1364,9 +1561,16 @@ class FlowDatabase:
             try:
                 db_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
                 if db_size_mb > Config.MAX_DB_SIZE_MB:
-                    self.logger.warn(
-                        f"Database size ({db_size_mb:.1f}MB) exceeds limit ({Config.MAX_DB_SIZE_MB}MB). "
-                        f"Consider deleting old sessions."
+                    self.logger.warning(
+                        f"Database size ({db_size_mb:.1f}MB) exceeds "
+                        f"limit ({Config.MAX_DB_SIZE_MB}MB)."
+                    )
+                    self.push_notification(
+                        title_key='database.notifications.storage_warning_title',
+                        message_key='database.notifications.storage_warning_msg',
+                        params={'size_mb': f'{db_size_mb:.0f}'},
+                        n_type='warning',
+                        priority='high',
                     )
             except Exception:
                 pass
@@ -1403,25 +1607,35 @@ class FlowDatabase:
                     pass
 
             conn.commit()
-            
+
             # 9. Conditional VACUUM if we deleted a lot of data
-            # Only run if we deleted more than 10% of total flows or more than 1000 flows
             if deleted_flows > max(1000, total_count * 0.1):
                 self.logger.info(f"Running VACUUM after deleting {deleted_flows} flows...")
                 try:
-                    # Release lock temporarily to avoid blocking
                     conn.execute("VACUUM")
                     conn.commit()
                 except Exception as e:
                     self.logger.error(f"VACUUM failed: {e}")
-            
-            # Log cleanup summary
+
+            # Log cleanup summary (always)
             cleanup_time = (time.time() - cleanup_start) * 1000
-            if deleted_sessions > 0 or deleted_flows > 0 or cleanup_time > 1000:
-                self.logger.info(
-                    f"Cleanup completed in {cleanup_time:.0f}ms: "
-                    f"deleted {deleted_sessions} sessions, {deleted_flows} flows, "
-                    f"db_size={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'}"
+            self.logger.info(
+                f"Cleanup: deleted {deleted_sessions} sessions, {deleted_flows} flows "
+                f"in {cleanup_time:.0f}ms "
+                f"(db={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'})"
+            )
+
+            # Notify frontend if any data was actually deleted
+            if deleted_flows > 0 or deleted_sessions > 0:
+                self.push_notification(
+                    title_key='database.notifications.cleanup_title',
+                    message_key='database.notifications.cleanup_msg',
+                    params={
+                        'flows': deleted_flows,
+                        'sessions': deleted_sessions,
+                    },
+                    n_type='info',
+                    priority='low',
                 )
 
     def _delete_body_files(self, session_id: str, flow_ids: List[str] = None):
@@ -1453,28 +1667,27 @@ class FlowDatabase:
                             pass
 
     def clear_session(self, session_id: str = None):
-        """Clear all flows in a session"""
+        """Clear all flows in a session.
+
+        Uses directory-level deletion for body files (fast), instead of
+        the old approach of listing every flow_id then deleting files one-by-one
+        while holding the write lock.
+        """
         session_id = self._get_session_id(session_id)
+
+        # Delete body files outside the lock — rmtree the whole session dir
+        self._delete_body_files(session_id)  # flow_ids=None → deletes entire dir
 
         with self._lock:
             conn = self._get_conn()
 
-            # Get flow IDs for file cleanup
-            flow_ids = [
-                row[0] for row in conn.execute(
-                    "SELECT id FROM flow_indices WHERE session_id = ?", (session_id,)
-                )
-            ]
-
-            # Delete body files
-            self._delete_body_files(session_id, flow_ids)
-
-            # Delete from database
+            # CASCADE on sessions→flow_indices→flow_details/flow_bodies handles
+            # child rows, but we need explicit deletes here because we are NOT
+            # deleting the session row itself.
             conn.execute("DELETE FROM flow_bodies WHERE session_id = ?", (session_id,))
             conn.execute("DELETE FROM flow_details WHERE session_id = ?", (session_id,))
             conn.execute("DELETE FROM flow_indices WHERE session_id = ?", (session_id,))
 
-            # Update stats inline (avoid deadlock from nested lock)
             conn.execute("""
                 UPDATE sessions SET
                     flow_count = 0,
@@ -1516,41 +1729,43 @@ class FlowDatabase:
 
     def vacuum(self, full: bool = False):
         """Run VACUUM to reclaim space and defragment database.
-        
+
+        Uses _lock (the write lock) to ensure exclusive access — VACUUM requires
+        no other writers or readers on the same connection. Previously used
+        _cleanup_lock which did not prevent concurrent store_flow() calls from
+        hitting SQLite 'database is locked' and triggering 30-second timeouts.
+
         Args:
-            full: If True, always run VACUUM. If False, only run if beneficial.
-        
-        Note: VACUUM can be slow on large databases (copies entire database).
+            full: If True, always run VACUUM. If False, only run if >20% pages free.
         """
-        with self._lock:
+        with self._lock:  # Must use write lock, not _cleanup_lock
             conn = self._get_conn()
-            
-            # Check if VACUUM would be beneficial
+
             if not full:
-                # Get free page count and total page count
                 try:
                     result = conn.execute("PRAGMA freelist_count").fetchone()
                     free_pages = result[0] if result else 0
                     result = conn.execute("PRAGMA page_count").fetchone()
                     total_pages = result[0] if result else 1
-                    
-                    # Only VACUUM if more than 20% of pages are free
                     if free_pages / total_pages < 0.2:
-                        self.logger.info(f"VACUUM skipped: only {free_pages}/{total_pages} pages free")
+                        self.logger.info(
+                            f"VACUUM skipped: only {free_pages}/{total_pages} free pages"
+                        )
                         return
                 except Exception:
-                    pass  # Proceed with VACUUM if check fails
-            
+                    pass
+
             self.logger.info("Starting VACUUM...")
             start_time = time.time()
-            
             try:
                 conn.execute("VACUUM")
                 conn.commit()
-                
                 elapsed = time.time() - start_time
                 new_size_mb = os.path.getsize(self.db_path) / (1024 * 1024)
-                self.logger.info(f"VACUUM completed in {elapsed:.1f}s, database size: {new_size_mb:.1f}MB")
+                self.logger.info(
+                    f"VACUUM completed in {elapsed:.1f}s, "
+                    f"database size: {new_size_mb:.1f}MB"
+                )
             except Exception as e:
                 self.logger.error(f"VACUUM failed: {e}")
 
