@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "dev:tauri": "RELAYCRAFT_DEV=1 pnpm tauri dev --config '{\"productName\": \"RelayCraft Dev\", \"identifier\": \"com.beta.relaycraft.dev\", \"proxy_port\": 9091}'",
-    "build": "tsc && vite build",
+    "build": "pnpm gen:licenses && tsc && vite build",
     "check:i18n": "node scripts/check-i18n.js",
     "preview": "vite preview",
     "tauri": "python engine-core/build.py --sync && tauri",

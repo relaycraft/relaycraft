@@ -342,6 +342,7 @@
       "traffic": "流量监控"
     },
     "try_another_search": "请尝试搜索其他关键字",
+    "view": "查看",
     "unknown": "未知",
     "value": "值",
     "warning": "警告"
@@ -888,10 +889,19 @@
       },
       "dev_tools": "开发者工具",
       "error_fetch": "获取版本信息失败，请检查网络设置。",
-      "github": "代码仓库",
+      "github": "产品代码仓库",
       "github_desc": "访问项目开源主页，浏览源代码或参与社区讨论",
       "homepage": "产品主页",
       "homepage_desc": "RelayCraft 官方产品主页",
+      "app_license": "产品许可协议",
+      "app_license_desc": "RelayCraft 基于 GNU Affero General Public License v3.0 开源",
+      "licenses": {
+        "title": "第三方许可协议",
+        "title_short": "开源许可协议",
+        "row_desc": "查看第三方软件开源许可",
+        "desc": "由于下列优秀的开源软件，RelayCraft 才得以诞生。",
+        "all": "全部"
+      },
       "links": "相关资源",
       "mitmproxy": "代理引擎仓库",
       "mitmproxy_desc": "基于优秀的开源项目 mitmproxy 驱动",
@@ -902,6 +912,7 @@
       "open_logs": "打开日志目录",
       "open_logs_desc": "查看系统运行时日志",
       "title": "关于与支持",
+      "version_info": "版本信息",
       "troubleshooting": "故障排查",
       "up_to_date": "已是最新版本",
       "verbose": "详细模式",
@@ -912,6 +923,11 @@
       "visit_engine": "访问引擎仓库",
       "visit_github": "访问代码仓库",
       "visit_website": "访问主页"
+    },
+    "advanced": {
+      "title": "高级与诊断",
+      "directories": "系统数据目录",
+      "troubleshooting": "故障排查"
     },
     "appearance": {
       "active": "当前使用",

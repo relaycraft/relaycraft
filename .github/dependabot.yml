@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Maintain dependencies for Node.js (via pnpm)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Maintain dependencies for Rust
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Maintain dependencies for Python
+  - package-ecosystem: "pip"
+    directory: "/engine-core"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"

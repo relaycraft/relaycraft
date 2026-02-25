@@ -1,0 +1,6148 @@
+[
+  {
+    "ecosystem": "Node.js",
+    "name": "@babel/runtime",
+    "version": "7.28.6",
+    "license": "MIT",
+    "repository": "https://babel.dev/docs/en/next/babel-runtime"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/autocomplete",
+    "version": "6.20.0",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/autocomplete#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/commands",
+    "version": "6.10.1",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/commands#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/lang-javascript",
+    "version": "6.2.4",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/lang-javascript#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/lang-json",
+    "version": "6.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/lang-json#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/lang-python",
+    "version": "6.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/lang-python#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/lang-yaml",
+    "version": "6.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/lang-yaml#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/language",
+    "version": "6.12.1",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/language#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/lint",
+    "version": "6.9.3",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/lint#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/merge",
+    "version": "6.11.2",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/merge#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/search",
+    "version": "6.6.0",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/search#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/state",
+    "version": "6.5.4",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/state#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/theme-one-dark",
+    "version": "6.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/theme-one-dark#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@codemirror/view",
+    "version": "6.39.12",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/view#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/common",
+    "version": "1.5.0",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/common#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/highlight",
+    "version": "1.2.3",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/highlight#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/javascript",
+    "version": "1.5.4",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/javascript#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/json",
+    "version": "1.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/json#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/lr",
+    "version": "1.4.8",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/lr#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/python",
+    "version": "1.1.18",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/python#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@lezer/yaml",
+    "version": "1.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/lezer-parser/yaml#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@marijn/find-cluster-break",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/marijnh/find-cluster-break#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/api",
+    "version": "2.10.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-dialog",
+    "version": "2.6.0",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-fs",
+    "version": "2.4.5",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-http",
+    "version": "2.5.7",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-log",
+    "version": "2.8.0",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-opener",
+    "version": "2.5.3",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-os",
+    "version": "2.3.2",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-process",
+    "version": "2.3.1",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@tauri-apps/plugin-updater",
+    "version": "2.10.0",
+    "license": "MIT OR Apache-2.0",
+    "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/debug",
+    "version": "4.1.12",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/debug"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/estree",
+    "version": "1.0.8",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/estree-jsx",
+    "version": "1.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree-jsx"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/hast",
+    "version": "3.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/hast"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/mdast",
+    "version": "4.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/mdast"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/ms",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ms"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/react",
+    "version": "19.2.8",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@types/unist",
+    "version": "2.0.11",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/unist"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@uiw/codemirror-extensions-basic-setup",
+    "version": "4.25.4",
+    "license": "MIT",
+    "repository": "https://uiwjs.github.io/react-codemirror/#/extensions/basic-setup"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@uiw/react-codemirror",
+    "version": "4.25.4",
+    "license": "MIT",
+    "repository": "https://uiwjs.github.io/react-codemirror"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "@ungap/structured-clone",
+    "version": "1.3.0",
+    "license": "ISC",
+    "repository": "https://github.com/ungap/structured-clone#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "adler2",
+    "version": "2.0.1",
+    "license": "0BSD OR Apache-2.0 OR MIT",
+    "repository": "https://github.com/oyvindln/adler2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "aes",
+    "version": "0.8.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/block-ciphers"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ahash",
+    "version": "0.7.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tkaitchuck/ahash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "aho-corasick",
+    "version": "1.1.4",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/aho-corasick"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "aioquic",
+    "version": "1.2.0",
+    "license": "BSD License",
+    "repository": "https://github.com/aiortc/aioquic"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "alloc-no-stdlib",
+    "version": "2.0.4",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dropbox/rust-alloc-no-stdlib"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "alloc-stdlib",
+    "version": "0.2.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dropbox/rust-alloc-no-stdlib"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "altgraph",
+    "version": "0.17.5",
+    "license": "MIT License",
+    "repository": "https://altgraph.readthedocs.io"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "android_log-sys",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-mobile/android_log-sys-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "android_logger",
+    "version": "0.15.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-mobile/android_logger-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "android_system_properties",
+    "version": "0.1.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/nical/android_system_properties"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "anyhow",
+    "version": "1.0.101",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/anyhow"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "arbitrary",
+    "version": "1.4.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-fuzz/arbitrary/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "argon2-cffi",
+    "version": "25.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/hynek/argon2-cffi/blob/main/CHANGELOG.md"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "argon2-cffi-bindings",
+    "version": "25.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/hynek/argon2-cffi-bindings/blob/main/CHANGELOG.md"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "argparse",
+    "version": "2.0.1",
+    "license": "Python-2.0",
+    "repository": "https://github.com/nodeca/argparse#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "arrayvec",
+    "version": "0.7.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bluss/arrayvec"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "asgiref",
+    "version": "3.10.0",
+    "license": "BSD License",
+    "repository": "https://github.com/django/asgiref/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-broadcast",
+    "version": "0.7.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-broadcast"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-channel",
+    "version": "2.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-channel"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-compression",
+    "version": "0.4.39",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Nullus157/async-compression"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-executor",
+    "version": "1.13.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-executor"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-io",
+    "version": "2.6.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-io"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-lock",
+    "version": "3.4.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-lock"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-process",
+    "version": "2.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-process"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-recursion",
+    "version": "1.1.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dcchut/async-recursion"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-signal",
+    "version": "0.2.13",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-signal"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-task",
+    "version": "4.7.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/async-task"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "async-trait",
+    "version": "0.1.89",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/async-trait"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "atk",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "atk-sys",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "atomic-waker",
+    "version": "1.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/atomic-waker"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "attrs",
+    "version": "25.4.0",
+    "license": "MIT",
+    "repository": "https://www.attrs.org/en/stable/changelog.html"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "autocfg",
+    "version": "1.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/cuviper/autocfg"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "aws-lc-rs",
+    "version": "1.15.4",
+    "license": "(Apache-2.0 OR ISC) AND ISC",
+    "repository": "https://github.com/aws/aws-lc-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "aws-lc-sys",
+    "version": "0.37.0",
+    "license": "(Apache-2.0 OR ISC) AND ISC AND OpenSSL",
+    "repository": "https://github.com/aws/aws-lc-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "bail",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/bail#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "base64",
+    "version": "0.21.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/marshallpierce/rust-base64"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "base64",
+    "version": "0.22.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/marshallpierce/rust-base64"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "bcrypt",
+    "version": "5.0.0",
+    "license": "Apache Software License",
+    "repository": "https://github.com/pyca/bcrypt/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "beautifulsoup4",
+    "version": "4.14.3",
+    "license": "MIT License",
+    "repository": "https://www.crummy.com/software/BeautifulSoup/bs4/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bitflags",
+    "version": "1.3.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bitflags/bitflags"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bitflags",
+    "version": "2.10.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bitflags/bitflags"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bitvec",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/bitvecto-rs/bitvec"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "blinker",
+    "version": "1.9.0",
+    "license": "MIT License",
+    "repository": "https://github.com/pallets-eco/blinker/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "block",
+    "version": "0.1.6",
+    "license": "MIT",
+    "repository": "http://github.com/SSheldon/rust-block"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "block-buffer",
+    "version": "0.10.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/utils"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "block2",
+    "version": "0.6.2",
+    "license": "MIT",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "blocking",
+    "version": "1.6.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/blocking"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "borsh",
+    "version": "1.6.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/near/borsh-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "borsh-derive",
+    "version": "1.6.0",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/near/borsh-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "brotli",
+    "version": "8.0.2",
+    "license": "BSD-3-Clause AND MIT",
+    "repository": "https://github.com/dropbox/rust-brotli"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "brotli",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/google/brotli"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "brotli-decompressor",
+    "version": "5.0.0",
+    "license": "BSD-3-Clause OR MIT",
+    "repository": "https://github.com/dropbox/rust-brotli-decompressor"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bumpalo",
+    "version": "3.19.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/fitzgen/bumpalo"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "byte-unit",
+    "version": "5.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/magiclen/byte-unit"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bytecheck",
+    "version": "0.6.12",
+    "license": "MIT",
+    "repository": "https://github.com/djkoloski/bytecheck"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bytecheck_derive",
+    "version": "0.6.12",
+    "license": "MIT",
+    "repository": "https://github.com/djkoloski/bytecheck"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bytemuck",
+    "version": "1.25.0",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/Lokathor/bytemuck"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "byteorder",
+    "version": "1.5.0",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/byteorder"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bytes",
+    "version": "1.11.1",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/bytes"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bzip2",
+    "version": "0.5.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/trifectatechfoundation/bzip2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "bzip2-sys",
+    "version": "0.1.13+1.0.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/alexcrichton/bzip2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cairo-rs",
+    "version": "0.18.5",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cairo-sys-rs",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "camino",
+    "version": "1.2.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/camino-rs/camino"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cargo_metadata",
+    "version": "0.19.2",
+    "license": "MIT",
+    "repository": "https://github.com/oli-obk/cargo_metadata"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cargo_toml",
+    "version": "0.22.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://gitlab.com/lib.rs/cargo_toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cargo-platform",
+    "version": "0.1.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/cargo"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cc",
+    "version": "1.2.55",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/cc-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "ccount",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/ccount#readme"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "certifi",
+    "version": "2026.2.25",
+    "license": "Mozilla Public License 2.0 (MPL 2.0)",
+    "repository": "https://github.com/certifi/python-certifi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cesu8",
+    "version": "1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/emk/cesu8-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cfb",
+    "version": "0.7.3",
+    "license": "MIT",
+    "repository": "https://github.com/mdsteele/rust-cfb"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "cffi",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://cffi.readthedocs.io/en/latest/whatsnew.html"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cfg_aliases",
+    "version": "0.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/katharostech/cfg_aliases"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cfg-expr",
+    "version": "0.15.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/EmbarkStudios/cfg-expr"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cfg-if",
+    "version": "1.0.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/cfg-if"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "character-entities",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/character-entities#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "character-entities-html4",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/character-entities-html4#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "character-entities-legacy",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/character-entities-legacy#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "character-reference-invalid",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/character-reference-invalid#readme"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "charset-normalizer",
+    "version": "3.4.4",
+    "license": "MIT",
+    "repository": "https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "chrono",
+    "version": "0.4.43",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/chronotope/chrono"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cipher",
+    "version": "0.4.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/traits"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "class-variance-authority",
+    "version": "0.7.1",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/joe-bell/cva#readme"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "click",
+    "version": "8.3.1",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/pallets/click/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "clsx",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/lukeed/clsx#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cmake",
+    "version": "0.1.57",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/cmake-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cocoa",
+    "version": "0.25.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cocoa-foundation",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "codemirror",
+    "version": "6.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/basic-setup#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "combine",
+    "version": "4.6.7",
+    "license": "MIT",
+    "repository": "https://github.com/Marwes/combine"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "comma-separated-tokens",
+    "version": "2.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/comma-separated-tokens#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "compression-codecs",
+    "version": "0.4.36",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Nullus157/async-compression"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "compression-core",
+    "version": "0.4.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Nullus157/async-compression"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "concurrent-queue",
+    "version": "2.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/concurrent-queue"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "consola",
+    "version": "3.4.2",
+    "license": "MIT",
+    "repository": "https://github.com/unjs/consola#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "constant_time_eq",
+    "version": "0.3.1",
+    "license": "Apache-2.0 OR CC0-1.0 OR MIT-0",
+    "repository": "https://github.com/cesarb/constant_time_eq"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "convert_case",
+    "version": "0.4.0",
+    "license": "MIT",
+    "repository": "https://github.com/rutrum/convert-case"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cookie",
+    "version": "0.18.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/SergioBenitez/cookie-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cookie_store",
+    "version": "0.21.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/pfernie/cookie_store"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cookie_store",
+    "version": "0.22.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/pfernie/cookie_store"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-foundation",
+    "version": "0.9.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-foundation",
+    "version": "0.10.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-foundation-sys",
+    "version": "0.8.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-graphics",
+    "version": "0.23.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-graphics",
+    "version": "0.24.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-graphics-types",
+    "version": "0.1.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "core-graphics-types",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/core-foundation-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cpufeatures",
+    "version": "0.2.17",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/utils"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crc",
+    "version": "3.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/mrhooray/crc-rs.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crc-catalog",
+    "version": "2.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/akhilles/crc-catalog.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crc32fast",
+    "version": "1.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/srijs/rust-crc32fast"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "crelt",
+    "version": "1.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/marijnh/crelt#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "cross-fetch",
+    "version": "4.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/lquixada/cross-fetch"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crossbeam-channel",
+    "version": "0.5.15",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/crossbeam-rs/crossbeam"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crossbeam-deque",
+    "version": "0.8.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/crossbeam-rs/crossbeam"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crossbeam-epoch",
+    "version": "0.9.18",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/crossbeam-rs/crossbeam"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crossbeam-utils",
+    "version": "0.8.21",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/crossbeam-rs/crossbeam"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "crypto-common",
+    "version": "0.1.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/traits"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "cryptography",
+    "version": "46.0.5",
+    "license": "Apache-2.0 OR BSD-3-Clause",
+    "repository": "https://github.com/pyca/cryptography"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cssparser",
+    "version": "0.29.6",
+    "license": "MPL-2.0",
+    "repository": "https://github.com/servo/rust-cssparser"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "cssparser-macros",
+    "version": "0.6.1",
+    "license": "MPL-2.0",
+    "repository": "https://github.com/servo/rust-cssparser"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "csstype",
+    "version": "3.2.3",
+    "license": "MIT",
+    "repository": "https://github.com/frenic/csstype#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ctor",
+    "version": "0.2.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/mmastrac/rust-ctor"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "darling",
+    "version": "0.21.3",
+    "license": "MIT",
+    "repository": "https://github.com/TedDriggs/darling"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "darling_core",
+    "version": "0.21.3",
+    "license": "MIT",
+    "repository": "https://github.com/TedDriggs/darling"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "darling_macro",
+    "version": "0.21.3",
+    "license": "MIT",
+    "repository": "https://github.com/TedDriggs/darling"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "data-url",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-url"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "debug",
+    "version": "4.4.3",
+    "license": "MIT",
+    "repository": "https://github.com/debug-js/debug#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "decode-named-character-reference",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/decode-named-character-reference#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "deflate64",
+    "version": "0.1.10",
+    "license": "MIT",
+    "repository": "https://github.com/anatawa12/deflate64-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "dequal",
+    "version": "2.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/lukeed/dequal#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "deranged",
+    "version": "0.5.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jhpratt/deranged"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "derive_arbitrary",
+    "version": "1.4.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-fuzz/arbitrary"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "derive_more",
+    "version": "0.99.20",
+    "license": "MIT",
+    "repository": "https://github.com/JelteF/derive_more"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "devlop",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/devlop#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "digest",
+    "version": "0.10.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/traits"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dirs",
+    "version": "6.0.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/soc/dirs-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dirs-sys",
+    "version": "0.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dirs-dev/dirs-sys-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dispatch",
+    "version": "0.2.0",
+    "license": "MIT",
+    "repository": "http://github.com/SSheldon/rust-dispatch"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dispatch2",
+    "version": "0.3.0",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "displaydoc",
+    "version": "0.2.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/yaahc/displaydoc"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dlopen2",
+    "version": "0.8.2",
+    "license": "MIT",
+    "repository": "https://github.com/OpenByteDev/dlopen2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dlopen2_derive",
+    "version": "0.4.3",
+    "license": "MIT",
+    "repository": "https://github.com/OpenByteDev/dlopen2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "document-features",
+    "version": "0.2.12",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/slint-ui/document-features"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dpi",
+    "version": "0.1.2",
+    "license": "Apache-2.0 AND MIT",
+    "repository": "https://github.com/rust-windowing/winit"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dtoa",
+    "version": "1.0.11",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/dtoa"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dtoa-short",
+    "version": "0.3.5",
+    "license": "MPL-2.0",
+    "repository": "https://github.com/upsuper/dtoa-short"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dunce",
+    "version": "1.0.5",
+    "license": "Apache-2.0 OR CC0-1.0 OR MIT-0",
+    "repository": "https://gitlab.com/kornelski/dunce"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "dyn-clone",
+    "version": "1.0.20",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/dyn-clone"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "either",
+    "version": "1.15.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rayon-rs/either"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "embed_plist",
+    "version": "1.2.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/nvzqz/embed-plist-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "embed-resource",
+    "version": "3.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/nabijaczleweli/rust-embed-resource"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "encoding_rs",
+    "version": "0.8.35",
+    "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+    "repository": "https://github.com/hsivonen/encoding_rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "endi",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/zeenix/endi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "enumflags2",
+    "version": "0.7.12",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/meithecatte/enumflags2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "enumflags2_derive",
+    "version": "0.7.12",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/meithecatte/enumflags2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "env_filter",
+    "version": "0.1.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-cli/env_logger"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "equivalent",
+    "version": "1.0.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/indexmap-rs/equivalent"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "erased-serde",
+    "version": "0.4.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/erased-serde"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "errno",
+    "version": "0.3.14",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/lambda-fairy/rust-errno"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "escape-string-regexp",
+    "version": "5.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/sindresorhus/escape-string-regexp#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "estree-util-is-identifier-name",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/estree-util-is-identifier-name#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "event-listener",
+    "version": "5.4.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/event-listener"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "event-listener-strategy",
+    "version": "0.5.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/event-listener-strategy"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "extend",
+    "version": "3.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/justmoon/node-extend#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fastrand",
+    "version": "2.3.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/fastrand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fdeflate",
+    "version": "0.3.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/image-rs/fdeflate"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fern",
+    "version": "0.7.1",
+    "license": "MIT",
+    "repository": "https://github.com/daboross/fern"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "field-offset",
+    "version": "0.3.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Diggsey/rust-field-offset"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "filetime",
+    "version": "0.2.27",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/alexcrichton/filetime"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "find-msvc-tools",
+    "version": "0.1.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/cc-rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "Flask",
+    "version": "3.1.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/pallets/flask/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "flate2",
+    "version": "1.1.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/flate2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fnv",
+    "version": "1.0.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-fnv"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "foreign-types",
+    "version": "0.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/sfackler/foreign-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "foreign-types-macros",
+    "version": "0.2.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/sfackler/foreign-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "foreign-types-shared",
+    "version": "0.3.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/sfackler/foreign-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "form_urlencoded",
+    "version": "1.2.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-url"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "framer-motion",
+    "version": "12.29.0",
+    "license": "MIT",
+    "repository": "https://github.com/motiondivision/motion#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fs_extra",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/webdesus/fs_extra"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "funty",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/myrrlyn/funty"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futf",
+    "version": "0.1.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/futf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-channel",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-core",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-executor",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-io",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-lite",
+    "version": "2.6.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/futures-lite"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-macro",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-sink",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-task",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-timer",
+    "version": "3.0.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/async-rs/futures-timer"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "futures-util",
+    "version": "0.3.31",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/futures-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "fxhash",
+    "version": "0.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/cbreeden/fxhash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdk",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdk-pixbuf",
+    "version": "0.18.5",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdk-pixbuf-sys",
+    "version": "0.18.0",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdk-sys",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdkwayland-sys",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdkx11",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gdkx11-sys",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "generic-array",
+    "version": "0.14.7",
+    "license": "MIT",
+    "repository": "https://github.com/fizyk20/generic-array.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "getrandom",
+    "version": "0.1.16",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/getrandom"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "getrandom",
+    "version": "0.2.17",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/getrandom"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "getrandom",
+    "version": "0.3.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/getrandom"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gio",
+    "version": "0.18.4",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gio-sys",
+    "version": "0.18.1",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "glib",
+    "version": "0.18.5",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "glib-macros",
+    "version": "0.18.5",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "glib-sys",
+    "version": "0.18.1",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "glob",
+    "version": "0.3.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/glob"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gobject-sys",
+    "version": "0.18.0",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gtk",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gtk-sys",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "gtk3-macros",
+    "version": "0.18.2",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk3-rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "h11",
+    "version": "0.16.0",
+    "license": "MIT License",
+    "repository": "https://github.com/python-hyper/h11"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "h2",
+    "version": "0.4.13",
+    "license": "MIT",
+    "repository": "https://github.com/hyperium/h2"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "h2",
+    "version": "4.3.0",
+    "license": "MIT License",
+    "repository": "https://github.com/python-hyper/h2/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hashbrown",
+    "version": "0.12.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/hashbrown"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hashbrown",
+    "version": "0.16.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/hashbrown"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "hast-util-to-jsx-runtime",
+    "version": "2.3.6",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/hast-util-to-jsx-runtime#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "hast-util-whitespace",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/hast-util-whitespace#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "heck",
+    "version": "0.4.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/withoutboats/heck"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "heck",
+    "version": "0.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/withoutboats/heck"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hermit-abi",
+    "version": "0.5.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/hermit-os/hermit-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hex",
+    "version": "0.4.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/KokaKiwi/rust-hex"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hmac",
+    "version": "0.12.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/MACs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "hpack",
+    "version": "4.1.0",
+    "license": "MIT License",
+    "repository": "https://github.com/python-hyper/hpack/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "html-parse-stringify",
+    "version": "3.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/henrikjoreteg/html-parse-stringify"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "html-url-attributes",
+    "version": "3.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/rehypejs/rehype-minify/tree/main#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "html5ever",
+    "version": "0.29.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/html5ever"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "http",
+    "version": "1.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/hyperium/http"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "http-body",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/hyperium/http-body"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "http-body-util",
+    "version": "0.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/hyperium/http-body"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "http-range",
+    "version": "0.1.5",
+    "license": "MIT",
+    "repository": "https://github.com/bancek/rust-http-range.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "httparse",
+    "version": "1.10.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/seanmonstar/httparse"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hyper",
+    "version": "1.8.1",
+    "license": "MIT",
+    "repository": "https://github.com/hyperium/hyper"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hyper-rustls",
+    "version": "0.27.7",
+    "license": "Apache-2.0 OR ISC OR MIT",
+    "repository": "https://github.com/rustls/hyper-rustls"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "hyper-util",
+    "version": "0.1.20",
+    "license": "MIT",
+    "repository": "https://github.com/hyperium/hyper-util"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "hyperframe",
+    "version": "6.1.0",
+    "license": "MIT License",
+    "repository": "https://github.com/python-hyper/hyperframe/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "i18next",
+    "version": "25.8.0",
+    "license": "MIT",
+    "repository": "https://www.i18next.com"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "i18next-browser-languagedetector",
+    "version": "8.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/i18next/i18next-browser-languageDetector"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "i18next-http-backend",
+    "version": "3.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/i18next/i18next-http-backend"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "iana-time-zone",
+    "version": "0.1.65",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/strawlab/iana-time-zone"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "iana-time-zone-haiku",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/strawlab/iana-time-zone"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ico",
+    "version": "0.5.0",
+    "license": "MIT",
+    "repository": "https://github.com/mdsteele/rust-ico"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_collections",
+    "version": "2.1.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_locale_core",
+    "version": "2.1.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_normalizer",
+    "version": "2.1.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_normalizer_data",
+    "version": "2.1.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_properties",
+    "version": "2.1.2",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_properties_data",
+    "version": "2.1.2",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "icu_provider",
+    "version": "2.1.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ident_case",
+    "version": "1.0.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/TedDriggs/ident_case"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "idna",
+    "version": "1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-url/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "idna",
+    "version": "3.11",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/kjd/idna"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "idna_adapter",
+    "version": "1.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/hsivonen/idna_adapter"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "indexmap",
+    "version": "1.9.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bluss/indexmap"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "indexmap",
+    "version": "2.13.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/indexmap-rs/indexmap"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "infer",
+    "version": "0.19.0",
+    "license": "MIT",
+    "repository": "https://github.com/bojand/infer"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "inline-style-parser",
+    "version": "0.2.7",
+    "license": "MIT",
+    "repository": "https://github.com/remarkablemark/inline-style-parser#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "inout",
+    "version": "0.1.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/utils"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ipnet",
+    "version": "2.11.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/krisprice/ipnet"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "iri-string",
+    "version": "0.7.10",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/lo48576/iri-string"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "is-alphabetical",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/is-alphabetical#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "is-alphanumerical",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/is-alphanumerical#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "is-decimal",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/is-decimal#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "is-docker",
+    "version": "0.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/TheLarkInn/is-docker"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "is-hexadecimal",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/is-hexadecimal#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "is-plain-obj",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/sindresorhus/is-plain-obj#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "is-wsl",
+    "version": "0.4.0",
+    "license": "MIT",
+    "repository": "https://github.com/TheLarkInn/is-wsl"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "itoa",
+    "version": "1.0.17",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/itoa"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "itsdangerous",
+    "version": "2.2.0",
+    "license": "BSD License",
+    "repository": "https://github.com/pallets/itsdangerous/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "javascriptcore-rs",
+    "version": "1.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/tauri-apps/javascriptcore-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "javascriptcore-rs-sys",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/tauri-apps/javascriptcore-rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "Jinja2",
+    "version": "3.1.6",
+    "license": "BSD License",
+    "repository": "https://github.com/pallets/jinja/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "jni",
+    "version": "0.21.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jni-rs/jni-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "jni-sys",
+    "version": "0.3.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/sfackler/rust-jni-sys"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "jobserver",
+    "version": "0.1.34",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/jobserver-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "js-sys",
+    "version": "0.3.85",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/js-sys"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "js-yaml",
+    "version": "4.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/nodeca/js-yaml#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "json-patch",
+    "version": "3.0.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/idubrov/json-patch"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "jsonpath-ng",
+    "version": "1.7.0",
+    "license": "Apache Software License",
+    "repository": "https://github.com/h2non/jsonpath-ng"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "jsonptr",
+    "version": "0.6.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/chanced/jsonptr"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "kaitaistruct",
+    "version": "0.11",
+    "license": "MIT",
+    "repository": "https://kaitai.io"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "keyboard-types",
+    "version": "0.7.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/pyfisch/keyboard-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "kuchikiki",
+    "version": "0.8.8-speedreader",
+    "license": "MIT",
+    "repository": "https://github.com/brave/kuchikiki"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "lazy_static",
+    "version": "1.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang-nursery/lazy-static.rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "ldap3",
+    "version": "2.9.1",
+    "license": "GNU Lesser General Public License v3 (LGPLv3)",
+    "repository": "https://github.com/cannatag/ldap3"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "libappindicator",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "N/A"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "libappindicator-sys",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "N/A"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "libc",
+    "version": "0.2.180",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/libc"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "libloading",
+    "version": "0.7.4",
+    "license": "ISC",
+    "repository": "https://github.com/nagisa/rust_libloading/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "libredox",
+    "version": "0.1.12",
+    "license": "MIT",
+    "repository": "https://gitlab.redox-os.org/redox-os/libredox.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "linux-raw-sys",
+    "version": "0.11.0",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/sunfishcode/linux-raw-sys"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "litemap",
+    "version": "0.8.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "litrs",
+    "version": "1.0.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/LukasKalbertodt/litrs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "local-ip-address",
+    "version": "0.5.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/EstebanBorai/local-ip-address"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "lock_api",
+    "version": "0.4.14",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Amanieu/parking_lot"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "log",
+    "version": "0.4.29",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/log"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "longest-streak",
+    "version": "3.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/longest-streak#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "lru-slab",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/Ralith/lru-slab"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "lucide-react",
+    "version": "0.562.0",
+    "license": "ISC",
+    "repository": "https://lucide.dev"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "lzma-rs",
+    "version": "0.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/gendx/lzma-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "lzma-sys",
+    "version": "0.1.20",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/alexcrichton/xz2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "mac",
+    "version": "0.1.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/reem/rust-mac.git"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "macholib",
+    "version": "1.16.4",
+    "license": "MIT License",
+    "repository": "http://github.com/ronaldoussoren/macholib"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "malloc_buf",
+    "version": "0.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/SSheldon/malloc_buf"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "markdown-table",
+    "version": "3.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/markdown-table#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "markup5ever",
+    "version": "0.14.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/html5ever"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "MarkupSafe",
+    "version": "3.0.3",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/pallets/markupsafe/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "match_token",
+    "version": "0.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/html5ever"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "matches",
+    "version": "0.1.10",
+    "license": "MIT",
+    "repository": "https://github.com/SimonSapin/rust-std-candidates"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-find-and-replace",
+    "version": "3.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-find-and-replace#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-from-markdown",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-from-markdown#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm",
+    "version": "3.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm-autolink-literal",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm-autolink-literal#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm-footnote",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm-footnote#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm-strikethrough",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm-strikethrough#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm-table",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm-table#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-gfm-task-list-item",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-gfm-task-list-item#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-mdx-expression",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-mdx-expression#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-mdx-jsx",
+    "version": "3.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-mdx-jsx#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-mdxjs-esm",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-mdxjs-esm#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-phrasing",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-phrasing#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-to-hast",
+    "version": "13.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-to-hast#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-to-markdown",
+    "version": "2.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-to-markdown#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "mdast-util-to-string",
+    "version": "4.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/mdast-util-to-string#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "memchr",
+    "version": "2.8.0",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/memchr"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "memoffset",
+    "version": "0.9.1",
+    "license": "MIT",
+    "repository": "https://github.com/Gilnaa/memoffset"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark",
+    "version": "4.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-core-commonmark",
+    "version": "2.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-autolink-literal",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-autolink-literal#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-footnote",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-footnote#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-strikethrough",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-strikethrough#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-table",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-table#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-tagfilter",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-tagfilter#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-extension-gfm-task-list-item",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark-extension-gfm-task-list-item#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-factory-destination",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-factory-label",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-factory-space",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-factory-title",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-factory-whitespace",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-character",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-chunked",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-classify-character",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-combine-extensions",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-decode-numeric-character-reference",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-decode-string",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-encode",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-html-tag-name",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-normalize-identifier",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-resolve-all",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-sanitize-uri",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-subtokenize",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-symbol",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "micromark-util-types",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/micromark/micromark/tree/main#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "mime",
+    "version": "0.3.17",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/hyperium/mime"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "minisign-verify",
+    "version": "0.2.4",
+    "license": "MIT",
+    "repository": "https://github.com/jedisct1/rust-minisign-verify"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "miniz_oxide",
+    "version": "0.8.9",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "mio",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/mio"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "mitmproxy",
+    "version": "12.2.1",
+    "license": "MIT License",
+    "repository": "https://mitmproxy.org"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "mitmproxy_rs",
+    "version": "0.12.9",
+    "license": "UNKNOWN",
+    "repository": "UNKNOWN"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "mitmproxy-macos",
+    "version": "0.12.9",
+    "license": "MIT",
+    "repository": "https://github.com/mitmproxy/mitmproxy-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "motion-dom",
+    "version": "12.29.0",
+    "license": "MIT",
+    "repository": "https://github.com/motiondivision/motion#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "motion-utils",
+    "version": "12.27.2",
+    "license": "MIT",
+    "repository": "https://github.com/motiondivision/motion#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "ms",
+    "version": "2.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/vercel/ms#readme"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "msgpack",
+    "version": "1.1.2",
+    "license": "Apache-2.0",
+    "repository": "https://msgpack.org/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "muda",
+    "version": "0.17.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/amrbashir/muda"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ndk",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-mobile/ndk"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ndk-context",
+    "version": "0.1.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-windowing/android-ndk-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ndk-sys",
+    "version": "0.6.0+11769913",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-mobile/ndk"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "neli",
+    "version": "0.6.5",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/jbaublitz/neli"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "neli-proc-macros",
+    "version": "0.1.4",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/jbaublitz/neli"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "new_debug_unreachable",
+    "version": "1.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/mbrubeck/rust-debug-unreachable"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "node-fetch",
+    "version": "2.7.0",
+    "license": "MIT",
+    "repository": "https://github.com/bitinn/node-fetch"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "nodrop",
+    "version": "0.1.14",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bluss/arrayvec"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ntapi",
+    "version": "0.4.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/MSxDOS/ntapi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "num_enum",
+    "version": "0.7.5",
+    "license": "Apache-2.0 OR BSD-3-Clause OR MIT",
+    "repository": "https://github.com/illicitonion/num_enum"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "num_enum_derive",
+    "version": "0.7.5",
+    "license": "Apache-2.0 OR BSD-3-Clause OR MIT",
+    "repository": "https://github.com/illicitonion/num_enum"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "num_threads",
+    "version": "0.1.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jhpratt/num_threads"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "num-conv",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jhpratt/num-conv"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "num-traits",
+    "version": "0.2.19",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-num/num-traits"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc",
+    "version": "0.2.7",
+    "license": "MIT",
+    "repository": "http://github.com/SSheldon/rust-objc"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2",
+    "version": "0.6.3",
+    "license": "MIT",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-app-kit",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-cloud-kit",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-data",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-foundation",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-graphics",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-image",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-text",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-core-video",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-encode",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-exception-helper",
+    "version": "0.1.1",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-foundation",
+    "version": "0.3.2",
+    "license": "MIT",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-io-surface",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-javascript-core",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-osa-kit",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-quartz-core",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-security",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-ui-kit",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "objc2-web-kit",
+    "version": "0.3.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/madsmtm/objc2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "once_cell",
+    "version": "1.21.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/matklad/once_cell"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "open",
+    "version": "5.3.3",
+    "license": "MIT",
+    "repository": "https://github.com/Byron/open-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "openssl-probe",
+    "version": "0.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/openssl-probe"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "option-ext",
+    "version": "0.2.0",
+    "license": "MPL-2.0",
+    "repository": "https://github.com/soc/option-ext.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ordered-stream",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/danieldg/ordered-stream"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "osakit",
+    "version": "0.3.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/mdevils/rust-osakit"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "packaging",
+    "version": "26.0",
+    "license": "Apache-2.0 OR BSD-2-Clause",
+    "repository": "https://github.com/pypa/packaging"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pango",
+    "version": "0.18.3",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pango-sys",
+    "version": "0.18.0",
+    "license": "MIT",
+    "repository": "https://github.com/gtk-rs/gtk-rs-core"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "parking",
+    "version": "2.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/parking"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "parking_lot",
+    "version": "0.12.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Amanieu/parking_lot"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "parking_lot_core",
+    "version": "0.9.12",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Amanieu/parking_lot"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "parse-entities",
+    "version": "4.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/parse-entities#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pathdiff",
+    "version": "0.2.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Manishearth/pathdiff"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pbkdf2",
+    "version": "0.12.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/password-hashes/tree/master/pbkdf2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pem",
+    "version": "3.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/jcreekmore/pem-rs.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "percent-encoding",
+    "version": "2.3.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-url/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf",
+    "version": "0.8.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf",
+    "version": "0.10.1",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf",
+    "version": "0.11.3",
+    "license": "MIT",
+    "repository": "https://github.com/rust-phf/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_codegen",
+    "version": "0.8.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_codegen",
+    "version": "0.11.3",
+    "license": "MIT",
+    "repository": "https://github.com/rust-phf/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_generator",
+    "version": "0.8.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_generator",
+    "version": "0.10.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_generator",
+    "version": "0.11.3",
+    "license": "MIT",
+    "repository": "https://github.com/rust-phf/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_macros",
+    "version": "0.10.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_macros",
+    "version": "0.11.3",
+    "license": "MIT",
+    "repository": "https://github.com/rust-phf/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_shared",
+    "version": "0.8.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_shared",
+    "version": "0.10.0",
+    "license": "MIT",
+    "repository": "https://github.com/sfackler/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "phf_shared",
+    "version": "0.11.3",
+    "license": "MIT",
+    "repository": "https://github.com/rust-phf/rust-phf"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pin-project-lite",
+    "version": "0.2.16",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/taiki-e/pin-project-lite"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pin-utils",
+    "version": "0.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang-nursery/pin-utils"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "piper",
+    "version": "0.2.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/piper"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "pkg-config",
+    "version": "0.3.32",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/pkg-config-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "plist",
+    "version": "1.8.0",
+    "license": "MIT",
+    "repository": "https://github.com/ebarnard/rust-plist/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "ply",
+    "version": "3.11",
+    "license": "BSD",
+    "repository": "http://www.dabeaz.com/ply/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "png",
+    "version": "0.17.16",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/image-rs/image-png"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "polling",
+    "version": "3.11.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/smol-rs/polling"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "potential_utf",
+    "version": "0.1.4",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "powerfmt",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jhpratt/powerfmt"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ppv-lite86",
+    "version": "0.2.21",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/cryptocorrosion/cryptocorrosion"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "precomputed-hash",
+    "version": "0.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/emilio/precomputed-hash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-crate",
+    "version": "1.3.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bkchr/proc-macro-crate"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-crate",
+    "version": "2.0.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bkchr/proc-macro-crate"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-crate",
+    "version": "3.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bkchr/proc-macro-crate"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-error",
+    "version": "1.0.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://gitlab.com/CreepySkeleton/proc-macro-error"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-error-attr",
+    "version": "1.0.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://gitlab.com/CreepySkeleton/proc-macro-error"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro-hack",
+    "version": "0.5.20+deprecated",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/proc-macro-hack"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "proc-macro2",
+    "version": "1.0.106",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/proc-macro2"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "property-information",
+    "version": "7.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/property-information#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "psl-types",
+    "version": "2.0.11",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/addr-rs/psl-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ptr_meta",
+    "version": "0.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/djkoloski/ptr_meta"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ptr_meta_derive",
+    "version": "0.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/djkoloski/ptr_meta"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "publicsuffix",
+    "version": "2.3.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rushmorem/publicsuffix"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "publicsuffix2",
+    "version": "2.20191221",
+    "license": "MIT License; Mozilla Public License 2.0 (MPL 2.0)",
+    "repository": "https://github.com/nexb/python-publicsuffix2"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyasn1",
+    "version": "0.6.2",
+    "license": "BSD-2-Clause",
+    "repository": "https://github.com/pyasn1/pyasn1"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyasn1_modules",
+    "version": "0.4.2",
+    "license": "BSD License",
+    "repository": "https://github.com/pyasn1/pyasn1-modules"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pycparser",
+    "version": "3.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/eliben/pycparser"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyinstaller",
+    "version": "6.18.0",
+    "license": "GNU General Public License v2 (GPLv2)",
+    "repository": "https://pyinstaller.org"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyinstaller-hooks-contrib",
+    "version": "2026.1",
+    "license": "Apache Software License; GNU General Public License v2 (GPLv2)",
+    "repository": "https://github.com/pyinstaller/pyinstaller-hooks-contrib"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pylsqpack",
+    "version": "0.3.23",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/aiortc/pylsqpack"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyOpenSSL",
+    "version": "25.3.0",
+    "license": "Apache Software License",
+    "repository": "https://pyopenssl.org/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyparsing",
+    "version": "3.2.5",
+    "license": "MIT",
+    "repository": "https://github.com/pyparsing/pyparsing/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "pyperclip",
+    "version": "1.11.0",
+    "license": "BSD License",
+    "repository": "https://github.com/asweigart/pyperclip"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "PyYAML",
+    "version": "6.0.3",
+    "license": "MIT License",
+    "repository": "https://pyyaml.org/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "qrcode.react",
+    "version": "4.2.0",
+    "license": "ISC",
+    "repository": "http://zpao.github.io/qrcode.react"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "quick-xml",
+    "version": "0.38.4",
+    "license": "MIT",
+    "repository": "https://github.com/tafia/quick-xml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "quinn",
+    "version": "0.11.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/quinn-rs/quinn"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "quinn-proto",
+    "version": "0.11.13",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/quinn-rs/quinn"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "quinn-udp",
+    "version": "0.5.14",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/quinn-rs/quinn"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "quote",
+    "version": "1.0.44",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/quote"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "r-efi",
+    "version": "5.3.0",
+    "license": "Apache-2.0 OR LGPL-2.1-or-later OR MIT",
+    "repository": "https://github.com/r-efi/r-efi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "radium",
+    "version": "0.7.0",
+    "license": "MIT",
+    "repository": "https://github.com/bitvecto-rs/radium"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand",
+    "version": "0.7.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand",
+    "version": "0.8.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand",
+    "version": "0.9.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_chacha",
+    "version": "0.2.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_chacha",
+    "version": "0.3.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_chacha",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_core",
+    "version": "0.5.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_core",
+    "version": "0.6.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_core",
+    "version": "0.9.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_hc",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rand_pcg",
+    "version": "0.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-random/rand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "raw-window-handle",
+    "version": "0.6.2",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/rust-windowing/raw-window-handle"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rayon",
+    "version": "1.11.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rayon-rs/rayon"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rayon-core",
+    "version": "1.13.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rayon-rs/rayon"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rcgen",
+    "version": "0.13.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/rcgen"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "react",
+    "version": "19.2.3",
+    "license": "MIT",
+    "repository": "https://react.dev/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "react-dom",
+    "version": "19.2.3",
+    "license": "MIT",
+    "repository": "https://react.dev/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "react-i18next",
+    "version": "16.5.3",
+    "license": "MIT",
+    "repository": "https://github.com/i18next/react-i18next"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "react-markdown",
+    "version": "10.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/remarkjs/react-markdown#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "react-virtuoso",
+    "version": "4.18.1",
+    "license": "MIT",
+    "repository": "https://virtuoso.dev/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "redox_syscall",
+    "version": "0.5.18",
+    "license": "MIT",
+    "repository": "https://gitlab.redox-os.org/redox-os/syscall"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "redox_syscall",
+    "version": "0.7.1",
+    "license": "MIT",
+    "repository": "https://gitlab.redox-os.org/redox-os/syscall"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "redox_users",
+    "version": "0.5.2",
+    "license": "MIT",
+    "repository": "https://gitlab.redox-os.org/redox-os/users"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ref-cast",
+    "version": "1.0.25",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/ref-cast"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ref-cast-impl",
+    "version": "1.0.25",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/ref-cast"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "regex",
+    "version": "1.12.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/regex"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "regex-automata",
+    "version": "0.4.14",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/regex"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "regex-syntax",
+    "version": "0.8.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/regex"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "relative-path",
+    "version": "1.9.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/udoprog/relative-path"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "remark-gfm",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/remarkjs/remark-gfm#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "remark-parse",
+    "version": "11.0.0",
+    "license": "MIT",
+    "repository": "https://remark.js.org"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "remark-rehype",
+    "version": "11.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/remarkjs/remark-rehype#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "remark-stringify",
+    "version": "11.0.0",
+    "license": "MIT",
+    "repository": "https://remark.js.org"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rend",
+    "version": "0.4.2",
+    "license": "MIT",
+    "repository": "https://github.com/djkoloski/rend"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "requests",
+    "version": "2.32.5",
+    "license": "Apache Software License",
+    "repository": "https://requests.readthedocs.io"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "reqwest",
+    "version": "0.12.28",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/seanmonstar/reqwest"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "reqwest",
+    "version": "0.13.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/seanmonstar/reqwest"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rfd",
+    "version": "0.16.0",
+    "license": "MIT",
+    "repository": "https://github.com/PolyMeilex/rfd"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ring",
+    "version": "0.17.14",
+    "license": "Apache-2.0 AND ISC",
+    "repository": "https://github.com/briansmith/ring"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rkyv",
+    "version": "0.7.46",
+    "license": "MIT",
+    "repository": "https://github.com/rkyv/rkyv"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rkyv_derive",
+    "version": "0.7.46",
+    "license": "MIT",
+    "repository": "https://github.com/rkyv/rkyv"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rstest",
+    "version": "0.23.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/la10736/rstest"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rstest_macros",
+    "version": "0.23.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/la10736/rstest"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "ruamel.yaml",
+    "version": "0.18.16",
+    "license": "MIT license",
+    "repository": "https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "ruamel.yaml.clib",
+    "version": "0.2.15",
+    "license": "MIT License",
+    "repository": "https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rust_decimal",
+    "version": "1.40.0",
+    "license": "MIT",
+    "repository": "https://github.com/paupino/rust-decimal"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustc_version",
+    "version": "0.4.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/djc/rustc-version-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustc-hash",
+    "version": "2.1.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/rustc-hash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustix",
+    "version": "1.1.3",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/bytecodealliance/rustix"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls",
+    "version": "0.23.36",
+    "license": "Apache-2.0 OR ISC OR MIT",
+    "repository": "https://github.com/rustls/rustls"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls-native-certs",
+    "version": "0.8.3",
+    "license": "Apache-2.0 OR ISC OR MIT",
+    "repository": "https://github.com/rustls/rustls-native-certs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls-pki-types",
+    "version": "1.14.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/pki-types"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls-platform-verifier",
+    "version": "0.6.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/rustls-platform-verifier"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls-platform-verifier-android",
+    "version": "0.1.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/rustls-platform-verifier"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustls-webpki",
+    "version": "0.103.9",
+    "license": "ISC",
+    "repository": "https://github.com/rustls/webpki"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "rustversion",
+    "version": "1.0.22",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/rustversion"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "ryu",
+    "version": "1.0.22",
+    "license": "Apache-2.0 OR BSL-1.0",
+    "repository": "https://github.com/dtolnay/ryu"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "same-file",
+    "version": "1.0.6",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/same-file"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "schannel",
+    "version": "0.1.28",
+    "license": "MIT",
+    "repository": "https://github.com/steffengy/schannel-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "scheduler",
+    "version": "0.27.0",
+    "license": "MIT",
+    "repository": "https://react.dev/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "schemars",
+    "version": "0.8.22",
+    "license": "MIT",
+    "repository": "https://github.com/GREsau/schemars"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "schemars",
+    "version": "0.9.0",
+    "license": "MIT",
+    "repository": "https://github.com/GREsau/schemars"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "schemars",
+    "version": "1.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/GREsau/schemars"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "schemars_derive",
+    "version": "0.8.22",
+    "license": "MIT",
+    "repository": "https://github.com/GREsau/schemars"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "scopeguard",
+    "version": "1.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/bluss/scopeguard"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "seahash",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://gitlab.redox-os.org/redox-os/seahash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "security-framework",
+    "version": "3.5.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/kornelski/rust-security-framework"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "security-framework-sys",
+    "version": "2.15.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/kornelski/rust-security-framework"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "selectors",
+    "version": "0.24.0",
+    "license": "MPL-2.0",
+    "repository": "https://github.com/servo/servo"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "semver",
+    "version": "1.0.27",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/semver"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde",
+    "version": "1.0.228",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/serde-rs/serde"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_core",
+    "version": "1.0.228",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/serde-rs/serde"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_derive",
+    "version": "1.0.228",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/serde-rs/serde"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_derive_internals",
+    "version": "0.29.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/serde-rs/serde"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_json",
+    "version": "1.0.149",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/serde-rs/json"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_repr",
+    "version": "0.1.20",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/serde-repr"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_spanned",
+    "version": "0.6.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_spanned",
+    "version": "1.0.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_urlencoded",
+    "version": "0.7.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/nox/serde_urlencoded"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_with",
+    "version": "3.16.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jonasbb/serde_with/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_with_macros",
+    "version": "3.16.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jonasbb/serde_with/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde_yaml",
+    "version": "0.9.34+deprecated",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/serde-yaml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serde-untagged",
+    "version": "0.1.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/serde-untagged"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serialize-to-javascript",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/chippers/serialize-to-javascript"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "serialize-to-javascript-impl",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/chippers/serialize-to-javascript"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "service-identity",
+    "version": "24.2.0",
+    "license": "MIT",
+    "repository": "https://service-identity.readthedocs.io/en/stable/changelog.html"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "servo_arc",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/servo"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "sha1",
+    "version": "0.10.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/hashes"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "sha2",
+    "version": "0.10.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/hashes"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "shlex",
+    "version": "1.3.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/comex/rust-shlex"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "signal-hook-registry",
+    "version": "1.4.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/vorner/signal-hook"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "simd-adler32",
+    "version": "0.3.8",
+    "license": "MIT",
+    "repository": "https://github.com/mcountryman/simd-adler32"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "simdutf8",
+    "version": "0.1.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rusticstuff/simdutf8"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "simplelog",
+    "version": "0.12.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/drakulix/simplelog.rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "siphasher",
+    "version": "0.3.11",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jedisct1/rust-siphash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "siphasher",
+    "version": "1.0.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/jedisct1/rust-siphash"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "slab",
+    "version": "0.4.12",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/slab"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "smallvec",
+    "version": "1.15.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-smallvec"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "socket2",
+    "version": "0.6.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-lang/socket2"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "softbuffer",
+    "version": "0.4.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rust-windowing/softbuffer"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "sonner",
+    "version": "2.0.7",
+    "license": "MIT",
+    "repository": "https://sonner.emilkowal.ski/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "sortedcontainers",
+    "version": "2.4.0",
+    "license": "Apache Software License",
+    "repository": "http://www.grantjenks.com/docs/sortedcontainers/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "soup3",
+    "version": "0.5.0",
+    "license": "MIT",
+    "repository": "https://gitlab.gnome.org/World/Rust/soup3-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "soup3-sys",
+    "version": "0.5.0",
+    "license": "MIT",
+    "repository": "https://gitlab.gnome.org/World/Rust/soup3-rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "soupsieve",
+    "version": "2.8.3",
+    "license": "MIT",
+    "repository": "https://github.com/facelessuser/soupsieve"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "space-separated-tokens",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/space-separated-tokens#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "stable_deref_trait",
+    "version": "1.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/storyyeller/stable_deref_trait"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "string_cache",
+    "version": "0.8.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/string-cache"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "string_cache_codegen",
+    "version": "0.5.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/string-cache"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "stringify-entities",
+    "version": "4.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/stringify-entities#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "strsim",
+    "version": "0.11.1",
+    "license": "MIT",
+    "repository": "https://github.com/rapidfuzz/strsim-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "style-mod",
+    "version": "4.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/marijnh/style-mod#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "style-to-js",
+    "version": "1.1.21",
+    "license": "MIT",
+    "repository": "https://github.com/remarkablemark/style-to-js#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "style-to-object",
+    "version": "1.0.14",
+    "license": "MIT",
+    "repository": "https://github.com/remarkablemark/style-to-object#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "subtle",
+    "version": "2.6.1",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dalek-cryptography/subtle"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "swift-rs",
+    "version": "1.0.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Brendonovich/swift-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "syn",
+    "version": "1.0.109",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/syn"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "syn",
+    "version": "2.0.114",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/syn"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "sync_wrapper",
+    "version": "1.0.2",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/Actyx/sync_wrapper"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "synstructure",
+    "version": "0.13.2",
+    "license": "MIT",
+    "repository": "https://github.com/mystor/synstructure"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "sysinfo",
+    "version": "0.33.1",
+    "license": "MIT",
+    "repository": "https://github.com/GuillaumeGomez/sysinfo"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "system-configuration",
+    "version": "0.7.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/mullvad/system-configuration-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "system-configuration-sys",
+    "version": "0.6.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/mullvad/system-configuration-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "system-deps",
+    "version": "6.2.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/gdesmott/system-deps"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "tailwind-merge",
+    "version": "3.4.0",
+    "license": "MIT",
+    "repository": "https://github.com/dcastil/tailwind-merge"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tao",
+    "version": "0.34.5",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/tauri-apps/tao"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tao-macros",
+    "version": "0.1.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tao"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tap",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/myrrlyn/tap"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tar",
+    "version": "0.4.44",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/alexcrichton/tar-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "target-lexicon",
+    "version": "0.12.16",
+    "license": "Apache-2.0 WITH LLVM-exception",
+    "repository": "https://github.com/bytecodealliance/target-lexicon"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri",
+    "version": "2.10.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-build",
+    "version": "2.5.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-codegen",
+    "version": "2.5.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-macros",
+    "version": "2.5.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin",
+    "version": "2.5.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-dialog",
+    "version": "2.6.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-fs",
+    "version": "2.4.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-http",
+    "version": "2.5.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-log",
+    "version": "2.8.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-opener",
+    "version": "2.5.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-process",
+    "version": "2.3.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-single-instance",
+    "version": "2.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-plugin-updater",
+    "version": "2.10.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/plugins-workspace"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-runtime",
+    "version": "2.10.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-runtime-wry",
+    "version": "2.10.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-utils",
+    "version": "2.8.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tauri-winres",
+    "version": "0.3.5",
+    "license": "MIT",
+    "repository": "https://github.com/tauri-apps/winres"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tempfile",
+    "version": "3.24.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Stebalien/tempfile"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tendril",
+    "version": "0.4.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/tendril"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "termcolor",
+    "version": "1.4.1",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/termcolor"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "thiserror",
+    "version": "1.0.69",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/thiserror"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "thiserror",
+    "version": "2.0.18",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/thiserror"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "thiserror-impl",
+    "version": "1.0.69",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/thiserror"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "thiserror-impl",
+    "version": "2.0.18",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/thiserror"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "time",
+    "version": "0.3.47",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/time-rs/time"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "time-core",
+    "version": "0.1.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/time-rs/time"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "time-macros",
+    "version": "0.2.27",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/time-rs/time"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tinystr",
+    "version": "0.8.2",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tinyvec",
+    "version": "1.10.0",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/Lokathor/tinyvec"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tinyvec_macros",
+    "version": "0.1.1",
+    "license": "Apache-2.0 OR MIT OR Zlib",
+    "repository": "https://github.com/Soveu/tinyvec_macros"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tokio",
+    "version": "1.49.0",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tokio"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tokio-macros",
+    "version": "2.6.0",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tokio"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tokio-rustls",
+    "version": "0.26.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/rustls/tokio-rustls"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tokio-util",
+    "version": "0.7.18",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tokio"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml",
+    "version": "0.8.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml",
+    "version": "0.9.11+spec-1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_datetime",
+    "version": "0.6.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_datetime",
+    "version": "0.7.5+spec-1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_edit",
+    "version": "0.19.15",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_edit",
+    "version": "0.20.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_edit",
+    "version": "0.23.10+spec-1.0.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_parser",
+    "version": "1.0.6+spec-1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "toml_writer",
+    "version": "1.0.6+spec-1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/toml-rs/toml"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "tornado",
+    "version": "6.5.2",
+    "license": "Apache Software License",
+    "repository": "http://www.tornadoweb.org/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tower",
+    "version": "0.5.3",
+    "license": "MIT",
+    "repository": "https://github.com/tower-rs/tower"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tower-http",
+    "version": "0.6.8",
+    "license": "MIT",
+    "repository": "https://github.com/tower-rs/tower-http"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tower-layer",
+    "version": "0.3.3",
+    "license": "MIT",
+    "repository": "https://github.com/tower-rs/tower"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tower-service",
+    "version": "0.3.3",
+    "license": "MIT",
+    "repository": "https://github.com/tower-rs/tower"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "tr46",
+    "version": "0.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/Sebmaster/tr46.js#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tracing",
+    "version": "0.1.44",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tracing"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tracing-attributes",
+    "version": "0.1.31",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tracing"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tracing-core",
+    "version": "0.1.36",
+    "license": "MIT",
+    "repository": "https://github.com/tokio-rs/tracing"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "tray-icon",
+    "version": "0.21.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tray-icon"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "trim-lines",
+    "version": "3.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/trim-lines#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "trough",
+    "version": "2.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/trough#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "try-lock",
+    "version": "0.2.5",
+    "license": "MIT",
+    "repository": "https://github.com/seanmonstar/try-lock"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "tslib",
+    "version": "2.8.1",
+    "license": "0BSD",
+    "repository": "https://www.typescriptlang.org/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "typeid",
+    "version": "1.0.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/dtolnay/typeid"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "typenum",
+    "version": "1.19.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/paholg/typenum"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "typescript",
+    "version": "5.8.3",
+    "license": "Apache-2.0",
+    "repository": "https://www.typescriptlang.org/"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "typing_extensions",
+    "version": "4.14.0",
+    "license": "PSF-2.0",
+    "repository": "https://github.com/python/typing_extensions"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "uds_windows",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/haraldh/rust_uds_windows"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unic-char-property",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/open-i18n/rust-unic/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unic-char-range",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/open-i18n/rust-unic/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unic-common",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/open-i18n/rust-unic/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unic-ucd-ident",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/open-i18n/rust-unic/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unic-ucd-version",
+    "version": "0.9.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/open-i18n/rust-unic/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unicode-ident",
+    "version": "1.0.22",
+    "license": "(Apache-2.0 OR MIT) AND Unicode-3.0",
+    "repository": "https://github.com/dtolnay/unicode-ident"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unicode-segmentation",
+    "version": "1.12.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/unicode-rs/unicode-segmentation"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unified",
+    "version": "11.0.5",
+    "license": "MIT",
+    "repository": "https://unifiedjs.com"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unist-util-is",
+    "version": "6.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/unist-util-is#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unist-util-position",
+    "version": "5.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/unist-util-position#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unist-util-stringify-position",
+    "version": "4.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/unist-util-stringify-position#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unist-util-visit",
+    "version": "5.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/unist-util-visit#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "unist-util-visit-parents",
+    "version": "6.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/syntax-tree/unist-util-visit-parents#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "unsafe-libyaml",
+    "version": "0.2.11",
+    "license": "MIT",
+    "repository": "https://github.com/dtolnay/unsafe-libyaml"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "untrusted",
+    "version": "0.9.0",
+    "license": "ISC",
+    "repository": "https://github.com/briansmith/untrusted"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "url",
+    "version": "2.5.8",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/servo/rust-url"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "urllib3",
+    "version": "2.6.3",
+    "license": "MIT",
+    "repository": "https://github.com/urllib3/urllib3/blob/main/CHANGES.rst"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "urlpattern",
+    "version": "0.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/denoland/rust-urlpattern"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "urwid",
+    "version": "3.0.3",
+    "license": "GNU Library or Lesser General Public License (LGPL)",
+    "repository": "https://urwid.org/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "use-sync-external-store",
+    "version": "1.6.0",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "utf-8",
+    "version": "0.7.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/SimonSapin/rust-utf8"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "utf8_iter",
+    "version": "1.0.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/hsivonen/utf8_iter"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "utf8-width",
+    "version": "0.1.8",
+    "license": "MIT",
+    "repository": "https://github.com/magiclen/utf8-width"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "uuid",
+    "version": "1.20.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/uuid-rs/uuid"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "value-bag",
+    "version": "1.12.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/sval-rs/value-bag"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "version_check",
+    "version": "0.9.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/SergioBenitez/version_check"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "version-compare",
+    "version": "0.2.1",
+    "license": "MIT",
+    "repository": "https://gitlab.com/timvisee/version-compare"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "vfile",
+    "version": "6.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/vfile/vfile#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "vfile-message",
+    "version": "4.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/vfile/vfile-message#readme"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "void-elements",
+    "version": "3.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/jadejs/void-elements"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "vswhom",
+    "version": "0.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/nabijaczleweli/vswhom.rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "vswhom-sys",
+    "version": "0.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/nabijaczleweli/vswhom-sys.rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "w3c-keyname",
+    "version": "2.2.8",
+    "license": "MIT",
+    "repository": "https://github.com/marijnh/w3c-keyname#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "walkdir",
+    "version": "2.5.0",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/walkdir"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "want",
+    "version": "0.3.1",
+    "license": "MIT",
+    "repository": "https://github.com/seanmonstar/want"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasi",
+    "version": "0.9.0+wasi-snapshot-preview1",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/bytecodealliance/wasi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasi",
+    "version": "0.11.1+wasi-snapshot-preview1",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/bytecodealliance/wasi"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasip2",
+    "version": "1.0.2+wasi-0.2.9",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/bytecodealliance/wasi-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-bindgen",
+    "version": "0.2.108",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-bindgen-futures",
+    "version": "0.4.58",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/futures"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-bindgen-macro",
+    "version": "0.2.108",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-bindgen-macro-support",
+    "version": "0.2.108",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro-support"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-bindgen-shared",
+    "version": "0.2.108",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/shared"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wasm-streams",
+    "version": "0.5.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/MattiasBuelens/wasm-streams/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "web-sys",
+    "version": "0.3.85",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/web-sys"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "web-time",
+    "version": "1.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/daxpedda/web-time"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "webidl-conversions",
+    "version": "3.0.1",
+    "license": "BSD-2-Clause",
+    "repository": "https://github.com/jsdom/webidl-conversions#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webkit2gtk",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/tauri-apps/webkit2gtk-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webkit2gtk-sys",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/tauri-apps/webkit2gtk-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webpki-root-certs",
+    "version": "1.0.6",
+    "license": "CDLA-Permissive-2.0",
+    "repository": "https://github.com/rustls/webpki-roots"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webpki-roots",
+    "version": "1.0.6",
+    "license": "CDLA-Permissive-2.0",
+    "repository": "https://github.com/rustls/webpki-roots"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "websockets",
+    "version": "16.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/python-websockets/websockets"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webview2-com",
+    "version": "0.38.2",
+    "license": "MIT",
+    "repository": "https://github.com/wravery/webview2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webview2-com-macros",
+    "version": "0.8.1",
+    "license": "MIT",
+    "repository": "https://github.com/wravery/webview2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "webview2-com-sys",
+    "version": "0.38.2",
+    "license": "MIT",
+    "repository": "https://github.com/wravery/webview2-rs"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "Werkzeug",
+    "version": "3.1.6",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/pallets/werkzeug/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "whatwg-url",
+    "version": "5.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/jsdom/whatwg-url#readme"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winapi",
+    "version": "0.3.9",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/retep998/winapi-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winapi-i686-pc-windows-gnu",
+    "version": "0.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/retep998/winapi-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winapi-util",
+    "version": "0.1.11",
+    "license": "MIT OR Unlicense",
+    "repository": "https://github.com/BurntSushi/winapi-util"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winapi-x86_64-pc-windows-gnu",
+    "version": "0.4.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/retep998/winapi-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "window-vibrancy",
+    "version": "0.6.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/tauri-plugin-vibrancy"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows",
+    "version": "0.57.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows",
+    "version": "0.61.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_gnullvm",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_gnullvm",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_gnullvm",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_gnullvm",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_msvc",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_msvc",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_msvc",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_aarch64_msvc",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnu",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnu",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnu",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnu",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnullvm",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_gnullvm",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_msvc",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_msvc",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_msvc",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_i686_msvc",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnu",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnu",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnu",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnu",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnullvm",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnullvm",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnullvm",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_gnullvm",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_msvc",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_msvc",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_msvc",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows_x86_64_msvc",
+    "version": "0.53.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-collections",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-core",
+    "version": "0.57.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-core",
+    "version": "0.61.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-core",
+    "version": "0.62.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-future",
+    "version": "0.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-implement",
+    "version": "0.57.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-implement",
+    "version": "0.60.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-interface",
+    "version": "0.57.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-interface",
+    "version": "0.59.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-link",
+    "version": "0.1.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-link",
+    "version": "0.2.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-numerics",
+    "version": "0.2.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-registry",
+    "version": "0.6.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-result",
+    "version": "0.1.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-result",
+    "version": "0.3.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-result",
+    "version": "0.4.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-strings",
+    "version": "0.4.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-strings",
+    "version": "0.5.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.45.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.48.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.52.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.59.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.60.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-sys",
+    "version": "0.61.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-targets",
+    "version": "0.42.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-targets",
+    "version": "0.48.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-targets",
+    "version": "0.52.6",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-targets",
+    "version": "0.53.5",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-threading",
+    "version": "0.1.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "windows-version",
+    "version": "0.1.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/microsoft/windows-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winnow",
+    "version": "0.5.40",
+    "license": "MIT",
+    "repository": "https://github.com/winnow-rs/winnow"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winnow",
+    "version": "0.7.14",
+    "license": "MIT",
+    "repository": "https://github.com/winnow-rs/winnow"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "winreg",
+    "version": "0.55.0",
+    "license": "MIT",
+    "repository": "https://github.com/gentoo90/winreg-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wit-bindgen",
+    "version": "0.51.0",
+    "license": "Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT",
+    "repository": "https://github.com/bytecodealliance/wit-bindgen"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "writeable",
+    "version": "0.6.2",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wry",
+    "version": "0.54.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/tauri-apps/wry"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "wsproto",
+    "version": "1.2.0",
+    "license": "MIT License",
+    "repository": "https://github.com/python-hyper/wsproto/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "wyz",
+    "version": "0.5.1",
+    "license": "MIT",
+    "repository": "https://github.com/myrrlyn/wyz"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "x11",
+    "version": "2.21.0",
+    "license": "MIT",
+    "repository": "https://github.com/AltF02/x11-rs.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "x11-dl",
+    "version": "2.21.0",
+    "license": "MIT",
+    "repository": "https://github.com/AltF02/x11-rs.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "xattr",
+    "version": "1.6.1",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/Stebalien/xattr"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "xz2",
+    "version": "0.1.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/alexcrichton/xz2-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "yasna",
+    "version": "0.5.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/qnighy/yasna.rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "yoke",
+    "version": "0.8.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "yoke-derive",
+    "version": "0.8.1",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zbus",
+    "version": "5.13.2",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zbus_macros",
+    "version": "5.13.2",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zbus_names",
+    "version": "4.3.1",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerocopy",
+    "version": "0.8.39",
+    "license": "Apache-2.0 OR BSD-2-Clause OR MIT",
+    "repository": "https://github.com/google/zerocopy"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerocopy-derive",
+    "version": "0.8.39",
+    "license": "Apache-2.0 OR BSD-2-Clause OR MIT",
+    "repository": "https://github.com/google/zerocopy"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerofrom",
+    "version": "0.1.6",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerofrom-derive",
+    "version": "0.1.6",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zeroize",
+    "version": "1.8.2",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/utils"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zeroize_derive",
+    "version": "1.4.3",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/RustCrypto/utils/tree/master/zeroize/derive"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerotrie",
+    "version": "0.2.3",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerovec",
+    "version": "0.11.5",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zerovec-derive",
+    "version": "0.11.2",
+    "license": "Unicode-3.0",
+    "repository": "https://github.com/unicode-org/icu4x"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zip",
+    "version": "2.4.2",
+    "license": "MIT",
+    "repository": "https://github.com/zip-rs/zip2.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zip",
+    "version": "4.6.1",
+    "license": "MIT",
+    "repository": "https://github.com/zip-rs/zip2.git"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zmij",
+    "version": "1.0.19",
+    "license": "MIT",
+    "repository": "https://github.com/dtolnay/zmij"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zopfli",
+    "version": "0.8.3",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/zopfli-rs/zopfli"
+  },
+  {
+    "ecosystem": "Python",
+    "name": "zstandard",
+    "version": "0.25.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/indygreg/python-zstandard"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zstd",
+    "version": "0.13.3",
+    "license": "MIT",
+    "repository": "https://github.com/gyscos/zstd-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zstd-safe",
+    "version": "7.2.4",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/gyscos/zstd-rs"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zstd-sys",
+    "version": "2.0.16+zstd.1.5.7",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://github.com/gyscos/zstd-rs"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "zustand",
+    "version": "5.0.10",
+    "license": "MIT",
+    "repository": "https://github.com/pmndrs/zustand"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zvariant",
+    "version": "5.9.2",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zvariant_derive",
+    "version": "5.9.2",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Rust",
+    "name": "zvariant_utils",
+    "version": "3.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/z-galaxy/zbus/"
+  },
+  {
+    "ecosystem": "Node.js",
+    "name": "zwitch",
+    "version": "2.0.4",
+    "license": "MIT",
+    "repository": "https://github.com/wooorm/zwitch#readme"
+  }
+]

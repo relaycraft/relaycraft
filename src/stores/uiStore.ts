@@ -28,6 +28,7 @@ export type SettingsTabType =
   | "ai"
   | "plugins"
   | "certificate"
+  | "advanced"
   | "about";
 
 interface UIStore {

@@ -13,6 +13,7 @@ import {
   Settings as SettingsIcon,
   Shield,
   Sparkles,
+  Wrench,
   XCircle,
 } from "lucide-react";
 import React from "react";
@@ -25,6 +26,7 @@ import { Button } from "../common/Button";
 import { AppLogo } from "../layout/AppLogo";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { CertificateSettings } from "./CertificateSettings";
+import { LicensesModal } from "./LicensesModal";
 import { MarketView } from "./MarketView";
 import { PluginSettings } from "./PluginSettings";
 import {
@@ -40,6 +42,7 @@ import {
 export function SettingsView() {
   const { t } = useTranslation();
   const { availableLanguages, settingsTab, setSettingsTab, showConfirm } = useUIStore();
+  const [licensesOpen, setLicensesOpen] = React.useState(false);
   const {
     config,
     updateProxyPort,
@@ -165,6 +168,12 @@ export function SettingsView() {
         icon={Shield}
         active={settingsTab === "certificate"}
         onClick={() => setSettingsTab("certificate")}
+      />
+      <SettingsTabButton
+        label={t("settings.advanced.title")}
+        icon={Wrench}
+        active={settingsTab === "advanced"}
+        onClick={() => setSettingsTab("advanced")}
       />
       <SettingsTabButton
         label={t("settings.about.title")}
@@ -411,7 +420,7 @@ export function SettingsView() {
                 </p>
               </div>
 
-              <SettingsSection title={t("settings.about.title")}>
+              <SettingsSection title={t("settings.about.version_info")}>
                 <div className="px-4 py-3 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-ui font-medium text-foreground">
@@ -497,7 +506,104 @@ export function SettingsView() {
                 </div>
               </SettingsSection>
 
-              <SettingsSection title={t("settings.about.troubleshooting")}>
+              <SettingsSection title={t("settings.about.links")}>
+                <SettingsRow
+                  title={t("settings.about.homepage")}
+                  description={t("settings.about.homepage_desc")}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                    onClick={async () => {
+                      const { openUrl } = await import("@tauri-apps/plugin-opener");
+                      openUrl("https://www.relaycraft.dev").catch(console.error);
+                    }}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    {t("settings.about.visit_website")}
+                  </Button>
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.about.github")}
+                  description={t("settings.about.github_desc")}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                    onClick={async () => {
+                      const { openUrl } = await import("@tauri-apps/plugin-opener");
+                      openUrl("https://github.com/relaycraft/relaycraft").catch(console.error);
+                    }}
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    {t("settings.about.visit_github")}
+                  </Button>
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.about.mitmproxy")}
+                  description={t("settings.about.mitmproxy_desc")}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                    onClick={async () => {
+                      const { openUrl } = await import("@tauri-apps/plugin-opener");
+                      openUrl("https://github.com/mitmproxy/mitmproxy").catch(console.error);
+                    }}
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    {t("settings.about.visit_engine")}
+                  </Button>
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.about.app_license", "Product License")}
+                  description={t(
+                    "settings.about.app_license_desc",
+                    "RelayCraft is released under the GNU Affero General Public License v3.0",
+                  )}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                    onClick={async () => {
+                      const { openUrl } = await import("@tauri-apps/plugin-opener");
+                      openUrl("https://github.com/relaycraft/relaycraft/blob/main/LICENSE").catch(
+                        console.error,
+                      );
+                    }}
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    {t("common.view", "View")}
+                  </Button>
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.about.licenses.title_short", "Open Source Licenses")}
+                  description={t(
+                    "settings.about.licenses.row_desc",
+                    "View third-party software licenses",
+                  )}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
+                    onClick={() => setLicensesOpen(true)}
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    {t("common.view", "View")}
+                  </Button>
+                </SettingsRow>
+              </SettingsSection>
+            </div>
+          )}
+
+          {settingsTab === "advanced" && (
+            <div className="space-y-6 pb-24">
+              <SettingsSection title={t("settings.advanced.troubleshooting")}>
                 <SettingsRow
                   title={t("settings.about.verbose")}
                   description={t("settings.about.verbose_desc")}
@@ -526,7 +632,10 @@ export function SettingsView() {
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="flex items-center justify-between gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg mt-2">
+                      <div className="flex items-center gap-3 px-4 py-3 bg-amber-500/8 border border-amber-500/20 rounded-lg">
+                        <div className="p-1 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
+                          <RefreshCcw className="w-3.5 h-3.5" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 leading-tight">
                             {t("settings.about.verbose_restart_title")}
@@ -541,7 +650,7 @@ export function SettingsView() {
                 </AnimatePresence>
               </SettingsSection>
 
-              <SettingsSection title={t("settings.about.dev_tools")}>
+              <SettingsSection title={t("settings.advanced.directories")}>
                 <SettingsRow
                   title={t("settings.about.open_config")}
                   description={t("settings.about.open_config_desc")}
@@ -585,60 +694,6 @@ export function SettingsView() {
                   </Button>
                 </SettingsRow>
               </SettingsSection>
-
-              <SettingsSection title={t("settings.about.links")}>
-                <SettingsRow
-                  title={t("settings.about.github")}
-                  description={t("settings.about.github_desc")}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
-                    onClick={async () => {
-                      const { openUrl } = await import("@tauri-apps/plugin-opener");
-                      openUrl("https://github.com/relaycraft/relaycraft").catch(console.error);
-                    }}
-                  >
-                    <Github className="w-3.5 h-3.5" />
-                    {t("settings.about.visit_github")}
-                  </Button>
-                </SettingsRow>
-                <SettingsRow
-                  title={t("settings.about.mitmproxy")}
-                  description={t("settings.about.mitmproxy_desc")}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
-                    onClick={async () => {
-                      const { openUrl } = await import("@tauri-apps/plugin-opener");
-                      openUrl("https://github.com/mitmproxy/mitmproxy").catch(console.error);
-                    }}
-                  >
-                    <Github className="w-3.5 h-3.5" />
-                    {t("settings.about.visit_engine")}
-                  </Button>
-                </SettingsRow>
-                <SettingsRow
-                  title={t("settings.about.homepage")}
-                  description={t("settings.about.homepage_desc")}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
-                    onClick={async () => {
-                      const { openUrl } = await import("@tauri-apps/plugin-opener");
-                      openUrl("https://www.relaycraft.dev").catch(console.error);
-                    }}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    {t("settings.about.visit_website")}
-                  </Button>
-                </SettingsRow>
-              </SettingsSection>
             </div>
           )}
 
@@ -654,6 +709,7 @@ export function SettingsView() {
 
       {/* Modals */}
       <MarketView />
+      <LicensesModal isOpen={licensesOpen} onClose={() => setLicensesOpen(false)} />
     </SettingsPage>
   );
 }

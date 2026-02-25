@@ -342,6 +342,7 @@
       "traffic": "Traffic"
     },
     "try_another_search": "Try another search term",
+    "view": "View",
     "unknown": "Unknown",
     "value": "Value",
     "warning": "Warning"
@@ -888,10 +889,19 @@
       },
       "dev_tools": "Developer Tools",
       "error_fetch": "Failed to fetch version info. Please check your network.",
-      "github": "Repository",
+      "github": "Product Repository",
       "github_desc": "Visit the open-source repository to browse code or join community discussions",
       "homepage": "Product Home",
       "homepage_desc": "Official RelayCraft product website",
+      "app_license": "Product License",
+      "app_license_desc": "RelayCraft is released under the GNU Affero General Public License v3.0",
+      "licenses": {
+        "title": "Third-Party Licenses",
+        "title_short": "Open Source Licenses",
+        "row_desc": "View third-party software licenses",
+        "desc": "Open source software that makes RelayCraft possible.",
+        "all": "All"
+      },
       "links": "Resources",
       "mitmproxy": "Engine Repository",
       "mitmproxy_desc": "Powered by the excellent open-source project mitmproxy",
@@ -902,6 +912,7 @@
       "open_logs": "Open Logs Folder",
       "open_logs_desc": "View internal runtime logs",
       "title": "Support & About",
+      "version_info": "Version Information",
       "troubleshooting": "Troubleshooting",
       "up_to_date": "Up to date",
       "verbose": "Verbose Mode",
@@ -912,6 +923,11 @@
       "visit_engine": "Visit Engine Repo",
       "visit_github": "Visit Repository",
       "visit_website": "Visit Website"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "directories": "System Data Directories",
+      "troubleshooting": "Troubleshooting"
     },
     "appearance": {
       "active": "Active",

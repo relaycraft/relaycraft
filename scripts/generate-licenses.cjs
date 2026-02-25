@@ -2,11 +2,17 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execSync } = require("node:child_process");
 
-const OUTPUT_FILE = path.join(__dirname, "../THIRD-PARTY-LICENSES.md");
+const OUTPUT_FILE = path.join(__dirname, "../src/assets/licenses.json");
 const TAURI_DIR = path.join(__dirname, "../src-tauri");
 const ENGINE_DIR = path.join(__dirname, "../engine-core");
 
 console.log("📦 Generating Third-Party License Report...");
+
+// Ensure output directory exists
+const outputDir = path.dirname(OUTPUT_FILE);
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
 
 // Helper to run commands
 function run(cmd, cwd = process.cwd()) {
@@ -24,12 +30,11 @@ function run(cmd, cwd = process.cwd()) {
   }
 }
 
+const licenses = [];
+
 // 1. Rust Licenses (cargo-license)
 console.log("🦀 Scanning Rust dependencies...");
-let rustLicenses =
-  "## Backend Dependencies (Rust)\n\n| Package | Version | License | Repository |\n| :--- | :--- | :--- | :--- |\n";
 try {
-  // Check if cargo-license is installed
   try {
     execSync("cargo license --version", { stdio: "ignore" });
   } catch {
@@ -42,78 +47,110 @@ try {
     const crates = JSON.parse(rustOutput).filter((c) => c.name !== "relaycraft");
     console.log(`Found ${crates.length} Rust dependencies.`);
     crates.forEach((c) => {
-      rustLicenses += `| ${c.name} | ${c.version} | ${c.license || "Unknown"} | ${c.repository || "N/A"} |\n`;
+      licenses.push({
+        ecosystem: "Rust",
+        name: c.name,
+        version: c.version,
+        license: c.license || "Unknown",
+        repository: c.repository || "N/A"
+      });
     });
   }
 } catch (_e) {
   console.warn("⚠️ Failed to generate Rust licenses.");
-  rustLicenses += "*(Generation Failed)*\n";
 }
 
-// 2. Frontend Licenses (license-checker)
-console.log("⚛️ Scanning Frontend dependencies...");
-let frontendLicenses = "## Frontend Dependencies (Node.js)\n\n";
+// 2. Frontend Licenses (pnpm licenses)
+console.log("⚛️ Scanning Frontend dependencies via pnpm...");
 try {
-  // We use npx to run license-checker without permanent install
-  const jsonOutput = run("npx -y license-checker --json --production", path.join(__dirname, ".."));
+  const jsonOutput = run("pnpm licenses list --json --prod", path.join(__dirname, ".."));
   if (jsonOutput) {
     const allLicenses = JSON.parse(jsonOutput);
-    const pkgs = Object.keys(allLicenses).filter((pkg) => !pkg.startsWith("relaycraft@"));
-    console.log(`Found ${pkgs.length} Frontend dependencies.`);
-    pkgs.forEach((pkg) => {
-      const info = allLicenses[pkg];
-      frontendLicenses += `### ${pkg}\n`;
-      frontendLicenses += `* **License:** ${info.licenses}\n`;
-      frontendLicenses += `* **Repository:** ${info.repository}\n`;
-      if (info.licenseFile) {
-        // frontendLicenses += `* [License File](${info.licenseFile})\n`;
-      }
-      frontendLicenses += `\n---\n\n`;
+    let count = 0;
+    Object.entries(allLicenses).forEach(([licenseType, pkgs]) => {
+      pkgs.forEach((pkg) => {
+        if (!pkg.name.startsWith("relaycraft")) {
+          count++;
+          licenses.push({
+            ecosystem: "Node.js",
+            name: pkg.name,
+            version: pkg.versions && pkg.versions.length > 0 ? pkg.versions[0] : "Unknown",
+            license: pkg.license || licenseType || "Unknown",
+            repository: pkg.homepage || pkg.repository || "N/A",
+          });
+        }
+      });
     });
+    console.log(`Found ${count} Frontend dependencies.`);
   }
-} catch (_e) {
+} catch (e) {
   console.warn("⚠️ Failed to generate Frontend licenses.");
-  frontendLicenses += "*(Generation Failed)*\n";
+}
+
+// Helper to find a suitable python version for mitmproxy (requires >= 3.10)
+function getPythonCmd() {
+  const candidates = process.platform === "win32"
+    ? ["python", "py -3.12", "py -3"]
+    : ["python3.12", "python3.11", "python3", "python"];
+
+  for (const cmd of candidates) {
+    try {
+      execSync(`${cmd} --version`, { stdio: "ignore" });
+      return cmd;
+    } catch (e) { }
+  }
+  return "python3";
 }
 
 // 3. Python Licenses (pip-licenses)
-console.log("🐍 Scanning Python dependencies...");
-let pythonLicenses = "## Engine Dependencies (Python)\n\n";
+console.log("🐍 Scanning Python dependencies via temp venv...");
+const venvDir = path.join(ENGINE_DIR, ".venv_licenses");
 try {
-  // Check if pip-licenses is installed
-  try {
-    execSync("pip-licenses --version", { stdio: "ignore" });
-  } catch {
-    // Try installing it in the implementation environment if possible,
-    // but for now, we assume it's available or user needs to pip install it.
-    // In CI usage, we will install it explicitly.
-    console.log("Attempting to install pip-licenses...");
-    execSync("pip install pip-licenses");
-  }
+  const basePython = getPythonCmd();
+  console.log(`  ↳ Using ${basePython} to create venv...`);
+  run(`${basePython} -m venv .venv_licenses`, ENGINE_DIR);
+  const venvPython =
+    process.platform === "win32"
+      ? path.join(venvDir, "Scripts", "python.exe")
+      : path.join(venvDir, "bin", "python3");
 
-  // Generate markdown table (without full license text to save space)
-  const pipOutput = run("pip-licenses --format=markdown --with-urls", ENGINE_DIR);
+  // Install requirements and pip-licenses into the isolated environment
+  console.log("  ↳ Installing core packages...");
+  run(`"${venvPython}" -m pip install --upgrade pip --quiet`, ENGINE_DIR);
+  run(`"${venvPython}" -m pip install -r requirements.txt --quiet`, ENGINE_DIR);
+  console.log("  ↳ Installing pip-licenses...");
+  run(`"${venvPython}" -m pip install pip-licenses --quiet`, ENGINE_DIR);
+
+  const pipOutput = run(
+    `"${venvPython}" -m piplicenses --format=json --with-urls`,
+    ENGINE_DIR
+  );
   if (pipOutput) {
-    const lines = pipOutput.split("\n");
-    console.log(`Found ${Math.max(0, lines.length - 2)} Python dependencies.`);
-    pythonLicenses += pipOutput;
-    pythonLicenses += "\n\n---\n\n";
+    const pythonDeps = JSON.parse(pipOutput);
+    // filter out the pip-licenses itself and its direct deps if we want, but it's fine to include
+    console.log(`Found ${pythonDeps.length} Python dependencies.`);
+    pythonDeps.forEach((dep) => {
+      licenses.push({
+        ecosystem: "Python",
+        name: dep.Name,
+        version: dep.Version,
+        license: dep.License || "Unknown",
+        repository: dep.URL || "N/A",
+      });
+    });
   }
-} catch (_e) {
-  console.warn("⚠️ Failed to generate Python dependencies. Is pip-licenses installed?");
-  pythonLicenses += "*(Generation Failed)*\n";
+} catch (e) {
+  console.warn("⚠️ Failed to generate Python dependencies.");
+} finally {
+  // Always clean up the temp venv
+  try {
+    fs.rmSync(venvDir, { recursive: true, force: true });
+  } catch (e) { }
 }
 
-// Combine and Write
-const splitLine =
-  "\n\n********************************************************************************\n\n";
-const finalContent =
-  `# Third-Party Licenses\n\nThis project makes use of the following open source packages:\n\n` +
-  rustLicenses +
-  splitLine +
-  frontendLicenses +
-  splitLine +
-  pythonLicenses;
+// Sort alphabetically by name
+licenses.sort((a, b) => a.name.localeCompare(b.name));
 
-fs.writeFileSync(OUTPUT_FILE, finalContent);
+// Write to JSON
+fs.writeFileSync(OUTPUT_FILE, JSON.stringify(licenses, null, 2));
 console.log(`✅ Licenses written to ${OUTPUT_FILE}`);
