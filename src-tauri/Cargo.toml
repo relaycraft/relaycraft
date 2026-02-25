@@ -43,7 +43,7 @@ url = "2"
 tauri-plugin-fs = "2.4.5"
 tokio = { version = "1", features = ["process", "rt-multi-thread"] }
 tauri-plugin-process = "2"
-rcgen = "0.13"
+rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
 walkdir = "2"
