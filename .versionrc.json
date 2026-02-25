@@ -1,4 +1,5 @@
 {
+  "releaseCommitMessageFormat": "chore: release {{currentTag}}",
   "bumpFiles": [
     {
       "filename": "package.json",

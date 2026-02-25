@@ -26,17 +26,17 @@
 RelayCraft isn't just another proxy tool. It's an **AI-native workflow** for the modern web.
 
 - **🤖 AI-Native Everything**: Create complex rewrite rules using natural language, analyze requests intelligently, and get context-aware suggestions.
-- **⚡ Performance First**: Near-zero overhead proxying thanks to the Rust core and a high-performance **mitmproxy**-based sidecar.
+- **🏗️ Modern Architecture**: A lightweight and robust core built with Tauri and Rust, powered by the industry-standard **mitmproxy** engine.
 - **🛡️ Security & Privacy**: Your data, only yours. Fully Offline, Zero Accounts, Local Storage, Local AI Support, Open Source, and No Telemetry.
-- **🐍 Python Powered**: Write custom scripts to manipulate traffic with the full power of the Python ecosystem.
-- **🎨 Modern UI/UX**: A premium, dark-mode-first interface that says goodbye to outdated tool aesthetics.
+- **🐍 Python & Ecosystem**: Manipulate traffic with the full power of the **mitmproxy** Python ecosystem for ultimate flexibility.
+- **🎨 Extensibility & Customization**: A powerful plugin system and a comprehensive theme engine to craft your own professional workspace.
 
 ## 🚀 Key Features
 
 ### 📊 Traffic Monitor
-- **Real-time Capture**: Inspect HTTP, HTTPS, and WebSocket traffic with zero latency.
-- **Rich Analysis**: JSON syntax highlighting, image preview, and detailed timing breakdowns.
-- **Smart Filtering**: Filter by method, domain, status, or content type with powerful query syntax.
+- **Multi-protocol Support**: Inspect HTTP, HTTPS, and WebSocket traffic with ease.
+- **Deep Analysis**: JSON syntax highlighting and image previews for thorough inspection.
+- **Smart Filtering**: Filter by method, domain, status code, or content type with a powerful custom query syntax.
 - **Export Options**: One-click export to **cURL**, **HAR**, or **Relay Session** (.relay).
 
 ### ⚙️ Rules Engine
