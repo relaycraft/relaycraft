@@ -11,20 +11,17 @@ pub struct PluginCallArgs {
     pub args: serde_json::Value,
 }
 
+/// Commands that require audit logging (security-sensitive operations)
+const AUDITED_COMMANDS: &[&str] = &[
+    "ai_chat_completion",  // AI API calls
+    // Add more sensitive commands here as needed
+];
+
 #[tauri::command]
 pub async fn plugin_call(
     payload: PluginCallArgs,
     app: AppHandle,
 ) -> Result<serde_json::Value, String> {
-    // [AUDIT] Use system public logging for plugin bridge activity
-    let _ = logging::write_domain_log(
-        "audit",
-        &format!(
-            "[PluginBridge] Call from {}: {}",
-            payload.plugin_id, payload.command
-        ),
-    );
-
     // 1. Verify Plugin installation and get manifest
     let app_dir = config::get_data_dir()?;
     let plugins_dir = app_dir.join("plugins");
@@ -60,6 +57,18 @@ pub async fn plugin_call(
             plugin
         }
     };
+
+    // [AUDIT] Only log security-sensitive commands, use plugin name for clarity
+    if AUDITED_COMMANDS.contains(&payload.command.as_str()) {
+        let plugin_name = &plugin.manifest.name;
+        let _ = logging::write_domain_log(
+            "audit",
+            &format!(
+                "[PluginBridge] {} called {}",
+                plugin_name, payload.command
+            ),
+        );
+    }
 
     let permissions = plugin.manifest.permissions.as_deref().unwrap_or(&[]);
 

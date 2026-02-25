@@ -1,10 +1,11 @@
 use super::config::AIConfig;
 use super::error::AIError;
+use crate::logging;
 use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 struct ChatMessage {
     role: String,
     content: String,
@@ -110,11 +111,36 @@ impl AIClient {
 
         let request = ChatCompletionRequest {
             model: self.config.model.clone(),
-            messages: chat_messages,
+            messages: chat_messages.clone(),
             temperature,
             max_tokens: self.config.max_tokens,
             stream: false,
         };
+
+        // Calculate approximate token count for audit logging
+        let message_chars: usize = chat_messages.iter().map(|m| m.content.len()).sum();
+        let approx_input_tokens = message_chars / 4; // Rough estimate: ~4 chars per token
+
+        // Audit log: endpoint and token info
+        let _ = logging::write_domain_log(
+            "audit",
+            &format!(
+                "AI Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}",
+                endpoint, self.config.model, self.config.max_tokens, approx_input_tokens
+            ),
+        );
+
+        // Debug log: full request details (only when verbose logging is enabled)
+        log::debug!(
+            "AI Request Details: endpoint={}, model={}, temperature={}, max_tokens={}, messages_count={}",
+            endpoint, self.config.model, temperature, self.config.max_tokens, chat_messages.len()
+        );
+        for (idx, msg) in chat_messages.iter().enumerate() {
+            log::debug!(
+                "  Message[{}]: role={}, content_length={}",
+                idx, msg.role, msg.content.len()
+            );
+        }
 
         log::info!("Sending AI request to: {}", endpoint);
 
@@ -180,6 +206,31 @@ impl AIClient {
         } else {
             temp_override.unwrap_or(self.config.temperature)
         };
+
+        // Calculate approximate token count for audit logging
+        let message_chars: usize = chat_messages.iter().map(|m| m.content.len()).sum();
+        let approx_input_tokens = message_chars / 4; // Rough estimate: ~4 chars per token
+
+        // Audit log: endpoint and token info
+        let _ = logging::write_domain_log(
+            "audit",
+            &format!(
+                "AI Stream Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}",
+                endpoint, self.config.model, self.config.max_tokens, approx_input_tokens
+            ),
+        );
+
+        // Debug log: full request details (only when verbose logging is enabled)
+        log::debug!(
+            "AI Stream Request Details: endpoint={}, model={}, temperature={}, max_tokens={}, messages_count={}",
+            endpoint, self.config.model, temperature, self.config.max_tokens, chat_messages.len()
+        );
+        for (idx, msg) in chat_messages.iter().enumerate() {
+            log::debug!(
+                "  Message[{}]: role={}, content_length={}",
+                idx, msg.role, msg.content.len()
+            );
+        }
 
         let request = ChatCompletionRequest {
             model: self.config.model.clone(),

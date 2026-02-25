@@ -65,6 +65,12 @@ export function SettingsView() {
     upstream_proxy: config.upstream_proxy,
   });
 
+  // Snapshot of verbose_logging at app startup (to detect changes requiring app restart)
+  const verboseLoggingSnapshot = React.useRef(config.verbose_logging);
+
+  // Track if verbose_logging has changed since app startup
+  const verboseLoggingChanged = config.verbose_logging !== verboseLoggingSnapshot.current;
+
   // Track if network settings have changed since last restart
   const networkChanged =
     running &&
@@ -488,6 +494,28 @@ export function SettingsView() {
                     />
                   </div>
                 </SettingsRow>
+                {/* Restart hint for verbose logging */}
+                <AnimatePresence>
+                  {verboseLoggingChanged && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg mt-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 leading-tight">
+                            {t("settings.about.verbose_restart_title")}
+                          </p>
+                          <p className="text-xs text-amber-600/70 dark:text-amber-400/70 leading-tight mt-0.5">
+                            {t("settings.about.verbose_restart_desc")}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </SettingsSection>
 
               <SettingsSection title={t("settings.about.dev_tools")}>

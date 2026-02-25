@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::ai::config::AIConfig;
 use crate::logging;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct UpstreamProxyConfig {
     pub enabled: bool,
     pub url: String,
@@ -211,13 +211,55 @@ fn get_config_path() -> Result<PathBuf, String> {
 pub fn save_config(mut config: AppConfig) -> Result<(), String> {
     let config_path = get_config_path()?;
 
-    // Sanitize sensitive data before saving to disk
+    // Load old config to detect changes
+    let old_config = load_config().unwrap_or_default();
+
+    // Sanitize sensitive data before serialization/saving
     config.ai_config.api_key = String::new();
+
+    // Compare JSON representations to find changes
+    let new_json = serde_json::to_value(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+    let old_json = serde_json::to_value(&AppConfig {
+        ai_config: crate::ai::config::AIConfig { api_key: String::new(), ..old_config.ai_config.clone() },
+        ..old_config.clone()
+    }).map_err(|e| format!("Failed to serialize old config: {}", e))?;
+
+    // Helper to format JSON value concisely
+    fn format_value(v: &serde_json::Value) -> String {
+        match v {
+            serde_json::Value::Bool(b) => b.to_string(),
+            serde_json::Value::Number(n) => n.to_string(),
+            serde_json::Value::String(s) => format!("\"{}\"", s),
+            serde_json::Value::Array(arr) => format!("[{} items]", arr.len()),
+            serde_json::Value::Object(obj) => format!("{{{}}}", obj.len()),
+            serde_json::Value::Null => "null".to_string(),
+        }
+    }
+
+    let mut changes: Vec<String> = Vec::new();
+    if let (Some(new_obj), Some(old_obj)) = (new_json.as_object(), old_json.as_object()) {
+        for (key, new_val) in new_obj {
+            if let Some(old_val) = old_obj.get(key) {
+                if new_val != old_val {
+                    changes.push(format!("{}: {} -> {}", key, format_value(old_val), format_value(new_val)));
+                }
+            }
+        }
+    }
 
     let json = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
     fs::write(&config_path, json).map_err(|e| format!("Failed to write config: {}", e))?;
-    let _ = logging::write_domain_log("audit", "Updated Application Configuration");
+
+    // Log changes to audit
+    if changes.is_empty() {
+        let _ = logging::write_domain_log("audit", "Updated Application Configuration (no changes)");
+    } else {
+        let _ = logging::write_domain_log(
+            "audit",
+            &format!("Updated Configuration: {}", changes.join(", ")),
+        );
+    }
     Ok(())
 }
 
@@ -320,3 +362,4 @@ mod tests {
         assert_eq!(decoded.ai_config.api_key, "");
     }
 }
+

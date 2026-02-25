@@ -33,6 +33,10 @@ pub fn init_log_dir(path: PathBuf) {
         *global_tx = Some(tx);
     }
 
+    // Clean up old logs on startup (safe: only removes known log file types)
+    let logs_path = path.join("logs");
+    cleanup_old_logs(&logs_path);
+
     // Spawn background worker
     thread::spawn(move || {
         let mut file_cache: HashMap<String, File> = HashMap::new();
@@ -86,6 +90,71 @@ pub fn init_log_dir(path: PathBuf) {
             }
         }
     });
+}
+
+/// Clean up old log files on startup
+/// SAFETY: Only processes known log file types, never touches other files
+fn cleanup_old_logs(log_dir: &std::path::Path) {
+    if !log_dir.exists() {
+        return;
+    }
+
+    // ONLY process these known log file types - whitelist approach for safety
+    const KNOWN_LOG_TYPES: &[&str] = &[
+        "audit", "script", "plugin", "crash", "engine", "app"
+    ];
+
+    const MAX_FILES_PER_TYPE: usize = 5; // Keep 5 most recent files per log type
+
+    for log_type in KNOWN_LOG_TYPES {
+        // Find all files matching this log type (e.g., audit.log, audit.log.1, etc.)
+        let mut files: Vec<std::path::PathBuf> = Vec::new();
+
+        if let Ok(entries) = std::fs::read_dir(log_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    // Strict matching: only match "X.log" or "X.log.N" where X is the log type
+                    let is_match = filename == format!("{}.log", log_type)
+                        || filename.starts_with(&format!("{}.log.", log_type));
+
+                    if is_match {
+                        files.push(path);
+                    }
+                }
+            }
+        }
+
+        if files.len() <= MAX_FILES_PER_TYPE {
+            continue; // No cleanup needed
+        }
+
+        // Sort by modification time (newest first)
+        files.sort_by(|a, b| {
+            let time_a = std::fs::metadata(a)
+                .and_then(|m| m.modified())
+                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+            let time_b = std::fs::metadata(b)
+                .and_then(|m| m.modified())
+                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+            time_b.cmp(&time_a)
+        });
+
+        // Remove oldest files beyond the limit
+        for old_file in files.iter().skip(MAX_FILES_PER_TYPE) {
+            // Extra safety: verify it's still a valid log file before deletion
+            if let Some(filename) = old_file.file_name().and_then(|n| n.to_str()) {
+                if filename.starts_with(&format!("{}.", log_type)) && filename.contains(".log") {
+                    if let Err(e) = std::fs::remove_file(old_file) {
+                        eprintln!("[LogCleanup] Failed to remove {:?}: {}", old_file, e);
+                    } else {
+                        eprintln!("[LogCleanup] Removed old log: {}", filename);
+                    }
+                }
+            }
+        }
+    }
+    // Note: We do NOT truncate files - too risky. Just remove old rotated files.
 }
 
 /// Setup panic hook to log crashes to crash.log

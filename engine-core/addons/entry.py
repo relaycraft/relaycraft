@@ -166,8 +166,19 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
             return None
 
         # Verify the module has at least one hook function
+        # Check both module-level functions and class instances in 'addons' list
         hook_functions = ['request', 'response', 'error', 'websocket_message']
         has_hook = any(hasattr(module, hook) for hook in hook_functions)
+
+        # Also check if there's an 'addons' list with class instances that have hook methods
+        if not has_hook and hasattr(module, 'addons'):
+            addons_list = getattr(module, 'addons', [])
+            if isinstance(addons_list, list):
+                for addon_instance in addons_list:
+                    if any(hasattr(addon_instance, hook) for hook in hook_functions):
+                        has_hook = True
+                        break
+
         if not has_hook:
             _log_message("warn", f"Script {script_name} has no hook functions (request/response/error/websocket_message)")
 
