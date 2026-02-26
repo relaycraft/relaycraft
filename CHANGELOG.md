@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* bypass internal relay traffic overhead and standardize issue intake ([44b4368](https://github-relaycraft/relaycraft/relaycraft/commit/44b4368f56e53a5e8cb18ec74221aa698c7050da))
+* harden import flow and engine script runtime ([3126a80](https://github-relaycraft/relaycraft/relaycraft/commit/3126a8064de292866d5b9b5cd4e9a93d1081f4b2))
+
 ## [1.0.0-rc.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc1...v1.0.0-rc.1) (2026-02-25)
 
 > [!IMPORTANT]
