@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a bug or unexpected behavior | 报告问题或意外行为
 title: "[Bug] "
-labels: ["bug", "needs triage"]
+labels: ["bug", "needs-triage"]
 body:
   - type: markdown
     attributes:
@@ -11,6 +11,16 @@ body:
 
         Before submitting, please check that this issue hasn't been reported already.
         提交前请确认此问题尚未被其他人报告。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist | 提交前检查
+      options:
+        - label: I searched existing issues and did not find a duplicate. | 我已搜索现有 Issue，未发现重复项。
+          required: true
+        - label: I can reproduce this issue consistently with clear steps. | 我可以通过清晰步骤稳定复现此问题。
+          required: true
 
   - type: input
     id: version

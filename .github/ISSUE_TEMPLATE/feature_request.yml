@@ -1,13 +1,23 @@
 name: ✨ Feature Request
 description: Suggest a new feature or improvement | 建议新功能或改进
 title: "[Feature] "
-labels: ["enhancement"]
+labels: ["enhancement", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for suggesting a feature!
         感谢您的功能建议！
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist | 提交前检查
+      options:
+        - label: I searched existing issues and discussions and did not find a duplicate. | 我已搜索 Issue 和 Discussions，未发现重复建议。
+          required: true
+        - label: This request describes a concrete user problem, not just a preferred implementation. | 该请求描述了明确的用户问题，而不仅是实现偏好。
+          required: true
 
   - type: textarea
     id: problem

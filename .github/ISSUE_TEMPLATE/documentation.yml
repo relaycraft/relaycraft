@@ -1,8 +1,18 @@
 name: 📚 Documentation Issue
 description: Report missing, incorrect, or unclear documentation | 报告文档问题
 title: "[Docs] "
-labels: ["documentation"]
+labels: ["documentation", "needs-triage"]
 body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist | 提交前检查
+      options:
+        - label: I searched existing issues and did not find a duplicate doc issue. | 我已搜索现有 Issue，未发现重复文档问题。
+          required: true
+        - label: I identified where the documentation is missing/incorrect. | 我已明确缺失或错误文档的位置。
+          required: true
+
   - type: textarea
     id: description
     attributes:

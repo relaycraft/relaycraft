@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: 🔎 Search Existing Issues
+    url: https://github.com/relaycraft/relaycraft/issues?q=is%3Aissue
+    about: Please search for duplicates before creating a new issue. | 提交前请先搜索是否已有重复 Issue。
   - name: 💬 Community Discussion
     url: https://github.com/relaycraft/relaycraft/discussions
     about: For questions and general discussion, please use Discussions. | 问题和一般讨论请使用 Discussions。

@@ -1,0 +1,59 @@
+name: 🧩 Task / Tech Debt
+description: Track engineering tasks, refactors, and technical debt | 跟踪工程任务、重构和技术债
+title: "[Task] "
+labels: ["task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for implementation tasks, refactors, and maintenance work.
+        请使用此模板提交实现任务、重构和维护类工作。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist | 提交前检查
+      options:
+        - label: I searched existing issues and did not find a duplicate task. | 我已搜索现有 Issue，未发现重复任务。
+          required: true
+        - label: I defined clear scope and acceptance criteria for this task. | 我已定义清晰的任务范围和验收标准。
+          required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background | 背景
+      description: Why is this task needed? | 为什么需要这个任务？
+      placeholder: Current state, problem, or source issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope | 范围
+      description: What should be included and excluded? | 需要包含和不包含什么？
+      placeholder: |
+        Included:
+        - ...
+        Excluded:
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria | 验收标准
+      description: List verifiable outcomes. | 列出可验证的结果。
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References | 关联信息
+      description: Related PRs, issues, files, or design docs. | 相关 PR、Issue、文件或设计文档。

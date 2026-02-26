@@ -324,6 +324,10 @@ pub fn run() {
 }
 
 #[cfg(target_os = "macos")]
+// TODO(relaycraft): Migrate this window customization to objc2/objc2-app-kit.
+// We currently keep cocoa APIs here only for compatibility and suppress
+// deprecation warnings locally to avoid warning noise in unrelated Rust work.
+#[allow(deprecated)]
 fn setup_macos_window(window: &tauri::WebviewWindow) {
     use cocoa::appkit::{NSWindow, NSWindowStyleMask, NSWindowTitleVisibility};
     use cocoa::base::{id, YES};

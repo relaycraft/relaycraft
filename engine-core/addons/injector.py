@@ -43,9 +43,20 @@ try:
             })
         except Exception as e:
             print(f"[RELAYCRAFT] _rc_record_hit error: {e}", flush=True)
+    def _rc_should_skip_internal(flow):
+        try:
+            req = getattr(flow, "request", None)
+            if not req:
+                return False
+            path = getattr(req, "path", "") or ""
+            host = getattr(req, "host", "") or ""
+            return path.startswith("/_relay") or host == "relay.guide"
+        except Exception:
+            return False
 except Exception as e:
     print(f"[RELAYCRAFT] Failed to setup _rc_record_hit: {e}", flush=True)
     def _rc_record_hit(flow, script_path): pass
+    def _rc_should_skip_internal(flow): return False
 
 # Robust logging helper for scripts
 def _rc_log(level, msg):
@@ -119,6 +130,13 @@ def _rc_log(level, msg):
 
         # 1. Identify flow parameter (auto-detect position)
         flow_param = args[1].arg if len(args) >= 2 else args[0].arg
+
+        # Fast-path for high-frequency internal control endpoints.
+        # User scripts should not run on RelayCraft's own /_relay requests.
+        skip_stmt = ast.parse(
+            f"if _rc_should_skip_internal({flow_param}):\n    return"
+        ).body[0]
+        func_node.body.insert(0, skip_stmt)
 
         safe_call = self._create_safe_call(flow_param)
         injected_in_if = False

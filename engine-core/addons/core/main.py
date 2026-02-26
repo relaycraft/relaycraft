@@ -94,6 +94,9 @@ class CoreAddon:
             self.logger.error(f"Critical error in CoreAddon.request: {e}")
 
     async def response(self, flow: http.HTTPFlow) -> None:
+        if self.is_internal_request(flow):
+            return
+
         try:
             # 1. Rule Engine response handling - Synchronous
             self.rule_engine.handle_response(flow)
