@@ -1,0 +1,26 @@
+---
+description: RelayCraft AI 协作体系 — 指引 AI 使用三层知识架构
+alwaysApply: true
+---
+
+# RelayCraft AI 协作体系
+
+本项目使用 AGENTS.md + specs/ + skills/ 三层知识架构。详细导航见 `AGENTS.md` 顶部的"快速导航"章节。
+
+## 核心速记
+
+1. **i18n 必须**：所有用户可见文本用 `t()`，zh.json 和 en.json 同步更新
+2. **Zustand 选择器**：`useStore((s) => s.field)`，禁止全量订阅
+3. **Tailwind + cn()**：样式用 utilities，颜色用主题变量
+4. **Tauri Command 注册**：新命令加到 `lib.rs` 的 `invoke_handler`
+5. **Python Hook 安全**：顶层 try/except，异常不能传播
+6. **Conventional Commits**：`feat:` / `fix:` / `refactor:` / `chore:`
+
+## 执行任务前
+
+- 涉及具体编码模式时，**先读对应的 `skills/*.md`**（见 AGENTS.md 快速导航表）
+- 涉及功能任务时，检查 `specs/` 是否有对应契约
+
+## 维护义务
+
+代码变更影响通用模式时，同步更新 skills/；影响架构约束时，同步更新 AGENTS.md。文档是活的。
