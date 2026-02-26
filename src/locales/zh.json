@@ -302,7 +302,7 @@
     "help": "帮助",
     "import": "导入",
     "import_har": "导入 HAR",
-    "import_har_hint": "导入 HAR (追加)",
+    "import_har_hint": "导入 HAR",
     "loading": "加载中...",
     "move_down": "下移",
     "move_up": "上移",
@@ -814,8 +814,12 @@
       "name_placeholder": "输入会话名称...",
       "save_btn": "保存会话",
       "saving": "保存中...",
-      "title": "保存当前会话"
+      "title": "保存当前会话",
+      "success": "会话保存成功"
     },
+    "load_success": "会话加载成功",
+    "export_har_success": "HAR 导出成功",
+    "import_har_success": "HAR 导入成功",
     "switch_hint": "切换到历史会话",
     "time": {
       "days_ago": "{{count}}天前",

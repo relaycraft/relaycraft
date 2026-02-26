@@ -168,6 +168,11 @@ impl ProxyEngine for MitmproxyEngine {
         // Provide user scripts for internal loading
         cmd.env("RELAYCRAFT_USER_SCRIPTS", &user_scripts_joined);
 
+        // Force UTF-8 for Python stdio across platforms (especially Windows code pages).
+        // Keep both for compatibility with different Python/runtime behaviors.
+        cmd.env("PYTHONUTF8", "1");
+        cmd.env("PYTHONIOENCODING", "utf-8");
+
         cmd.args(&args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());

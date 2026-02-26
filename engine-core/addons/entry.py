@@ -4,6 +4,9 @@ import tempfile
 import importlib.util
 import traceback
 import asyncio
+import atexit
+import shutil
+import time
 from pathlib import Path
 
 # Add current directory to sys.path to allow package imports
@@ -12,6 +15,22 @@ sys.path.append(str(Path(__file__).parent))
 from typing import List, Any, Optional
 from core import CoreAddon
 from injector import inject_tracking
+
+
+def _safe_print(message: str) -> None:
+    """
+    Print text safely across different terminal encodings (e.g. GBK on Windows).
+    Falls back to escaped output when the stream cannot encode Unicode characters.
+    """
+    try:
+        print(message, flush=True)
+    except UnicodeEncodeError:
+        stream = getattr(sys, "stdout", None)
+        encoding = (getattr(stream, "encoding", None) or "utf-8")
+        safe_message = message.encode(encoding, errors="backslashreplace").decode(
+            encoding, errors="replace"
+        )
+        print(safe_message, flush=True)
 
 
 def _setup_asyncio_exception_handler():
@@ -44,9 +63,9 @@ def _setup_asyncio_exception_handler():
 
         # Log other errors
         if exception:
-            print(f"[RELAYCRAFT][WARN] Asyncio error: {exception}", flush=True)
+            _safe_print(f"[RELAYCRAFT][WARN] Asyncio error: {exception}")
         else:
-            print(f"[RELAYCRAFT][WARN] Asyncio warning: {message}", flush=True)
+            _safe_print(f"[RELAYCRAFT][WARN] Asyncio warning: {message}")
 
     # Set the exception handler
     try:
@@ -69,6 +88,44 @@ _setup_asyncio_exception_handler()
 # Global temp directory for preprocessed scripts
 _preprocessed_dir = None
 
+
+def _cleanup_preprocessed_dir() -> None:
+    """Remove current process preprocessed script temp directory."""
+    global _preprocessed_dir
+    if not _preprocessed_dir:
+        return
+    try:
+        if os.path.isdir(_preprocessed_dir):
+            shutil.rmtree(_preprocessed_dir, ignore_errors=True)
+    except Exception:
+        # Never let cleanup errors affect engine shutdown.
+        pass
+    finally:
+        _preprocessed_dir = None
+
+
+def _cleanup_stale_preprocessed_dirs(max_age_hours: int = 24) -> None:
+    """Remove stale relaycraft temp dirs left by previous abnormal exits."""
+    try:
+        temp_root = Path(tempfile.gettempdir())
+        cutoff = time.time() - max_age_hours * 3600
+        for p in temp_root.glob("relaycraft_scripts_*"):
+            if not p.is_dir():
+                continue
+            try:
+                if p.stat().st_mtime < cutoff:
+                    shutil.rmtree(p, ignore_errors=True)
+            except Exception:
+                # Ignore per-path errors and continue cleanup.
+                continue
+    except Exception:
+        pass
+
+
+# Best-effort cleanup: remove stale leftovers on startup, and current temp dir on exit.
+_cleanup_stale_preprocessed_dirs(max_age_hours=24)
+atexit.register(_cleanup_preprocessed_dir)
+
 def _log_message(level: str, message: str) -> None:
     """
     Robust logging helper that works in all contexts.
@@ -82,7 +139,7 @@ def _log_message(level: str, message: str) -> None:
     except Exception:
         pass
     # Fallback: print with flush for immediate output
-    print(f"[RELAYCRAFT][{level.upper()}] {message}", flush=True)
+    _safe_print(f"[RELAYCRAFT][{level.upper()}] {message}")
 
 def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
     """

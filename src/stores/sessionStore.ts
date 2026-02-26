@@ -292,6 +292,12 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         flows: [], // Flows are not in memory
       };
       set({ currentSession: session });
+
+      const { notify } = await import("../lib/notify");
+      const i18next = await import("i18next");
+      notify.success(
+        i18next.default.t("session.save.success", { defaultValue: "Session saved successfully" }),
+      );
     } catch (error) {
       Logger.error("Failed to save session:", error);
     } finally {
@@ -306,7 +312,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         filters: [
           {
             name: "RelayCraft Session",
-            extensions: ["relay", "json"],
+            extensions: ["relay"],
           },
         ],
         multiple: false,
@@ -341,6 +347,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
           }
+
+          const { notify } = await import("../lib/notify");
+          const i18next = await import("i18next");
+          notify.success(
+            i18next.default.t("session.load_success", {
+              defaultValue: "Session loaded successfully",
+            }),
+          );
         } else {
           const errorText = await response.text();
           Logger.error(`Session import failed: ${response.status} - ${errorText}`);
@@ -403,6 +417,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       if (!result.success) {
         throw new Error("Export failed");
       }
+
+      const { notify } = await import("../lib/notify");
+      const i18next = await import("i18next");
+      notify.success(
+        i18next.default.t("session.export_har_success", {
+          defaultValue: "HAR exported successfully",
+        }),
+      );
     } catch (error) {
       console.error("Failed to export HAR:", error);
     } finally {
@@ -446,6 +468,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             `HAR imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
           );
 
+          useTrafficStore.getState().clearLocal();
           useTrafficStore.getState().addIndices(indices);
 
           if (session_id) {
@@ -453,6 +476,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
           }
+
+          const { notify } = await import("../lib/notify");
+          const i18next = await import("i18next");
+          notify.success(
+            i18next.default.t("session.import_har_success", {
+              defaultValue: "HAR imported successfully",
+            }),
+          );
         } else {
           const errorText = await response.text();
           Logger.error(`HAR import failed: ${response.status} - ${errorText}`);

@@ -464,6 +464,10 @@ class FlowDatabase:
             ))
             conn.commit()
 
+            # Keep in-memory write target consistent with DB active session.
+            if is_active:
+                self._current_session_id = session_id
+
         return session_id
     
     def update_session_flow_count(self, session_id: str) -> None:
@@ -500,6 +504,9 @@ class FlowDatabase:
                 WHERE id = ?
             """, (time.time(), session_id))
             conn.commit()
+
+            # Keep in-memory write target consistent after manual switch.
+            self._current_session_id = session_id
 
         return True
 

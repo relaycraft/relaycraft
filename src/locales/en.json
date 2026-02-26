@@ -302,7 +302,7 @@
     "help": "Help",
     "import": "Import",
     "import_har": "Import HAR",
-    "import_har_hint": "Import HAR (Append)",
+    "import_har_hint": "Import HAR",
     "loading": "Loading...",
     "move_down": "Move Down",
     "move_up": "Move Up",
@@ -814,8 +814,12 @@
       "name_placeholder": "Enter session name...",
       "save_btn": "Save Session",
       "saving": "Saving...",
-      "title": "Save Current Session"
+      "title": "Save Current Session",
+      "success": "Session saved successfully"
     },
+    "load_success": "Session loaded successfully",
+    "export_har_success": "HAR exported successfully",
+    "import_har_success": "HAR imported successfully",
     "switch_hint": "Switch session",
     "time": {
       "days_ago": "{{count}}d ago",

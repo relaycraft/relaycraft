@@ -1314,9 +1314,9 @@ class TrafficMonitor:
                     except Exception:
                         pass
                         
-                    if not (file_path.lower().endswith('.json') or file_path.lower().endswith('.har')):
+                    if not file_path.lower().endswith('.relay'):
                         flow.response = Response.make(
-                            400, b'{"error": "Invalid file type. Only .json or .har allowed"}',
+                            400, b'{"error": "Invalid file type. Only .relay allowed"}',
                             {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
                         )
                         return
@@ -1396,7 +1396,8 @@ class TrafficMonitor:
                     session_id = self.db.create_session(
                         name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                         description="",
-                        metadata={"type": "har_import"}
+                        metadata={"type": "har_import"},
+                        is_active=False
                     )
 
                     flows, indices = self._normalize_har_entries(entries)
@@ -1461,7 +1462,8 @@ class TrafficMonitor:
                     session_id = self.db.create_session(
                         name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                         description="",
-                        metadata={"type": "har_import"}
+                        metadata={"type": "har_import"},
+                        is_active=False
                     )
 
                     flows, indices = self._normalize_har_entries(entries)
