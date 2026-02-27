@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.3](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-02-27)
+
+
+### Features
+
+* implement cross-platform vibrancy support and refactor window logic ([406504e](https://github-relaycraft/relaycraft/relaycraft/commit/406504ef0e0f900397f8d172cada5873dcfe505f)), closes [#17](https://github-relaycraft/relaycraft/relaycraft/issues/17)
+
 ## [1.0.0-rc.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-26)
 
 
