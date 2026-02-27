@@ -7,7 +7,7 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { type ThemeMode, useThemeStore } from "../../stores/themeStore";
 import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
-import { SettingsSection } from "./SettingsLayout";
+import { SettingsRow, SettingsSection, SettingsToggle } from "./SettingsLayout";
 import { ThemeThumbnail } from "./ThemeThumbnail";
 
 export const AppearanceSettings: React.FC = () => {
@@ -16,7 +16,7 @@ export const AppearanceSettings: React.FC = () => {
     useThemeStore();
   const { installPluginLocal } = usePluginStore();
   const { setMarketOpen } = useUIStore();
-  const { config, updateDisplayDensity } = useSettingsStore();
+  const { config, updateDisplayDensity, updateEnableVibrancy } = useSettingsStore();
 
   useEffect(() => {
     fetchThemes();
@@ -173,6 +173,21 @@ export const AppearanceSettings: React.FC = () => {
             </Button>
           ))}
         </div>
+      </SettingsSection>
+
+      <SettingsSection title={t("settings.appearance.effects", "Window Effects")}>
+        <SettingsRow
+          title={t("settings.appearance.vibrancy", "Enable Window Vibrancy")}
+          description={t(
+            "settings.appearance.vibrancy_desc",
+            "Enable native window translucency (Acrylic/Mica/Blur). High performance impact. Requires compatible themes.",
+          )}
+        >
+          <SettingsToggle
+            checked={config.enable_vibrancy}
+            onCheckedChange={(val) => updateEnableVibrancy(val)}
+          />
+        </SettingsRow>
       </SettingsSection>
 
       {/* Delete Confirmation Dialog */}

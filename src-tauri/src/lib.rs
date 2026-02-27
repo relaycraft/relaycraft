@@ -120,35 +120,21 @@ pub fn run() {
         })
         .manage(plugins::PluginCache::default())
         .setup(move |app| {
+            // Delegate window setup to common::window (handles macOS vibrancy and cross-platform decor)
+            if let Some(window) = app.get_webview_window("main") {
+                common::window::setup_window(&window);
+            }
+
             #[cfg(target_os = "macos")]
             {
-                use tauri::Manager;
-                if let Some(window) = app.get_webview_window("main") {
-                    setup_macos_window(&window);
-                }
                 // On macOS (WebKit), show the splash window from Rust immediately.
-                // JS-based show() is unreliable because WebKit may throttle scripts
-                // while the window is hidden (visible:false).
                 if let Some(splash) = app.get_webview_window("splashscreen") {
                     let _ = splash.show();
                 }
             }
 
-            // Disable decorations on Windows for custom TitleBar
-            #[cfg(target_os = "windows")]
-            {
-                use tauri::Manager;
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.set_decorations(false);
-                }
-                // On Windows we keep splash hidden initially and let JS call show()
-                // after the first paint to avoid a blank-window flash (WebView2 quirk).
-            }
-
-            // On Linux and other platforms, show splash right away from Rust.
             #[cfg(not(any(target_os = "macos", target_os = "windows")))]
             {
-                use tauri::Manager;
                 if let Some(splash) = app.get_webview_window("splashscreen") {
                     let _ = splash.show();
                 }
@@ -272,6 +258,7 @@ pub fn run() {
             rules::save_groups,
             rules::export_rules_bundle,
             rules::import_rules_bundle,
+            common::window::set_window_vibrancy,
             rules::get_rules_dir_path,
             rules::export_rules_zip,
             rules::import_rules_zip,
@@ -323,25 +310,7 @@ pub fn run() {
         });
 }
 
-#[cfg(target_os = "macos")]
-// TODO(relaycraft): Migrate this window customization to objc2/objc2-app-kit.
-// We currently keep cocoa APIs here only for compatibility and suppress
-// deprecation warnings locally to avoid warning noise in unrelated Rust work.
-#[allow(deprecated)]
-fn setup_macos_window(window: &tauri::WebviewWindow) {
-    use cocoa::appkit::{NSWindow, NSWindowStyleMask, NSWindowTitleVisibility};
-    use cocoa::base::{id, YES};
 
-    unsafe {
-        let ns_window = window.ns_window().unwrap() as id;
-        ns_window.setTitlebarAppearsTransparent_(YES);
-        ns_window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-
-        let mut style_mask = ns_window.styleMask();
-        style_mask.insert(NSWindowStyleMask::NSFullSizeContentViewWindowMask);
-        ns_window.setStyleMask_(style_mask);
-    }
-}
 
 fn apply_upstream_proxy(config: &config::AppConfig) {
     if config.upstream_proxy.enabled && !config.upstream_proxy.url.is_empty() {

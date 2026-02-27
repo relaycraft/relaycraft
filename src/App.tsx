@@ -240,7 +240,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden font-sans">
+    <div className="h-screen flex flex-col bg-transparent text-foreground overflow-hidden font-sans">
       <VibrancyBackground />
       <Toaster
         position="bottom-right"
@@ -264,7 +264,7 @@ function App() {
         <Sidebar isMacOS={isMacOS} />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-background/30 backdrop-blur-sm relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-transparent backdrop-blur-xl relative">
           <div className="flex-1 relative overflow-hidden">
             <AnimatePresence>
               <motion.div

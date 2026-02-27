@@ -951,6 +951,9 @@
       "mode_light": "Light Mode",
       "mode_system": "System Sync",
       "theme": "Color Theme",
+      "effects": "Window Effects",
+      "vibrancy": "Window Vibrancy",
+      "vibrancy_desc": "Enable native window translucency. Requires theme support.",
       "title": "Appearance"
     },
     "footer": "RelayCraft · Initializing core engine...",

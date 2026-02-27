@@ -29,10 +29,10 @@
         "minWidth": 1024,
         "minHeight": 600,
         "decorations": true,
-        "transparent": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "visible": false
+        "visible": false,
+        "transparent": true
       },
       {
         "label": "splashscreen",

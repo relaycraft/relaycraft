@@ -272,8 +272,6 @@
                 // Only switch to light theme when explicitly set to 'light'
                 if (mode === 'light') {
                     document.documentElement.classList.add('theme-light');
-                    // Also update body background immediately for light mode
-                    document.documentElement.style.background = '#ffffff';
                 }
             } catch (e) {
                 console.warn('Theme sync failed', e);

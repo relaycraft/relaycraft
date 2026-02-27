@@ -40,6 +40,8 @@ pub struct AppConfig {
     pub theme_registry_url: String,
     #[serde(default)]
     pub cert_warning_ignored: bool,
+    #[serde(default = "default_true")]
+    pub enable_vibrancy: bool,
 }
 
 fn default_registry_url() -> String {
@@ -79,6 +81,7 @@ impl Default for AppConfig {
             plugin_registry_url: default_registry_url(),
             theme_registry_url: default_theme_registry_url(),
             cert_warning_ignored: false,
+            enable_vibrancy: true,
         }
     }
 }
@@ -218,11 +221,16 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
     config.ai_config.api_key = String::new();
 
     // Compare JSON representations to find changes
-    let new_json = serde_json::to_value(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+    let new_json =
+        serde_json::to_value(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
     let old_json = serde_json::to_value(&AppConfig {
-        ai_config: crate::ai::config::AIConfig { api_key: String::new(), ..old_config.ai_config.clone() },
+        ai_config: crate::ai::config::AIConfig {
+            api_key: String::new(),
+            ..old_config.ai_config.clone()
+        },
         ..old_config.clone()
-    }).map_err(|e| format!("Failed to serialize old config: {}", e))?;
+    })
+    .map_err(|e| format!("Failed to serialize old config: {}", e))?;
 
     // Helper to format JSON value concisely
     fn format_value(v: &serde_json::Value) -> String {
@@ -241,7 +249,12 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
         for (key, new_val) in new_obj {
             if let Some(old_val) = old_obj.get(key) {
                 if new_val != old_val {
-                    changes.push(format!("{}: {} -> {}", key, format_value(old_val), format_value(new_val)));
+                    changes.push(format!(
+                        "{}: {} -> {}",
+                        key,
+                        format_value(old_val),
+                        format_value(new_val)
+                    ));
                 }
             }
         }
@@ -253,7 +266,8 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
 
     // Log changes to audit
     if changes.is_empty() {
-        let _ = logging::write_domain_log("audit", "Updated Application Configuration (no changes)");
+        let _ =
+            logging::write_domain_log("audit", "Updated Application Configuration (no changes)");
     } else {
         let _ = logging::write_domain_log(
             "audit",
@@ -344,6 +358,7 @@ mod tests {
         assert_eq!(config.proxy_port, 9090);
         assert_eq!(config.language, "zh");
         assert!(config.confirm_exit);
+        assert!(config.enable_vibrancy);
     }
 
     #[test]
@@ -362,4 +377,3 @@ mod tests {
         assert_eq!(decoded.ai_config.api_key, "");
     }
 }
-

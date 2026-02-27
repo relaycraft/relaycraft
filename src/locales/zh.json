@@ -951,6 +951,9 @@
       "mode_light": "浅色模式",
       "mode_system": "跟随系统",
       "theme": "主题方案",
+      "effects": "窗口特效",
+      "vibrancy": "窗口毛玻璃效果",
+      "vibrancy_desc": "启用原生窗口半透明材质，需要主题支持。",
       "title": "外观定制"
     },
     "footer": "RelayCraft · 正在加载系统内核...",

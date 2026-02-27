@@ -295,9 +295,7 @@ html.lang-zh .font-bold {
   z-index: -10;
   overflow: hidden;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%,
-      var(--color-input) 0%,
-      var(--color-background) 100%);
+  background: transparent;
 }
 
 .vibrancy-blob {
