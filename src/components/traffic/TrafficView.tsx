@@ -329,7 +329,7 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
       )}
       <div className="h-full flex flex-1 overflow-hidden">
         {/* Traffic List */}
-        <div className="flex-1 border-r border-border flex flex-col bg-muted/5 min-w-0">
+        <div className="flex-1 border-r border-border flex flex-col bg-muted/30 min-w-0">
           <FilterBar
             filterText={filterText}
             setFilterText={setFilterText}

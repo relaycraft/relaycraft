@@ -169,31 +169,50 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       name: "Modern Charcoal",
       type: "dark",
       colors: {
-        "--color-background": "rgba(11, 12, 15, 0.4)",
-        "--color-foreground": "#e6edf3",
-        "--color-muted": "rgba(17, 20, 26, 0.45)",
-        "--color-muted-foreground": "#8b949e",
-        "--color-popover": "rgba(22, 27, 34, 0.75)",
-        "--color-popover-foreground": "#ffffff",
-        "--color-card": "rgba(22, 26, 34, 0.75)",
-        "--color-card-foreground": "#e6edf3",
-        "--color-border": "rgba(255, 255, 255, 0.08)",
-        "--color-input": "rgba(13, 15, 20, 0.6)",
-        "--color-primary": "#60a5fa",
-        "--color-primary-foreground": "#ffffff",
-        "--color-secondary": "rgba(13, 17, 23, 0.5)",
-        "--color-secondary-foreground": "#8b949e",
-        "--color-accent": "rgba(30, 34, 41, 0.6)",
-        "--color-accent-foreground": "#ffffff",
-        "--color-destructive": "#fb7185",
-        "--color-destructive-foreground": "#ffffff",
-        "--color-success": "#10b981",
-        "--color-success-foreground": "#ffffff",
-        "--color-warning": "#f59e0b",
-        "--color-warning-foreground": "#000000",
-        "--color-info": "#3b82f6",
-        "--color-info-foreground": "#ffffff",
-        "--color-ring": "#3b82f6",
+        /* ═══════════════════════════════════════════════════════════════
+         * CORE SURFACE COLORS (Backgrounds)
+         * These use rgba with transparency for vibrancy/glass effect.
+         * When vibrancy is disabled, these are blended with solid background.
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-background": "rgba(11, 12, 15, 0.4)", // Main app background
+        "--color-muted": "rgba(17, 20, 26, 0.45)", // Secondary surfaces, sidebars
+        "--color-card": "rgba(22, 26, 34, 0.75)", // Cards, panels, detail views
+        "--color-popover": "rgba(22, 27, 34, 0.75)", // Dropdowns, tooltips, modals
+        "--color-input": "rgba(13, 15, 20, 0.6)", // Input fields, text boxes
+        "--color-secondary": "rgba(13, 17, 23, 0.5)", // Secondary buttons, badges
+        "--color-accent": "rgba(30, 34, 41, 0.6)", // Accent surfaces, highlights
+
+        /* ═══════════════════════════════════════════════════════════════
+         * TEXT COLORS (Solid - no transparency)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-foreground": "#e6edf3", // Primary text
+        "--color-muted-foreground": "#8b949e", // Secondary text, placeholders
+        "--color-popover-foreground": "#ffffff", // Text on popovers
+        "--color-card-foreground": "#e6edf3", // Text on cards
+        "--color-primary-foreground": "#ffffff", // Text on primary buttons
+        "--color-secondary-foreground": "#8b949e", // Text on secondary elements
+        "--color-accent-foreground": "#ffffff", // Text on accent surfaces
+        "--color-destructive-foreground": "#ffffff", // Text on destructive actions
+        "--color-success-foreground": "#ffffff", // Text on success states
+        "--color-warning-foreground": "#000000", // Text on warnings (dark for contrast)
+        "--color-info-foreground": "#ffffff", // Text on info states
+
+        /* ═══════════════════════════════════════════════════════════════
+         * BORDER COLORS (Semi-transparent)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-border": "rgba(255, 255, 255, 0.08)", // Standard borders
+        "--color-border-subtle": "rgba(255, 255, 255, 0.04)", // Subtle dividers
+        "--color-border-muted": "rgba(255, 255, 255, 0.12)", // Emphasized borders
+
+        /* ═══════════════════════════════════════════════════════════════
+         * SEMANTIC COLORS (Solid - for accessibility)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-primary": "#60a5fa", // Primary actions, links, focus
+        "--color-destructive": "#fb7185", // Errors, delete actions
+        "--color-success": "#10b981", // Success states, confirmations
+        "--color-warning": "#f59e0b", // Warnings, cautions
+        "--color-info": "#3b82f6", // Informational elements
+        "--color-ring": "#3b82f6", // Focus ring color
 
         /* Rule Type Specific Colors - Dark */
         "--color-rule-script": "#818cf8",
@@ -229,10 +248,6 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--blur-md": "12px",
         "--blur-lg": "40px",
 
-        /* Borders - Dark */
-        "--color-border-subtle": "rgba(255, 255, 255, 0.04)",
-        "--color-border-muted": "rgba(255, 255, 255, 0.12)",
-
         /* Typography Scale */
         "--text-micro": "0.625rem",
         "--text-tiny": "0.6875rem",
@@ -247,31 +262,49 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       name: "Nebula White",
       type: "light",
       colors: {
-        "--color-background": "#fcfcfd",
-        "--color-foreground": "#1a1c23",
-        "--color-muted": "#f4f4f7",
-        "--color-muted-foreground": "#6b7280",
-        "--color-popover": "#ffffff",
-        "--color-popover-foreground": "#1a1c23",
-        "--color-card": "#ffffff",
-        "--color-card-foreground": "#1a1c23",
-        "--color-border": "#e5e7eb",
-        "--color-input": "#ffffff",
-        "--color-primary": "#4f46e5",
-        "--color-primary-foreground": "#ffffff",
-        "--color-secondary": "#f4f4f7",
-        "--color-secondary-foreground": "#4f46e5",
-        "--color-accent": "#eef2ff",
-        "--color-accent-foreground": "#4f46e5",
-        "--color-destructive": "#ef4444",
-        "--color-destructive-foreground": "#ffffff",
-        "--color-success": "#10b981",
-        "--color-success-foreground": "#ffffff",
-        "--color-warning": "#f59e0b",
-        "--color-warning-foreground": "#ffffff",
-        "--color-info": "#3b82f6",
-        "--color-info-foreground": "#ffffff",
-        "--color-ring": "#4f46e5",
+        /* ═══════════════════════════════════════════════════════════════
+         * CORE SURFACE COLORS (Backgrounds) - Light Theme
+         * Light theme needs lower opacity for visible vibrancy effect.
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-background": "rgba(252, 252, 253, 0.65)", // Main app background
+        "--color-muted": "rgba(244, 244, 247, 0.55)", // Secondary surfaces, sidebars
+        "--color-card": "rgba(255, 255, 255, 0.75)", // Cards, panels, detail views
+        "--color-popover": "rgba(255, 255, 255, 0.85)", // Dropdowns, tooltips, modals
+        "--color-input": "rgba(255, 255, 255, 0.8)", // Input fields, text boxes
+        "--color-secondary": "rgba(244, 244, 247, 0.5)", // Secondary buttons, badges
+        "--color-accent": "rgba(238, 242, 255, 0.6)", // Accent surfaces, highlights
+
+        /* ═══════════════════════════════════════════════════════════════
+         * TEXT COLORS (Solid - no transparency)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-foreground": "#1a1c23", // Primary text
+        "--color-muted-foreground": "#6b7280", // Secondary text, placeholders
+        "--color-popover-foreground": "#1a1c23", // Text on popovers
+        "--color-card-foreground": "#1a1c23", // Text on cards
+        "--color-primary-foreground": "#ffffff", // Text on primary buttons
+        "--color-secondary-foreground": "#4f46e5", // Text on secondary elements
+        "--color-accent-foreground": "#4f46e5", // Text on accent surfaces
+        "--color-destructive-foreground": "#ffffff", // Text on destructive actions
+        "--color-success-foreground": "#ffffff", // Text on success states
+        "--color-warning-foreground": "#ffffff", // Text on warnings
+        "--color-info-foreground": "#ffffff", // Text on info states
+
+        /* ═══════════════════════════════════════════════════════════════
+         * BORDER COLORS (Semi-transparent)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-border": "rgba(0, 0, 0, 0.08)", // Standard borders
+        "--color-border-subtle": "rgba(0, 0, 0, 0.04)", // Subtle dividers
+        "--color-border-muted": "rgba(0, 0, 0, 0.1)", // Emphasized borders
+
+        /* ═══════════════════════════════════════════════════════════════
+         * SEMANTIC COLORS (Solid - for accessibility)
+         * ═══════════════════════════════════════════════════════════════ */
+        "--color-primary": "#4f46e5", // Primary actions, links, focus
+        "--color-destructive": "#ef4444", // Errors, delete actions
+        "--color-success": "#10b981", // Success states, confirmations
+        "--color-warning": "#f59e0b", // Warnings, cautions
+        "--color-info": "#3b82f6", // Informational elements
+        "--color-ring": "#4f46e5", // Focus ring color
 
         /* Rule Type Specific Colors - Light */
         "--color-rule-script": "#4f46e5",
@@ -306,10 +339,6 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         "--blur-sm": "4px",
         "--blur-md": "12px",
         "--blur-lg": "40px",
-
-        /* Borders - Light */
-        "--color-border-subtle": "rgba(0, 0, 0, 0.02)",
-        "--color-border-muted": "rgba(0, 0, 0, 0.06)",
 
         /* Typography Scale */
         "--text-micro": "0.625rem",

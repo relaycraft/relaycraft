@@ -177,7 +177,7 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 pt-1 text-ui leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
+              <div className="px-4 pb-4 pt-1 text-tiny leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{thoughts}</ReactMarkdown>
                 {isThinking && (
                   <motion.span

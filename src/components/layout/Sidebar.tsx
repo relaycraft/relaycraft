@@ -55,7 +55,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
 
   return (
     <div
-      className={`w-16 bg-muted/40 backdrop-blur-lg flex flex-col items-center flex-shrink-0 z-20 border-r border-subtle shadow-[inset_-1px_0_0_rgba(255,255,255,0.01)] ${
+      className={`w-16 bg-muted/40 flex flex-col items-center flex-shrink-0 z-20 border-r border-subtle shadow-[inset_-1px_0_0_rgba(255,255,255,0.01)] ${
         isMacOS ? "py-4 gap-2" : "py-6 gap-4"
       }`}
     >

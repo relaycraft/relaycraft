@@ -264,7 +264,7 @@ function App() {
         <Sidebar isMacOS={isMacOS} />
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-transparent backdrop-blur-xl relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-transparent relative">
           <div className="flex-1 relative overflow-hidden">
             <AnimatePresence>
               <motion.div
@@ -276,7 +276,7 @@ function App() {
                 className="absolute inset-0 flex flex-col overflow-hidden"
               >
                 {/* Context Header - Glassy */}
-                <div className="h-11 px-4 border-b border-border/40 flex items-center justify-between bg-muted/20 backdrop-blur-xl flex-shrink-0">
+                <div className="h-11 px-4 border-b border-border/40 flex items-center justify-between bg-muted/20 flex-shrink-0">
                   <div>
                     <h1 className="text-ui font-bold tracking-tight text-foreground/90">
                       {activeTab === "traffic" && t("sidebar.traffic")}

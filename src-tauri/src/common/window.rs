@@ -22,7 +22,10 @@ pub fn update_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
 
 #[cfg(target_os = "macos")]
 fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
-    use objc2_app_kit::{NSVisualEffectMaterial, NSVisualEffectView};
+    use objc2_app_kit::{
+        NSAppearance, NSAppearanceCustomization, NSAppearanceNameVibrantDark,
+        NSAppearanceNameVibrantLight, NSVisualEffectMaterial, NSVisualEffectView,
+    };
     use objc2_foundation::MainThreadMarker;
 
     if MainThreadMarker::new().is_none() {
@@ -55,11 +58,24 @@ fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
             view.setHidden(false); // Ensure it's visible again
 
             let material = match effect {
-                "light" => NSVisualEffectMaterial::WindowBackground,
+                // Light theme: Sidebar material provides more visible vibrancy
+                "light" => NSVisualEffectMaterial::Sidebar,
+                // Dark theme: UnderWindowBackground gives deep, rich blur
                 "dark" => NSVisualEffectMaterial::UnderWindowBackground,
                 _ => NSVisualEffectMaterial::Sidebar,
             };
             view.setMaterial(material);
+
+            // Force the appearance to match the app theme, not the system appearance.
+            // This ensures dark theme gets dark vibrancy even when macOS is in light mode.
+            let appearance_name = if effect == "dark" {
+                NSAppearanceNameVibrantDark
+            } else {
+                NSAppearanceNameVibrantLight
+            };
+            if let Some(appearance) = NSAppearance::appearanceNamed(appearance_name) {
+                view.setAppearance(Some(&appearance));
+            }
 
             if let Ok(ns_window) = window.ns_window() {
                 let ns_window = &*(ns_window as *const objc2_app_kit::NSWindow);
