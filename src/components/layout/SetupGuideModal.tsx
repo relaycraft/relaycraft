@@ -165,19 +165,6 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
           </div>
 
           {/* Fallback tip */}
-          <div className="bg-muted/10 rounded-xl p-3 border border-border/20 flex gap-3 mt-1">
-            <div className="p-1.5 bg-yellow-500/5 rounded-lg h-fit text-yellow-500/60">
-              <AlertTriangle className="w-3.5 h-3.5" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-tight text-yellow-500/70">
-                {t("setup_guide.install_cert_fallback")}
-              </p>
-              <p className="text-xs text-muted-foreground/60 leading-normal mt-0.5">
-                {t("setup_guide.install_cert_fallback_desc")}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

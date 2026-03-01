@@ -162,11 +162,10 @@
           "Expand [Trust] dropdown, set [When using this certificate] to [Always Trust]",
           "Close window and enter system password"
         ],
-        "macos_sequoia_hint_desc": "Due to system restrictions, auto-install may fail on Sequoia. We recommend using the <strong>Terminal Command</strong> below.",
-        "macos_sequoia_hint_title": "macOS 15 (Sequoia) Automation Limit",
-        "mobile_android_hint": "Note: Modern Android systems have strict built-in security policies; Root access or specialized debugging configurations may be required for traffic decryption.",
-        "mobile_browser_access": "2. Browser Access (or Scan) Link",
-        "mobile_manual_transfer_tip": "Tip: If connection fails, send the certificate file from computer to phone directly (most reliable).",
+        "macos_sequoia_hint_desc": "Auto-install and trust is not supported. We recommend using the <strong>Terminal Command</strong> below.",
+        "macos_sequoia_hint_title": "macOS 15 or Later",
+        "mobile_android_hint": "Modern Android systems have strict built-in security policies; Root access or specialized debugging configurations may be required for traffic decryption.",
+        "mobile_browser_access": "2. Browser Access Link",
         "mobile_qr_code_hint": "Scan to open download link",
         "mobile_step1": "Step 1: Get Certificate",
         "mobile_step1_desc": "Ensure mobile device is on the same LAN and proxy is configured.",
@@ -176,7 +175,7 @@
         "mobile_troubleshooting_title": "Still can't capture?",
         "mobile_wifi_config": "1. Configure Wi-Fi Proxy",
         "terminal_copy": "Copy Command",
-        "terminal_hint": "Faster Way: Terminal One-Click Trust",
+        "terminal_hint": "Terminal One-Click Trust",
         "title": "Installation Guides",
         "windows": [
           "Click <strong>Open Storage Directory</strong> on the left",
@@ -189,7 +188,7 @@
       },
       "tabs": {
         "desktop": "Desktop",
-        "mobile": "Mobile (iOS/Android)"
+        "mobile": "Mobile"
       }
     },
     "state": {
@@ -673,7 +672,7 @@
       "convert_script_confirm_disable_rule": "The original rule will be disabled.",
       "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
       "convert_script_confirm_enable_script": "The new script will be enabled.",
-      "convert_script_confirm_restart": "Note: Enabling script requires proxy engine restart.",
+      "convert_script_confirm_restart": "Enabling script requires proxy engine restart.",
       "convert_script_title": "Confirm Conversion",
       "core": {
         "group": "Group",
@@ -1000,10 +999,8 @@
     "install_cert_step1_desc": "Make sure your phone and computer are on the same Wi-Fi. Go to Wi-Fi details → Proxy → <strong>Manual</strong>, enter IP <code>{{ip}}</code> and port <code>{{port}}</code>.",
     "install_cert_step2": "Visit Certificate Page",
     "install_cert_step2_desc": "After configuring the proxy, open your mobile browser and visit (or scan the QR code):",
-    "install_cert_fallback": "Can't connect?",
-    "install_cert_fallback_desc": "You can send the certificate file from your computer directly to your phone to install it (most reliable option).",
-    "mobile_config": "Mobile Config (iOS/Android)",
-    "pc_config": "PC / Browser Config",
+    "mobile_config": "Mobile",
+    "pc_config": "Desktop",
     "switchy_omega": "Recommended: SwitchyOmega",
     "switchy_omega_desc": "Install SwitchyOmega extension, create <strong>HTTP</strong> proxy with Host <code>{{ip}}</code> and Port <code>{{port}}</code>.",
     "system_proxy": "System Proxy",
@@ -1084,7 +1081,7 @@
     },
     "headers_list": {
       "add": "Add Header",
-      "encrypted": "Encrypted (HTTPS)",
+      "encrypted": "HTTPS",
       "failed": "Failed",
       "key": "Key",
       "pending": "Pending"
@@ -1118,7 +1115,7 @@
     "start_hint": "Click the \"Start Capture\" button or use shortcut to begin capturing traffic.",
     "start_proxy": "Start Capture",
     "status": {
-      "encrypted": "Encrypted (HTTPS)",
+      "encrypted": "HTTPS",
       "failed": "Failed",
       "label": "Status",
       "pending": "Pending"

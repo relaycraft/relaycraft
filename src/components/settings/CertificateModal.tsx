@@ -353,13 +353,6 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                         </AnimatePresence>,
                         document.body,
                       )}
-
-                      <div className="mt-3 flex items-start gap-2 px-1">
-                        <div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" />
-                        <p className="text-xs text-muted-foreground italic leading-relaxed">
-                          {t("cert.manual.guides.mobile_manual_transfer_tip")}
-                        </p>
-                      </div>
                     </div>
                   </div>
 
