@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.4](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2026-03-01)
+
+
+### Features
+
+* add image preview support in request composer ([bd2f01d](https://github-relaycraft/relaycraft/relaycraft/commit/bd2f01d3dceacbf9f126f9215adbb7c9d42ebb97))
+* enhance vibrancy effect and fix rendering issues ([ddeb2d8](https://github-relaycraft/relaycraft/relaycraft/commit/ddeb2d87b5737acb455842cb8223f5a50fba9ae7))
+
 ## [1.0.0-rc.3](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-02-27)
 
 
