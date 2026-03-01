@@ -8,6 +8,7 @@ import {
   formatJson,
   formatXml,
   getExtensionFromHeaders,
+  getFilenameFromUrl,
 } from "../../lib/contentUtils";
 import type { HarHeader } from "../../types";
 import { getHeaderValue } from "../../types";
@@ -24,6 +25,7 @@ interface ContentPreviewProps {
   content: string | undefined; // Base64 encoded for binaries/images, plain text for text
   encoding?: "text" | "base64";
   headers: HarHeader[] | Record<string, string> | null;
+  url?: string; // Optional URL for extracting filename
 }
 
 // Helper to get header value from either format
@@ -54,7 +56,7 @@ function headersToRecord(
   return headers;
 }
 
-export function ContentPreview({ content, encoding, headers }: ContentPreviewProps) {
+export function ContentPreview({ content, encoding, headers, url }: ContentPreviewProps) {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
   const [showFullContent, setShowFullContent] = useState(false);
@@ -103,7 +105,9 @@ export function ContentPreview({ content, encoding, headers }: ContentPreviewPro
   const handleDownload = async () => {
     try {
       const extension = getExtensionFromHeaders(headersRecord, contentType);
-      const defaultPath = `response.${extension}`;
+      // Try to get filename from URL, fallback to response.${ext}
+      const urlFilename = url ? getFilenameFromUrl(url) : null;
+      const defaultPath = urlFilename || `response.${extension}`;
 
       const filePath = await save({
         defaultPath,

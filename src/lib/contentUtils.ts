@@ -115,6 +115,25 @@ export function formatXml(xml: string): string {
   return formatted;
 }
 
+/**
+ * Extract filename from URL path
+ * Returns null if no valid filename found
+ */
+export function getFilenameFromUrl(url: string): string | null {
+  try {
+    const pathname = new URL(url).pathname;
+    const filename = pathname.split("/").pop();
+    // Must have extension and not be empty
+    if (filename?.includes(".") && filename.length > 1) {
+      // Sanitize: remove potentially dangerous characters (control chars removed for safety)
+      return filename.replace(/[<>:"/\\|?*]/g, "_");
+    }
+  } catch {
+    // Invalid URL
+  }
+  return null;
+}
+
 export function getExtensionFromHeaders(
   headers: Record<string, string> | null,
   contentType: ContentType,

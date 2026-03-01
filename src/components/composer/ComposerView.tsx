@@ -1,16 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Code2, Download, Eraser, Globe, Loader2, Send, X, Zap } from "lucide-react";
+import { AlertCircle, Code2, Eraser, Globe, Loader2, Send, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { formatJson } from "../../lib/contentUtils";
 import { parseCurl } from "../../lib/curlParser";
 import { cn } from "../../lib/utils";
 import { useComposerStore } from "../../stores/composerStore";
 import { Button } from "../common/Button";
-import { CopyButton } from "../common/CopyButton";
 import { Editor } from "../common/Editor";
 import { EmptyState } from "../common/EmptyState";
 import { Input } from "../common/Input";
@@ -19,6 +15,7 @@ import { Select } from "../common/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Textarea } from "../common/Textarea";
 import { Tooltip } from "../common/Tooltip";
+import { ContentPreview } from "../traffic/ContentPreview";
 import { BodyFormEditor } from "./BodyFormEditor";
 import { HeaderListEditor } from "./HeaderListEditor";
 
@@ -27,6 +24,7 @@ interface ReplayResponse {
   status: number;
   headers: Record<string, string>;
   body: string;
+  encoding: "text" | "base64";
 }
 
 export function ComposerView() {
@@ -69,22 +67,6 @@ export function ComposerView() {
     }
   };
 
-  const handleDownload = async () => {
-    if (!lastResponse) return;
-    try {
-      const filePath = await save({
-        defaultPath: "response.json",
-        filters: [
-          { name: "JSON", extensions: ["json"] },
-          { name: "All Files", extensions: ["*"] },
-        ],
-      });
-      if (filePath) await writeTextFile(filePath, lastResponse.body);
-    } catch (error) {
-      console.error("Failed to save file:", error);
-    }
-  };
-
   const handleSend = async () => {
     if (!url || sending) return;
     setSending(true);
@@ -107,6 +89,7 @@ export function ComposerView() {
         status: response.status,
         headers: response.headers,
         body: response.body,
+        encoding: response.encoding,
       });
     } catch (error: any) {
       const errorMsg = error.toString();
@@ -416,44 +399,14 @@ export function ComposerView() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="h-full flex flex-col"
+                  className="h-full flex flex-col p-4 overflow-auto"
                 >
-                  <div className="flex-1 relative min-h-0 bg-transparent">
-                    <Editor
-                      value={
-                        viewMode === "raw"
-                          ? lastResponse.body
-                          : lastResponse.body.length > 1024 * 1024 // 1MB threshold for formatting
-                            ? lastResponse.body
-                            : formatJson(lastResponse.body)
-                      }
-                      language={viewMode === "raw" ? "text" : "json"}
-                      options={{
-                        readOnly: true,
-                        lineWrapping: true,
-                        lineNumbers: true,
-                      }}
-                    />
-                  </div>
-
-                  {/* Action Floating Bar */}
-                  <div className="absolute right-4 bottom-4 flex items-center gap-2 opacity-0 group-hover/response:opacity-100 transition-opacity">
-                    <CopyButton
-                      text={lastResponse.body}
-                      variant="quiet"
-                      className="h-9 w-9 rounded-xl shadow-lg bg-background/90"
-                    />
-                    <Tooltip content={t("content_preview.download")}>
-                      <Button
-                        variant="quiet"
-                        size="icon-sm"
-                        onClick={handleDownload}
-                        className="h-9 w-9 bg-background/90 backdrop-blur rounded-xl border border-white/10 shadow-lg"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </Tooltip>
-                  </div>
+                  <ContentPreview
+                    content={lastResponse.body}
+                    encoding={lastResponse.encoding}
+                    headers={lastResponse.headers}
+                    url={url}
+                  />
                 </motion.div>
               ) : result?.type === "error" ? (
                 <motion.div

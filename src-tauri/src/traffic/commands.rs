@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use base64::Engine;
+
 #[derive(serde::Deserialize)]
 pub struct ReplayRequest {
     pub method: String,
@@ -13,6 +15,7 @@ pub struct ReplayResponse {
     pub status: u16,
     pub headers: HashMap<String, String>,
     pub body: String,
+    pub encoding: String, // "text" or "base64"
 }
 
 #[tauri::command]
@@ -64,12 +67,31 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
         }
     }
 
-    let body = response.text().await.map_err(|e| e.to_string())?;
+    // Check if content is binary (image, etc.) based on content-type
+    let content_type = headers
+        .get("content-type")
+        .map(|s| s.to_lowercase())
+        .unwrap_or_default();
+
+    let is_binary = content_type.starts_with("image/")
+        || content_type.starts_with("application/octet-stream")
+        || content_type.starts_with("video/")
+        || content_type.starts_with("audio/");
+
+    let (body, encoding) = if is_binary {
+        let bytes = response.bytes().await.map_err(|e| e.to_string())?;
+        let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        (encoded, "base64".to_string())
+    } else {
+        let text = response.text().await.map_err(|e| e.to_string())?;
+        (text, "text".to_string())
+    };
 
     Ok(ReplayResponse {
         status,
         headers,
         body,
+        encoding,
     })
 }
 

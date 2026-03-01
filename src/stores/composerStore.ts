@@ -16,6 +16,7 @@ interface ComposerState {
     status: number | null;
     headers: Record<string, string>;
     body: string;
+    encoding: "text" | "base64";
   } | null;
 
   setMethod: (method: string) => void;
@@ -27,6 +28,7 @@ interface ComposerState {
       status: number | null;
       headers: Record<string, string>;
       body: string;
+      encoding: "text" | "base64";
     } | null,
   ) => void;
 
