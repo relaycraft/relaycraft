@@ -184,10 +184,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className="h-full flex flex-col bg-card/60 backdrop-blur-lg border-l border-subtle overflow-hidden"
+      className="h-full flex flex-col bg-card border-l border-subtle overflow-hidden"
     >
       {/* Header - Glassy Sub-surface */}
-      <div className="flex flex-col p-4 border-b border-subtle bg-muted/20 backdrop-blur-md flex-shrink-0 gap-3">
+      <div className="flex flex-col p-4 border-b border-subtle bg-muted/20 flex-shrink-0 gap-3">
         {/* Row 1: Status & Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

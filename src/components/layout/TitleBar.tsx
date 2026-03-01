@@ -57,7 +57,7 @@ export function TitleBar({ running, loading, onToggle }: TitleBarProps) {
     <div
       onDoubleClick={handleMaximize}
       data-tauri-drag-region
-      className="h-10 bg-background/95 backdrop-blur-md border-b border-subtle flex items-center justify-between px-3 select-none fixed top-0 left-0 right-0 z-50 cursor-default"
+      className="h-10 bg-background/95 border-b border-subtle flex items-center justify-between px-3 select-none fixed top-0 left-0 right-0 z-50 cursor-default"
     >
       {!isMacOS && (
         <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
