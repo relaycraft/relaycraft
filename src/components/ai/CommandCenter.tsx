@@ -23,6 +23,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useSuggestionEngine } from "../../hooks/useSuggestionEngine";
 import { dispatchCommand } from "../../lib/ai/dispatcher";
 import { getAILanguageInfo } from "../../lib/ai/lang";
@@ -74,8 +75,14 @@ export function CommandCenter() {
   const [action, setAction] = useState<CommandAction | null>(null);
   const [error, setError] = useState<string | null>(null); // New error state
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Use smart auto-scroll hook
+  const { scrollRef } = useAutoScroll({
+    enabled: !!streamingMessage || executing,
+    pauseOnUserScroll: true,
+    dependencies: [streamingMessage],
+  });
 
   // Feature stores for context gathering
   const activeTab = useUIStore((state) => state.activeTab);
@@ -128,12 +135,7 @@ export function CommandCenter() {
     }
   }, [isOpen, updateContextualSuggestions]);
 
-  // Auto-scroll to bottom when streaming
-  useEffect(() => {
-    if (scrollRef.current && (streamingMessage || executing)) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [streamingMessage, executing]);
+  // Auto-scroll is now handled by useAutoScroll hook
 
   const handleRunCommand = async (forceInput?: string) => {
     const commandToRun = forceInput || input;

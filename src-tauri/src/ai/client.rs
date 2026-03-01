@@ -73,8 +73,10 @@ pub struct AIClient {
 
 impl AIClient {
     pub fn new(config: AIConfig) -> Self {
+        // Use longer timeout for reasoning models that may take a while to respond
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
+            .timeout(std::time::Duration::from_secs(120)) // 2 minutes total timeout
+            .connect_timeout(std::time::Duration::from_secs(10))
             .build()
             .unwrap_or_else(|_| Client::new());
 
@@ -268,14 +270,37 @@ impl AIClient {
         let stream = response.bytes_stream();
         let sse_stream = stream.map(|chunk_result| {
             chunk_result
-                .map_err(|e| AIError::NetworkError(e.to_string()))
+                .map_err(|e| {
+                    log::error!("AI Stream bytes error: {}", e);
+                    AIError::NetworkError(e.to_string())
+                })
                 .and_then(|bytes| {
                     let text = String::from_utf8_lossy(&bytes);
                     let mut result = Err(AIError::ParseError("No valid info".to_string()));
 
                     for line in text.lines() {
                         let line = line.trim();
-                        if line.is_empty() || !line.starts_with("data: ") {
+                        if line.is_empty() {
+                            continue;
+                        }
+
+                        // Log raw SSE line for debugging
+                        log::trace!("SSE line: {}", line);
+
+                        if !line.starts_with("data: ") {
+                            // Log non-data lines that might contain errors
+                            if line.starts_with("data:") {
+                                // Handle "data:" without space (some providers do this)
+                                let data = line.trim_start_matches("data:").trim();
+                                if data == "[DONE]" {
+                                    continue;
+                                }
+                                if let Ok(chunk) = serde_json::from_str::<ChatCompletionChunk>(data) {
+                                    result = Ok(chunk);
+                                    break;
+                                }
+                                log::debug!("Failed to parse SSE data (no space): {}", data);
+                            }
                             continue;
                         }
 
@@ -287,6 +312,8 @@ impl AIClient {
                         if let Ok(chunk) = serde_json::from_str::<ChatCompletionChunk>(data) {
                             result = Ok(chunk);
                             break;
+                        } else {
+                            log::debug!("Failed to parse SSE chunk: {}", data);
                         }
                     }
                     result

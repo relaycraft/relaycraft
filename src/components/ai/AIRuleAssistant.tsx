@@ -11,8 +11,9 @@ import {
   Wand2,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { buildAIContext } from "../../lib/ai/contextBuilder";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { PROXY_RULE_SYSTEM_PROMPT } from "../../lib/ai/prompts";
@@ -65,7 +66,13 @@ export function AIRuleAssistant({
   const [detectedIntent, setDetectedIntent] = useState<"explain" | "rule" | "unknown">("unknown");
   const [preview, setPreview] = useState<Partial<Rule> | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Use smart auto-scroll hook for AI explanation
+  const { scrollRef } = useAutoScroll({
+    enabled: generating || !!explanation,
+    pauseOnUserScroll: true,
+    dependencies: [explanation],
+  });
 
   // YAML Editor State
   const [yamlContent, setYamlContent] = useState("");
@@ -151,13 +158,6 @@ export function AIRuleAssistant({
 
     setIsDirty(isYamlDirty || hasPreview || hasExplanation || isScriptDirty || generating);
   }, [yamlContent, preview, explanation, scriptContent, generating, initialRule, setIsDirty]);
-
-  // Auto-scroll for AI analysis as it streams
-  useEffect(() => {
-    if (scrollRef.current && generating) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [generating]);
 
   const handleGenerate = async (overridePrompt?: string) => {
     const activePrompt = overridePrompt || prompt;

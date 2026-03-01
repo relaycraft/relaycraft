@@ -21,8 +21,9 @@ import {
   X,
 } from "lucide-react";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
@@ -61,20 +62,19 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [replaying, setReplaying] = useState(false);
-  const analysisScrollRef = useRef<HTMLDivElement>(null);
+
+  // Use smart auto-scroll hook for AI analysis
+  const { scrollRef: analysisScrollRef } = useAutoScroll({
+    enabled: analyzing || !!analysis,
+    pauseOnUserScroll: true,
+    dependencies: [analysis],
+  });
 
   // Reset analysis when flow changes
   useEffect(() => {
     setAnalysis(null);
     setAnalyzing(false);
   }, []);
-
-  // Auto-scroll for analysis
-  useEffect(() => {
-    if (analysisScrollRef.current && analyzing) {
-      analysisScrollRef.current.scrollTop = analysisScrollRef.current.scrollHeight;
-    }
-  }, [analyzing]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -503,7 +503,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
               </div>
               <div
                 ref={analysisScrollRef}
-                className="overflow-y-auto pr-1 no-scrollbar scroll-smooth relative z-10"
+                className="overflow-y-auto pr-1 no-scrollbar scroll-smooth relative z-10 max-h-[300px]"
               >
                 <div className="pb-1">
                   <AIMarkdown content={analysis} />

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Bot, Check, Loader2, Wand2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import {
   getScriptExplanationPrompt,
@@ -9,6 +10,7 @@ import {
   MITMPROXY_SYSTEM_PROMPT,
   SCRIPT_EXPLAIN_SYSTEM_PROMPT,
 } from "../../lib/ai/prompts";
+import { stripThoughts } from "../../lib/ai/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { useUIStore } from "../../stores/uiStore";
 import { AIMarkdown } from "./AIMarkdown";
@@ -23,8 +25,12 @@ interface AIScriptAssistantProps {
 
 const extractPythonCode = (text: string): string | null => {
   if (!text) return null;
+
+  // Remove <think...</think tags first (for reasoning models)
+  const cleanedText = stripThoughts(text);
+
   const codeBlockRegex = /```(?:python)?\s*([\s\S]*?)(?:```|$)/i;
-  const match = text.match(codeBlockRegex);
+  const match = cleanedText.match(codeBlockRegex);
   let code: string | null = null;
   if (match && match[1].trim().length > 10) {
     code = match[1].trim();
@@ -32,13 +38,13 @@ const extractPythonCode = (text: string): string | null => {
     const patterns = ['"""', "'''", "import ", "class Addon", "# "];
     let codeStart = Infinity;
     for (const p of patterns) {
-      const idx = text.indexOf(p);
+      const idx = cleanedText.indexOf(p);
       if (idx !== -1 && idx < codeStart) {
         codeStart = idx;
       }
     }
     if (codeStart !== Infinity) {
-      code = text.substring(codeStart).trim();
+      code = cleanedText.substring(codeStart).trim();
     }
   }
   if (code) {
@@ -63,9 +69,15 @@ export function AIScriptAssistant({
   const [genMode, setGenMode] = useState<"generate" | "explain" | null>(null);
   const [tempCode, setTempCode] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const isGeneratingRef = useRef(false);
   const hasHandledPromptRef = useRef(false);
+
+  // Use smart auto-scroll hook for AI output
+  const { scrollRef } = useAutoScroll({
+    enabled: generating || !!explanation,
+    pauseOnUserScroll: true,
+    dependencies: [explanation, tempCode],
+  });
 
   const handleGenerate = useCallback(
     async (mode: "generate" | "explain" = "generate", overridePrompt?: string) => {
@@ -209,13 +221,6 @@ export function AIScriptAssistant({
       onApply(tempCode);
     }
   }, [tempCode, generating, onApply]);
-
-  // Auto-scroll for AI analysis as it streams
-  useEffect(() => {
-    if (scrollRef.current && generating) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [generating]);
 
   return (
     <motion.div

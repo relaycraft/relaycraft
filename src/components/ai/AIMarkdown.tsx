@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "../common/CopyButton";
@@ -104,6 +104,7 @@ const markdownComponents: any = {
 
 export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const thoughtsScrollRef = useRef<HTMLDivElement>(null);
 
   // Extract thinking process
   const { thoughts, answer, isThinking } = useMemo(() => {
@@ -134,6 +135,24 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
       setIsCollapsed(true);
     }
   }, [isThinking, answer]);
+
+  // Auto-scroll thoughts container when thinking content is streaming
+  const prevThoughtsLengthRef = useRef(0);
+  useEffect(() => {
+    const currentLength = thoughts?.length ?? 0;
+    if (
+      thoughtsScrollRef.current &&
+      isThinking &&
+      !isCollapsed &&
+      currentLength > prevThoughtsLengthRef.current
+    ) {
+      thoughtsScrollRef.current.scrollTo({
+        top: thoughtsScrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    prevThoughtsLengthRef.current = currentLength;
+  }, [thoughts, isThinking, isCollapsed]);
 
   return (
     <div
@@ -177,7 +196,10 @@ export function AIMarkdown({ content, className = "" }: AIMarkdownProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 pt-1 text-tiny leading-relaxed text-foreground/60 italic font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar">
+              <div
+                ref={thoughtsScrollRef}
+                className="px-4 pb-4 pt-1 text-tiny leading-relaxed text-foreground/50 font-normal border-t border-primary/5 bg-primary/[0.01] max-h-[260px] overflow-y-auto custom-scrollbar"
+              >
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{thoughts}</ReactMarkdown>
                 {isThinking && (
                   <motion.span
