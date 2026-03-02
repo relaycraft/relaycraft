@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { DiffEditor, Editor } from "../components/common/Editor";
 import { Markdown } from "../components/common/Markdown";
 import i18n from "../i18n";
+import { useAIStore } from "../stores/aiStore";
 import { useNotificationStore } from "../stores/notificationStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
 import { usePluginSettingsStore } from "../stores/pluginSettingsStore";
@@ -40,19 +41,39 @@ export const createPluginApi = (
     });
   };
 
+  const i18nApi = {
+    t: (key: string, options: any) => {
+      // Auto-namespace the key if it doesn't contain a colon
+      return i18n.t(key, { ns: ns, ...options }) as string;
+    },
+    language: i18n.language,
+    onLanguageChange: (callback: (lng: string) => void) => {
+      const handler = (lng: string) => callback(lng);
+      i18n.on("languageChanged", handler);
+      // Return unsubscribe function
+      return () => i18n.off("languageChanged", handler);
+    },
+    registerLocale: (lang: string, resources: Record<string, string>) => {
+      // Legacy manual registration
+      i18n.addResourceBundle(lang, ns, resources, true, true); // Use plugin namespace
+      const label = resources._label || lang.toUpperCase();
+      useUIStore.getState().registerAvailableLanguage(lang, label, label, pluginId);
+    },
+  };
+
+  const themeApi = {
+    register: (theme: any) => {
+      useThemeStore.getState().registerTheme(theme, pluginId);
+    },
+    set: (themeId: string) => {
+      useThemeStore.getState().setTheme(themeId);
+    },
+  };
+
   return {
+    i18n: i18nApi,
+    theme: themeApi,
     ui: {
-      t: (key, options) => {
-        // Auto-namespace the key if it doesn't contain a colon
-        return i18n.t(key, { ns: ns, ...options }) as string;
-      },
-      language: i18n.language,
-      onLanguageChange: (callback) => {
-        const handler = (lng: string) => callback(lng);
-        i18n.on("languageChanged", handler);
-        // Return unsubscribe function
-        return () => i18n.off("languageChanged", handler);
-      },
       registerPage: (page) => {
         // Auto-inject the i18n namespace if nameKey is provided
         const pageWithNamespace = page.nameKey
@@ -62,18 +83,6 @@ export const createPluginApi = (
       },
       registerSlot: (slotId, options) => {
         usePluginSlotStore.getState().registerComponent(slotId, options.component, pluginId);
-      },
-      registerTheme: (theme) => {
-        useThemeStore.getState().registerTheme(theme, pluginId);
-      },
-      setTheme: (themeId) => {
-        useThemeStore.getState().setTheme(themeId);
-      },
-      registerLocale: (lang, resources) => {
-        // Legacy manual registration
-        i18n.addResourceBundle(lang, ns, resources, true, true); // Use plugin namespace
-        const label = resources._label || lang.toUpperCase();
-        useUIStore.getState().registerAvailableLanguage(lang, label, label, pluginId);
       },
       toast: (message, type = "info") => {
         const { dnd } = useNotificationStore.getState();
@@ -128,15 +137,14 @@ export const createPluginApi = (
       chat: async (messages) => {
         return scopedInvoke<string>("ai_chat_completion", messages);
       },
+      isEnabled: () => {
+        return useAIStore.getState().settings.enabled;
+      },
     },
     stats: {
       getProcessStats: async () => {
         return scopedInvoke<any>("get_process_stats");
       },
-    },
-    // Legacy support - Now routed through the security bridge whitelisting
-    invoke: async <T>(command: string, args?: any): Promise<T> => {
-      return scopedInvoke<T>(command, args);
     },
     settings: {
       get: (key?: string) => {

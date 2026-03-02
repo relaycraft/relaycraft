@@ -87,16 +87,22 @@ export interface SlotOptions {
 }
 
 export interface PluginAPI {
-  ui: {
-    registerPage: (page: Omit<PluginPage, "pluginId">) => void;
-    registerSlot: (slotId: string, options: SlotOptions) => void;
-    registerTheme: (theme: Omit<Theme, "pluginId">) => void;
-    setTheme: (themeId: string) => void;
-    registerLocale: (lang: string, resources: Record<string, string>) => void;
-    toast: (message: string, type?: "info" | "success" | "error") => void;
+  // New i18n namespace
+  i18n: {
     t: (key: string, options?: any) => string;
     language: string;
     onLanguageChange: (callback: (lng: string) => void) => () => void;
+    registerLocale: (lang: string, resources: Record<string, string>) => void;
+  };
+  // New theme namespace
+  theme: {
+    register: (theme: Omit<Theme, "pluginId">) => void;
+    set: (themeId: string) => void;
+  };
+  ui: {
+    registerPage: (page: Omit<PluginPage, "pluginId">) => void;
+    registerSlot: (slotId: string, options: SlotOptions) => void;
+    toast: (message: string, type?: "info" | "success" | "error") => void;
     components: {
       Editor: React.ComponentType<any>;
       DiffEditor: React.ComponentType<any>;
@@ -105,6 +111,7 @@ export interface PluginAPI {
   };
   ai: {
     chat: (messages: AIMessage[]) => Promise<string>;
+    isEnabled: () => boolean;
   };
   stats: {
     getProcessStats: () => Promise<{
@@ -113,8 +120,6 @@ export interface PluginAPI {
       up_time: number;
     }>;
   };
-  // Legacy support
-  invoke: <T>(command: string, args?: any) => Promise<T>;
   settings: {
     get: (key?: string) => any;
   };

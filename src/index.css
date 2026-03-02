@@ -233,18 +233,22 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* Premium Typography System */
 * {
   /* Enable advanced font features for better rendering */
   font-feature-settings:
     "liga" 1,
     "calt" 1;
-}
-
-body {
-  font-family: var(--font-sans);
-  font-weight: 400;
-  line-height: 1.5;
+  outline-color: var(--color-primary);
+  border-color: var(--color-border);
 }
 
 /* Specific optimization for macOS + Chinese: Increase base font size via rem-base adjustment */
@@ -263,6 +267,14 @@ h6 {
   letter-spacing: -0.02em;
   line-height: 1.2;
   font-weight: 600;
+}
+
+/* Refined typography weight for specific elements */
+h1,
+h2,
+h3,
+.font-bold {
+  letter-spacing: -0.01em;
 }
 
 /* CJK Font Weight Optimization: prevent too bold appearance */
@@ -394,29 +406,7 @@ html.lang-zh .font-bold {
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
 }
 
-* {
-  outline-color: var(--color-primary);
-}
 
-/* Refined typography weight for specific elements */
-h1,
-h2,
-h3,
-.font-bold {
-  letter-spacing: -0.01em;
-}
-
-* {
-  border-color: var(--color-border);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
 
 body {
   background-color: var(--color-background);
@@ -424,6 +414,7 @@ body {
   font-size: var(--text-ui);
   line-height: 1.6;
   font-family: var(--font-sans);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
