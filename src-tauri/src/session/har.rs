@@ -8,10 +8,8 @@ use crate::session::har_model::{
     HarContent, HarCreator, HarEntry, HarHeader, HarLog, HarLogContent, HarRequest, HarResponse,
     HarTimings,
 };
-use crate::session::model::{Flow, FlowRequest, FlowResponse, RcExtension};
+use crate::session::model::{Flow, FlowRequest, FlowResponse};
 use std::fs::File;
-use std::io::BufReader;
-use url::Url;
 
 // ==================== Flow to HAR ====================
 
@@ -88,105 +86,9 @@ fn har_timings_from_flow(timings: &crate::session::model::HarTimings) -> HarTimi
     }
 }
 
-// ==================== HAR to Flow ====================
-
-/// Convert HAR Entry to Flow
-pub fn har_entry_to_flow(entry: &HarEntry) -> Flow {
-    let parsed_url = Url::parse(&entry.request.url).ok();
-
-    Flow {
-        id: uuid::Uuid::new_v4().to_string(),
-        started_date_time: entry.startedDateTime.clone(),
-        time: entry.time,
-        request: FlowRequest {
-            method: entry.request.method.clone(),
-            url: entry.request.url.clone(),
-            http_version: entry.request.httpVersion.clone(),
-            headers: entry.request.headers.iter().map(|h| crate::session::model::HarHeader {
-                name: h.name.clone(),
-                value: h.value.clone(),
-                comment: None,
-            }).collect(),
-            cookies: entry.request.cookies.iter().map(|c| crate::session::model::HarCookie {
-                name: c.name.clone(),
-                value: c.value.clone(),
-                ..Default::default()
-            }).collect(),
-            query_string: entry.request.queryString.iter().map(|q| crate::session::model::HarQueryString {
-                name: q.name.clone(),
-                value: q.value.clone(),
-                comment: None,
-            }).collect(),
-            post_data: entry.request.postData.as_ref().map(|pd| crate::session::model::HarPostData {
-                mime_type: pd.mimeType.clone(),
-                text: Some(pd.text.clone()),
-                comment: None,
-                ..Default::default()
-            }),
-            body_size: entry.request.bodySize as i64,
-            headers_size: entry.request.headersSize as i64,
-            parsed_url: parsed_url.as_ref().map(|u| crate::session::model::RcParsedUrl {
-                scheme: u.scheme().to_string(),
-                host: u.host_str().unwrap_or("").to_string(),
-                port: u.port(),
-                path: u.path().to_string(),
-                query: u.query().unwrap_or("").to_string(),
-                fragment: u.fragment().map(|s| s.to_string()),
-            }),
-        },
-        response: FlowResponse {
-            status: entry.response.status,
-            status_text: entry.response.statusText.clone(),
-            http_version: entry.response.httpVersion.clone(),
-            headers: entry.response.headers.iter().map(|h| crate::session::model::HarHeader {
-                name: h.name.clone(),
-                value: h.value.clone(),
-                comment: None,
-            }).collect(),
-            cookies: entry.response.cookies.iter().map(|c| crate::session::model::HarCookie {
-                name: c.name.clone(),
-                value: c.value.clone(),
-                ..Default::default()
-            }).collect(),
-            content: crate::session::model::HarContent {
-                size: entry.response.content.size as i64,
-                mime_type: entry.response.content.mimeType.clone(),
-                text: entry.response.content.text.clone(),
-                encoding: entry.response.content.encoding.clone(),
-                compression: None,
-                comment: None,
-            },
-            headers_size: entry.response.headersSize as i64,
-            body_size: entry.response.bodySize as i64,
-            redirect_url: entry.response.redirectURL.clone(),
-        },
-        timings: crate::session::model::HarTimings {
-            send: Some(entry.timings.send),
-            wait: Some(entry.timings.wait),
-            receive: Some(entry.timings.receive),
-            blocked: None,
-            dns: None,
-            connect: None,
-            ssl: None,
-            comment: None,
-        },
-        cache: entry.cache.clone(),
-        rc: RcExtension {
-            client_ip: None,
-            server_ip: None,
-            error: None,
-            is_websocket: false,
-            websocket_frame_count: 0,
-            hits: vec![],
-            intercept: crate::session::model::RcIntercept {
-                intercepted: false,
-                phase: None,
-                modified_at: None,
-            },
-            body_truncated: false,
-        },
-    }
-}
+// Note: HAR to Flow conversion (har_entry_to_flow) has been removed.
+// HAR imports are now handled by the Python engine via /_relay/import_har_file
+// which uses ijson streaming to avoid memory issues with large files.
 
 // ==================== Tauri Commands ====================
 
@@ -213,17 +115,8 @@ pub async fn export_har(path: String, flows: Vec<Flow>) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-pub async fn import_har(path: String) -> Result<Vec<Flow>, String> {
-    let file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
-    let reader = BufReader::new(file);
-    let har_log: HarLog =
-        serde_json::from_reader(reader).map_err(|e| format!("Failed to deserialize HAR: {}", e))?;
-
-    let flows: Vec<Flow> = har_log.log.entries.iter().map(har_entry_to_flow).collect();
-    let _ = logging::write_domain_log("audit", &format!("Imported HAR from {}", path));
-    Ok(flows)
-}
+// Note: import_har has been removed - HAR imports are now handled by the Python engine
+// via /_relay/import_har_file which uses ijson streaming to avoid memory issues with large files.
 
 // ==================== Tests ====================
 
@@ -286,9 +179,7 @@ mod tests {
         assert_eq!(entry.response.status, 200);
         assert_eq!(entry.response.content.text, Some("hello".to_string()));
 
-        let back_to_flow = har_entry_to_flow(&entry);
-        assert_eq!(back_to_flow.request.method, "GET");
-        assert_eq!(back_to_flow.request.url, "https://example.com/api");
+        // Note: har_entry_to_flow has been removed - HAR imports are now handled by Python engine
     }
 
     #[test]

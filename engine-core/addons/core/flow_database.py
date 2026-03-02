@@ -613,8 +613,11 @@ class FlowDatabase:
         Avoids the expensive json.loads(json.dumps(flow_data)) round-trip by only
         copying the body fields that need to be replaced.
         """
+
         # Build a shallow-ish copy: deep-copy only the body fields we need to mutate
         import copy
+        from decimal import Decimal
+
         flow_copy = dict(flow_data)  # shallow copy of top level
 
         if req_ref != 'inline':
@@ -635,7 +638,13 @@ class FlowDatabase:
                 res_copy['content'] = ct_copy
                 flow_copy['response'] = res_copy
 
-        return json.dumps(flow_copy, ensure_ascii=False)
+        # Custom JSON encoder that handles Decimal types (from HAR files)
+        def decimal_default(obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+        return json.dumps(flow_copy, ensure_ascii=False, default=decimal_default)
 
     def store_flow(self, flow_data: Dict, session_id: str = None,
                    update_session_ts: bool = True) -> bool:
@@ -854,9 +863,18 @@ class FlowDatabase:
 
     def _extract_index(self, flow_data: Dict, session_id: str) -> Dict:
         """Extract index fields from flow data"""
+        from decimal import Decimal
         req = flow_data.get('request') or {}
         res = flow_data.get('response') or {}
         rc = flow_data.get('_rc') or {}
+
+        # Helper to convert Decimal to float for SQLite compatibility
+        def to_float(v, default=0.0):
+            if v is None:
+                return default
+            if isinstance(v, Decimal):
+                return float(v)
+            return v
 
         return {
             'id': flow_data.get('id'),
@@ -865,12 +883,12 @@ class FlowDatabase:
             'url': req.get('url', ''),
             'host': flow_data.get('host', ''),
             'path': flow_data.get('path', ''),
-            'status': res.get('status', 0),
+            'status': to_float(res.get('status'), 0),
             'http_version': flow_data.get('httpVersion', '') or req.get('httpVersion', ''),
             'content_type': flow_data.get('contentType', ''),
             'started_datetime': flow_data.get('startedDateTime', ''),
-            'time': flow_data.get('time', 0),
-            'size': flow_data.get('size') or (flow_data.get('response') or {}).get('content', {}).get('size', 0),
+            'time': to_float(flow_data.get('time'), 0),
+            'size': to_float(flow_data.get('size') or (flow_data.get('response') or {}).get('content', {}).get('size', 0), 0),
             'client_ip': rc.get('clientIp', '') or flow_data.get('clientIp', ''),
             'app_name': rc.get('appName', '') or flow_data.get('appName', ''),
             'app_display_name': rc.get('appDisplayName', '') or flow_data.get('appDisplayName', ''),
@@ -878,10 +896,10 @@ class FlowDatabase:
             'has_request_body': 1 if (req.get('postData') or {}).get('text') else 0,
             'has_response_body': 1 if (res.get('content') or {}).get('text') else 0,
             'is_websocket': 1 if rc.get('isWebsocket') else 0,
-            'websocket_frame_count': rc.get('websocketFrameCount', 0),
+            'websocket_frame_count': to_float(rc.get('websocketFrameCount'), 0),
             'is_intercepted': 1 if (rc.get('intercept') or {}).get('intercepted') else 0,
             'hits': json.dumps(rc.get('hits', [])),
-            'msg_ts': flow_data.get('msg_ts', time.time()),
+            'msg_ts': to_float(flow_data.get('msg_ts'), time.time()),
         }
 
     def _process_body(self, flow_id: str, session_id: str, body: str, body_type: str) -> Tuple[bytes, str]:

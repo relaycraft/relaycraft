@@ -13,6 +13,7 @@ export interface DbSession {
   id: string;
   name: string;
   description?: string;
+  metadata?: any;
   created_at: number;
   updated_at: number;
   flow_count: number;
@@ -334,25 +335,67 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
         if (response.ok) {
           const data = await response.json();
-          const { session_id, indices } = data;
+          const { session_id, status } = data;
 
-          Logger.info(
-            `Session imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
-          );
+          Logger.info(`Session imported started: session_id=${session_id}, status=${status}`);
 
           useTrafficStore.getState().clearLocal();
-          useTrafficStore.getState().addIndices(indices);
 
           if (session_id) {
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
+
+            // Start a temporary poller to refresh the list and load the data periodically
+            // while the background import is happening
+            let importPollCount = 0;
+            const importPollInterval = setInterval(async () => {
+              await get().fetchDbSessions();
+              const { dbSessions } = get();
+              const currentSess = dbSessions.find((s) => s.id === session_id);
+
+              let md: any = {};
+              try {
+                md =
+                  typeof currentSess?.metadata === "string"
+                    ? JSON.parse(currentSess.metadata)
+                    : currentSess?.metadata || {};
+              } catch (e) {}
+
+              if (!currentSess || md.status !== "importing" || importPollCount > 600) {
+                // Max 10 mins
+                clearInterval(importPollInterval);
+                // Trigger a final reload circuit to show the complete data
+                if (get().showSessionId === session_id) {
+                  await get().switchDbSession(session_id);
+                }
+
+                if (md.status === "ready") {
+                  const { notify } = await import("../lib/notify");
+                  const i18next = await import("i18next");
+                  notify.success(
+                    i18next.default.t("session.import_complete", {
+                      defaultValue: "Session import complete!",
+                    }),
+                  );
+                } else if (md.status === "error") {
+                  const { notify } = await import("../lib/notify");
+                  notify.error("Session import failed: " + md.error_message);
+                }
+              } else {
+                // While still importing, occasionally refresh the view if selected
+                if (importPollCount % 3 === 0 && get().showSessionId === session_id) {
+                  await get().switchDbSession(session_id);
+                }
+              }
+              importPollCount++;
+            }, 1000);
           }
 
           const { notify } = await import("../lib/notify");
           const i18next = await import("i18next");
           notify.success(
-            i18next.default.t("session.load_success", {
-              defaultValue: "Session loaded successfully",
+            i18next.default.t("session.import_started", {
+              defaultValue: "Session is importing in the background...",
             }),
           );
         } else {
@@ -462,26 +505,63 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
         if (response.ok) {
           const data = await response.json();
-          const { session_id, indices } = data;
+          const { session_id, status } = data;
 
-          Logger.info(
-            `HAR imported: session_id=${session_id}, indices count=${indices?.length || 0}`,
-          );
+          Logger.info(`HAR import started: session_id=${session_id}, status=${status}`);
 
           useTrafficStore.getState().clearLocal();
-          useTrafficStore.getState().addIndices(indices);
 
           if (session_id) {
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
+
+            let importPollCount = 0;
+            const importPollInterval = setInterval(async () => {
+              await get().fetchDbSessions();
+              const { dbSessions } = get();
+              const currentSess = dbSessions.find((s) => s.id === session_id);
+
+              let md: any = {};
+              try {
+                md =
+                  typeof currentSess?.metadata === "string"
+                    ? JSON.parse(currentSess.metadata)
+                    : currentSess?.metadata || {};
+              } catch (e) {}
+
+              if (!currentSess || md.status !== "importing" || importPollCount > 600) {
+                clearInterval(importPollInterval);
+                if (get().showSessionId === session_id) {
+                  await get().switchDbSession(session_id);
+                }
+
+                if (md.status === "ready") {
+                  const { notify } = await import("../lib/notify");
+                  const i18next = await import("i18next");
+                  notify.success(
+                    i18next.default.t("session.import_har_success", {
+                      defaultValue: "HAR imported successfully",
+                    }),
+                  );
+                } else if (md.status === "error") {
+                  const { notify } = await import("../lib/notify");
+                  notify.error("HAR import failed: " + md.error_message);
+                }
+              } else {
+                if (importPollCount % 3 === 0 && get().showSessionId === session_id) {
+                  await get().switchDbSession(session_id);
+                }
+              }
+              importPollCount++;
+            }, 1000);
           }
 
           const { notify } = await import("../lib/notify");
           const i18next = await import("i18next");
           notify.success(
-            i18next.default.t("session.import_har_success", {
-              defaultValue: "HAR imported successfully",
+            i18next.default.t("session.import_har_started", {
+              defaultValue: "HAR file is importing in the background...",
             }),
           );
         } else {

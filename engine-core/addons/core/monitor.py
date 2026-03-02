@@ -1329,46 +1329,106 @@ class TrafficMonitor:
                         )
                         return
 
-                    with open(file_path, 'r', encoding='utf-8') as fh:
-                        data = json.load(fh)
+                    import ijson
+                    import threading
+                    import time
 
-                    if isinstance(data, list):
-                        flows = data
-                        session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
-                        session_description = ""
-                        session_metadata = {"type": "session_import"}
-                        session_created_at = None
-                    else:
-                        flows = data.get("flows", [])
-                        session_name = data.get("name") or f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
-                        session_description = data.get("description") or ""
-                        session_metadata = data.get("metadata") or {}
-                        session_metadata["type"] = "session_import"
-                        metadata_created = (session_metadata or {}).get("createdAt")
-                        session_created_at = metadata_created / 1000.0 if metadata_created else None
+                    session_name = f"Imported Session ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                    session_description = ""
+                    session_metadata = {"type": "session_import", "status": "importing"}
+                    session_created_at = None
 
-                    for idx, f in enumerate(flows):
-                        if not f.get("msg_ts"):
-                            if f.get("startedDateTime"):
-                                try:
-                                    from datetime import datetime as dt
-                                    dt_str = f["startedDateTime"].replace("Z", "+00:00")
-                                    f["msg_ts"] = dt.fromisoformat(dt_str).timestamp()
-                                except Exception:
-                                    f["msg_ts"] = time.time() + idx * 0.001
-                            else:
-                                f["msg_ts"] = time.time() + idx * 0.001
+                    try:
+                        with open(file_path, 'rb') as fh:
+                            parser = ijson.parse(fh)
+                            for prefix, event, value in parser:
+                                if prefix == 'name' and event == 'string':
+                                    session_name = value
+                                elif prefix == 'description' and event == 'string':
+                                    session_description = value
+                                elif prefix == 'flows' or event == 'start_array':
+                                    break
+                    except Exception as e:
+                        self.logger.warning(f"Fast metadata parse failed, using defaults: {e}")
 
                     session_id = self.db.create_session(
                         name=session_name, description=session_description,
                         metadata=session_metadata, is_active=False,
                         created_at=session_created_at
                     )
-                    self.db.store_flows_batch(flows, session_id=session_id)
-                    self.db.update_session_flow_count(session_id)
 
-                    indices = self._build_session_indices(flows)
-                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
+                    def stream_import_worker():
+                        try:
+                            with open(file_path, 'rb') as fh:
+                                fh.seek(0)
+                                first_char = b''
+                                while first_char in (b'', b' ', b'\t', b'\r', b'\n'):
+                                    first_char = fh.read(1)
+                                fh.seek(0)
+
+                                item_path = "item" if first_char == b'[' else "flows.item"
+                                flows_stream = ijson.items(fh, item_path)
+
+                                batch = []
+                                batch_size = 500
+                                count = 0
+
+                                for f in flows_stream:
+                                    if not f.get("msg_ts"):
+                                        if f.get("startedDateTime"):
+                                            try:
+                                                from datetime import datetime as dt
+                                                dt_str = f["startedDateTime"].replace("Z", "+00:00")
+                                                f["msg_ts"] = dt.fromisoformat(dt_str).timestamp()
+                                            except Exception:
+                                                f["msg_ts"] = time.time() + count * 0.001
+                                        else:
+                                            f["msg_ts"] = time.time() + count * 0.001
+
+                                    batch.append(f)
+                                    count += 1
+
+                                    if len(batch) >= batch_size:
+                                        self.db.store_flows_batch(batch, session_id=session_id)
+                                        batch = []
+                                        time.sleep(0.01)
+
+                                if batch:
+                                    self.db.store_flows_batch(batch, session_id=session_id)
+                                
+                                self.db.update_session_flow_count(session_id)
+                                
+                                with self.db._lock:
+                                    conn = self.db._get_conn()
+                                    row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
+                                    if row and row[0]:
+                                        import json
+                                        md = json.loads(row[0])
+                                        md["status"] = "ready"
+                                        conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
+                                        conn.commit()
+
+                        except Exception as e:
+                            import traceback
+                            self.logger.error(f"Background stream import failed: {traceback.format_exc()}")
+                            try:
+                                with self.db._lock:
+                                    conn = self.db._get_conn()
+                                    row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
+                                    if row and row[0]:
+                                        import json
+                                        md = json.loads(row[0])
+                                        md["status"] = "error"
+                                        md["error_message"] = str(e)
+                                        conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
+                                        conn.commit()
+                            except Exception:
+                                pass
+
+                    t = threading.Thread(target=stream_import_worker, name=f"ImportWorker-{session_id}", daemon=True)
+                    t.start()
+
+                    json_str = json.dumps({"session_id": session_id, "status": "importing"}, ensure_ascii=False)
                     flow.response = Response.make(
                         200, json_str.encode("utf-8"),
                         {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
@@ -1455,22 +1515,72 @@ class TrafficMonitor:
                         )
                         return
 
-                    with open(file_path, 'r', encoding='utf-8') as fh:
-                        har_data = json.load(fh)
-                    entries = har_data.get("log", {}).get("entries", []) or []
-
                     session_id = self.db.create_session(
                         name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                         description="",
-                        metadata={"type": "har_import"},
+                        metadata={"type": "har_import", "status": "importing"},
                         is_active=False
                     )
 
-                    flows, indices = self._normalize_har_entries(entries)
-                    self.db.store_flows_batch(flows, session_id=session_id)
-                    self.db.update_session_flow_count(session_id)
+                    def stream_har_worker():
+                        try:
+                            import ijson
+                            import time
+                            import threading
+                            
+                            with open(file_path, 'rb') as fh:
+                                entries_stream = ijson.items(fh, "log.entries.item")
 
-                    json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
+                                batch = []
+                                batch_size = 500
+
+                                for entry in entries_stream:
+                                    batch.append(entry)
+
+                                    if len(batch) >= batch_size:
+                                        flows, _ = self._normalize_har_entries(batch)
+                                        self.db.store_flows_batch(flows, session_id=session_id)
+                                        batch = []
+                                        time.sleep(0.01)
+
+                                if batch:
+                                    flows, _ = self._normalize_har_entries(batch)
+                                    self.db.store_flows_batch(flows, session_id=session_id)
+                                
+                                self.db.update_session_flow_count(session_id)
+                                
+                                with self.db._lock:
+                                    conn = self.db._get_conn()
+                                    row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
+                                    if row and row[0]:
+                                        import json
+                                        md = json.loads(row[0])
+                                        md["status"] = "ready"
+                                        conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
+                                        conn.commit()
+
+                        except Exception as e:
+                            import traceback
+                            self.logger.error(f"Background HAR stream import failed: {traceback.format_exc()}")
+                            try:
+                                with self.db._lock:
+                                    conn = self.db._get_conn()
+                                    row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
+                                    if row and row[0]:
+                                        import json
+                                        md = json.loads(row[0])
+                                        md["status"] = "error"
+                                        md["error_message"] = str(e)
+                                        conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
+                                        conn.commit()
+                            except Exception:
+                                pass
+
+                    import threading
+                    t = threading.Thread(target=stream_har_worker, name=f"ImportHARWorker-{session_id}", daemon=True)
+                    t.start()
+
+                    json_str = json.dumps({"session_id": session_id, "status": "importing"}, ensure_ascii=False)
                     flow.response = Response.make(
                         200, json_str.encode("utf-8"),
                         {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}

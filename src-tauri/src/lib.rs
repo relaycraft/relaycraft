@@ -250,7 +250,6 @@ pub fn run() {
             traffic::check_proxy_connectivity,
             session::save_session,
             session::har::export_har,
-            session::har::import_har,
             rules::load_all_rules,
             rules::save_rule,
             rules::delete_rule,

@@ -77,6 +77,7 @@ def build(sync_only=False):
         '--hidden-import=yaml',
         '--hidden-import=sqlite3',
         '--hidden-import=pysqlite3',
+        '--hidden-import=ijson',
         '--collect-all=mitmproxy',
         '--collect-all=jsonpath_ng',
         '--clean',
