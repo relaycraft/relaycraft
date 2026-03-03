@@ -14,6 +14,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getRuleTypeTheme } from "../../lib/ruleTypeTheme";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Rule, RuleType } from "../../types/rules";
@@ -53,22 +54,8 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
   };
 
   const getRuleColorCheck = (type: RuleType) => {
-    switch (type) {
-      case "rewrite_body":
-        return "text-purple-500 bg-purple-500/10 border-purple-200 dark:border-purple-900";
-      case "map_local":
-        return "text-blue-500 bg-blue-500/10 border-blue-200 dark:border-blue-900";
-      case "map_remote":
-        return "text-emerald-500 bg-emerald-500/10 border-emerald-200 dark:border-emerald-900";
-      case "rewrite_header":
-        return "text-orange-500 bg-orange-500/10 border-orange-200 dark:border-orange-900";
-      case "throttle":
-        return "text-cyan-500 bg-cyan-500/10 border-cyan-200 dark:border-cyan-900";
-      case "block_request":
-        return "text-rose-500 bg-rose-500/10 border-rose-200 dark:border-rose-900";
-      default:
-        return "text-gray-500 bg-gray-500/10 border-gray-200 dark:border-gray-800";
-    }
+    const theme = getRuleTypeTheme(type);
+    return `${theme.text} ${theme.bg} ${theme.border}`;
   };
 
   const belowLabel = (rule: Rule) => {
@@ -150,7 +137,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               key={rule.id}
-              className={`group relative flex items-center px-3 py-1.5 rounded-2xl border transition-all duration-300 ${
+              className={`group/rule-item relative flex items-center px-3 py-1.5 rounded-2xl border transition-all duration-300 ${
                 isSelected
                   ? "bg-primary/12 border-primary/40 shadow-md shadow-primary/5 ring-1 ring-primary/20 z-10"
                   : `bg-card hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 ${rule.execution.enabled ? "border-border/60" : "border-border/30 bg-muted/30"}`
@@ -250,7 +237,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
               </div>
 
               {/* Actions */}
-              <div className="absolute right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-card/90 backdrop-blur-sm pl-2 py-1 rounded-xl shadow-[-8px_0_12px_rgba(0,0,0,0.1)] z-20">
+              <div className="absolute right-2 flex items-center gap-0.5 opacity-0 pointer-events-none group-hover/rule-item:opacity-100 group-hover/rule-item:pointer-events-auto group-focus-within/rule-item:opacity-100 group-focus-within/rule-item:pointer-events-auto transition-all duration-200 bg-card/90 backdrop-blur-sm pl-2 py-1 rounded-xl shadow-[-8px_0_12px_rgba(0,0,0,0.1)] z-20">
                 <Tooltip content={t("common.move_up")}>
                   <button
                     onClick={(e) => {

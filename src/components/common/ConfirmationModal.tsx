@@ -117,7 +117,7 @@ export function ConfirmationModal({
         <div className="flex items-start gap-4">
           <div
             className={cn(
-              "p-3 rounded-2xl shrink-0 ring-1 ring-inset shadow-sm",
+              "p-3 rounded-xl shrink-0 ring-1 ring-inset shadow-sm",
               variant === "info" && "bg-blue-500/10 text-blue-500 ring-blue-500/10",
               variant === "success" && "bg-green-500/10 text-green-500 ring-green-500/10",
               variant === "warning" && "bg-orange-500/10 text-orange-500 ring-orange-500/10",

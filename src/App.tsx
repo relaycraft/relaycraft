@@ -143,7 +143,7 @@ const TrafficActionButtons = () => {
             variant="ghost"
             size="icon-xs"
             onClick={() => useTrafficStore.getState().clearFlows()}
-            className="h-7 w-7 text-muted-foreground hover:text-error hover:bg-error/10 rounded-md border border-border/20 shadow-sm"
+            className="h-7 w-7 text-muted-foreground/80 hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 rounded-md border border-border/20 shadow-sm transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>

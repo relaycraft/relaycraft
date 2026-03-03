@@ -46,7 +46,7 @@ export function BodyFormEditor({ data, onChange }: BodyFormEditorProps) {
 
       <div className="space-y-1.5">
         {data.map((item, index) => (
-          <div key={index} className="flex items-center gap-2 group">
+          <div key={index} className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => updateItem(index, "enabled", !item.enabled)}
@@ -71,7 +71,7 @@ export function BodyFormEditor({ data, onChange }: BodyFormEditorProps) {
             <button
               type="button"
               onClick={() => removeItem(index)}
-              className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 text-muted-foreground/45 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

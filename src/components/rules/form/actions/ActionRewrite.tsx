@@ -230,7 +230,7 @@ export function ActionRewrite({
                       value={mod.path}
                       onChange={(e) => updateJsonMod(i, "path", e.target.value)}
                       placeholder="$.store.book[0].title"
-                      className="flex-1 h-7 text-ui font-mono px-2"
+                      className="flex-1 h-7 text-xs font-mono px-2"
                     />
                     <Select
                       value={mod.operation || "set"}
@@ -258,7 +258,7 @@ export function ActionRewrite({
                           "rules.editor.action.rewrite.json_value_placeholder",
                           "Value (JSON)",
                         )}
-                        className="flex-1 h-7 text-ui font-mono px-2"
+                        className="flex-1 h-7 text-xs font-mono px-2"
                       />
                     )}
                   </div>

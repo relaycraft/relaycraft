@@ -224,7 +224,7 @@ export function ScriptManager() {
           {draftScript && (
             <div
               onClick={() => selectScript(null)}
-              className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border bg-primary/5 border-primary/20 text-primary font-medium ${!selectedScript ? "ring-1 ring-primary/30" : ""}`}
+              className={`group/script-draft-row flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border bg-primary/5 border-primary/20 text-primary font-medium ${!selectedScript ? "ring-1 ring-primary/30" : ""}`}
             >
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
               <Plus className="w-4 h-4 flex-shrink-0" />
@@ -232,11 +232,12 @@ export function ScriptManager() {
                 <span className="truncate block">{draftScript.name} (草稿)</span>
               </div>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setDraftScript(null);
                 }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 hover:text-destructive text-muted-foreground rounded"
+                className="p-1 hover:bg-destructive/10 hover:text-destructive text-muted-foreground/45 rounded transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -264,7 +265,7 @@ export function ScriptManager() {
               <div
                 key={script.name}
                 onClick={() => selectScript(script.name)}
-                className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border relative ${
+                className={`group/script-row flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border relative ${
                   selectedScript === script.name
                     ? "bg-primary/10 border-primary/20 text-primary font-medium"
                     : "border-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground"
@@ -340,7 +341,7 @@ export function ScriptManager() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all shrink-0 absolute right-1.5 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm border border-border/40 p-1 px-1.5 rounded-lg shadow-sm">
+                <div className="flex items-center gap-1.5 opacity-0 pointer-events-none group-hover/script-row:opacity-100 group-hover/script-row:pointer-events-auto group-focus-within/script-row:opacity-100 group-focus-within/script-row:pointer-events-auto transition-all shrink-0 absolute right-1.5 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm border border-border/40 p-1 px-1.5 rounded-lg shadow-sm">
                   <div className="flex items-center bg-muted/20 rounded-md border border-border/20 overflow-hidden">
                     <Tooltip content={t("common.move_up")}>
                       <button

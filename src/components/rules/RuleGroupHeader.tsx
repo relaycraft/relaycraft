@@ -87,7 +87,7 @@ export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-1 opacity-0 group-hover/group-header:opacity-100 transition-all duration-200">
+        <div className="flex items-center gap-1 opacity-0 pointer-events-none group-hover/group-header:opacity-100 group-hover/group-header:pointer-events-auto group-focus-within/group-header:opacity-100 group-focus-within/group-header:pointer-events-auto transition-all duration-200">
           <Tooltip content={t("rules.group.move_up")}>
             <button
               onClick={() => moveGroup(group.id, "up")}

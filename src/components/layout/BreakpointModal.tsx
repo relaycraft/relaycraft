@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import {
-  AlertOctagon,
   ArrowRightLeft,
   CheckCircle2,
+  CirclePause,
   Hash,
   Layers,
   Play,
@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { formatProtocol, getProtocolColor } from "../../lib/utils";
 import type { Flow } from "../../types";
 import type { HarHeader } from "../../types/flow";
 import { Button } from "../common/Button";
@@ -294,8 +295,8 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
               {/* Subheader for current flow */}
               <div className="px-4 py-2 border-b border-border/40 flex items-center justify-between bg-muted/5">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="p-1 bg-amber-500/10 rounded text-amber-600 shrink-0">
-                    <AlertOctagon className="w-3.5 h-3.5" />
+                  <div className="p-1 bg-destructive/10 rounded text-destructive shrink-0">
+                    <CirclePause className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
@@ -311,9 +312,13 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
                       <span className="px-1.5 py-0.5 rounded text-tiny font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
                         {flow.request.method}
                       </span>
-                      <span className="text-tiny font-mono text-muted-foreground/50 shrink-0">
-                        {flow.request.httpVersion}
-                      </span>
+                      {flow.request.httpVersion && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider uppercase shrink-0 ${getProtocolColor(flow.request.httpVersion)}`}
+                        >
+                          {formatProtocol(flow.request.httpVersion)}
+                        </span>
+                      )}
                       <span className="text-tiny font-medium text-foreground/60 truncate font-mono">
                         {flow.request.url}
                       </span>

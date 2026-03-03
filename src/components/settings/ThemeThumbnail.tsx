@@ -30,7 +30,7 @@ export const ThemeThumbnail: React.FC<ThemeThumbnailProps> = ({
           onClick();
         }
       }}
-      className={`group relative cursor-pointer rounded-xl border-2 transition-all p-2 bg-black/20 hover:bg-black/40 ${
+      className={`group relative cursor-pointer rounded-xl border-2 transition-all p-2 bg-muted/20 hover:bg-muted/30 ${
         isActive ? "border-primary ring-2 ring-primary/20" : "border-transparent"
       }`}
     >

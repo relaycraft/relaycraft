@@ -189,8 +189,8 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                             {t("cert.manual.guides.terminal_hint")}
                           </div>
-                          <div className="bg-zinc-950 rounded-lg p-3 group relative border border-white/5 ring-1 ring-white/5 shadow-sm">
-                            <div className="font-mono text-xs text-zinc-300 break-all pr-8 leading-relaxed">
+                          <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 ring-1 ring-border/20 shadow-sm">
+                            <div className="font-mono text-xs text-foreground/85 break-all pr-8 leading-relaxed">
                               sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k
                               /Library/Keychains/System.keychain "
                               {certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"
@@ -198,7 +198,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                             <div className="absolute right-2 top-2">
                               <CopyButton
                                 text={`sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k /Library/Keychains/System.keychain "${certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"`}
-                                className="p-1.5 bg-white/5 hover:bg-white/10 text-white rounded transition-all border border-white/10 active:scale-95"
+                                className="p-1.5 bg-background/70 hover:bg-background text-foreground rounded transition-all border border-border/40 active:scale-95"
                                 label={t("cert.manual.guides.terminal_copy")}
                               />
                             </div>
@@ -230,8 +230,8 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                               <div className="text-xs font-bold text-muted-foreground uppercase px-1">
                                 {distro.label}
                               </div>
-                              <div className="bg-zinc-950 rounded-lg p-3 group relative border border-white/5 shadow-sm">
-                                <div className="font-mono text-xs text-zinc-300 break-all pr-8 leading-relaxed">
+                              <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 shadow-sm">
+                                <div className="font-mono text-xs text-foreground/85 break-all pr-8 leading-relaxed">
                                   {distro.cmd.replace(
                                     "{{path}}",
                                     certPath || "~/relaycraft-ca-cert.pem",
@@ -243,7 +243,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                                       "{{path}}",
                                       certPath || "~/relaycraft-ca-cert.pem",
                                     )}
-                                    className="p-1.5 bg-white/5 hover:bg-white/10 text-white rounded transition-all border border-white/10 active:scale-95"
+                                    className="p-1.5 bg-background/70 hover:bg-background text-foreground rounded transition-all border border-border/40 active:scale-95"
                                     label={t("common.copy")}
                                   />
                                 </div>

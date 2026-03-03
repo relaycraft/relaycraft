@@ -219,10 +219,10 @@ export const MarketView: React.FC = () => {
                         )}
 
                         {/* Overlay Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/15 to-transparent dark:from-background/90 dark:via-background/30 opacity-60 group-hover:opacity-75 transition-opacity" />
 
                         {/* Hover Install Button */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/15 dark:bg-background/30 backdrop-blur-[2px]">
                           <Button
                             variant={
                               isInstalled && isThemeItem
@@ -232,7 +232,7 @@ export const MarketView: React.FC = () => {
                                 : "default"
                             }
                             size="sm"
-                            className={`h-9 px-6 font-bold shadow-xl ${isInstalled && isThemeItem && !isActiveTheme ? "bg-white/10 hover:bg-white/20 text-white border-white/20" : ""}`}
+                            className={`h-9 px-6 font-bold shadow-xl ${isInstalled && isThemeItem && !isActiveTheme ? "bg-background/80 hover:bg-background/95 dark:bg-background/70 dark:hover:bg-background/85 text-foreground border-border/50" : ""}`}
                             disabled={
                               (isInstalled && !isThemeItem) || isInstalling || isActiveTheme
                             }
@@ -280,18 +280,18 @@ export const MarketView: React.FC = () => {
                       </div>
 
                       {/* Minimal Info */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-foreground">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="font-bold text-sm text-white/90 leading-tight shadow-black drop-shadow-md">
+                            <h3 className="font-bold text-sm text-foreground/90 leading-tight">
                               {displayName}
                             </h3>
-                            <p className="text-xs text-white/60 font-medium mt-0.5">
+                            <p className="text-xs text-muted-foreground font-medium mt-0.5">
                               {item.author}
                             </p>
                           </div>
                           {item.downloadCount != null && (
-                            <div className="flex items-center text-xs text-white/60 bg-black/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                            <div className="flex items-center text-xs text-muted-foreground bg-background/65 dark:bg-background/55 border border-border/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
                               <Download className="w-3 h-3 mr-1 opacity-80" />
                               {item.downloadCount.toLocaleString()}
                             </div>

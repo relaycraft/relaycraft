@@ -1,5 +1,9 @@
 import { type ClassValue, clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
+import {
+  getRuleTypeBadgeClass as getRuleTypeBadgeClassFromTheme,
+  getRuleTypeDotClass as getRuleTypeDotClassFromTheme,
+} from "./ruleTypeTheme";
 
 // Create a custom tailwind-merge instance that recognizes our custom font-size classes
 const customTwMerge = extendTailwindMerge({
@@ -82,36 +86,14 @@ export function getDurationBadgeClass(ms: number | null): string {
  * Get background color class for rule dots/indicators
  */
 export function getRuleTypeDotClass(type: string, status?: string): string {
-  if (status === "file_not_found") return "bg-error";
-  switch (type) {
-    case "script":
-      return "bg-rule-script";
-    case "breakpoint":
-      return "bg-rule-breakpoint";
-    case "rewrite_body":
-      return "bg-rule-rewrite-body";
-    case "map_local":
-      return "bg-rule-map-local";
-    case "map_remote":
-      return "bg-rule-map-remote";
-    case "rewrite_header":
-      return "bg-rule-rewrite-header";
-    case "throttle":
-      return "bg-rule-throttle";
-    case "block_request":
-      return "bg-rule-block";
-    default:
-      return "bg-muted-foreground/40";
-  }
+  return getRuleTypeDotClassFromTheme(type, status);
 }
 
 /**
  * Get full badge class for rule type labels
  */
 export function getRuleTypeBadgeClass(type: string, status?: string): string {
-  const dotClass = getRuleTypeDotClass(type, status);
-  const colorName = dotClass.replace("bg-", "");
-  return `text-${colorName} bg-${colorName}/10 border border-${colorName}/20`;
+  return getRuleTypeBadgeClassFromTheme(type, status);
 }
 
 /**

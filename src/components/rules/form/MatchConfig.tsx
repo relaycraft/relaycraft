@@ -124,7 +124,7 @@ export function MatchConfig({
                 value={urlPattern}
                 onChange={(e) => onChangeUrlPattern(e.target.value)}
                 placeholder={t("rules.editor.match.url_placeholder")}
-                className="h-8 font-mono text-ui placeholder:font-sans placeholder:text-xs pr-10 bg-background/50"
+                className="h-8 font-mono text-xs placeholder:font-sans placeholder:text-xs pr-10 bg-background/50"
               />
               {urlMatchType === "regex" && (
                 <div className="absolute right-2 top-0 bottom-0 flex items-center justify-center z-30">
@@ -167,7 +167,7 @@ export function MatchConfig({
                 value={testUrl}
                 onChange={(e) => setTestUrl(e.target.value)}
                 placeholder={t("rules.editor.match.test.placeholder")}
-                className="h-8 bg-background/30 border-dashed border-input transition-all focus:border-solid text-ui placeholder:text-xs"
+                className="h-8 bg-background/30 border-dashed border-input transition-all focus:border-solid text-xs placeholder:text-xs"
               />
             </div>
           </div>
@@ -228,7 +228,7 @@ export function MatchConfig({
             {requiredHeaders.length > 0 && (
               <div className="space-y-2">
                 {requiredHeaders.map((header, index) => (
-                  <div key={index} className="flex gap-2 items-center group">
+                  <div key={index} className="flex gap-2 items-center">
                     <div className="flex-1 grid grid-cols-[1.5fr_1fr_2fr] gap-2">
                       <div>
                         <Input
@@ -240,7 +240,7 @@ export function MatchConfig({
                             onChangeHeaders(newHeaders);
                           }}
                           placeholder="Key"
-                          className="h-8 py-1 px-2 text-ui placeholder:text-xs font-mono w-full"
+                          className="h-8 py-1 px-2 text-xs placeholder:text-xs font-mono w-full"
                         />
                       </div>
                       <div>
@@ -251,7 +251,7 @@ export function MatchConfig({
                             newHeaders[index].matchType = val as any;
                             onChangeHeaders(newHeaders);
                           }}
-                          className="h-8 py-1 text-ui w-full"
+                          className="h-8 py-1 text-xs w-full"
                           containerClassName="w-full"
                         >
                           <option value="exact">
@@ -274,14 +274,14 @@ export function MatchConfig({
                             onChangeHeaders(newHeaders);
                           }}
                           placeholder="Value"
-                          className="h-8 py-1 px-2 text-ui placeholder:text-xs w-full"
+                          className="h-8 py-1 px-2 text-xs placeholder:text-xs w-full"
                         />
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => onChangeHeaders(requiredHeaders.filter((_, i) => i !== index))}
-                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1.5 text-muted-foreground/45 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

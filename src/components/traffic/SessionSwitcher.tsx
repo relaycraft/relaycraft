@@ -258,7 +258,7 @@ export function SessionSwitcher() {
                     <div
                       key={session.id}
                       onClick={() => handleSwitch(session.id)}
-                      className={`group flex items-center gap-2 px-3 py-0.5 cursor-pointer transition-all border-l-2 ${
+                      className={`group/session-row flex items-center gap-2 px-3 py-0.5 cursor-pointer transition-all border-l-2 ${
                         isViewing
                           ? "bg-primary/10 border-primary text-foreground"
                           : "border-transparent hover:bg-muted/40 hover:border-border/40"
@@ -301,7 +301,7 @@ export function SessionSwitcher() {
                           variant="ghost"
                           size="icon-xs"
                           onClick={(e) => handleDelete(e, session)}
-                          className="opacity-0 group-hover:opacity-100 hover:text-error h-5 w-5 bg-background/50 backdrop-blur shadow-sm border border-border/20"
+                          className="text-muted-foreground/45 hover:text-error h-5 w-5 bg-background/50 backdrop-blur shadow-sm border border-border/20 transition-colors"
                         >
                           <Trash2 className="w-2.5 h-2.5" />
                         </Button>

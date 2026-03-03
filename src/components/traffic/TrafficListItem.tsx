@@ -49,6 +49,21 @@ export const TrafficListItem = memo(
     // Use httpVersion from backend, fallback to HTTP/1.1
     const httpVersion = index.httpVersion || "HTTP/1.1";
 
+    // Deduplicate hits while preserving script/breakpoint/rule distinctions.
+    // For breakpoints, merge request/response phase into one indicator.
+    const dedupedHits = index.hits
+      ? [
+          ...new Map(
+            index.hits.map((h) => [
+              h.type === "breakpoint"
+                ? `breakpoint:${h.id.replace(/:request$|:response$/, "")}`
+                : `${h.type}:${h.id}`,
+              h,
+            ]),
+          ).values(),
+        ]
+      : [];
+
     return (
       <div
         onClick={() => onSelect(index)}
@@ -176,72 +191,42 @@ export const TrafficListItem = memo(
             {/* File not found warning */}
             {index.hits?.some((h) => h.status === "file_not_found") && (
               <Tooltip content={t("traffic.file_not_found", "File not found")} side="left">
-                <AlertTriangle className="w-3.5 h-3.5 text-error" />
+                <AlertTriangle className="w-3 h-3 text-error" />
               </Tooltip>
             )}
             <div className="flex -space-x-1">
-              {index.hits &&
-                // Deduplicate hits: for breakpoints, use rule_id (without phase) as key
-                [
-                  ...new Map(
-                    index.hits.map((h) => [
-                      h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
-                      h,
-                    ]),
-                  ).values(),
-                ]
-                  .slice(0, 5)
-                  .map((hit, idx) => {
-                    const isScript = hit.type === "script";
-                    const isBreakpoint = hit.type === "breakpoint";
-                    let tooltipContent = "";
-                    if (isScript) {
-                      tooltipContent = `${t("common.script", "Script")}: ${hit.name}`;
-                    } else if (isBreakpoint) {
-                      tooltipContent = `${t("common.breakpoint", "Breakpoint")}: ${hit.name}`;
-                    } else {
-                      tooltipContent = `${t("common.rule", "Rule")}: ${hit.name}`;
-                    }
-                    return (
-                      <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
-                        {isScript ? (
-                          <div className="w-3 h-3 flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0 shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
-                            <Terminal className="w-[9px] h-[9px]" strokeWidth={2.5} />
-                          </div>
-                        ) : isBreakpoint ? (
-                          <CirclePause
-                            className="w-3 h-3 text-red-500 flex-shrink-0"
-                            strokeWidth={2}
-                          />
-                        ) : (
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full border border-background shadow-sm aspect-square ${getRuleTypeDotClass(hit.type, hit.status)}`}
-                          />
-                        )}
-                      </Tooltip>
-                    );
-                  })}
-              {index.hits &&
-                [
-                  ...new Map(
-                    index.hits.map((h) => [
-                      h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
-                      h,
-                    ]),
-                  ).values(),
-                ].length > 5 && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    +
-                    {[
-                      ...new Map(
-                        index.hits.map((h) => [
-                          h.type === "breakpoint" ? h.id.replace(/:request$|:response$/, "") : h.id,
-                          h,
-                        ]),
-                      ).values(),
-                    ].length - 5}
-                  </span>
-                )}
+              {dedupedHits.slice(0, 5).map((hit, idx) => {
+                const isScript = hit.type === "script";
+                const isBreakpoint = hit.type === "breakpoint";
+                let tooltipContent = "";
+                if (isScript) {
+                  tooltipContent = `${t("common.script", "Script")}: ${hit.name}`;
+                } else if (isBreakpoint) {
+                  tooltipContent = `${t("common.breakpoint", "Breakpoint")}: ${hit.name}`;
+                } else {
+                  tooltipContent = `${t("common.rule", "Rule")}: ${hit.name}`;
+                }
+                return (
+                  <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
+                    {isScript ? (
+                      <div className="w-3 h-3 flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0 shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
+                        <Terminal className="w-[9px] h-[9px]" strokeWidth={2.5} />
+                      </div>
+                    ) : isBreakpoint ? (
+                      <CirclePause className="w-3 h-3 text-red-500 flex-shrink-0" strokeWidth={2} />
+                    ) : (
+                      <div
+                        className={`w-2 h-2 rounded-full ring-1 ring-background/70 shadow-sm ${getRuleTypeDotClass(hit.type, hit.status)}`}
+                      />
+                    )}
+                  </Tooltip>
+                );
+              })}
+              {dedupedHits.length > 5 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  +{dedupedHits.length - 5}
+                </span>
+              )}
             </div>
           </div>
         ) : null}

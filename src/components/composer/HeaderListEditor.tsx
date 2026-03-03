@@ -50,7 +50,7 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
 
       <div className="space-y-1.5">
         {headers.map((item, index) => (
-          <div key={index} className="flex items-center gap-1.5 group">
+          <div key={index} className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => updateItem(index, "enabled", !item.enabled)}
@@ -77,8 +77,9 @@ export function HeaderListEditor({ headers, onChange }: HeaderListEditorProps) {
               />
             </div>
             <button
+              type="button"
               onClick={() => removeItem(index)}
-              className="p-1.5 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 interactive-pop"
+              className="p-1.5 text-muted-foreground/45 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors interactive-pop"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

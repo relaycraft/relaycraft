@@ -373,7 +373,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                           </span>
                         </Tooltip>
                         {hit.type === "breakpoint" && phases.length > 0 && (
-                          <span className="text-xs opacity-60 italic">
+                          <span className="text-xs opacity-60">
                             (
                             {phases.map((p, i) => (
                               <span key={p}>

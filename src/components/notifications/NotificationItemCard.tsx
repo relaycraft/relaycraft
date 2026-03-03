@@ -33,7 +33,7 @@ export function NotificationItemCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`relative group p-3.5 rounded-xl border transition-all cursor-pointer ${
+      className={`relative group/notification-card p-3.5 rounded-xl border transition-all cursor-pointer ${
         notification.read
           ? "bg-muted/5 border-border/10 opacity-60 hover:opacity-100"
           : `${priorityConfig.className} shadow-sm border-border/40 hover:border-border/60`
@@ -134,11 +134,12 @@ export function NotificationItemCard({
 
         {/* 删除按钮 */}
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRemove(notification.id);
           }}
-          className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-all"
+          className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground/30 opacity-0 pointer-events-none group-hover/notification-card:opacity-100 group-hover/notification-card:pointer-events-auto group-focus-within/notification-card:opacity-100 group-focus-within/notification-card:pointer-events-auto transition-all"
           title={t("notifications.delete_title")}
         >
           <X className="w-3.5 h-3.5" />
