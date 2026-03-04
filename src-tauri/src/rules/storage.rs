@@ -9,6 +9,15 @@ use walkdir::WalkDir;
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
 
+/// A single rule that failed to import
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FailedRule {
+    pub id: String,
+    pub name: String,
+    pub error: String,
+}
+
 /// Result of a bulk import operation
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -16,6 +25,8 @@ pub struct ImportResult {
     pub success: bool,
     pub imported_count: usize,
     pub skipped_count: usize,
+    #[serde(default)]
+    pub failed_rules: Vec<FailedRule>,
     pub error: Option<String>,
 }
 
@@ -215,23 +226,38 @@ impl RuleStorage {
         serde_yaml::to_string(&bundle).map_err(|e| RuleError::Serialization(e.to_string()))
     }
 
-    /// Import rules from bundle
-    pub fn import_bundle(&self, yaml_content: &str) -> Result<usize, RuleError> {
+    /// Import rules from bundle, collecting per-rule errors instead of failing fast
+    pub fn import_bundle(&self, yaml_content: &str) -> Result<ImportResult, RuleError> {
         let bundle: RuleBundle =
             serde_yaml::from_str(yaml_content).map_err(|e| RuleError::Parse(e.to_string()))?;
 
         let mut imported_count = 0;
+        let mut failed_rules: Vec<FailedRule> = Vec::new();
 
         for entry in bundle.rules {
-            self.save(&entry.rule, Some(&entry.group_id))?;
-            imported_count += 1;
+            let rule_id = entry.rule.id.clone();
+            let rule_name = entry.rule.name.clone();
+            match self.save(&entry.rule, Some(&entry.group_id)) {
+                Ok(()) => imported_count += 1,
+                Err(e) => failed_rules.push(FailedRule {
+                    id: rule_id,
+                    name: rule_name,
+                    error: e.to_string(),
+                }),
+            }
         }
 
         if !bundle.groups.is_empty() {
             self.save_groups(&bundle.groups)?;
         }
 
-        Ok(imported_count)
+        Ok(ImportResult {
+            success: failed_rules.is_empty(),
+            imported_count,
+            skipped_count: failed_rules.len(),
+            failed_rules,
+            error: None,
+        })
     }
 
     /// Export rules to a ZIP file
@@ -341,6 +367,7 @@ impl RuleStorage {
             success: true,
             imported_count,
             skipped_count,
+            failed_rules: vec![],
             error: None,
         })
     }

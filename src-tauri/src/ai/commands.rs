@@ -9,7 +9,11 @@ pub struct AIState {
 
 #[tauri::command]
 pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, String> {
-    let mut config = state.config.lock().unwrap().clone();
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
 
     // Load API key from local storage
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
@@ -48,7 +52,10 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
     }
 
     // Update in-memory state and persist
-    *state.config.lock().unwrap() = config.clone();
+    *state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))? = config.clone();
 
     // Persist to config.json
     let mut app_config = crate::config::load_config().unwrap_or_default();
@@ -60,7 +67,11 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
 
 #[tauri::command]
 pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, String> {
-    let mut config = state.config.lock().unwrap().clone();
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
 
     log::info!("Testing AI connection. Provider: {}", config.provider);
 
@@ -107,7 +118,11 @@ pub async fn ai_chat_completion(
     temperature: Option<f32>,
     state: State<'_, AIState>,
 ) -> Result<String, String> {
-    let mut config = state.config.lock().unwrap().clone();
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
 
     // Load API key from local storage
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
@@ -135,7 +150,11 @@ pub async fn ai_chat_completion_stream(
     on_chunk: Channel<ChatCompletionChunk>,
     state: State<'_, AIState>,
 ) -> Result<(), String> {
-    let mut config = state.config.lock().unwrap().clone();
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
 
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
         config.api_key = key;

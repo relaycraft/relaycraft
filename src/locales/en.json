@@ -990,7 +990,8 @@
       "upstream_title": "Upstream Proxy",
       "upstream_url": "Proxy URL",
       "upstream_url_desc": "Supports HTTP/HTTPS protocols, e.g., http://127.0.0.1:7890"
-    }
+    },
+    "config_reset_warning": "Settings file was corrupted and has been reset to defaults. Please reconfigure your preferences."
   },
   "setup_guide": {
     "copy_address": "Copy Address",

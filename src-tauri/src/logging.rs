@@ -38,7 +38,9 @@ pub fn init_log_dir(path: PathBuf) {
     cleanup_old_logs(&logs_path);
 
     // Spawn background worker
-    thread::spawn(move || {
+    if let Err(e) = thread::Builder::new()
+        .name("rc-log-writer".into())
+        .spawn(move || {
         let mut file_cache: HashMap<String, File> = HashMap::new();
         let log_dir = path.join("logs");
 
@@ -60,13 +62,27 @@ pub fn init_log_dir(path: PathBuf) {
             let file_key = filename.to_string();
 
             // Get or open file handle
-            let file = file_cache.entry(file_key).or_insert_with(|| {
-                OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(&file_path)
-                    .unwrap_or_else(|_| File::create(&file_path).unwrap()) // Fallback
-            });
+            let file = match file_cache.entry(file_key) {
+                std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+                std::collections::hash_map::Entry::Vacant(e) => {
+                    let result = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(&file_path)
+                        .or_else(|_| File::create(&file_path));
+                    match result {
+                        Ok(f) => e.insert(f),
+                        Err(err) => {
+                            eprintln!(
+                                "Failed to open log file {}: {}",
+                                file_path.display(),
+                                err
+                            );
+                            continue;
+                        }
+                    }
+                }
+            };
 
             // Standardize prefixing
             let domain_prefix = match entry.domain.as_str() {
@@ -89,7 +105,10 @@ pub fn init_log_dir(path: PathBuf) {
                 // If write fails, try to reopen next time
             }
         }
-    });
+    })
+    {
+        eprintln!("Failed to spawn log writer thread: {}", e);
+    }
 }
 
 /// Clean up old log files on startup

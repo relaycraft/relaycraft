@@ -14,10 +14,31 @@ use tauri::Manager;
 mod logging;
 mod scripts;
 
+/// Warnings detected during startup that the frontend should surface to the user.
+pub struct StartupWarnings {
+    pub config_was_reset: bool,
+}
+
+#[tauri::command]
+fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
+    state.config_was_reset
+}
+
+// TODO(security): Enable CSP in tauri.conf.json `app.security.csp` before final 1.0 release.
+// Currently set to null — define a restrictive policy to prevent inline script execution
+// and restrict remote resource loading. See: https://tauri.app/security/csp/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Load existing config or use default
-    let mut app_config = config::load_config().unwrap_or_default();
+    // Load existing config or use default; detect corruption so we can notify the user.
+    let config_load_result = config::load_config();
+    let config_was_reset = config_load_result.is_err();
+    if config_was_reset {
+        log::error!(
+            "Failed to load config ({}), resetting to defaults",
+            config_load_result.as_ref().err().unwrap()
+        );
+    }
+    let mut app_config = config_load_result.unwrap_or_default();
 
     // Ensure local loopback bypasses system proxies
     let current_no_proxy = std::env::var("NO_PROXY").unwrap_or_default();
@@ -118,6 +139,7 @@ pub fn run() {
         .manage(ai::AIState {
             config: Mutex::new(app_config.ai_config.clone()),
         })
+        .manage(StartupWarnings { config_was_reset })
         .manage(plugins::PluginCache::default())
         .setup(move |app| {
             // Delegate window setup to common::window (handles macOS vibrancy and cross-platform decor)
@@ -230,9 +252,6 @@ pub fn run() {
             plugins::commands::get_plugins,
             plugins::commands::toggle_plugin,
             plugins::commands::read_plugin_file,
-            plugins::commands::get_plugins,
-            plugins::commands::toggle_plugin,
-            plugins::commands::read_plugin_file,
             plugins::commands::get_themes,
             plugins::commands::read_theme_file,
             plugins::commands::get_plugin_config,
@@ -263,6 +282,7 @@ pub fn run() {
             rules::import_rules_zip,
             logging::log_domain_event,
             logging::get_logs,
+            get_startup_warnings,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

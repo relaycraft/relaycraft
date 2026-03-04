@@ -25,6 +25,8 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
     let proxy_url = format!("http://127.0.0.1:{}", config.proxy_port);
 
     let client_builder = reqwest::Client::builder()
+        // TODO: Evaluate SSL verification policy before 1.0 — currently disabled to support
+        // MITM proxy chains, but consider making this configurable or scoping it to loopback only.
         .danger_accept_invalid_certs(true)
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .gzip(true)
@@ -106,6 +108,7 @@ pub async fn check_proxy_connectivity(proxy_url: String) -> Result<String, Strin
     let client = reqwest::Client::builder()
         .proxy(proxy)
         .timeout(std::time::Duration::from_secs(5))
+        // TODO: Same as above — consider making cert verification configurable.
         .danger_accept_invalid_certs(true) // Corporate proxies often use self-signed certs
         .build()
         .map_err(|e| format!("Failed to build client: {}", e))?;

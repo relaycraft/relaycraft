@@ -1,8 +1,10 @@
+import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { notify } from "../lib/notify";
 import { initPlugins } from "../plugins/pluginLoader";
 import { useAIStore } from "../stores/aiStore";
 import { usePluginStore } from "../stores/pluginStore";
@@ -107,6 +109,16 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       }
 
       await loadConfig();
+
+      // Notify user if config was corrupted and reset to defaults
+      try {
+        const configWasReset = await invoke<boolean>("get_startup_warnings");
+        if (configWasReset) {
+          notify.warning(t("settings.config_reset_warning"));
+        }
+      } catch (_e) {
+        // Non-critical: ignore if the command fails
+      }
 
       console.log("[init] Loading data stores...");
       await emit("init-status", t("init.status_data"));

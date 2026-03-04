@@ -52,6 +52,7 @@ interface RuleStore {
     success: boolean;
     imported?: number;
     skipped?: number;
+    failedRules?: Array<{ id: string; name: string; error: string }>;
     error?: string;
   }>;
   loadErrors: Array<{ path: string; error: string }>;
@@ -565,6 +566,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         success: boolean;
         importedCount: number;
         skippedCount: number;
+        failedRules: Array<{ id: string; name: string; error: string }>;
         error?: string;
       }>("import_rules_zip", {
         zipPath,
@@ -578,6 +580,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
           success: true,
           imported: result.importedCount,
           skipped: result.skippedCount,
+          failedRules: result.failedRules ?? [],
         };
       }
       return { success: false, error: result.error };

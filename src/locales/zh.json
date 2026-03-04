@@ -990,7 +990,8 @@
       "upstream_title": "上游代理",
       "upstream_url": "代理地址",
       "upstream_url_desc": "支持 HTTP/HTTPS 协议，例如 http://127.0.0.1:7890"
-    }
+    },
+    "config_reset_warning": "配置文件已损坏并已重置为默认设置，请重新配置您的偏好。"
   },
   "setup_guide": {
     "copy_address": "复制地址",

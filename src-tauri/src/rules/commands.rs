@@ -71,16 +71,13 @@ pub fn export_rules_bundle() -> Result<String, String> {
     storage.export_bundle().map_err(|e| e.to_tauri_error())
 }
 
-/// Import rules bundle
+/// Import rules bundle, returning per-rule success/failure details
 #[tauri::command]
-pub fn import_rules_bundle(yaml_content: String) -> Result<String, String> {
+pub fn import_rules_bundle(yaml_content: String) -> Result<ImportResult, String> {
     let storage = RuleStorage::from_config().map_err(|e| e.to_tauri_error())?;
-
-    let count = storage
+    storage
         .import_bundle(&yaml_content)
-        .map_err(|e| e.to_tauri_error())?;
-
-    Ok(format!("Imported {} rules", count))
+        .map_err(|e| e.to_tauri_error())
 }
 
 /// Export rules to a ZIP file

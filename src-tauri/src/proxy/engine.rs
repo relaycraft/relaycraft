@@ -541,9 +541,11 @@ impl MitmproxyEngine {
     ) {
         if let Some(s) = stream {
             let reader = std::io::BufReader::new(s);
-            std::thread::spawn(move || {
-                use std::io::BufRead;
-                for line in reader.lines().flatten() {
+            std::thread::Builder::new()
+                .name("rc-log-forwarder".into())
+                .spawn(move || {
+                    use std::io::BufRead;
+                    for line in reader.lines().flatten() {
                     // Classify log domain based on content markers
                     let domain = if line.contains("[SCRIPT]")
                         || line.contains("[RELAYCRAFT][SCRIPT]")
@@ -562,13 +564,16 @@ impl MitmproxyEngine {
                     };
                     logging::write_domain_log(domain, &line).ok();
                 }
-            });
+                })
+                .ok();
         }
     }
 
     fn spawn_crash_watcher(&self) {
         let inner = self.inner.clone();
-        std::thread::spawn(move || {
+        std::thread::Builder::new()
+            .name("rc-crash-watcher".into())
+            .spawn(move || {
             loop {
                 thread::sleep(Duration::from_secs(2));
                 let mut lock = match inner.child.lock() {
@@ -610,6 +615,7 @@ impl MitmproxyEngine {
                     break;
                 }
             }
-        });
+            })
+            .ok();
     }
 }
