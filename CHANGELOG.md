@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.6](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-03-04)
+
+
+### Features
+
+* improve robustness for rule import and config initialization ([c9d0b87](https://github-relaycraft/relaycraft/relaycraft/commit/c9d0b873577d2821c5e96d907743f80308cb8dc1))
+* truncate large responses to prevent UI freezing ([ed41ac1](https://github-relaycraft/relaycraft/relaycraft/commit/ed41ac11124f6e66c6cdd304764e9e467f190d4b))
+
 ## [1.0.0-rc.5](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2026-03-03)
 
 
