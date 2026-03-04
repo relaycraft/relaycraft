@@ -1,6 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Code2, Eraser, Globe, Loader2, Send, X, Zap } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Code2,
+  Eraser,
+  Globe,
+  Loader2,
+  Send,
+  X,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { parseCurl } from "../../lib/curlParser";
@@ -25,6 +35,8 @@ interface ReplayResponse {
   headers: Record<string, string>;
   body: string;
   encoding: "text" | "base64";
+  truncated: boolean;
+  totalBytes: number;
 }
 
 export function ComposerView() {
@@ -90,6 +102,8 @@ export function ComposerView() {
         headers: response.headers,
         body: response.body,
         encoding: response.encoding,
+        truncated: response.truncated,
+        totalBytes: response.totalBytes,
       });
     } catch (error: any) {
       const errorMsg = error.toString();
@@ -401,6 +415,12 @@ export function ComposerView() {
                   exit={{ opacity: 0 }}
                   className="h-full flex flex-col p-4 overflow-auto"
                 >
+                  {lastResponse.truncated && (
+                    <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium flex-shrink-0">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("composer.response_truncated", { size: "5MB" })}</span>
+                    </div>
+                  )}
                   <ContentPreview
                     content={lastResponse.body}
                     encoding={lastResponse.encoding}

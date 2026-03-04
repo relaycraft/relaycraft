@@ -17,6 +17,8 @@ interface ComposerState {
     headers: Record<string, string>;
     body: string;
     encoding: "text" | "base64";
+    truncated: boolean;
+    totalBytes: number;
   } | null;
 
   setMethod: (method: string) => void;
@@ -29,6 +31,8 @@ interface ComposerState {
       headers: Record<string, string>;
       body: string;
       encoding: "text" | "base64";
+      truncated: boolean;
+      totalBytes: number;
     } | null,
   ) => void;
 

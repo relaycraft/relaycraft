@@ -388,7 +388,8 @@
     "title": "请求构造",
     "url": "URL",
     "url_builder_error": "URL 构造错误 ({{url}})",
-    "url_placeholder": "输入请求 URL..."
+    "url_placeholder": "输入请求 URL...",
+    "response_truncated": "响应体超过 {{size}}，仅显示前 {{size}} 的内容以防止界面卡顿。"
   },
   "content_preview": {
     "base64": "Base64 编码内容",

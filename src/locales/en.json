@@ -388,7 +388,8 @@
     "title": "Request Composer",
     "url": "URL",
     "url_builder_error": "Builder error for URL ({{url}})",
-    "url_placeholder": "Enter request URL..."
+    "url_placeholder": "Enter request URL...",
+    "response_truncated": "Response body exceeds {{size}} — only the first {{size}} is shown to prevent UI freezing."
   },
   "content_preview": {
     "base64": "Base64 Encoded Content",

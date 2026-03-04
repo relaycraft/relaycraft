@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
 use base64::Engine;
+use futures_util::StreamExt;
+
+/// Maximum response body size transferred over IPC (5 MB).
+/// Prevents large responses from serializing over the IPC bridge and freezing the UI.
+const MAX_BODY_BYTES: usize = 5 * 1024 * 1024;
 
 #[derive(serde::Deserialize)]
 pub struct ReplayRequest {
@@ -16,6 +21,8 @@ pub struct ReplayResponse {
     pub headers: HashMap<String, String>,
     pub body: String,
     pub encoding: String, // "text" or "base64"
+    pub truncated: bool,  // true if body was cut off at MAX_BODY_BYTES
+    pub total_bytes: usize, // actual content-length or bytes read
 }
 
 #[tauri::command]
@@ -80,12 +87,29 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
         || content_type.starts_with("video/")
         || content_type.starts_with("audio/");
 
+    // Stream body up to MAX_BODY_BYTES to avoid freezing the IPC bridge with huge payloads.
+    let mut stream = response.bytes_stream();
+    let mut buffer: Vec<u8> = Vec::with_capacity(MAX_BODY_BYTES.min(65536));
+    let mut truncated = false;
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| e.to_string())?;
+        let remaining = MAX_BODY_BYTES.saturating_sub(buffer.len());
+        if chunk.len() >= remaining {
+            buffer.extend_from_slice(&chunk[..remaining]);
+            truncated = true;
+            break;
+        }
+        buffer.extend_from_slice(&chunk);
+    }
+
+    let total_bytes = buffer.len();
+
     let (body, encoding) = if is_binary {
-        let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-        let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        let encoded = base64::engine::general_purpose::STANDARD.encode(&buffer);
         (encoded, "base64".to_string())
     } else {
-        let text = response.text().await.map_err(|e| e.to_string())?;
+        let text = String::from_utf8_lossy(&buffer).into_owned();
         (text, "text".to_string())
     };
 
@@ -94,6 +118,8 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
         headers,
         body,
         encoding,
+        truncated,
+        total_bytes,
     })
 }
 
