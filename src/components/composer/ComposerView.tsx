@@ -67,7 +67,6 @@ export function ComposerView() {
   const [curlInput, setCurlInput] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
   const [showCurlModal, setShowCurlModal] = useState(false);
-  const [viewMode, setViewMode] = useState<"preview" | "raw">("preview");
 
   const handleFormatJson = () => {
     if (!body.trim()) return;
@@ -377,30 +376,6 @@ export function ComposerView() {
                 >
                   {lastResponse.status}
                 </span>
-                <div className="flex items-center bg-muted/30 p-0.5 rounded-lg border border-border/20">
-                  <button
-                    onClick={() => setViewMode("preview")}
-                    className={cn(
-                      "px-2 py-0.5 text-xs font-bold rounded-md transition-all interactive-pop",
-                      viewMode === "preview"
-                        ? "bg-background text-primary shadow-sm"
-                        : "text-muted-foreground/60 hover:text-foreground",
-                    )}
-                  >
-                    {t("composer.preview")}
-                  </button>
-                  <button
-                    onClick={() => setViewMode("raw")}
-                    className={cn(
-                      "px-2 py-0.5 text-xs font-bold rounded-md transition-all interactive-pop",
-                      viewMode === "raw"
-                        ? "bg-background text-primary shadow-sm"
-                        : "text-muted-foreground/60 hover:text-foreground",
-                    )}
-                  >
-                    {t("composer.raw")}
-                  </button>
-                </div>
               </div>
             )}
           </div>

@@ -146,15 +146,6 @@ addons = [Addon()]
     setIsRenaming(false);
   };
 
-  // Determine if AI is currently pushing code
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  // Listen to AI assistant events or use a simple heuristic:
-  // If showAI is true and content is changing rapidly (handled via a prop if we were more coupled,
-  // but here we can just use the assistant's state if we exposed it, or a simple timeout).
-  // Better: ScriptEditor is the one receiving onApply.
-  // I'll add a way for ScriptEditor to know it's syncing.
-
   const handleSave = async () => {
     if (saving) return;
     const targetName = scriptName || draftScript?.name;
@@ -217,7 +208,7 @@ addons = [Addon()]
           {isRenaming ? (
             <input
               type="text"
-              className="w-80 px-2 py-1 text-sm font-mono font-medium bg-muted/30 border border-primary/30 rounded focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+              className="w-80 px-2 py-1 text-ui font-mono font-bold bg-muted/30 border border-primary/30 rounded focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={(e) => {
@@ -332,21 +323,13 @@ addons = [Addon()]
               if (!scriptName && name) {
                 setDraftScript({ name, content: code });
               }
-              setIsSyncing(true);
-              setTimeout(() => setIsSyncing(false), 2000);
             }}
           />
         )}
       </AnimatePresence>
 
       <div className="flex-1 overflow-hidden relative group/editor">
-        {isSyncing && (
-          <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-pulse" />
-            <div className="absolute inset-0 bg-primary/[0.02] shadow-[inset_0_0_60px_rgba(var(--primary-rgb),0.05)]" />
-          </div>
-        )}
-
+        {" "}
         <Editor
           height="100%"
           language="python"
