@@ -96,3 +96,57 @@ impl AIConfig {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = AIConfig::default();
+        assert!(!config.enabled);
+        assert_eq!(config.provider, "openai");
+        assert_eq!(config.model, "gpt-4-turbo-preview");
+        assert_eq!(config.max_tokens, 4096);
+        assert!(config.enable_caching);
+    }
+
+    #[test]
+    fn test_get_endpoint_with_custom() {
+        let mut config = AIConfig::default();
+        config.custom_endpoint = Some("https://my-custom-ai.dev/v1".to_string());
+        
+        assert_eq!(config.get_endpoint(), "https://my-custom-ai.dev/v1");
+        
+        // Empty custom string should fallback
+        config.custom_endpoint = Some("".to_string());
+        assert_eq!(config.get_endpoint(), "https://api.openai.com/v1");
+    }
+
+    #[test]
+    fn test_get_endpoint_provider_fallbacks() {
+        let mut config = AIConfig::default();
+        config.custom_endpoint = None; // Ensure fallback path
+
+        let cases = vec![
+            ("openai", "https://api.openai.com/v1"),
+            ("openrouter", "https://openrouter.ai/api/v1"),
+            ("deepseek", "https://api.deepseek.com/v1"),
+            ("aliyun", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+            ("google", "https://generativelanguage.googleapis.com/v1beta/openai"),
+            ("anthropic", "https://api.anthropic.com/v1"),
+            ("moonshot", "https://api.moonshot.cn/v1"),
+            ("unknown_provider", "https://api.openai.com/v1"), // fallback
+        ];
+
+        for (provider, expected) in cases {
+            config.provider = provider.to_string();
+            assert_eq!(
+                config.get_endpoint(),
+                expected,
+                "Failed for provider: {}",
+                provider
+            );
+        }
+    }
+}

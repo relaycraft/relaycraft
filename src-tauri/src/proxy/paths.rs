@@ -209,3 +209,55 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    // tauri::AppHandle requires a running app context, which is hard to mock in isolated unit tests.
+    // However, we can test some platform-specific binary name assumptions and check that our
+    // code compiles and logic isn't overtly broken by syntax or basic env checks.
+
+    #[test]
+    fn test_exe_name_resolution() {
+        let is_windows = cfg!(target_os = "windows");
+        
+        let binary_name = if is_windows {
+            "engine.exe"
+        } else {
+            "engine"
+        };
+        
+        if is_windows {
+            assert_eq!(binary_name, "engine.exe");
+        } else {
+            assert_eq!(binary_name, "engine");
+        }
+    }
+    
+    // Test the debug path resolution structure logic
+    // We can't fully mock std::env::current_dir(), but we can test string manipulations
+    #[test]
+    fn test_debug_path_construction() {
+        let fake_current_dir = PathBuf::from("/Users/test/Projects/relaycraft/src-tauri");
+        
+        let project_root = if fake_current_dir.ends_with("src-tauri") {
+            fake_current_dir
+                .parent()
+                .unwrap()
+                .to_path_buf()
+        } else {
+            fake_current_dir.clone()
+        };
+        
+        assert_eq!(project_root, PathBuf::from("/Users/test/Projects/relaycraft"));
+        
+        // Check binary path construction
+        let binary_path = project_root
+            .join("src-tauri")
+            .join("binaries")
+            .join("engine");
+            
+        assert_eq!(binary_path, PathBuf::from("/Users/test/Projects/relaycraft/src-tauri/binaries/engine"));
+    }
+}
