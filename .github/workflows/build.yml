@@ -200,9 +200,36 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          # Enable signing for all platforms, including self-hosted Windows
         with:
           args: ${{ matrix.args }} ${{ env.WINDOWS_BUNDLE_ARGS }}
+
+      - name: Remove Bundled Font Libraries from AppImage
+        if: runner.os == 'Linux'
+        run: |
+          # 提前下载 appimagetool (Ubuntu runner 默认不带或者版本可能不对)
+          wget -qO appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+
+          APPIMAGE=$(find src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -1)
+          WORKDIR=$(mktemp -d)
+
+          echo "📦 Extracting AppImage: $APPIMAGE"
+          # 解包
+          "$APPIMAGE" --appimage-extract
+          mv squashfs-root "$WORKDIR/"
+
+          echo "🧹 Removing bundled font libraries..."
+          # 移除捆绑的字体库，让系统库接管
+          for lib in libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 \
+                     libfontconfig.so.1 libfreetype.so.6; do
+            find "$WORKDIR/squashfs-root" -name "$lib*" -delete
+          done
+
+          echo "📦 Repacking AppImage..."
+          # 重新打包，替换原文件
+          # APPIMAGE_EXTRACT_AND_RUN=1 让 appimagetool 以解压模式运行自身，绕过 CI 环境无 FUSE 的限制
+          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool "$WORKDIR/squashfs-root" "$APPIMAGE"
+          rm -rf "$WORKDIR" appimagetool
 
       - name: Sign Linux Binaries
         if: runner.os == 'Linux'
@@ -612,12 +639,20 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
+      - name: Extract Release Notes
+        id: extract-release-notes
+        run: |
+          awk '/^##* \[?[0-9]+\.[0-9]+\.[0-9]+/{if (p) exit; p=1; next} p' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "See the assets to download this version and install." > release_notes.md
+          fi
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: 'RelayCraft v${{ env.VERSION }}'
-          body: 'See the assets to download this version and install.'
+          body_path: release_notes.md
           files: all-bundles/*
           draft: true
           token: ${{ github.token }}

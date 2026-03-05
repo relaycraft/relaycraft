@@ -34,6 +34,9 @@ python build.py
 将生成的单文件可执行程序复制到 Tauri 的二进制目录，并重命名为目标平台格式：
 
 ```bash
+# 创建目录
+mkdir -p ../src-tauri/binaries
+
 # Windows
 copy dist\engine.exe ..\src-tauri\binaries\engine-x86_64-pc-windows-msvc.exe
 

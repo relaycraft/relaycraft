@@ -34,11 +34,14 @@ To use the built engine in RelayCraft:
 Copy the single-file executable to the Tauri binaries directory with the correct target triple:
 
 ```bash
+# Create directory
+mkdir -p ../src-tauri/binaries
+
 # Windows
 copy dist\engine.exe ..\src-tauri\binaries\engine-x86_64-pc-windows-msvc.exe
 
 # Linux
-cp dist/engine ..\src-tauri\binaries\engine-x86_64-unknown-linux-gnu
+cp dist/engine ../src-tauri\binaries\engine-x86_64-unknown-linux-gnu
 ```
 
 ### macOS (Bundle Resources)

@@ -25,25 +25,26 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
             }
         }
 
+        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
         let binary_name = if cfg!(target_os = "windows") {
-            "engine.exe"
+            format!("engine-{}.exe", target_triple)
         } else {
-            "engine"
+            format!("engine-{}", target_triple)
         };
 
         let binary_path = project_root
             .join("src-tauri")
             .join("binaries")
-            .join(binary_name);
+            .join(&binary_name);
 
         #[cfg(target_os = "macos")]
         {
-            // Check resources directory for macOS directory bundle
+            // Check resources directory for macOS directory bundle (onedir)
             let resource_path = project_root
                 .join("src-tauri")
                 .join("resources")
-                .join(binary_name)
-                .join(binary_name);
+                .join("engine")
+                .join("engine");
 
             if resource_path.exists() {
                 return Ok(resource_path);
@@ -221,17 +222,18 @@ mod tests {
     #[test]
     fn test_exe_name_resolution() {
         let is_windows = cfg!(target_os = "windows");
+        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
         
         let binary_name = if is_windows {
-            "engine.exe"
+            format!("engine-{}.exe", target_triple)
         } else {
-            "engine"
+            format!("engine-{}", target_triple)
         };
         
         if is_windows {
-            assert_eq!(binary_name, "engine.exe");
+            assert_eq!(binary_name, format!("engine-{}.exe", target_triple));
         } else {
-            assert_eq!(binary_name, "engine");
+            assert_eq!(binary_name, format!("engine-{}", target_triple));
         }
     }
     
@@ -253,11 +255,12 @@ mod tests {
         assert_eq!(project_root, PathBuf::from("/Users/test/Projects/relaycraft"));
         
         // Check binary path construction
+        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
         let binary_path = project_root
             .join("src-tauri")
             .join("binaries")
-            .join("engine");
+            .join(format!("engine-{}", target_triple));
             
-        assert_eq!(binary_path, PathBuf::from("/Users/test/Projects/relaycraft/src-tauri/binaries/engine"));
+        assert_eq!(binary_path, PathBuf::from(format!("/Users/test/Projects/relaycraft/src-tauri/binaries/engine-{}", target_triple)));
     }
 }
