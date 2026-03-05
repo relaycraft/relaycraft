@@ -52,7 +52,7 @@ try {
         name: c.name,
         version: c.version,
         license: c.license || "Unknown",
-        repository: c.repository || "N/A"
+        repository: c.repository || "N/A",
       });
     });
   }
@@ -83,21 +83,22 @@ try {
     });
     console.log(`Found ${count} Frontend dependencies.`);
   }
-} catch (e) {
+} catch (_e) {
   console.warn("⚠️ Failed to generate Frontend licenses.");
 }
 
 // Helper to find a suitable python version for mitmproxy (requires >= 3.10)
 function getPythonCmd() {
-  const candidates = process.platform === "win32"
-    ? ["python", "py -3.12", "py -3"]
-    : ["python3.12", "python3.11", "python3", "python"];
+  const candidates =
+    process.platform === "win32"
+      ? ["python", "py -3.12", "py -3"]
+      : ["python3.12", "python3.11", "python3", "python"];
 
   for (const cmd of candidates) {
     try {
       execSync(`${cmd} --version`, { stdio: "ignore" });
       return cmd;
-    } catch (e) { }
+    } catch (_e) {}
   }
   return "python3";
 }
@@ -121,10 +122,7 @@ try {
   console.log("  ↳ Installing pip-licenses...");
   run(`"${venvPython}" -m pip install pip-licenses --quiet`, ENGINE_DIR);
 
-  const pipOutput = run(
-    `"${venvPython}" -m piplicenses --format=json --with-urls`,
-    ENGINE_DIR
-  );
+  const pipOutput = run(`"${venvPython}" -m piplicenses --format=json --with-urls`, ENGINE_DIR);
   if (pipOutput) {
     const pythonDeps = JSON.parse(pipOutput);
     // filter out the pip-licenses itself and its direct deps if we want, but it's fine to include
@@ -139,13 +137,13 @@ try {
       });
     });
   }
-} catch (e) {
+} catch (_e) {
   console.warn("⚠️ Failed to generate Python dependencies.");
 } finally {
   // Always clean up the temp venv
   try {
     fs.rmSync(venvDir, { recursive: true, force: true });
-  } catch (e) { }
+  } catch (_e) {}
 }
 
 // Sort alphabetically by name

@@ -57,7 +57,7 @@ export function detectContentType(
       try {
         JSON.parse(trimmed);
         return "json";
-      } catch (e) {
+      } catch (_e) {
         // Not JSON
       }
     }
@@ -108,7 +108,7 @@ export function formatXml(xml: string): string {
       padding += "  ";
     }
 
-    formatted += padding + node + "\r\n";
+    formatted += `${padding + node}\r\n`;
     pad += indent;
   });
 

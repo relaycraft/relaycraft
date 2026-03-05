@@ -6,7 +6,7 @@ export interface ParsedCurl {
 }
 
 export function parseCurl(curlCommand: string): ParsedCurl | null {
-  if (!(curlCommand && curlCommand.trim().startsWith("curl"))) return null;
+  if (!curlCommand?.trim().startsWith("curl")) return null;
 
   const result: ParsedCurl = {
     method: "GET", // Default

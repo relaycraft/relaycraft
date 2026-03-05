@@ -442,8 +442,8 @@
         function switchTab(os) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            const t = document.getElementById('tab-' + os) || document.getElementById('tab-android');
-            const p = document.getElementById('panel-' + os) || document.getElementById('panel-android');
+            const t = document.getElementById(`tab-${os}`) || document.getElementById('tab-android');
+            const p = document.getElementById(`panel-${os}`) || document.getElementById('panel-android');
             t.classList.add('active');
             p.classList.add('active');
         }

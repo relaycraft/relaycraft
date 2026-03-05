@@ -104,7 +104,7 @@ class SuggestionEngineRegistry {
         return (
           s.label.toLowerCase().includes(query) ||
           s.action.toLowerCase().includes(query) ||
-          (s.description && s.description.toLowerCase().includes(query))
+          s.description?.toLowerCase().includes(query)
         );
       });
     }

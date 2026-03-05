@@ -359,7 +359,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
                   typeof currentSess?.metadata === "string"
                     ? JSON.parse(currentSess.metadata)
                     : currentSess?.metadata || {};
-              } catch (e) {}
+              } catch (_e) {}
 
               if (!currentSess || md.status !== "importing" || importPollCount > 600) {
                 // Max 10 mins
@@ -379,7 +379,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
                   );
                 } else if (md.status === "error") {
                   const { notify } = await import("../lib/notify");
-                  notify.error("Session import failed: " + md.error_message);
+                  notify.error(`Session import failed: ${md.error_message}`);
                 }
               } else {
                 // While still importing, occasionally refresh the view if selected
@@ -528,7 +528,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
                   typeof currentSess?.metadata === "string"
                     ? JSON.parse(currentSess.metadata)
                     : currentSess?.metadata || {};
-              } catch (e) {}
+              } catch (_e) {}
 
               if (!currentSess || md.status !== "importing" || importPollCount > 600) {
                 clearInterval(importPollInterval);
@@ -546,7 +546,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
                   );
                 } else if (md.status === "error") {
                   const { notify } = await import("../lib/notify");
-                  notify.error("HAR import failed: " + md.error_message);
+                  notify.error(`HAR import failed: ${md.error_message}`);
                 }
               } else {
                 if (importPollCount % 3 === 0 && get().showSessionId === session_id) {

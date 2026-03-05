@@ -69,7 +69,7 @@ export class NavigationProvider implements SuggestionProvider {
         description:
           cmd.id === "clear"
             ? cmd.name // "Clear Traffic" directly
-            : t("command_center.suggestions.go_to") + " " + cmd.name,
+            : `${t("command_center.suggestions.go_to")} ${cmd.name}`,
       });
     });
 

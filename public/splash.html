@@ -266,7 +266,7 @@
     </style>
     <script>
         // Synchronize with App Theme from localStorage before paint
-        (function () {
+        (() => {
             try {
                 const mode = localStorage.getItem('themeMode');
                 // Only switch to light theme when explicitly set to 'light'
@@ -286,8 +286,8 @@
         function showWindowWhenReady() {
             if (_splashShown) return;
             _splashShown = true;
-            requestAnimationFrame(function () {
-                setTimeout(function () {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
                     try {
                         if (window.__TAURI__) {
                             window.__TAURI__.window.getCurrentWindow().show();

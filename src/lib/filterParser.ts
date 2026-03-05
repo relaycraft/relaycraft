@@ -134,7 +134,7 @@ export function parseFilter(input: string): FilterCriteria {
 
 function parseSize(val: string): number {
   const num = parseFloat(val);
-  if (isNaN(num)) return 0;
+  if (Number.isNaN(num)) return 0;
   const unit = val
     .toLowerCase()
     .replace(/[0-9.]/g, "")
@@ -147,7 +147,7 @@ function parseSize(val: string): number {
 
 function parseDuration(val: string): number {
   const num = parseFloat(val);
-  if (isNaN(num)) return 0;
+  if (Number.isNaN(num)) return 0;
   const unit = val
     .toLowerCase()
     .replace(/[0-9.]/g, "")
@@ -327,7 +327,7 @@ export function matchFlow(
     if (isRegex) {
       try {
         return new RegExp(search, caseSensitive ? "" : "i").test(actual);
-      } catch (e) {
+      } catch (_e) {
         return false;
       }
     }
@@ -355,7 +355,7 @@ export function matchFlow(
           const regex = new RegExp(item.value, caseSensitive ? "" : "i");
           isMatch =
             regex.test(url) || regex.test(method) || regex.test(statusStr) || regex.test(host);
-        } catch (e) {
+        } catch (_e) {
           // Invalid regex, fall back to literal search
           isMatch =
             matchString(url, item.value) ||

@@ -54,7 +54,7 @@ const summarizeRule = (rule: Rule): { match: string; action: string } => {
  */
 const truncate = (val: string, limit: number = 200): string => {
   if (!val || val.length <= limit) return val;
-  return val.substring(0, limit) + `... [TRUNCATED ${val.length - limit} chars]`;
+  return `${val.substring(0, limit)}... [TRUNCATED ${val.length - limit} chars]`;
 };
 
 /**
@@ -141,7 +141,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     try {
       // Fetch last 10 engine logs
       recentLogs = await invoke("get_logs", { logName: "proxy", lines: 10 });
-    } catch (e) {
+    } catch (_e) {
       recentLogs = ["Error fetching system logs."];
     }
   }

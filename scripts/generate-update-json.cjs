@@ -48,13 +48,18 @@ function getPlatformKeys(filename) {
   const lowerFile = filename.toLowerCase();
 
   if (lowerFile.includes("universal")) {
-    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin") || lowerFile.endsWith(".tar.gz")) {
+    if (
+      lowerFile.includes("macos") ||
+      lowerFile.includes("apple-darwin") ||
+      lowerFile.endsWith(".tar.gz")
+    ) {
       return ["darwin-aarch64", "darwin-x86_64"];
     }
   }
 
   if (lowerFile.includes("aarch64") || lowerFile.includes("arm64")) {
-    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin")) return ["darwin-aarch64"];
+    if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin"))
+      return ["darwin-aarch64"];
     if (lowerFile.includes("linux")) return ["linux-aarch64"];
   }
 
@@ -65,15 +70,27 @@ function getPlatformKeys(filename) {
   }
 
   // Fallback based on extension
-  if (lowerFile.endsWith(".msi.zip") || lowerFile.endsWith(".msi") || lowerFile.endsWith(".exe") || lowerFile.endsWith(".nsis.zip")) {
+  if (
+    lowerFile.endsWith(".msi.zip") ||
+    lowerFile.endsWith(".msi") ||
+    lowerFile.endsWith(".exe") ||
+    lowerFile.endsWith(".nsis.zip")
+  ) {
     return ["windows-x86_64"];
   }
 
-  if (lowerFile.endsWith(".app.tar.gz") || (lowerFile.endsWith(".tar.gz") && lowerFile.includes("apple-darwin"))) {
+  if (
+    lowerFile.endsWith(".app.tar.gz") ||
+    (lowerFile.endsWith(".tar.gz") && lowerFile.includes("apple-darwin"))
+  ) {
     return ["darwin-aarch64", "darwin-x86_64"];
   }
 
-  if (lowerFile.endsWith(".deb") || lowerFile.endsWith(".appimage") || lowerFile.endsWith(".appimage.tar.gz")) {
+  if (
+    lowerFile.endsWith(".deb") ||
+    lowerFile.endsWith(".appimage") ||
+    lowerFile.endsWith(".appimage.tar.gz")
+  ) {
     return ["linux-x86_64"];
   }
 

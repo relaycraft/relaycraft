@@ -290,7 +290,7 @@ function generateRewriteBodySnippet(action: RewriteBodyAction, indentStr: string
   } else if (action.regex_replace) {
     bodyLogic = `${indentStr}if flow.${event}.text:\n${indentStr}    flow.${event}.text = re.sub(r"${action.regex_replace.pattern || ""}", "${action.regex_replace.replacement || ""}", flow.${event}.text)`;
   } else if (action.json) {
-    const innerIndent = indentStr + "        ";
+    const innerIndent = `${indentStr}        `;
     bodyLogic = `${indentStr}try:
 ${indentStr}    if flow.${event}.text:
 ${indentStr}        data = json.loads(flow.${event}.text)
