@@ -24,9 +24,6 @@ fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
     state.config_was_reset
 }
 
-// TODO(security): Enable CSP in tauri.conf.json `app.security.csp` before final 1.0 release.
-// Currently set to null — define a restrictive policy to prevent inline script execution
-// and restrict remote resource loading. See: https://tauri.app/security/csp/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Load existing config or use default; detect corruption so we can notify the user.

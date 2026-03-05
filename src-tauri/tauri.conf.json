@@ -48,7 +48,7 @@
       }
     ],
     "security": {
-      "csp": null,
+      "csp": "default-src 'self' tauri: ipc: asset:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: asset: tauri:; connect-src ipc: http://ipc.localhost asset: tauri:; media-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:",
       "assetProtocol": {
         "enable": true,
         "scope": {
