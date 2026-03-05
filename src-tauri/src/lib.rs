@@ -26,6 +26,15 @@ fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // On Linux: apply environment fixes before WebKit initializes.
+    #[cfg(target_os = "linux")]
+    {
+        // Disable WebKitGTK GPU compositing to prevent severe lag on systems with limited
+        // GPU support (e.g. virtual machines). Linux has no blur/vibrancy effects so there
+        // is no visual regression.
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    }
+
     // Load existing config or use default; detect corruption so we can notify the user.
     let config_load_result = config::load_config();
     let config_was_reset = config_load_result.is_err();

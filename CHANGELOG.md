@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.7](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-03-05)
+
+
+### Features
+
+* enforce strict CSP and formalize internal TLS bypass ([31267d8](https://github-relaycraft/relaycraft/relaycraft/commit/31267d843b41a6fe64246766f29883310292dc53))
+
 ## [1.0.0-rc.6](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-03-04)
 
 

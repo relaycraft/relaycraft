@@ -203,33 +203,28 @@ jobs:
         with:
           args: ${{ matrix.args }} ${{ env.WINDOWS_BUNDLE_ARGS }}
 
-      - name: Remove Bundled Font Libraries from AppImage
+      - name: Repack AppImage with FUSE 2/3 Compatible Runtime
         if: runner.os == 'Linux'
         run: |
-          # 提前下载 appimagetool (Ubuntu runner 默认不带或者版本可能不对)
+          # Tauri's default AppImage runtime requires libfuse2, which is absent on modern distros
+          # (Ubuntu 22.04+, Fedora 37+, Arch). Repack with the newer type2-runtime that
+          # automatically falls back to libfuse3, squashfuse, or unsquashfs.
           wget -qO appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          wget -qO runtime-x86_64 "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64"
           chmod +x appimagetool
 
           APPIMAGE=$(find src-tauri/target/release/bundle/appimage/ -name "*.AppImage" | head -1)
           WORKDIR=$(mktemp -d)
 
-          echo "📦 Extracting AppImage: $APPIMAGE"
-          # 解包
-          "$APPIMAGE" --appimage-extract
+          echo "Extracting: $APPIMAGE"
+          APPIMAGE_EXTRACT_AND_RUN=1 "$APPIMAGE" --appimage-extract
           mv squashfs-root "$WORKDIR/"
 
-          echo "🧹 Removing bundled font libraries..."
-          # 移除捆绑的字体库，让系统库接管
-          for lib in libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 \
-                     libfontconfig.so.1 libfreetype.so.6; do
-            find "$WORKDIR/squashfs-root" -name "$lib*" -delete
-          done
-
-          echo "📦 Repacking AppImage..."
-          # 重新打包，替换原文件
-          # APPIMAGE_EXTRACT_AND_RUN=1 让 appimagetool 以解压模式运行自身，绕过 CI 环境无 FUSE 的限制
-          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool "$WORKDIR/squashfs-root" "$APPIMAGE"
-          rm -rf "$WORKDIR" appimagetool
+          echo "Repacking with FUSE 2/3 compatible runtime..."
+          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool \
+            --runtime-file runtime-x86_64 \
+            "$WORKDIR/squashfs-root" "$APPIMAGE"
+          rm -rf "$WORKDIR" appimagetool runtime-x86_64
 
       - name: Sign Linux Binaries
         if: runner.os == 'Linux'
