@@ -5,14 +5,12 @@
     "assistant": {
       "analyzing": "智能助手正在思考...",
       "naming": {
-        "desc": "更具描述性的命名",
         "placeholder": "描述规则用途...",
         "suggestions": {
           "auto": "基于配置自动命名",
           "desc": "更具描述性的命名",
           "tech": "更具技术性的命名"
         },
-        "tech": "更具技术性的命名",
         "title": "智能命名助手"
       },
       "regex": {
@@ -117,9 +115,6 @@
     "add": "立即添加"
   },
   "cert": {
-    "format": {
-      "label": "格式"
-    },
     "actions": {
       "install": "安装并信任证书",
       "regenerate": "重新生成根证书",
@@ -166,7 +161,6 @@
         "macos_sequoia_hint_title": "macOS 15 或更高版本",
         "mobile_android_hint": "现代 Android 系统拥有更严格的内置安全策略，可能需要 Root 权限或特定的调试配置才能进行流量解密。",
         "mobile_browser_access": "2. 浏览器访问地址",
-        "mobile_qr_code_hint": "扫码快速打开下载链接",
         "mobile_step1": "第一步：获取证书",
         "mobile_step1_desc": "确保移动设备与电脑在同一局域网，且已配置好代理。",
         "mobile_step2": "第二步：安装与信任",
@@ -300,7 +294,6 @@
     "headers": "请求头",
     "help": "帮助",
     "import": "导入",
-    "import_har": "导入 HAR",
     "import_har_hint": "导入 HAR",
     "loading": "加载中...",
     "move_down": "下移",
@@ -308,7 +301,6 @@
     "name": "名称",
     "no_content": "暂无内容",
     "no_results": "无搜索结果",
-    "none": "无",
     "not_loaded": "未加载",
     "no": "否",
     "ok": "确定",
@@ -319,7 +311,6 @@
     "rule": "规则",
     "restarting": "正在重启...",
     "save": "保存",
-    "save_success": "保存成功",
     "script": "脚本",
     "search": "搜索...",
     "select": "请选择...",
@@ -430,10 +421,6 @@
       "messages": "消息",
       "request": "请求",
       "response": "响应"
-    },
-    "websocket": {
-      "empty": "尚未捕获到 WebSocket 帧",
-      "title": "WebSocket 帧"
     }
   },
   "header_editor": {
@@ -650,7 +637,6 @@
       "advanced_assistant": "高级规则助手",
       "ai": {
         "analysis_title": "智能分析",
-        "apply": "应用代码",
         "apply_yaml": "应用 YAML",
         "chip_create": "创建规则",
         "chip_explain": "解释规则",
@@ -669,7 +655,6 @@
         "tab_ai": "智能模式",
         "tab_script": "脚本预览"
       },
-      "convert_script_confirm": "确定要将此规则转换为 Python 脚本吗？",
       "convert_script_confirm_disable_rule": "原规则将被禁用。",
       "convert_script_confirm_dynamic": "确定要创建脚本 \"{{name}}\" 吗？",
       "convert_script_confirm_enable_script": "新脚本将被启用。",
@@ -705,11 +690,6 @@
         "headers": {
           "add": "添加条件",
           "label": "Header 匹配"
-        },
-        "headers_list": {
-          "add": "Add Header",
-          "key": "Key",
-          "value": "Value"
         },
         "label": "匹配规则",
         "test": {
@@ -799,14 +779,10 @@
     "clear_all_confirm": "确认清空全部历史记录？",
     "clear_all_msg": "这将删除所有历史会话记录（当前正在记录的会话除外）。此操作无法撤销。",
     "clear_error": "清除历史会话失败",
-    "current": "当前",
-    "delete_confirm": "确定删除此会话？",
     "delete_confirm_msg": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
     "delete_title": "删除会话",
-    "flow_count": "{{count}} 记录",
     "historical_mode": "查看历史会话",
     "history": "会话历史",
-    "latest": "最新",
     "save": {
       "desc": "备注描述 (可选)",
       "desc_placeholder": "输入关于此会话的备注信息...",
@@ -817,7 +793,6 @@
       "title": "保存当前会话",
       "success": "会话保存成功"
     },
-    "load_success": "会话加载成功",
     "export_har_success": "HAR 导出成功",
     "import_har_success": "HAR 导入成功",
     "import_har_started": "HAR 文件正在后台导入...",
@@ -920,7 +895,6 @@
       "open_logs_desc": "查看系统运行时日志",
       "title": "关于与支持",
       "version_info": "版本信息",
-      "troubleshooting": "故障排查",
       "up_to_date": "已是最新版本",
       "verbose": "详细模式",
       "verbose_desc": "记录应用及底层核心的详细运行日志，用于深度故障诊断与排查",
@@ -998,8 +972,6 @@
     "copy_address": "复制地址",
     "current_proxy": "当前代理地址",
     "got_it": "我知道了",
-    "install_cert": "安装证书",
-    "install_cert_desc": "配置代理后，使用手机浏览器访问 <strong>http://relay.guide</strong> 下载并信任证书，否则无法查看 HTTPS 内容。",
     "install_cert_step1": "配置 Wi-Fi 代理",
     "install_cert_step1_desc": "确保手机与电脑在同一 Wi-Fi。进入 Wi-Fi 详情 → 配置代理 → <strong>手动</strong>，填入 IP 地址 <code>{{ip}}</code>，端口 <code>{{port}}</code>。",
     "install_cert_step2": "访问证书安装页面",
@@ -1012,9 +984,7 @@
     "system_proxy_desc": "在系统设置中搜索「代理」，开启「使用代理服务器」，填入上述地址与端口。",
     "title": "代理配置指南",
     "trouble": "遇到问题？",
-    "trouble_desc": "检查防火墙设置，确保 {{port}} 端口未被其他程序占用。",
-    "wifi_manual": "Wi-Fi 手动配置",
-    "wifi_manual_desc": "确保手机与电脑在同一 Wi-Fi。进入 Wi-Fi 详情 → 配置代理 → <strong>手动</strong>。"
+    "trouble_desc": "检查防火墙设置，确保 {{port}} 端口未被其他程序占用。"
   },
   "sidebar": {
     "certificate": "证书管理",
@@ -1029,9 +999,7 @@
     "breakpoints": "管理断点",
     "captured": "捕获请求数",
     "ip": "本机 IP",
-    "listening": "监听中",
     "port": "监听端口",
-    "stopped": "已停止",
     "engine_healthy": "引擎工作中",
     "engine_idle": "引擎空闲",
     "engine_error": "引擎未运行"
@@ -1084,18 +1052,9 @@
       "quick": "快速过滤",
       "regex_tooltip": "正则匹配"
     },
-    "headers_list": {
-      "add": "添加 Header",
-      "encrypted": "HTTPS",
-      "failed": "失败",
-      "key": "键名",
-      "pending": "等待中"
-    },
-    "jump_to_latest": "回到最新",
     "list_cleared": "流量列表已清空",
     "listening": "正在监听网络流量...",
     "new_requests": "条新请求",
-    "proxy_error": "监听启动错误",
     "proxy_stopped": "监听未启动",
     "replay_failed": "重发失败",
     "replay_success": "请求已重发",

@@ -5,14 +5,12 @@
     "assistant": {
       "analyzing": "Smart Assistant is thinking...",
       "naming": {
-        "desc": "More descriptive naming",
         "placeholder": "Describe rule purpose...",
         "suggestions": {
           "auto": "Auto-name based on config",
           "desc": "More descriptive naming",
           "tech": "More technical naming"
         },
-        "tech": "More technical naming",
         "title": "Smart Naming Assistant"
       },
       "regex": {
@@ -117,9 +115,6 @@
     "add": "Add Breakpoint"
   },
   "cert": {
-    "format": {
-      "label": "Format"
-    },
     "actions": {
       "install": "Install & Trust Certificate",
       "regenerate": "Regenerate Root CA",
@@ -166,7 +161,6 @@
         "macos_sequoia_hint_title": "macOS 15 or Later",
         "mobile_android_hint": "Modern Android systems have strict built-in security policies; Root access or specialized debugging configurations may be required for traffic decryption.",
         "mobile_browser_access": "2. Browser Access Link",
-        "mobile_qr_code_hint": "Scan to open download link",
         "mobile_step1": "Step 1: Get Certificate",
         "mobile_step1_desc": "Ensure mobile device is on the same LAN and proxy is configured.",
         "mobile_step2": "Step 2: Install & Trust",
@@ -300,7 +294,6 @@
     "headers": "Headers",
     "help": "Help",
     "import": "Import",
-    "import_har": "Import HAR",
     "import_har_hint": "Import HAR",
     "loading": "Loading...",
     "move_down": "Move Down",
@@ -309,7 +302,6 @@
     "no": "No",
     "no_content": "No content",
     "no_results": "No results found",
-    "none": "None",
     "not_loaded": "Not Loaded",
     "ok": "OK",
     "open": "Open Session",
@@ -319,7 +311,6 @@
     "rule": "Rule",
     "restarting": "Restarting...",
     "save": "Save",
-    "save_success": "Saved successfully",
     "script": "Script",
     "search": "Search...",
     "select": "Select...",
@@ -430,10 +421,6 @@
       "messages": "Messages",
       "request": "Request",
       "response": "Response"
-    },
-    "websocket": {
-      "empty": "No WebSocket frames captured yet",
-      "title": "WebSocket Frames"
     }
   },
   "header_editor": {
@@ -650,7 +637,6 @@
       "advanced_assistant": "Advanced Assistant",
       "ai": {
         "analysis_title": "Smart Analysis",
-        "apply": "Apply Code",
         "apply_yaml": "Apply YAML",
         "chip_create": "Create Rule",
         "chip_explain": "Explain Rule",
@@ -669,7 +655,6 @@
         "tab_ai": "Smart Mode",
         "tab_script": "Script Preview"
       },
-      "convert_script_confirm": "Are you sure you want to convert this rule to a Python script?",
       "convert_script_confirm_disable_rule": "The original rule will be disabled.",
       "convert_script_confirm_dynamic": "Are you sure you want to create script \"{{name}}\"?",
       "convert_script_confirm_enable_script": "The new script will be enabled.",
@@ -705,11 +690,6 @@
         "headers": {
           "add": "Add Condition",
           "label": "Header Matching"
-        },
-        "headers_list": {
-          "add": "Add Header",
-          "key": "Key",
-          "value": "Value"
         },
         "label": "Match Label",
         "test": {
@@ -799,14 +779,10 @@
     "clear_all_confirm": "Clear All History?",
     "clear_all_msg": "This will delete all historical sessions (excluding the active recording session). This action cannot be undone.",
     "clear_error": "Failed to clear historical sessions",
-    "current": "Current",
-    "delete_confirm": "Delete this session?",
     "delete_confirm_msg": "Are you sure you want to delete session \"{{name}}\"? This action cannot be undone.",
     "delete_title": "Delete Session",
-    "flow_count": "{{count}} entries",
     "historical_mode": "Viewing historical session",
     "history": "Session History",
-    "latest": "LATEST",
     "save": {
       "desc": "Description (Optional)",
       "desc_placeholder": "Enter notes about this session...",
@@ -817,7 +793,6 @@
       "title": "Save Current Session",
       "success": "Session saved successfully"
     },
-    "load_success": "Session loaded successfully",
     "export_har_success": "HAR exported successfully",
     "import_har_success": "HAR imported successfully",
     "import_har_started": "HAR file is importing in the background...",
@@ -920,7 +895,6 @@
       "open_logs_desc": "View internal runtime logs",
       "title": "Support & About",
       "version_info": "Version Information",
-      "troubleshooting": "Troubleshooting",
       "up_to_date": "Up to date",
       "verbose": "Verbose Mode",
       "verbose_desc": "Record detailed runtime logs for the application and core for deep troubleshooting",
@@ -998,8 +972,6 @@
     "copy_address": "Copy Address",
     "current_proxy": "Current Proxy Address",
     "got_it": "Got it",
-    "install_cert": "Install Certificate",
-    "install_cert_desc": "After setting proxy, visit <strong>http://relay.guide</strong> on mobile browser to install certificate for HTTPS.",
     "install_cert_step1": "Configure Wi-Fi Proxy",
     "install_cert_step1_desc": "Make sure your phone and computer are on the same Wi-Fi. Go to Wi-Fi details → Proxy → <strong>Manual</strong>, enter IP <code>{{ip}}</code> and port <code>{{port}}</code>.",
     "install_cert_step2": "Visit Certificate Page",
@@ -1012,9 +984,7 @@
     "system_proxy_desc": "Search 'Proxy' in system settings, enable 'Use a proxy server', and enter the address/port above.",
     "title": "Proxy Setup Guide",
     "trouble": "Having Issues?",
-    "trouble_desc": "Check firewall settings and ensure port {{port}} is available.",
-    "wifi_manual": "Wi-Fi Manual Config",
-    "wifi_manual_desc": "Ensure mobile is on same Wi-Fi. Go to settings → Wi-Fi details → Proxy → <strong>Manual</strong>."
+    "trouble_desc": "Check firewall settings and ensure port {{port}} is available."
   },
   "sidebar": {
     "certificate": "Certificates",
@@ -1029,9 +999,7 @@
     "breakpoints": "Manage Breakpoints",
     "captured": "Requests Captured",
     "ip": "Local IP",
-    "listening": "Listening",
     "port": "Listening Port",
-    "stopped": "Stopped",
     "engine_healthy": "Engine running",
     "engine_idle": "Engine idle",
     "engine_error": "Engine not running"
@@ -1084,18 +1052,9 @@
       "quick": "Quick Filters",
       "regex_tooltip": "Regex"
     },
-    "headers_list": {
-      "add": "Add Header",
-      "encrypted": "HTTPS",
-      "failed": "Failed",
-      "key": "Key",
-      "pending": "Pending"
-    },
-    "jump_to_latest": "Jump to latest",
     "list_cleared": "Traffic list cleared",
     "listening": "Listening for traffic...",
     "new_requests": " new requests",
-    "proxy_error": "Capture startup error",
     "proxy_stopped": "Capture Stopped",
     "replay_failed": "Replay failed",
     "replay_success": "Request replayed",

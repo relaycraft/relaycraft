@@ -364,12 +364,9 @@ function main() {
     console.log(
       `      Total keys: ${unusedResult.totalKeys}, Used keys: ${unusedResult.usedKeysCount}`,
     );
-    unusedResult.unusedKeys.slice(0, 10).forEach((k) => {
+    unusedResult.unusedKeys.forEach((k) => {
       console.log(`      - ${k}`);
     });
-    if (unusedResult.unusedKeys.length > 10) {
-      console.log(`      ... and ${unusedResult.unusedKeys.length - 10} more`);
-    }
     console.log("      (Note: Some keys may be used dynamically or in config)");
     console.log("");
   } else {
