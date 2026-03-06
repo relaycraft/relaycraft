@@ -176,6 +176,5 @@ fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
 
 #[tauri::command]
 pub fn set_window_vibrancy(window: tauri::WebviewWindow, effect: String) {
-    println!("[Rust] set_window_vibrancy called with effect: {}", effect);
     update_vibrancy(&window, &effect);
 }

@@ -1016,7 +1016,7 @@
     "stopped": "Stopped"
   },
   "traffic": {
-    "breakpoint_hit_tooltip": "This domain has breakpoint enabled",
+    "breakpoint_active_tooltip": "Currently intercepted by breakpoint",
     "hit_detail": "{{name}} ({{type}})",
     "context_menu": {
       "body_truncated": "Body truncated due to size",

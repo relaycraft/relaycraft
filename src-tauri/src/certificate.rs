@@ -244,7 +244,7 @@ pub async fn install_cert_automated() -> Result<(), String> {
             .map_err(|e| format!("Failed to trigger cert installation: {}", e))?;
 
         if !output.status.success() {
-            return Err("证书安装操作被取消或失败".to_string());
+            return Err("Certificate installation was cancelled or failed".to_string());
         }
     }
 
@@ -295,7 +295,7 @@ pub async fn install_cert_automated() -> Result<(), String> {
                     .map_err(|e| format!("Failed to execute pkexec: {}", e))?;
 
                 if !status.success() {
-                    return Err("用户取消了授权或安装失败".to_string());
+                    return Err("User cancelled authorization or installation failed".to_string());
                 }
             }
         } else if is_rhel {
@@ -318,7 +318,7 @@ pub async fn install_cert_automated() -> Result<(), String> {
                     .map_err(|e| format!("Failed to execute pkexec: {}", e))?;
 
                 if !status.success() {
-                    return Err("用户取消了授权或安装失败".to_string());
+                    return Err("User cancelled authorization or installation failed".to_string());
                 }
             }
         } else {
@@ -350,7 +350,7 @@ pub async fn remove_cert_automated() -> Result<(), String> {
             .map_err(|e| format!("Failed to trigger cert removal: {}", e))?;
 
         if !output.status.success() {
-            return Err("证书卸载操作被取消或失败".to_string());
+            return Err("Certificate removal was cancelled or failed".to_string());
         }
     }
 
@@ -394,7 +394,7 @@ pub async fn remove_cert_automated() -> Result<(), String> {
                         .status()
                         .map_err(|e| e.to_string())?;
                     if !status.success() {
-                        return Err("卸载失败".to_string());
+                        return Err("Certificate removal failed".to_string());
                     }
                 }
             }
@@ -417,7 +417,7 @@ pub async fn remove_cert_automated() -> Result<(), String> {
                         .status()
                         .map_err(|e| e.to_string())?;
                     if !status.success() {
-                        return Err("卸载失败".to_string());
+                        return Err("Certificate removal failed".to_string());
                     }
                 }
             }
@@ -596,7 +596,7 @@ pub fn get_detailed_cert_info() -> Result<DetailedCertInfo, String> {
             .args(["-NoProfile", "-Command", &ps_script])
             .creation_flags(0x08000000) // CREATE_NO_WINDOW
             .output()
-            .map_err(|e| format!("运行 PowerShell 失败: {}", e))?;
+            .map_err(|e| format!("Failed to run PowerShell: {}", e))?;
 
         let out_str = String::from_utf8_lossy(&output.stdout);
 
@@ -611,7 +611,7 @@ pub fn get_detailed_cert_info() -> Result<DetailedCertInfo, String> {
                         ..Default::default()
                     });
                 }
-                Err(format!("解析证书信息失败: {} (Output: {})", e, out_str))
+                Err(format!("Failed to parse certificate info: {} (Output: {})", e, out_str))
             }
         }
     }
@@ -638,9 +638,9 @@ pub fn get_detailed_cert_info() -> Result<DetailedCertInfo, String> {
             Ok(out) => out,
             Err(e) => {
                 if e.kind() == std::io::ErrorKind::NotFound {
-                    return Err("系统中未安装 OpenSSL，无法解析证书详情。".to_string());
+                    return Err("OpenSSL not found. Cannot parse certificate details.".to_string());
                 }
-                return Err(format!("运行 openssl 失败: {}", e));
+                return Err(format!("Failed to run openssl: {}", e));
             }
         };
 

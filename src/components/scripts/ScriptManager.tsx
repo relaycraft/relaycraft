@@ -229,7 +229,9 @@ export function ScriptManager() {
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
               <Plus className="w-4 h-4 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <span className="truncate block">{draftScript.name} (草稿)</span>
+                <span className="truncate block">
+                  {draftScript.name} ({t("scripts.status.draft")})
+                </span>
               </div>
               <button
                 type="button"

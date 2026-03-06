@@ -1016,7 +1016,7 @@
     "stopped": "已停止"
   },
   "traffic": {
-    "breakpoint_hit_tooltip": "此域名已开启断点拦截",
+    "breakpoint_active_tooltip": "当前正被断点拦截",
     "hit_detail": "{{name}} ({{type}})",
     "context_menu": {
       "body_truncated": "正文过大已截断",

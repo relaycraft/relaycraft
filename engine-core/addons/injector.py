@@ -8,6 +8,9 @@ This runs once during proxy startup, not per-request.
 import sys
 import ast
 import argparse
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TrackingInjector(ast.NodeTransformer):
@@ -88,7 +91,7 @@ def _rc_log(level, msg):
                 node.body = helper_ast + node.body
         except Exception as e:
             # Log the error but continue with original code
-            print(f"[RELAYCRAFT] Failed to inject helper code: {e}", flush=True)
+            logger.warning(f"Failed to inject helper code: {e}")
 
         self.generic_visit(node)
         return node
@@ -224,20 +227,20 @@ def inject_tracking(source_code, script_path=None):
         if sys.version_info >= (3, 9):
             result = ast.unparse(new_tree)
             if injector.injected_count > 0:
-                print(f"[RELAYCRAFT] Successfully injected {injector.injected_count} tracking call(s) into script{path_info}", flush=True)
+                logger.debug(f"Successfully injected {injector.injected_count} tracking call(s) into script{path_info}")
             return result
         else:
             # Fallback for older python (should not happen in our env)
-            print(f"[RELAYCRAFT] Warning: Python < 3.9, skipping AST injection{path_info}", flush=True)
+            logger.warning(f"Python < 3.9, skipping AST injection{path_info}")
             return source_code
 
     except SyntaxError as e:
         # Script has syntax errors - this is critical
-        print(f"[RELAYCRAFT] Syntax error in script{path_info}: {e}", flush=True)
+        logger.warning(f"Syntax error in script{path_info}: {e}")
         return source_code
     except Exception as e:
         # Other AST errors
-        print(f"[RELAYCRAFT] AST Injection failed{path_info}: {type(e).__name__}: {e}", flush=True)
+        logger.warning(f"AST Injection failed{path_info}: {type(e).__name__}: {e}")
         return source_code
 
 if __name__ == "__main__":

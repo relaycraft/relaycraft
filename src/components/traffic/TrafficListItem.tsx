@@ -101,14 +101,11 @@ export const TrafficListItem = memo(
         {/* Source Icon - Distinguish between Local and Remote (Mobile) */}
         <div className="w-5 flex justify-center text-muted-foreground/60 flex-shrink-0">
           {isLocal ? (
-            <Tooltip content={t("traffic.source.local", "Local")} side="bottom">
+            <Tooltip content={t("traffic.source.local")} side="bottom">
               <Laptop className="w-3.5 h-3.5 opacity-20 grayscale" />
             </Tooltip>
           ) : (
-            <Tooltip
-              content={`${t("traffic.source.remote", "Remote Device")} (${index.clientIp})`}
-              side="bottom"
-            >
+            <Tooltip content={`${t("traffic.source.remote")} (${index.clientIp})`} side="bottom">
               <Smartphone className="w-3.5 h-3.5 text-blue-500/70" />
             </Tooltip>
           )}
@@ -126,7 +123,7 @@ export const TrafficListItem = memo(
               className={`px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider ${getHttpStatusCodeClass(index.status)}`}
             >
               {isError ? (
-                <Tooltip content={t("traffic.status.failed", "Connection Failed")} side="bottom">
+                <Tooltip content={t("traffic.status.failed")} side="bottom">
                   <div className="flex items-center justify-center w-6 h-4 cursor-help">
                     <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
                   </div>
@@ -173,13 +170,7 @@ export const TrafficListItem = memo(
           <div className="flex items-center gap-1.5 flex-shrink-0 px-2">
             {/* Currently intercepted indicator (pulsing) */}
             {isIntercepted && (
-              <Tooltip
-                content={t(
-                  "traffic.breakpoint_active_tooltip",
-                  "Currently intercepted by breakpoint",
-                )}
-                side="left"
-              >
+              <Tooltip content={t("traffic.breakpoint_active_tooltip")} side="left">
                 <div className="relative flex items-center justify-center w-5 h-5">
                   <div className="absolute inset-0 bg-red-500/30 rounded-full blur-[4px] animate-pulse" />
                   <div className="relative w-3.5 h-3.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse flex items-center justify-center">
@@ -190,7 +181,7 @@ export const TrafficListItem = memo(
             )}
             {/* File not found warning */}
             {index.hits?.some((h) => h.status === "file_not_found") && (
-              <Tooltip content={t("traffic.file_not_found", "File not found")} side="left">
+              <Tooltip content={t("traffic.file_not_found")} side="left">
                 <AlertTriangle className="w-3 h-3 text-error" />
               </Tooltip>
             )}
@@ -200,11 +191,11 @@ export const TrafficListItem = memo(
                 const isBreakpoint = hit.type === "breakpoint";
                 let tooltipContent = "";
                 if (isScript) {
-                  tooltipContent = `${t("common.script", "Script")}: ${hit.name}`;
+                  tooltipContent = `${t("common.script")}: ${hit.name}`;
                 } else if (isBreakpoint) {
-                  tooltipContent = `${t("common.breakpoint", "Breakpoint")}: ${hit.name}`;
+                  tooltipContent = `${t("common.breakpoint")}: ${hit.name}`;
                 } else {
-                  tooltipContent = `${t("common.rule", "Rule")}: ${hit.name}`;
+                  tooltipContent = `${t("common.rule")}: ${hit.name}`;
                 }
                 return (
                   <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">

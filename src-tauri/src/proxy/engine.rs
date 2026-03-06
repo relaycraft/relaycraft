@@ -261,7 +261,7 @@ impl ProxyEngine for MitmproxyEngine {
                 }
                 let _ = child.wait();
             }
-            return Err(AppError::Config("Timeout waiting for proxy engine to start (30s). Check if something is blocking port or if antivirus is interfering.".into()));
+            return Err(AppError::Config("Timeout waiting for proxy engine to start (120s). Check if something is blocking port or if antivirus is interfering.".into()));
         }
 
         // Spawn crash watcher
