@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
 import { notify } from "../../lib/notify";
 import { getUniqueName } from "../../lib/utils";
 import { useProxyStore } from "../../stores/proxyStore";
@@ -68,10 +69,9 @@ export function ScriptManager() {
   }, [loading, scripts, selectedScript, draftScript, selectScript]);
 
   const handleCreate = () => {
-    const defaultTemplate = `"""\nAddon Script for RelayCraft\n"""\nfrom mitmproxy import http, ctx\n\nclass Addon:\n    def request(self, flow: http.HTTPFlow):\n        # TODO: Add your logic\n        pass\n\naddons = [Addon()]\n`;
     const existingNames = scripts.map((s) => s.name);
     const uniqueName = getUniqueName("Untitled Script.py", existingNames);
-    setDraftScript({ name: uniqueName, content: defaultTemplate });
+    setDraftScript({ name: uniqueName, content: DEFAULT_SCRIPT_TEMPLATE });
   };
 
   // Calculate if restart is needed based on:

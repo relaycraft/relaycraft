@@ -14,6 +14,7 @@ interface BodyFormEditorProps {
 
 export function BodyFormEditor({ data, onChange }: BodyFormEditorProps) {
   const { t } = useTranslation();
+
   const addItem = () => {
     onChange([...data, { key: "", value: "", enabled: true }]);
   };

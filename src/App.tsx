@@ -26,6 +26,7 @@ import { TrafficView } from "./components/traffic/TrafficView";
 import { useAppInit } from "./hooks/useAppInit";
 import { useAppShortcuts } from "./hooks/useAppShortcuts";
 import { useGlobalScrollbar } from "./hooks/useGlobalScrollbar";
+import { DEFAULT_SCRIPT_TEMPLATE } from "./lib/constants";
 // Libs
 import { notify } from "./lib/notify";
 import { getUniqueName } from "./lib/utils";
@@ -178,6 +179,7 @@ function App() {
   // Header Logic State
   const activeTab = useUIStore((state) => state.activeTab);
   const pluginPages = usePluginPageStore((state) => state.pages);
+  const ruleSearchQuery = useRuleStore((state) => state.searchQuery);
 
   const handleToggleProxy = async () => {
     if (loading || toggleLock.current) return;
@@ -308,7 +310,7 @@ function App() {
                         <Input
                           type="text"
                           placeholder={t("common.search")}
-                          value={useRuleStore.getState().searchQuery}
+                          value={ruleSearchQuery}
                           onChange={(e) => useRuleStore.getState().setSearchQuery(e.target.value)}
                           className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-ui placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
                         />
@@ -373,7 +375,6 @@ function App() {
                       <Button
                         size="sm"
                         onClick={() => {
-                          const defaultTemplate = `"""\nAddon Script for RelayCraft\n"""\nfrom mitmproxy import http, ctx\n\nclass Addon:\n    def request(self, flow: http.HTTPFlow):\n        # TODO: Add your logic\n        pass\n\naddons = [Addon()]\n`;
                           const existingNames = useScriptStore
                             .getState()
                             .scripts.map((s) => s.name);
@@ -382,7 +383,7 @@ function App() {
                           useScriptStore.getState().selectScript(null);
                           useScriptStore.getState().setDraftScript({
                             name: uniqueName,
-                            content: defaultTemplate,
+                            content: DEFAULT_SCRIPT_TEMPLATE,
                           });
 
                           useUIStore.getState().setActiveTab("scripts");

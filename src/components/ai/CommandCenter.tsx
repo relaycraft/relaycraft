@@ -31,6 +31,7 @@ import { FILTER_ASSISTANT_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { mapAIRuleToInternal } from "../../lib/ai/ruleMapper";
 import { SuggestionEngine } from "../../lib/ai/suggestionEngine";
 import { cleanAIResult } from "../../lib/ai/utils";
+import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
 import { getUniqueName } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { type CommandAction, useCommandStore } from "../../stores/commandStore";
@@ -291,8 +292,9 @@ export function CommandCenter() {
           act.params?.requirement || act.params?.description || act.params?.message || "";
 
         // Initialize a blank draft so the editor opens
-        const defaultTemplate = `"""\nAddon Script for RelayCraft\n"""\nfrom mitmproxy import http, ctx\n\nclass Addon:\n    def request(self, flow: http.HTTPFlow):\n        # TODO: Add your logic\n        pass\n\naddons = [Addon()]\n`;
-        useScriptStore.getState().setDraftScript({ name: scriptName, content: defaultTemplate });
+        useScriptStore
+          .getState()
+          .setDraftScript({ name: scriptName, content: DEFAULT_SCRIPT_TEMPLATE });
 
         // Pass the requirement to AI Assistant to pre-fill/auto-run
         if (requirement) {

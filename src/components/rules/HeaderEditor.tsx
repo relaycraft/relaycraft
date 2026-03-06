@@ -37,6 +37,8 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
       <div className="space-y-2">
         {operations.map((op, index) => (
           <div
+            // TODO: index key is intentionally used for now (same pattern exists in several list editors).
+            // If we later need stable per-row keys, keep them UI-only and never persist into rule/YAML data.
             key={index}
             className="grid grid-cols-[1.5fr_130px_1fr_auto] gap-2 items-center group"
           >
