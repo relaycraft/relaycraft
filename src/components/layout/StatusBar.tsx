@@ -12,9 +12,12 @@ import { Tooltip } from "../common/Tooltip";
 import { BreakpointManager } from "../traffic/BreakpointManager";
 
 export function StatusBar() {
-  const { running, active, port } = useProxyStore();
-  const { indices } = useTrafficStore();
-  const { breakpoints } = useBreakpointStore();
+  const running = useProxyStore((state) => state.running);
+  const active = useProxyStore((state) => state.active);
+  const port = useProxyStore((state) => state.port);
+  // indices is high-frequency (500ms polling), use selector to avoid full store subscription
+  const indices = useTrafficStore((state) => state.indices);
+  const breakpoints = useBreakpointStore((state) => state.breakpoints);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const { t } = useTranslation();
   const { isOpen, setIsOpen, unreadCount, dnd } = useNotificationStore();

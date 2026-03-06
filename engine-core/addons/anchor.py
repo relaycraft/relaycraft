@@ -63,5 +63,5 @@ def error(flow: http.HTTPFlow) -> None:
                 flow_data["error"] = str(flow.error)
                 # Use _store_flow instead of flow_buffer (which no longer exists)
                 main.traffic_monitor._store_flow(flow_data)
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Anchor error capture failed: {e}")

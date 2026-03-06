@@ -129,8 +129,8 @@ class CoreAddon:
                 res_code = flow.response.status_code if flow.response else 0
                 res_len = len(flow.response.content) if flow.response and flow.response.content else 0
                 self.logger.info(f"{flow.request.method} {flow.request.url} {res_code} {res_len}b")
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Access log write failed: {e}")
 
     def is_internal_request(self, flow: http.HTTPFlow) -> bool:
         """Check if request is to RelayCraft internal API"""
@@ -156,7 +156,7 @@ class CoreAddon:
             is_proxy_port = port == current_port
 
             return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path in ("/cert", "/cert.pem", "/cert.crt"))
-        except:
+        except Exception:
             return False
 
     async def error(self, flow: http.HTTPFlow) -> None:

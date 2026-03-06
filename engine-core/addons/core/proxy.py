@@ -16,9 +16,9 @@ class ProxyManager:
                 mode = getattr(ctx.options, "mode", [])
                 if mode and mode[0].startswith("upstream:"):
                     proxy_url = mode[0][9:]
-            except:
+            except Exception:
                 pass
-                
+
         if proxy_url:
             try:
                 # Handle cases without scheme (default to http)

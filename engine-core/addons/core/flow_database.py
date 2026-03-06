@@ -254,8 +254,8 @@ class FlowDatabase:
                 self.logger.warning(f"Database connection unhealthy ({e}), reconnecting...")
                 try:
                     self._local.conn.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to close unhealthy connection: {e}")
                 self._local.conn = self._create_connection()
         return self._local.conn
 
@@ -288,8 +288,8 @@ class FlowDatabase:
                     if hasattr(self._local, 'conn') and self._local.conn:
                         try:
                             self._local.conn.close()
-                        except:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"Failed to close locked connection: {e}")
                         self._local.conn = None
                     time.sleep(0.1 * (attempt + 1))  # Exponential backoff
                     continue
@@ -305,8 +305,8 @@ class FlowDatabase:
                     if hasattr(self._local, 'conn') and self._local.conn:
                         try:
                             self._local.conn.close()
-                        except:
-                            pass
+                        except Exception as e:
+                            self.logger.debug(f"Failed to close errored connection: {e}")
                         self._local.conn = None
                     time.sleep(0.2 * (attempt + 1))
                     continue
@@ -402,8 +402,8 @@ class FlowDatabase:
                 # Delete from database (CASCADE handles related tables)
                 conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
                 deleted_count += 1
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to delete expired session: {e}")
 
         if deleted_count > 0:
             conn.commit()
@@ -995,7 +995,7 @@ class FlowDatabase:
                 if item.get('hits'):
                     try:
                         item['hits'] = json.loads(item['hits'])
-                    except:
+                    except (json.JSONDecodeError, TypeError):
                         item['hits'] = []
                 else:
                     item['hits'] = []
@@ -1597,8 +1597,8 @@ class FlowDatabase:
                         n_type='warning',
                         priority='high',
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"DB size check failed: {e}")
 
             # 6. Perform WAL checkpoint to merge WAL file into main database
             # Use PASSIVE mode to avoid blocking - it will checkpoint what it can
@@ -1612,13 +1612,13 @@ class FlowDatabase:
                 if checkpoint_result and checkpoint_result[0] > 0:
                     self.logger.debug(f"WAL checkpoint partial: {checkpoint_result}")
             except Exception as e:
-                pass  # Ignore checkpoint errors
+                self.logger.debug(f"WAL checkpoint failed: {e}")
 
             # 7. Optimize indexes (analyzes tables and updates statistics)
             try:
                 conn.execute("PRAGMA optimize")
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"PRAGMA optimize failed: {e}")
 
             # 8. Quick integrity check (only if database is small enough)
             integrity_ok = True
@@ -1628,8 +1628,8 @@ class FlowDatabase:
                     integrity_ok = result[0] == 'ok' if result else False
                     if not integrity_ok:
                         self.logger.error(f"Database integrity check failed: {result}")
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Integrity check failed: {e}")
 
             conn.commit()
 
@@ -1688,7 +1688,7 @@ class FlowDatabase:
                     if filepath.exists():
                         try:
                             filepath.unlink()
-                        except:
+                        except OSError:
                             pass
 
     def clear_session(self, session_id: str = None):
@@ -1777,8 +1777,8 @@ class FlowDatabase:
                             f"VACUUM skipped: only {free_pages}/{total_pages} free pages"
                         )
                         return
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"VACUUM prerequisite check failed: {e}")
 
             self.logger.info("Starting VACUUM...")
             start_time = time.time()

@@ -101,3 +101,35 @@ pub async fn import_rules_zip(zip_path: String) -> Result<ImportResult, String> 
         .import_zip(Path::new(&zip_path))
         .map_err(|e| e.to_tauri_error())
 }
+
+/// Save all rules and groups in a single batch operation
+/// This is more efficient than calling save_rule multiple times
+#[tauri::command]
+pub async fn save_all_rules(rules_json: String, groups_json: String) -> Result<(), String> {
+    let storage = RuleStorage::from_config().map_err(|e| e.to_tauri_error())?;
+
+    // Parse rules with their group IDs
+    #[derive(serde::Deserialize)]
+    struct RuleEntry {
+        rule: Rule,
+        group_id: String,
+    }
+    let entries: Vec<RuleEntry> =
+        serde_json::from_str(&rules_json).map_err(|e| format!("Failed to parse rules: {}", e))?;
+
+    // Parse groups
+    let groups: Vec<RuleGroup> =
+        serde_json::from_str(&groups_json).map_err(|e| format!("Failed to parse groups: {}", e))?;
+
+    // Save each rule
+    for entry in entries {
+        storage
+            .save(&entry.rule, Some(&entry.group_id))
+            .map_err(|e| e.to_tauri_error())?;
+    }
+
+    // Save groups
+    storage.save_groups(&groups).map_err(|e| e.to_tauri_error())?;
+
+    Ok(())
+}

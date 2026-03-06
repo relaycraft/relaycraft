@@ -630,7 +630,7 @@ class TrafficMonitor:
                 return obj.decode('utf-8', 'replace')
             try:
                 return str(obj)
-            except:
+            except Exception:
                 return "<Non-serializable>"
 
         # Polling endpoint - returns lightweight indices only
@@ -724,7 +724,7 @@ class TrafficMonitor:
                             "Access-Control-Allow-Origin": "*"
                         }
                     )
-                except:
+                except Exception:
                     flow.response = Response.make(
                         500,
                         b'{"error": "Critical serialization failure"}',
@@ -789,7 +789,7 @@ class TrafficMonitor:
                             "Access-Control-Allow-Origin": "*"
                         }
                     )
-                except:
+                except Exception:
                     flow.response = Response.make(
                         500,
                         b'{"error": "Critical serialization failure"}',
@@ -1119,7 +1119,7 @@ class TrafficMonitor:
                         if flow.request.content:
                             body_data = json.loads(flow.request.content.decode('utf-8'))
                             metadata = body_data if isinstance(body_data, dict) else {}
-                    except:
+                    except (json.JSONDecodeError, UnicodeDecodeError):
                         pass
 
                     # Use streaming export to avoid memory issues
@@ -1311,9 +1311,9 @@ class TrafficMonitor:
                     
                     try:
                         file_path = _os.path.abspath(file_path)
-                    except Exception:
-                        pass
-                        
+                    except Exception as e:
+                        self.logger.debug(f"Path normalization failed, using raw path: {e}")
+
                     if not file_path.lower().endswith('.relay'):
                         flow.response = Response.make(
                             400, b'{"error": "Invalid file type. Only .relay allowed"}',
@@ -1422,8 +1422,8 @@ class TrafficMonitor:
                                         md["error_message"] = str(e)
                                         conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
                                         conn.commit()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"Failed to update session error status: {e}")
 
                     t = threading.Thread(target=stream_import_worker, name=f"ImportWorker-{session_id}", daemon=True)
                     t.start()
@@ -1498,9 +1498,9 @@ class TrafficMonitor:
                     # Security: Normalize path and enforce extension
                     try:
                         file_path = _os.path.abspath(file_path)
-                    except Exception:
-                        pass
-                        
+                    except Exception as e:
+                        self.logger.debug(f"Path normalization failed, using raw path: {e}")
+
                     if not file_path.lower().endswith('.har'):
                         flow.response = Response.make(
                             400, b'{"error": "Invalid file type. Only .har allowed"}',
@@ -1573,8 +1573,8 @@ class TrafficMonitor:
                                         md["error_message"] = str(e)
                                         conn.execute("UPDATE sessions SET metadata = ? WHERE id = ?", (json.dumps(md), session_id))
                                         conn.commit()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                self.logger.debug(f"Failed to update session error status: {e}")
 
                     import threading
                     t = threading.Thread(target=stream_har_worker, name=f"ImportHARWorker-{session_id}", daemon=True)
@@ -1662,7 +1662,8 @@ class TrafficMonitor:
                     proxy_host = flow.request.host if flow.request.host != "relay.guide" else "127.0.0.1"
                     current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
                     proxy_addr = f"{proxy_host}:{current_port}"
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(f"Failed to get proxy address, using default: {e}")
                     proxy_addr = "127.0.0.1:9090"
                 t_vars["proxy_addr"] = proxy_addr
 

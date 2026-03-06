@@ -277,6 +277,7 @@ pub fn run() {
             session::har::export_har,
             rules::load_all_rules,
             rules::save_rule,
+            rules::save_all_rules,
             rules::delete_rule,
             rules::load_groups,
             rules::save_groups,

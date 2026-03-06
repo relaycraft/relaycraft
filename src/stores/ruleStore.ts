@@ -34,6 +34,7 @@ interface RuleStore {
   loadRules: () => Promise<void>;
   saveRules: () => Promise<void>;
   saveRule: (rule: Rule) => Promise<void>;
+  saveGroups: () => Promise<void>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   isEditorDirty: boolean;
@@ -153,7 +154,17 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
       return updates;
     });
-    get().saveRules();
+    // Only save the toggled rule, not all rules
+    const toggledRule = get().rules.find((r) => r.id === id);
+    if (toggledRule) {
+      get().saveRule(toggledRule);
+    }
+    // Also save groups if we enabled a group
+    const groupId = get().ruleGroups[id];
+    const group = get().groups.find((g) => g.id === groupId);
+    if (group && !group.enabled) {
+      get().saveGroups();
+    }
   },
   enableAllRules: () => {
     set((state) => ({
@@ -225,7 +236,12 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
       return { version: state.version + 1, rules: updatedRules };
     });
-    get().saveRules();
+    // Only save rules in the affected group
+    const groupId = get().ruleGroups[id];
+    const affectedRules = get().rules.filter((r) => get().ruleGroups[r.id] === groupId);
+    for (const rule of affectedRules) {
+      get().saveRule(rule);
+    }
   },
 
   moveGroup: (id: string, direction: "up" | "down") => {
@@ -254,7 +270,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         })),
       };
     });
-    get().saveRules();
+    // Only save groups, not rules
+    get().saveGroups();
   },
 
   addGroup: (group) => {
@@ -274,7 +291,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       enabled: group.enabled ?? true,
     };
     set((state) => ({ version: state.version + 1, groups: [...state.groups, finalGroup] }));
-    get().saveRules();
+    // Only save groups, not rules
+    get().saveGroups();
   },
 
   updateGroup: (id, updates) => {
@@ -318,10 +336,21 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       return newState;
     });
 
-    get().saveRules();
+    // If name changed, need to save affected rules (they move to new directory)
+    if (isNameChanging) {
+      const affectedRules = get().rules.filter((r) => get().ruleGroups[r.id] === newId);
+      for (const rule of affectedRules) {
+        get().saveRule(rule);
+      }
+    }
+    // Always save groups
+    get().saveGroups();
   },
 
   deleteGroup: (id) => {
+    // Get affected rules before state change
+    const affectedRules = get().rules.filter((r) => get().ruleGroups[r.id] === id);
+
     set((state) => {
       const newRuleGroups = { ...state.ruleGroups };
       Object.keys(newRuleGroups).forEach((rid) => {
@@ -335,7 +364,13 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         ruleGroups: newRuleGroups,
       };
     });
-    get().saveRules();
+
+    // Save affected rules (they move to Default directory)
+    for (const rule of affectedRules) {
+      get().saveRule(rule);
+    }
+    // Save groups
+    get().saveGroups();
   },
 
   toggleGroup: (id: string) => {
@@ -364,7 +399,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         group.id === id ? { ...group, collapsed: !group.collapsed } : group,
       ),
     }));
-    get().saveRules();
+    // Only save groups, not rules
+    get().saveGroups();
   },
 
   loadRules: async () => {
@@ -404,13 +440,16 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   saveRules: async () => {
     try {
       const state = get();
-      for (const rule of state.rules) {
-        await invoke("save_rule", {
-          ruleJson: JSON.stringify(rule),
-          groupId: state.ruleGroups[rule.id],
-        });
-      }
-      await invoke("save_groups", { groupsJson: JSON.stringify(state.groups) });
+      // Prepare rules with their group IDs for batch save
+      const rulesWithGroups = state.rules.map((rule) => ({
+        rule,
+        groupId: state.ruleGroups[rule.id] || "Default",
+      }));
+      // Single IPC call instead of N+1 calls
+      await invoke("save_all_rules", {
+        rulesJson: JSON.stringify(rulesWithGroups),
+        groupsJson: JSON.stringify(state.groups),
+      });
     } catch (error) {
       console.error("Failed to save rules:", error);
     }
@@ -427,6 +466,15 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to save rule:", error);
+    }
+  },
+
+  saveGroups: async () => {
+    try {
+      const state = get();
+      await invoke("save_groups", { groupsJson: JSON.stringify(state.groups) });
+    } catch (error) {
+      console.error("Failed to save groups:", error);
     }
   },
 
@@ -457,6 +505,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       const state = get();
       const currentGroups = [...state.groups];
       const currentRules = [...state.rules];
+      // Create a mutable copy of ruleGroups to avoid direct state mutation
+      const currentRuleGroups = { ...state.ruleGroups };
 
       // Merge Groups by Name
       const groupIdMap = new Map<string, string>(); // OldID -> NewID
@@ -528,14 +578,15 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         delete (newRule as any).groupId;
 
         currentRules.push(newRule);
-        state.ruleGroups[newRule.id] = targetGroupId;
+        // Update the local copy, not the state directly
+        currentRuleGroups[newRule.id] = targetGroupId;
       });
 
       set((state) => ({
         version: state.version + 1,
         groups: currentGroups,
         rules: currentRules,
-        ruleGroups: { ...state.ruleGroups },
+        ruleGroups: currentRuleGroups,
       }));
       get().saveRules();
       return { success: true, count: addedCount };
