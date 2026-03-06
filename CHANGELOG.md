@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.8](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.7...v1.0.0-rc.8) (2026-03-06)
+
+
+### Features
+
+* enhance Linux UI/UX and packaging, refactor styles, and fix logger ([e804e02](https://github.com/relaycraft/relaycraft/commit/e804e0259a2137ed71b8d39f76aef62f1d341894))
+
+
+### Bug Fixes
+
+* remove obsolete commands and correct navigation targets ([4bbb8e7](https://github.com/relaycraft/relaycraft/commit/4bbb8e768aa1a119b948c74eb2cc09372a90e68b))
+
+
+### Performance Improvements
+
+* optimize flow processing and error handling ([bd6132d](https://github.com/relaycraft/relaycraft/commit/bd6132da4d43a79bc04ef41a71810565f41b4aa7))
+
 ## [1.0.0-rc.7](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-03-05)
 
 
