@@ -216,7 +216,6 @@
     "explanations": {
       "clear": "Clearing traffic list...",
       "nav_composer": "Navigating to Request Composer...",
-      "nav_plugins": "Navigating to Plugin Market...",
       "nav_rules": "Navigating to Rules...",
       "nav_scripts": "Navigating to Scripts...",
       "nav_settings": "Navigating to Settings...",
@@ -246,7 +245,6 @@
       "composer_post_example": "Construct a POST request to target server",
       "go_to": "Go to",
       "nav_composer": "/composer (Request Composer)",
-      "nav_plugins": "/plugins (Plugins Market)",
       "nav_rules": "/rules (Go to Rules)",
       "nav_scripts": "/scripts (Go to Scripts)",
       "nav_traffic": "/traffic (Go to Traffic)",

@@ -37,12 +37,6 @@ export class NavigationProvider implements SuggestionProvider {
         name: t("sidebar.composer"),
       },
       {
-        id: "nav_plugins",
-        action: "/plugins",
-        label: t("command_center.suggestions.nav_plugins"),
-        name: t("sidebar.plugins"),
-      },
-      {
         id: "settings",
         action: "/settings",
         label: t("command_center.suggestions.settings"),

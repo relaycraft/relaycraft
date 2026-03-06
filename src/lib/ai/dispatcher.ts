@@ -136,21 +136,20 @@ export async function dispatchCommand(
       confidence: 1.0,
       explanation: translate("command_center.explanations.nav_composer"),
     },
-    "/plugins": {
-      intent: "NAVIGATE",
-      params: { path: "/plugins" },
-      confidence: 1.0,
-      explanation: translate("command_center.explanations.nav_plugins"),
-    },
     "/proxy": {
       intent: "OPEN_SETTINGS",
-      params: { category: "proxy" },
+      params: { category: "network" },
       confidence: 1.0,
       explanation: translate("command_center.explanations.open_proxy"),
     },
     "/cert": {
-      intent: "NAVIGATE",
-      params: { path: "/certificate" },
+      intent: "OPEN_SETTINGS",
+      params: { category: "certificate" },
+      confidence: 1.0,
+    },
+    "/certificate": {
+      intent: "OPEN_SETTINGS",
+      params: { category: "certificate" },
       confidence: 1.0,
     },
   };

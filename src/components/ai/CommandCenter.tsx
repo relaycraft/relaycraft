@@ -232,8 +232,6 @@ export function CommandCenter() {
     if (p.includes("script")) return "scripts";
     if (p.includes("traffic") || p.includes("dashboard")) return "traffic";
     if (p.includes("composer")) return "composer";
-    if (p.includes("plugin")) return "plugins";
-    if (p.includes("cert")) return "certificate";
     if (p.includes("setting")) return "settings";
     return null;
   };

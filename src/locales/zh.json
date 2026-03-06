@@ -216,7 +216,6 @@
     "explanations": {
       "clear": "正在清空流量列表...",
       "nav_composer": "正在跳转到请求构造器...",
-      "nav_plugins": "正在跳转到插件市场...",
       "nav_rules": "正在跳转到规则管理...",
       "nav_scripts": "正在跳转到脚本管理...",
       "nav_settings": "正在跳转到系统设置...",
@@ -246,7 +245,6 @@
       "composer_post_example": "构造一个发往目标服务器的 POST 请求",
       "go_to": "跳转到",
       "nav_composer": "/composer 构造请求",
-      "nav_plugins": "/plugins 插件管理",
       "nav_rules": "/rules 规则管理",
       "nav_scripts": "/scripts 脚本管理",
       "nav_traffic": "/traffic 流量监控",
