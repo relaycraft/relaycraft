@@ -1,6 +1,12 @@
 {
   "identifier": "com.beta.relaycraft",
   "bundle": {
-    "externalBin": ["binaries/engine"]
+    "shortDescription": "AI-Native Web Traffic Debugging Tool",
+    "longDescription": "RelayCraft is a powerful, AI-native network debugging tool designed for modern development. Built with Tauri, React, and Rust, it bridges the gap between professional-grade proxy engines and modern developer experience with deep AI integration.",
+    "copyright": "Copyright © 2026 RelayCraft Team",
+    "licenseFile": "../LICENSE",
+    "externalBin": [
+      "binaries/engine"
+    ]
   }
 }

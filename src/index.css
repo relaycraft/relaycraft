@@ -250,11 +250,7 @@ button:disabled {
   border-color: var(--color-border);
 }
 
-/* Specific optimization for macOS + Chinese: Increase base font size via rem-base adjustment */
-html.platform-mac.lang-zh {
-  font-size: 106.25%;
-  /* Scales 16px to 17px equivalent in rem */
-}
+
 
 /* Typography Hierarchy */
 h1,
@@ -465,31 +461,7 @@ pre,
   background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
 }
 
-/* macOS Specific Overrides */
-/* 1. Reset to standard Mac overlay feel (wider track for padding) */
-html.platform-mac ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
 
-/* 2. Mac thumb: thinner visual appearance via border+background-clip */
-html.platform-mac ::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  /* Results in 6px visible thumb with 10px track */
-  background-clip: content-box;
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 90%);
-}
-
-/* 3. Darker on container hover or during scroll */
-html.platform-mac :hover::-webkit-scrollbar-thumb,
-html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 75%);
-}
-
-/* 4. Even darker when hovering the thumb itself */
-html.platform-mac ::-webkit-scrollbar-thumb:hover {
-  background-color: color-mix(in srgb, var(--color-foreground), transparent 50%);
-}
 
 /* Utility to completely hide */
 .no-scrollbar::-webkit-scrollbar {
@@ -961,4 +933,72 @@ select option:hover {
   .border-method-delete {
     border-color: var(--color-method-delete);
   }
+}
+
+/*
+  * Platform Specific Overrides
+  * =========================================
+  */
+
+/*
+ * macOS: Native-like Scrollbars & Typography
+ */
+
+/* Specific optimization for macOS + Chinese: Increase base font size via rem-base adjustment */
+html.platform-mac.lang-zh {
+  font-size: 106.25%;
+  /* Scales 16px to 17px equivalent in rem */
+}
+
+/* 1. Reset to standard Mac overlay feel (wider track for padding) */
+html.platform-mac ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* 2. Mac thumb: thinner visual appearance via border+background-clip */
+html.platform-mac ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  /* Results in 6px visible thumb with 10px track */
+  background-clip: content-box;
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 90%);
+}
+
+/* 3. Darker on container hover or during scroll */
+html.platform-mac :hover::-webkit-scrollbar-thumb,
+html.platform-mac .is-scrolling::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 75%);
+}
+
+/* 4. Even darker when hovering the thumb itself */
+html.platform-mac ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-foreground), transparent 50%);
+}
+
+/*
+ * Linux: Rounded corners for borderless window
+ */
+html.platform-linux {
+  background: transparent !important;
+}
+
+html.platform-linux body {
+  background: transparent !important;
+  /* Ensure the body doesn't overflow the rounded container */
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+html.platform-linux #root {
+  /* Apply the actual window shape */
+  border-radius: 12px;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--color-background);
+  /* Add a subtle border to define the edge clearly on dark backgrounds */
+  border: 1px solid var(--color-border);
+  /* Ensure fixed positioned elements (like TitleBar) are clipped by this container */
+  contain: paint;
 }

@@ -86,12 +86,18 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         if (osType === "macos") {
           document.documentElement.classList.add("platform-mac");
           useUIStore.getState().setOsType(true);
+        } else if (osType === "linux") {
+          document.documentElement.classList.add("platform-linux");
         }
       } catch (_e) {
         // Fallback
         const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
         if (isMac) {
           document.documentElement.classList.add("platform-mac");
+        }
+        const isLinux = typeof navigator !== "undefined" && /Linux/.test(navigator.userAgent);
+        if (isLinux) {
+          document.documentElement.classList.add("platform-linux");
         }
         useUIStore.getState().setOsType(isMac);
       }

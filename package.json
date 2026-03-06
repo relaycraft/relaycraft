@@ -2,6 +2,15 @@
   "name": "relaycraft",
   "private": true,
   "version": "1.0.0-rc.7",
+  "description": "AI-Native Web Traffic Debugging Tool",
+  "homepage": "https://relaycraft.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/relaycraft/relaycraft"
+  },
+  "bugs": {
+    "url": "https://github.com/relaycraft/relaycraft/issues"
+  },
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "author": "RelayCraft Team",

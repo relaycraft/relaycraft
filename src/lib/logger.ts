@@ -6,6 +6,11 @@ const consola = createConsola({
   level: 3, // Info
 });
 
+const isTauriRuntimeAvailable = () =>
+  typeof window !== "undefined" &&
+  "__TAURI_INTERNALS__" in window &&
+  typeof (window as any).__TAURI_INTERNALS__?.invoke === "function";
+
 /**
  * Core Application Logger
  *
@@ -27,6 +32,7 @@ export const Logger = {
     } else {
       consola.info(message);
     }
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await info(msg);
     } catch (e) {
@@ -41,6 +47,7 @@ export const Logger = {
     } else {
       consola.warn(message);
     }
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await warn(msg);
     } catch (e) {
@@ -57,6 +64,7 @@ export const Logger = {
     } else {
       consola.error(message);
     }
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await error(msg);
     } catch (e) {
@@ -74,6 +82,7 @@ export const Logger = {
     } else {
       consola.debug(message);
     }
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await debug(msg);
     } catch (e) {
@@ -88,6 +97,7 @@ export const Logger = {
     const msg = context ? `${message} ${JSON.stringify(context)}` : message;
     consola.withTag("AUDIT").log(message, context || "");
 
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await invoke("log_domain_event", { domain: "audit", message: msg });
     } catch (e) {
@@ -103,6 +113,7 @@ export const Logger = {
     // Don't clutter console too much, maybe just standard log
     consola.withTag("SCRIPT").log(message);
 
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await invoke("log_domain_event", { domain: "script", message: msg });
     } catch (e) {
@@ -117,6 +128,7 @@ export const Logger = {
     const msg = pluginId ? `[${pluginId}] ${message}` : message;
     consola.withTag("PLUGIN").log(message);
 
+    if (!isTauriRuntimeAvailable()) return;
     try {
       await invoke("log_domain_event", { domain: "plugin", message: msg });
     } catch (e) {
