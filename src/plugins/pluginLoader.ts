@@ -78,38 +78,44 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
     // Expose to internal registry for retrieval during script execution
     (window as any).__PLUGIN_APIS[plugin.manifest.id] = scopedApi;
 
-    // Create a script tag and execute the content
-    const script = document.createElement("script");
-    script.id = `plugin-script-${plugin.manifest.id}`;
+    // Wrap content in a closure to inject RelayCraft functionality.
+    // Use a Blob URL rather than script.textContent so the browser treats it as
+    // an external script — required to satisfy `script-src 'self' blob:` in the
+    // production CSP. Inline scripts (textContent) are blocked by `script-src 'self'`.
+    const wrappedContent = `(function() {
+    const pluginId = "${plugin.manifest.id}";
+    const scopedApi = globalThis.__PLUGIN_APIS[pluginId];
+    const components = globalThis.__PLUGIN_COMPONENTS;
+    const React = globalThis.React;
+    const RelayCraft = { api: scopedApi, components: components };
+    globalThis.RelayCraft = RelayCraft;
+    globalThis.ProxyPilot = RelayCraft;
+    console.log('[PluginLoader] Initialized API for ' + pluginId);
+    try {
+        ${content}
+    } catch(e) {
+        console.error("[PluginLoader] Plugin execution error:", e);
+        scopedApi.ui.toast("Plugin Error: " + (e.message || String(e)), "error");
+    }
+})();`;
 
-    // Wrap content in a Proxy/Closure to inject RelayCraft functionality
-    script.textContent = `
-            (function() {
-                const pluginId = "${plugin.manifest.id}";
-                const scopedApi = globalThis.__PLUGIN_APIS[pluginId];
-                const components = globalThis.__PLUGIN_COMPONENTS;
-                const React = globalThis.React;
-
-                const RelayCraft = {
-                    api: scopedApi,
-                    components: components
-                };
-
-                // Legacy compatibility
-                globalThis.RelayCraft = RelayCraft;
-                globalThis.ProxyPilot = RelayCraft; 
-
-                console.log('[PluginLoader] Initialized API for ' + pluginId);
-
-                try {
-                    ${content}
-                } catch(e) {
-                    console.error("[PluginLoader] Plugin execution error:", e);
-                    scopedApi.ui.toast("Plugin Error: " + (e.message || String(e)), "error");
-                }
-            })();
-        `;
-    document.head.appendChild(script);
+    await new Promise<void>((resolve) => {
+      const blob = new Blob([wrappedContent], { type: "application/javascript" });
+      const blobUrl = URL.createObjectURL(blob);
+      const script = document.createElement("script");
+      script.id = `plugin-script-${plugin.manifest.id}`;
+      script.src = blobUrl;
+      script.onload = () => {
+        URL.revokeObjectURL(blobUrl);
+        resolve();
+      };
+      script.onerror = (e) => {
+        URL.revokeObjectURL(blobUrl);
+        Logger.error(`Plugin script load error for ${plugin.manifest.id}:`, e);
+        resolve(); // resolve so other plugins still load
+      };
+      document.head.appendChild(script);
+    });
 
     Logger.debug(`Successfully loaded UI for plugin: ${plugin.manifest.id}`);
   } catch (error) {
