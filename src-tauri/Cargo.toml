@@ -1,6 +1,6 @@
 [package]
 name = "relaycraft"
-version = "1.0.0-rc.9"
+version = "1.0.0-rc.10"
 description = "RelayCraft - Powerful HTTP Proxy Tool"
 authors = ["RelayCraft Team"]
 edition = "2021"

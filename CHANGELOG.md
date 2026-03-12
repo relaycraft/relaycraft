@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.10](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.9...v1.0.0-rc.10) (2026-03-12)
+
+
+### Bug Fixes
+
+* fix plugin JS execution blocked by production CSP ([4135ab0](https://github.com/relaycraft/relaycraft/commit/4135ab084e0a5e9af3c50a966a11ec6a8185d998))
+
 ## [1.0.0-rc.9](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.8...v1.0.0-rc.9) (2026-03-12)
 
 
