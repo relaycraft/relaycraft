@@ -11,6 +11,32 @@ use std::thread;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
+/// On Linux, read `RssAnon` (anonymous RSS) from `/proc/[pid]/status`.
+///
+/// RssAnon = private heap + stack. It excludes file-mapped shared pages
+/// (e.g. shared libraries) that sysinfo's `memory()` (VmRSS) includes,
+/// so summing RssAnon across a process tree gives accurate totals without
+/// the 5-10× inflation caused by shared-library double-counting.
+///
+/// Falls back to 0 if the file is unreadable (process already exited, etc.).
+#[cfg(target_os = "linux")]
+fn read_rss_anon(pid: u32) -> u64 {
+    let path = format!("/proc/{}/status", pid);
+    let Ok(content) = std::fs::read_to_string(path) else {
+        return 0;
+    };
+    for line in content.lines() {
+        if let Some(rest) = line.strip_prefix("RssAnon:") {
+            if let Some(kb_str) = rest.split_whitespace().next() {
+                if let Ok(kb) = kb_str.parse::<u64>() {
+                    return kb * 1024;
+                }
+            }
+        }
+    }
+    0
+}
+
 /// Summary of proxy status
 pub struct ProxyStatus {
     pub running: bool,
@@ -438,19 +464,19 @@ impl ProxyEngine for MitmproxyEngine {
         if cached_pids_lock.is_empty()
             || now.duration_since(*last_refresh_lock) > Duration::from_secs(30)
         {
-            // Full refresh to discover new processes (WebView2, Proxy, etc.)
+            // Full refresh to discover new processes (WebView, Proxy, etc.)
             sys.refresh_processes(ProcessesToUpdate::All, true);
 
-            // Strategy A: Find all descendants starting from the Current Process (Main App)
+            // BFS from the main Tauri process to include all descendants,
+            // including the WebView which is a major part of actual memory usage.
             let main_pid = sysinfo::get_current_pid().unwrap();
             let mut pids = vec![main_pid];
             let mut queue = vec![main_pid];
 
-            // Breadth-First Search for all descendants
             while let Some(parent_pid) = queue.pop() {
                 for (pid, process) in sys.processes() {
                     if let Some(ppid) = process.parent() {
-                        if ppid == parent_pid {
+                        if ppid == parent_pid && !pids.contains(pid) {
                             queue.push(*pid);
                             pids.push(*pid);
                         }
@@ -469,7 +495,7 @@ impl ProxyEngine for MitmproxyEngine {
             sys.refresh_processes(ProcessesToUpdate::Some(&cached_pids_lock), true);
         }
 
-        let mut total_memory = 0;
+        let mut total_memory = 0u64;
         let mut total_cpu = 0.0;
         let mut uptime = 0;
         let main_pid = sysinfo::get_current_pid().unwrap();
@@ -477,7 +503,20 @@ impl ProxyEngine for MitmproxyEngine {
 
         for pid in &*cached_pids_lock {
             if let Some(process) = sys.process(*pid) {
-                total_memory += process.memory();
+                // On Linux, sysinfo returns RSS which double-counts shared library
+                // pages across processes (each WebKitGTK subprocess re-counts libc,
+                // libstdc++ etc.), inflating the total by 5-10×.
+                // RssAnon (anonymous RSS = private heap + stack) from /proc/[pid]/status
+                // excludes file-mapped shared pages and gives an accurate per-process
+                // figure that sums correctly across the process tree.
+                #[cfg(target_os = "linux")]
+                {
+                    total_memory += read_rss_anon(pid.as_u32());
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    total_memory += process.memory();
+                }
                 total_cpu += process.cpu_usage();
                 if *pid == main_pid {
                     uptime = process.run_time();
