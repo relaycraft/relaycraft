@@ -34,9 +34,10 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
     let client_builder = reqwest::Client::builder()
         // TLS verification must be disabled here by design: all requests are routed through the
         // local mitmproxy engine, which dynamically re-signs certificates with its own CA.
-        // Platform TLS verifiers reject these generated certs regardless of CA trust due to 
+        // Platform TLS verifiers reject these generated certs regardless of CA trust due to
         // additional compliance checks. This is safe because the connection target is always loopback.
         .danger_accept_invalid_certs(true)
+        .timeout(std::time::Duration::from_secs(30))
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .gzip(true)
         .brotli(true)

@@ -119,8 +119,18 @@ impl ScriptStorage {
         Ok(result)
     }
 
+    /// Validate that a script name contains no path traversal characters.
+    fn validate_name(name: &str) -> Result<(), ScriptError> {
+        if name.contains("..") || name.contains('/') || name.contains('\\') {
+            log::warn!("[Security] Blocked path traversal in script name: {}", name);
+            return Err(ScriptError::NotFound(format!("Invalid script name: {}", name)));
+        }
+        Ok(())
+    }
+
     /// Get script content
     pub fn get_content(&self, name: &str) -> Result<String, ScriptError> {
+        Self::validate_name(name)?;
         let path = self.base_dir.join(name);
         fs::read_to_string(path).map_err(|e| ScriptError::Io(e))
     }
@@ -145,6 +155,7 @@ impl ScriptStorage {
 
     /// Delete script
     pub fn delete_script(&self, name: &str) -> Result<(), ScriptError> {
+        Self::validate_name(name)?;
         let path = self.base_dir.join(name);
         if path.exists() {
             fs::remove_file(path)?;

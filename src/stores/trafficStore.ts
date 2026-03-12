@@ -80,6 +80,10 @@ interface TrafficStore {
 
 // ==================== Store Implementation ====================
 
+// Generation counter for selectFlow — prevents stale async responses from
+// overwriting the result of a more recent selection.
+let selectGeneration = 0;
+
 export const useTrafficStore = create<TrafficStore>((set, get) => ({
   // ========== Initial State ==========
   indices: [],
@@ -198,12 +202,19 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
 
   selectFlow: async (id) => {
     if (!id) {
-      set({ selectedFlow: null });
+      // Increment generation so any in-flight request for the previous flow
+      // finds a mismatched counter and discards its result.
+      ++selectGeneration;
+      set({ selectedFlow: null, selectedLoading: false });
       return;
     }
 
+    const generation = ++selectGeneration;
     set({ selectedLoading: true });
     const flow = await get().loadDetail(id);
+
+    // Discard if a newer selectFlow call has already taken over
+    if (generation !== selectGeneration) return;
 
     set({
       selectedFlow: flow,

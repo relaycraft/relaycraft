@@ -44,6 +44,14 @@ pub async fn read_plugin_file(
     file_name: String,
     _app: AppHandle,
 ) -> Result<String, String> {
+    // [SECURITY] 1. Quick-reject obvious traversal sequences.
+    // Sub-paths like "locales/en.json" are valid for plugins, so only ".." is blocked here.
+    // The canonical path check below is the definitive guard.
+    if file_name.contains("..") {
+        log::warn!("[Security] Blocked path traversal in read_plugin_file: {}", file_name);
+        return Err("Security Violation: Invalid filename".to_string());
+    }
+
     let app_dir = config::get_data_dir()?;
     let plugins_dir = app_dir.join("plugins");
 
@@ -51,13 +59,27 @@ pub async fn read_plugin_file(
     let plugin_path = crate::plugins::resolve_plugin_path(&plugins_dir, &plugin_id)
         .ok_or_else(|| format!("Plugin not found: {}", plugin_id))?;
 
-    let file_path = plugin_path.join(file_name);
+    let file_path = plugin_path.join(&file_name);
 
-    if !file_path.exists() {
-        return Err(format!("File not found: {:?}", file_path));
+    // [SECURITY] 2. Canonical path check — the resolved file must physically reside
+    // inside the plugin directory. Catches all traversal variants regardless of how
+    // the OS normalises separators or symlinks.
+    let canonical_file = file_path
+        .canonicalize()
+        .map_err(|_| "File not found".to_string())?;
+    let canonical_plugin_root = plugin_path
+        .canonicalize()
+        .map_err(|_| "Invalid plugin installation".to_string())?;
+
+    if !canonical_file.starts_with(&canonical_plugin_root) {
+        log::warn!(
+            "[Security] Path traversal attempt in read_plugin_file: {:?}",
+            canonical_file
+        );
+        return Err("Security Violation: Access denied".to_string());
     }
 
-    std::fs::read_to_string(file_path).map_err(|e| e.to_string())
+    std::fs::read_to_string(canonical_file).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

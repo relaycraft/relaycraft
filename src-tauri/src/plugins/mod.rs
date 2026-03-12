@@ -289,6 +289,18 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     }
     fs::create_dir_all(&target_dir).map_err(|e| e.to_string())?;
 
+    // 100 MB total extraction limit to prevent zip-bomb attacks.
+    const MAX_EXTRACT_BYTES: u64 = 100 * 1024 * 1024;
+    // Chunk size for streaming copy (64 KB).
+    const CHUNK: usize = 64 * 1024;
+    let mut total_extracted: u64 = 0;
+
+    // Helper: clean up and return an error.
+    let abort = |msg: &str| -> Result<String, String> {
+        let _ = fs::remove_dir_all(&target_dir);
+        Err(msg.to_string())
+    };
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         let outpath = match file.enclosed_name() {
@@ -304,8 +316,34 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
                     fs::create_dir_all(p).map_err(|e| e.to_string())?;
                 }
             }
+
+            // Pre-check: reject the entry before opening if its reported size
+            // alone would breach the budget. This avoids any disk write for
+            // obviously oversized entries.
+            let reported = file.size();
+            if total_extracted + reported > MAX_EXTRACT_BYTES {
+                return abort("Plugin archive exceeds 100 MB extraction limit");
+            }
+
             let mut outfile = fs::File::create(&outpath).map_err(|e| e.to_string())?;
-            std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
+
+            // Chunked copy: enforce the limit during the actual write stream so
+            // that a compressed entry whose true size exceeds its reported size
+            // (or whose reported size is 0) cannot exhaust disk before we notice.
+            let mut buf = vec![0u8; CHUNK];
+            loop {
+                use std::io::Read;
+                let n = file.read(&mut buf).map_err(|e| e.to_string())?;
+                if n == 0 {
+                    break;
+                }
+                total_extracted += n as u64;
+                if total_extracted > MAX_EXTRACT_BYTES {
+                    return abort("Plugin archive exceeds 100 MB extraction limit");
+                }
+                use std::io::Write;
+                outfile.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+            }
         }
     }
 
