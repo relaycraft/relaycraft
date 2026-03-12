@@ -448,6 +448,21 @@
       "storage_warning_msg": "流量数据库已达 {{size_mb}} MB，建议清理历史会话以释放空间。"
     }
   },
+  "mcp": {
+    "title": "外部集成",
+    "section_title": "MCP 服务器",
+    "enable": "启用 MCP 服务器",
+    "enable_desc": "启动时在本地开启 MCP 服务器，允许 Claude Desktop、Cursor 等工具读取流量数据",
+    "port": "监听端口",
+    "port_desc": "MCP 服务器本地监听端口（默认：7090）",
+    "status_running": "运行中 · 端口 {{port}}",
+    "status_stopped": "已停止",
+    "config_snippet": "接入配置",
+    "config_snippet_desc": "将以下配置粘贴到 Claude Desktop 或 Cursor 的 MCP 配置文件中",
+    "copy_config": "复制配置",
+    "copied": "已复制！",
+    "privacy_notice": "流量数据可能包含 Token、密钥等敏感信息，请仅在受信任的环境中启用 MCP 服务器。"
+  },
   "notifications": {
     "all_processed": "所有通知都已处理完毕",
     "category": {

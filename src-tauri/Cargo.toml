@@ -41,7 +41,9 @@ futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
 url = "2"
 tauri-plugin-fs = "2.4.5"
-tokio = { version = "1", features = ["process", "rt-multi-thread"] }
+tokio = { version = "1", features = ["process", "rt-multi-thread", "net", "sync"] }
+axum = { version = "0.8", features = [] }
+tower-http = { version = "0.6", features = ["cors"] }
 tauri-plugin-process = "2"
 rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }

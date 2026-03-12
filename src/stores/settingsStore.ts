@@ -23,6 +23,10 @@ export interface AppConfig {
   display_density: "compact" | "comfortable" | "relaxed";
   enable_vibrancy: boolean;
   ai_config?: any;
+  mcp_config: {
+    enabled: boolean;
+    port: number;
+  };
 }
 
 export type ConnectionStatus = "idle" | "success" | "error";
@@ -52,6 +56,7 @@ interface SettingsStore {
   updateEnableVibrancy: (value: boolean) => Promise<void>;
   testUpstreamConnectivity: () => Promise<void>;
   resetUpstreamStatus: () => void;
+  updateMcpConfig: (mcpConfig: { enabled: boolean; port: number }) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -74,6 +79,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     auto_start_proxy: false,
     display_density: "comfortable",
     enable_vibrancy: true,
+    mcp_config: {
+      enabled: false,
+      port: 7090,
+    },
   },
   loading: false,
   testingUpstream: false,
@@ -204,5 +213,16 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   resetUpstreamStatus: () => {
     set({ upstreamStatus: "idle", upstreamMessage: "" });
+  },
+
+  updateMcpConfig: async (mcpConfig) => {
+    const { config, saveConfig } = get();
+    await saveConfig({ ...config, mcp_config: mcpConfig });
+    // Tell Rust to apply the new config (start/stop server as needed)
+    try {
+      await invoke("apply_mcp_config");
+    } catch (error) {
+      Logger.error("Failed to apply MCP config:", error);
+    }
   },
 }));

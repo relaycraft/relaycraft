@@ -10,6 +10,7 @@ import {
   Package as PackageIcon,
   Palette,
   RefreshCcw,
+  Server,
   Settings as SettingsIcon,
   Shield,
   Sparkles,
@@ -28,6 +29,7 @@ import { AppearanceSettings } from "./AppearanceSettings";
 import { CertificateSettings } from "./CertificateSettings";
 import { LicensesModal } from "./LicensesModal";
 import { MarketView } from "./MarketView";
+import { McpSettings } from "./McpSettings";
 import { PluginSettings } from "./PluginSettings";
 import {
   SettingsInput,
@@ -152,6 +154,12 @@ export function SettingsView() {
         onClick={() => setSettingsTab("network")}
       />
       <SettingsTabButton
+        label={t("mcp.title")}
+        icon={Server}
+        active={settingsTab === "mcp"}
+        onClick={() => setSettingsTab("mcp")}
+      />
+      <SettingsTabButton
         label={t("ai.title")}
         icon={Sparkles}
         active={settingsTab === "ai"}
@@ -240,6 +248,8 @@ export function SettingsView() {
           )}
 
           {settingsTab === "appearance" && <AppearanceSettings />}
+
+          {settingsTab === "mcp" && <McpSettings />}
 
           {settingsTab === "network" && (
             <SettingsSection title={t("settings.network.title")}>

@@ -2,6 +2,7 @@ mod ai;
 mod certificate;
 mod common;
 mod config;
+mod mcp;
 pub mod plugins;
 mod proxy;
 mod rules;
@@ -139,6 +140,7 @@ pub fn run() {
         })
         .manage(StartupWarnings { config_was_reset })
         .manage(plugins::PluginCache::default())
+        .manage(mcp::McpState::default())
         .setup(move |app| {
             // Delegate window setup to common::window (handles macOS vibrancy and cross-platform decor)
             if let Some(window) = app.get_webview_window("main") {
@@ -212,6 +214,12 @@ pub fn run() {
                 }
             }
 
+            // Auto-start MCP Server if enabled in config
+            if app_config.mcp_config.enabled {
+                let mcp_state = app.state::<mcp::McpState>();
+                mcp::start(&mcp_state, app_config.mcp_config.port, app_config.proxy_port);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -282,6 +290,8 @@ pub fn run() {
             logging::log_domain_event,
             logging::get_logs,
             get_startup_warnings,
+            mcp::get_mcp_status,
+            mcp::apply_mcp_config,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

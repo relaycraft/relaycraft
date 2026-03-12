@@ -448,6 +448,21 @@
       "storage_warning_msg": "Traffic database has reached {{size_mb}} MB. Consider clearing old sessions to free up space."
     }
   },
+  "mcp": {
+    "title": "Integrations",
+    "section_title": "MCP Server",
+    "enable": "Enable MCP Server",
+    "enable_desc": "Start a local MCP Server at launch, allowing Claude Desktop, Cursor, and other tools to access your traffic data",
+    "port": "Listening Port",
+    "port_desc": "Local port for MCP Server (default: 7090)",
+    "status_running": "Running · Port {{port}}",
+    "status_stopped": "Stopped",
+    "config_snippet": "Integration Config",
+    "config_snippet_desc": "Paste into Claude Desktop or Cursor MCP config file to connect",
+    "copy_config": "Copy Config",
+    "copied": "Copied!",
+    "privacy_notice": "Traffic data may contain sensitive information such as tokens and credentials. Only enable MCP Server in trusted environments."
+  },
   "notifications": {
     "all_processed": "You are all caught up",
     "category": {

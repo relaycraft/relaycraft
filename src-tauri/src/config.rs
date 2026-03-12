@@ -5,6 +5,21 @@ use std::path::PathBuf;
 use crate::ai::config::AIConfig;
 use crate::logging;
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct McpConfig {
+    pub enabled: bool,
+    pub port: u16,
+}
+
+impl Default for McpConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            port: 7090,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct UpstreamProxyConfig {
     pub enabled: bool,
@@ -42,6 +57,8 @@ pub struct AppConfig {
     pub cert_warning_ignored: bool,
     #[serde(default = "default_true")]
     pub enable_vibrancy: bool,
+    #[serde(default)]
+    pub mcp_config: McpConfig,
 }
 
 fn default_registry_url() -> String {
@@ -82,6 +99,7 @@ impl Default for AppConfig {
             theme_registry_url: default_theme_registry_url(),
             cert_warning_ignored: false,
             enable_vibrancy: true,
+            mcp_config: McpConfig::default(),
         }
     }
 }

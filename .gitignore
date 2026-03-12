@@ -58,3 +58,6 @@ src-tauri/gen/schemas/
 src-tauri/binaries/
 src-tauri/resources/engine/
 src-tauri/resources/addons/
+
+# Claude Code
+.claude/

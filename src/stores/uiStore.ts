@@ -25,6 +25,7 @@ export type SettingsTabType =
   | "general"
   | "appearance"
   | "network"
+  | "mcp"
   | "ai"
   | "plugins"
   | "certificate"
