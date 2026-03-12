@@ -38,6 +38,7 @@ const mockConfig: AppConfig = {
   auto_start_proxy: false,
   display_density: "comfortable",
   enable_vibrancy: true,
+  mcp_config: { enabled: false, port: 7090 },
 };
 
 describe("settingsStore", () => {

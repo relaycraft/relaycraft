@@ -23,7 +23,10 @@ export interface AppConfig {
   display_density: "compact" | "comfortable" | "relaxed";
   enable_vibrancy: boolean;
   ai_config?: any;
-  mcp_config: {
+  // Optional so that configs written by older versions (which lack this field)
+  // deserialise without error. Rust's #[serde(default)] ensures the backend
+  // always returns it, but defensive UI code should use `?? { enabled: false, port: 7090 }`.
+  mcp_config?: {
     enabled: boolean;
     port: number;
   };

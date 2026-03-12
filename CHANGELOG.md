@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.9](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.8...v1.0.0-rc.9) (2026-03-12)
+
+
+### Features
+
+* add MCP Server to expose traffic data to external tools ([8f46f55](https://github.com/relaycraft/relaycraft/commit/8f46f5512141f0e777e7bf33df25dc13590ea702))
+
+
+### Bug Fixes
+
+* correct flow timing calculation for receive and connection reuse ([0dfe6fb](https://github.com/relaycraft/relaycraft/commit/0dfe6fb18c759fd54ff6db0911ba78c2262bf4db))
+* implement Linux-specific memory usage tracking with RssAnon ([f4f3a69](https://github.com/relaycraft/relaycraft/commit/f4f3a699f251847483c05de11c7e0e1576d5794f))
+* patch path traversal, zip-bomb, and selectFlow race condition ([9f26459](https://github.com/relaycraft/relaycraft/commit/9f2645984d2c652cbb8c29ccf28ef17345d3d23e))
+
 ## [1.0.0-rc.8](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.7...v1.0.0-rc.8) (2026-03-06)
 
 
