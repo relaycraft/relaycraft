@@ -260,7 +260,7 @@ class TrafficMonitor:
                 )
                 duration = (t_end - t_start) * 1000
 
-                # Detailed timing from server connection
+                # Detailed timing from server connection.
                 if flow.server_conn and hasattr(flow.server_conn, "timestamp_start"):
                     conn = flow.server_conn
                     ts_start = getattr(conn, "timestamp_start", None)
@@ -270,22 +270,42 @@ class TrafficMonitor:
                         getattr(conn, "timestamp_ssl_setup", None)
                     )
 
-                    if ts_start and ts_tcp:
-                        timings["dns"] = max(0, (ts_tcp - ts_start) * 1000)
-                    if ts_tcp and ts_tls:
-                        timings["ssl"] = max(0, (ts_tls - ts_tcp) * 1000)
+                    # Connection-reuse guard: if TCP setup completed before this
+                    # request started, the socket was already open (keep-alive /
+                    # HTTP2 multiplex). Per HAR 1.2 spec, dns/connect/ssl should be
+                    # -1 for reused connections.  Only populate them when the
+                    # handshake timestamps fall within this request's window.
+                    conn_is_new = ts_tcp is not None and ts_tcp >= t_start
 
-                    # TTFB: Request End -> Response Start
+                    if conn_is_new:
+                        if ts_start and ts_tcp:
+                            timings["dns"] = max(0, (ts_tcp - ts_start) * 1000)
+                        if ts_tcp and ts_tls:
+                            timings["ssl"] = max(0, (ts_tls - ts_tcp) * 1000)
+
+                    # TTFB: Request End → Response Start
                     if (flow.request.timestamp_end and
-                        flow.response and
-                        flow.response.timestamp_start):
+                            flow.response and
+                            flow.response.timestamp_start):
                         timings["wait"] = max(0, (
                             flow.response.timestamp_start - flow.request.timestamp_end
                         ) * 1000)
 
-                # Total receive time
-                if flow.response and flow.response.timestamp_start:
-                    timings["receive"] = max(0, duration - (timings["wait"] or 0))
+                # Receive: use real timestamps instead of arithmetic.
+                # The old formula `duration - (timings["wait"] or 0)` had two bugs:
+                #   1. In Python, -1 is truthy, so `-1 or 0` → -1, making receive = duration+1.
+                #   2. Any rounding in wait propagated into receive unpredictably.
+                if (flow.response and
+                        flow.response.timestamp_start and
+                        flow.response.timestamp_end):
+                    timings["receive"] = max(
+                        0,
+                        (flow.response.timestamp_end - flow.response.timestamp_start) * 1000
+                    )
+                elif flow.response and flow.response.timestamp_start:
+                    # No response end timestamp — estimate from duration minus wait.
+                    wait_ms = timings["wait"] if timings["wait"] >= 0 else 0
+                    timings["receive"] = max(0, duration - wait_ms)
 
             # ========== WebSocket ==========
             is_websocket = hasattr(flow, 'websocket') and flow.websocket is not None
