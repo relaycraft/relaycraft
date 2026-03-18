@@ -19,7 +19,7 @@ chrono = "0.4"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2.10.0", features = ["macos-private-api", "protocol-asset"] }
+tauri = { version = "2.10.3", features = ["macos-private-api", "protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-log = "2"
@@ -49,7 +49,7 @@ rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
 walkdir = "2"
-zip = "4.6"
+zip = "8.2"
 tauri-plugin-single-instance = "2.3.7"
 thiserror = "2.0"
 sha1 = "0.10.6"
