@@ -130,6 +130,13 @@ export interface Rule {
   actions: RuleAction[];
   type: RuleType; // Keeping type at top level for easy filtering/UI
   tags?: string[];
+  /** Provenance metadata — absent on older rules */
+  metadata?: {
+    /** "user" | "ai_assistant" | "ai_mcp" */
+    source?: string;
+    /** Human-readable intent set by AI tools */
+    aiIntent?: string;
+  };
 }
 
 export interface RuleGroup {

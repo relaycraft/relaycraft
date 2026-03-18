@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
 import { useEffect, useRef } from "react";
@@ -191,6 +191,16 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       initPlugins();
     }, 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Refresh rules when the MCP Server creates or modifies a rule
+  useEffect(() => {
+    const unlisten = listen("rules-changed", () => {
+      useRuleStore.getState().loadRules();
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
   }, []);
 
   // Handle Close Interception

@@ -19,6 +19,14 @@ export function McpSettings() {
   const [status, setStatus] = React.useState<McpStatus>({ running: false, port: mcp.port });
   const [portInput, setPortInput] = React.useState(String(mcp.port));
   const [copied, setCopied] = React.useState(false);
+  const [token, setToken] = React.useState("");
+
+  // Fetch the Bearer token once on mount
+  React.useEffect(() => {
+    invoke<string>("get_mcp_token")
+      .then(setToken)
+      .catch(() => {});
+  }, []);
 
   // Poll MCP server status every 3 s while this panel is mounted
   React.useEffect(() => {
@@ -66,6 +74,9 @@ export function McpSettings() {
         relaycraft: {
           type: "http",
           url: `http://localhost:${status.port}/mcp`,
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "Bearer <token>",
+          },
         },
       },
     },

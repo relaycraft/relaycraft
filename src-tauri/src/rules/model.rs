@@ -144,6 +144,22 @@ pub enum RuleType {
     BlockRequest,
 }
 
+/// Tracks how a rule was created.
+///
+/// - `"user"`         — created manually in the RelayCraft UI
+/// - `"ai_assistant"` — created by RelayCraft's built-in AI assistant (Command Center / AI Rule Assistant)
+/// - `"ai_mcp"`       — created by an external tool via the MCP Server (Claude Desktop, Cursor, etc.)
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleMetadata {
+    /// Origin of the rule: "user" | "ai_assistant" | "ai_mcp"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    /// Human-readable explanation of why the rule was created (set by AI tools)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ai_intent: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Rule {
@@ -155,6 +171,10 @@ pub struct Rule {
     pub match_config: RuleMatchConfig,
     pub actions: Vec<RuleAction>,
     pub tags: Option<Vec<String>>,
+    /// Optional provenance metadata — absent on older rules (backward compatible)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub metadata: Option<RuleMetadata>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

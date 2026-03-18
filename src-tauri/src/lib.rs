@@ -217,7 +217,7 @@ pub fn run() {
             // Auto-start MCP Server if enabled in config
             if app_config.mcp_config.enabled {
                 let mcp_state = app.state::<mcp::McpState>();
-                mcp::start(&mcp_state, app_config.mcp_config.port, app_config.proxy_port);
+                mcp::start(&mcp_state, app_config.mcp_config.port, app_config.proxy_port, app.handle().clone());
             }
 
             Ok(())
@@ -291,6 +291,7 @@ pub fn run() {
             logging::get_logs,
             get_startup_warnings,
             mcp::get_mcp_status,
+            mcp::get_mcp_token,
             mcp::apply_mcp_config,
         ])
         .build(tauri::generate_context!())

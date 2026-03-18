@@ -26,6 +26,8 @@ export function mapAIRuleToInternal(aiRule: AIRule): Partial<Rule> {
       response: [],
     },
     actions: [],
+    // Mark all rules created via the built-in AI assistant
+    metadata: { source: "ai_assistant" },
   };
 
   // 2. Normalize Match (Handle Array vs Object)

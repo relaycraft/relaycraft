@@ -10,6 +10,7 @@ import {
   Globe,
   LayoutList,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Wifi,
 } from "lucide-react";
@@ -189,6 +190,28 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                   >
                     {rule.name}
                   </span>
+                  {rule.metadata?.source && rule.metadata.source !== "user" && (
+                    <Tooltip
+                      content={
+                        <div className="max-w-[200px] whitespace-normal space-y-0.5">
+                          <p className="font-semibold text-xs">
+                            {rule.metadata.source === "ai_mcp"
+                              ? "MCP 外部工具创建"
+                              : "RelayCraft AI 助手创建"}
+                          </p>
+                          {rule.metadata.aiIntent && (
+                            <p className="text-xs opacity-75 leading-tight">
+                              {rule.metadata.aiIntent}
+                            </p>
+                          )}
+                        </div>
+                      }
+                    >
+                      <span className="inline-flex items-center cursor-help text-primary/60 hover:text-primary transition-colors">
+                        <Sparkles className="w-3 h-3" />
+                      </span>
+                    </Tooltip>
+                  )}
                   {conflict && rule.execution.enabled && (
                     <Tooltip
                       content={

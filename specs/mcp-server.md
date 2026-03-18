@@ -1,48 +1,63 @@
-# Spec: MCP Server — 流量数据开放能力
+# Spec: MCP Server — AI 流量管理中枢
 
-> 状态：`draft`
+> 状态：`Phase 2 已完成，Phase 3 规划中`
 > 优先级：`P1-high`
 > 创建日期：2026-03-09
+> 最后更新：2026-03-13
 > 关联 Issue：待创建
 
 ---
 
-## 目标 (Goals)
+## 战略定位 (Strategic Vision)
 
-- [ ] RelayCraft 启动时在本地端口同步启动一个 MCP Server，对外暴露流量数据查询能力
-- [ ] MVP 阶段提供 4 个核心 Tool，覆盖"查列表 → 看详情"的完整链路
-- [ ] 接入 Claude Desktop、Cursor 等主流 MCP 客户端，零配置成本
-- [ ] 设置界面提供开关、端口配置、一键复制接入配置
+所有 AI 编程工具（Claude、Cursor、Copilot）有一个共同的根本盲区：**运行时失明**。AI 能写代码、审查代码，但代码运行之后它就看不见了——API 返回了什么、请求为什么失败、延迟出在哪里，只能靠开发者截图转述。
+
+RelayCraft 站在这个盲区的入口。MCP Server 让 AI 能直接读取和干预 HTTP 流量，是 RelayCraft 从"开发者手动使用的调试工具"变成"AI 工作流里的主动组件"的关键一步。
+
+### 能力进化路径
+
+```
+Phase 1 (已完成，rc.9)  —  观察者
+  AI 通过 MCP 读取流量数据，辅助分析
+
+Phase 2 (已完成，rc.10)  —  干预者
+  AI 直接创建/管理规则、重放请求，完成"看→干预→验证"完整闭环
+
+Phase 3 (1.0 之后)  —  编排者
+  AI 主导多步调试工作流，RelayCraft 作为执行引擎
+```
+
+### 市场现状
+
+主流 HTTP 调试工具均已陆续推出 MCP Server，方向已被市场验证。RelayCraft 的差异化在于：
+
+1. **完整规则管理闭环**：create / list / toggle / delete 全链路，而非仅支持创建
+2. **规则引擎更丰富**：6 种规则类型，rewrite_body 支持 4 种子模式（set / replace / regex_replace / status_code）
+3. **Session 语义**：以 Session 作为数据边界，AI 上下文更清晰，支持历史 Session 对比
+4. **三平台一致体验 + 开源**
+5. **中文市场本土化**：双语界面 + 国内 AI 服务商集成
 
 ---
 
-## 背景 (Context)
+## 已实现功能
 
-RelayCraft 捕获的实时 HTTP 流量是开发调试场景中密度最高的上下文信息。当开发者同时使用 AI 辅助开发工具（Claude Desktop、Cursor 等）时，AI 无法直接"看到"网络请求，只能依赖开发者手动粘贴截图或文本，效率很低。
+### Phase 1（rc.9，只读）
 
-MCP（Model Context Protocol）是目前主流 AI 工具接入本地数据的标准协议。通过在 RelayCraft 内嵌 MCP Server，可以让 AI 直接读取：
+- [x] 应用启动时在 `:7090` 启动 MCP Server
+- [x] 4 个只读 Tool：`list_sessions`、`list_flows`、`get_flow`、`search_flows`
+- [x] 设置界面：开关 + 端口配置 + 一键复制接入 JSON
 
-- 当前正在抓包的请求列表
-- 某个请求的完整 headers + body
-- 历史调试会话数据
+### Phase 2（rc.10，读写 + 规则管理）
 
-这是一个**差异化竞争点**：目前市面上没有任何 HTTP 调试工具提供 MCP 接口。
-
-### 现有基础
-
-Python 引擎已有完整的流量 HTTP API，MCP Server 可以直接复用：
-
-- `/_relay/poll?session_id=X&since=T` — 查询流量索引列表
-- `/_relay/detail?id=X` — 获取单条请求完整数据
-- `/_relay/sessions` — 获取所有历史会话列表
-
-### 相关模块
-
-- `src/components/settings/` — 设置界面（新增 MCP 配置面板）
-- `src-tauri/src/mcp/` — 新增 Rust MCP Server 模块
-- `src-tauri/src/config.rs` — AppConfig 新增 MCP 配置项
-- `src-tauri/src/lib.rs` — 启动时 spawn MCP Server
-- `engine-core/addons/core/monitor.py` — 数据来源（只读，无需修改）
+- [x] Token 认证：`mcp-token` 文件持久化，写操作需 `Authorization: Bearer <token>`
+- [x] `get_session_stats`：全局统计摘要，AI 建立认知的起点
+- [x] `create_rule`：支持全部 6 种规则类型，简化参数，AI 友好
+- [x] `replay_request`：通过代理端口重放，结果可见于流量列表
+- [x] `list_rules`：列出所有规则（id、名称、类型、url_pattern、启用状态、来源）
+- [x] `delete_rule`：删除指定规则，返回被删规则的名称和来源
+- [x] `toggle_rule`：启用/禁用规则，无需删除
+- [x] Rule 来源标记：`source: "user" | "ai_assistant" | "ai_mcp"`，UI 显示徽标
+- [x] 规则变更事件：`create_rule`/`delete_rule`/`toggle_rule` 操作后发出 `rules-changed` 事件，前端即时刷新
 
 ---
 
@@ -51,462 +66,428 @@ Python 引擎已有完整的流量 HTTP API，MCP Server 可以直接复用：
 ### 整体数据流
 
 ```
-┌─────────────────────────────────────────────┐
-│              RelayCraft (Tauri)             │
-│                                             │
-│  ┌─────────────┐      ┌──────────────────┐ │
-│  │ Python      │      │  Rust MCP Server │ │
-│  │ Engine      │◄─────│  (axum, :7090)   │ │
-│  │ (:9090)     │ HTTP │                  │ │
-│  └─────────────┘      └────────┬─────────┘ │
-│                                │            │
-└────────────────────────────────┼────────────┘
-                                 │ MCP / HTTP+SSE
-               ┌─────────────────┼──────────────┐
-               │                 │              │
-       ┌───────▼──────┐  ┌───────▼──────┐  ┌───▼──────────┐
-       │Claude Desktop│  │    Cursor    │  │  其他 MCP    │
-       │              │  │              │  │  客户端      │
-       └──────────────┘  └──────────────┘  └──────────────┘
+┌──────────────────────────────────────────────────────┐
+│                  RelayCraft (Tauri)                  │
+│                                                      │
+│  ┌──────────────┐  内部 HTTP  ┌──────────────────┐   │
+│  │ Python Engine│◄────────────│  Rust MCP Server │   │
+│  │   (:9090)    │             │    (axum :7090)  │   │
+│  └──────────────┘             └────────┬─────────┘   │
+│                                        │             │
+│  ┌──────────────┐  直接调用             │             │
+│  │  Rules Store │◄──── create/delete/  │             │
+│  │  (YAML 文件) │      toggle_rule      │             │
+│  └──────────────┘                      │             │
+└────────────────────────────────────────┼─────────────┘
+                                         │ MCP / HTTP JSON-RPC
+               ┌─────────────────────────┼──────────────┐
+        ┌──────▼──────┐    ┌─────────────▼──┐   ┌───▼────────┐
+        │Claude Desktop│   │    Cursor      │   │  其他工具  │
+        └─────────────┘    └────────────────┘   └────────────┘
 ```
 
 ### 设计原则
 
-1. **只读**：MVP 阶段 MCP Server 不写入任何数据，只提供查询
-2. **无状态代理**：MCP Server 本身不维护流量缓存，直接转发到 Python 引擎
-3. **Session 感知**：以 Session 而非时间戳作为数据边界，AI 上下文更清晰
-4. **松耦合**：MCP Server 和主应用通过 HTTP 解耦，可独立重启
+1. **无状态代理**：MCP Server 不缓存流量数据，直接转发到 Python 引擎 API
+2. **Session 感知**：以 Session 而非时间戳作为数据边界，`session_id` 均可省略以使用当前活跃 Session
+3. **写操作不过引擎**：`create/delete/toggle rule` 直接操作 RuleStorage，不经过 Python 引擎
+4. **崩溃隔离**：MCP Server 是独立 tokio task，崩溃不影响主应用和代理引擎
 
-### MCP 传输协议选型
+### 传输协议
 
-使用 **Streamable HTTP**（MCP 1.0 标准传输层）：
-
-- 客户端 POST `http://localhost:7090/mcp` 发起 JSON-RPC 请求
-- 服务端以普通 JSON 响应（无需 SSE，MVP 阶段无推送需求）
-- 支持 CORS，允许 Web 端 MCP 客户端接入
+**Streamable HTTP**（MCP 1.0 标准）：客户端 `POST http://localhost:7090/mcp`，JSON-RPC 2.0，支持 CORS。
 
 ---
 
-## MVP Tool 设计
+## Tool 完整规格
 
-### Tool 1: `list_sessions`
+### 当前 10 个 Tool 一览
 
-列出所有历史调试会话，让 AI 了解有哪些可查的数据范围。
+| Tool | 类型 | 认证 | 说明 |
+|---|---|---|---|
+| `list_sessions` | 读 | 无 | 列出所有历史 Session |
+| `list_flows` | 读 | 无 | 查询 Session 内流量列表，多维过滤 |
+| `get_flow` | 读 | 无 | 获取单条请求的完整 headers + body |
+| `search_flows` | 读 | 无 | 关键词搜索流量 URL |
+| `get_session_stats` | 读 | 无 | Session 聚合统计（错误率、域名分布等） |
+| `list_rules` | 读 | 无 | 列出所有规则摘要（id/名称/类型/状态/来源） |
+| `create_rule` | 写 | Token | 创建代理规则，立即生效 |
+| `delete_rule` | 写 | Token | 按 ID 删除规则 |
+| `toggle_rule` | 写 | Token | 启用或禁用规则 |
+| `replay_request` | 写 | Token | 通过代理端口重放请求 |
 
-**输入参数**
+---
 
-无
+### 只读 Tool
 
-**输出**
+#### `list_sessions`
+
+列出所有历史调试会话。无输入参数。
+
+```json
+{ "sessions": [
+  { "id": "sess_abc", "name": "2026-03-12 下午调试", "flowCount": 342,
+    "startedAt": "2026-03-12T14:23:00Z", "isActive": true }
+]}
+```
+
+---
+
+#### `list_flows`
+
+查询 Session 内流量列表，支持多维过滤。
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `session_id` | string? | 不传时默认当前活跃 Session |
+| `limit` | number? | 默认 50，最大 200 |
+| `method` | string? | 如 `GET`、`POST` |
+| `status` | string? | 范围如 `4xx`、`5xx`，或精确值 `404` |
+| `domain` | string? | 子字符串匹配 |
+| `has_error` | boolean? | 只返回有错误的请求 |
+| `content_type` | string? | 如 `json`、`html` |
+
+返回轻量 FlowIndex（不含 body），需要完整数据时调用 `get_flow`。
+
+---
+
+#### `get_flow`
+
+获取单条请求的完整 headers + body。
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `id` | string | Flow ID |
+
+body 超过 100KB 时截断，附加 `"bodyTruncated": true`。
+
+---
+
+#### `search_flows`
+
+关键词搜索流量 URL。
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `query` | string | 搜索关键词 |
+| `session_id` | string? | 不传时默认活跃 Session |
+| `limit` | number? | 默认 20，最大 50 |
+
+---
+
+#### `get_session_stats`
+
+获取当前 Session 的统计摘要，帮助 AI 快速建立全局认知。
 
 ```json
 {
-  "sessions": [
-    {
-      "id": "sess_abc123",
-      "name": "2026-03-09 下午调试",
-      "flowCount": 342,
-      "startedAt": "2026-03-09T14:23:00Z",
-      "durationMs": 3600000,
-      "isActive": true
-    }
-  ]
+  "totalFlows": 342,
+  "errorRate": 0.08,
+  "topDomains": [
+    { "domain": "api.example.com", "count": 156, "errorCount": 12, "avgDurationMs": 234 }
+  ],
+  "statusDistribution": { "2xx": 290, "4xx": 38, "5xx": 14 },
+  "slowestFlows": [{ "id": "flow_abc", "url": "...", "durationMs": 3200 }]
 }
 ```
 
-**说明**：`isActive: true` 标识当前正在录制的 session，AI 优先引导用户查询活跃 session。
-
 ---
 
-### Tool 2: `list_flows`
+#### `list_rules`
 
-查询某个 Session 内的流量列表，支持多维过滤。
-
-**输入参数**
-
-| 参数 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `session_id` | string | 否 | 不传时默认当前活跃 session |
-| `limit` | number | 否 | 返回条数，默认 50，最大 200 |
-| `method` | string | 否 | 过滤 HTTP 方法，如 `GET`、`POST` |
-| `status` | number \| string | 否 | 过滤状态码，支持范围如 `4xx`、`5xx` |
-| `domain` | string | 否 | 过滤域名，支持子字符串匹配 |
-| `has_error` | boolean | 否 | 只返回有错误的请求 |
-| `content_type` | string | 否 | 过滤响应 Content-Type，如 `json`、`html` |
-
-**输出**
+列出所有规则的摘要信息，通常在 `delete_rule` 或 `toggle_rule` 前调用以获取 rule_id。
 
 ```json
-{
-  "session_id": "sess_abc123",
-  "total": 342,
-  "returned": 50,
-  "flows": [
-    {
-      "id": "flow_xyz",
-      "method": "POST",
-      "url": "https://api.example.com/v1/users",
-      "host": "api.example.com",
-      "path": "/v1/users",
-      "status": 422,
-      "contentType": "application/json",
-      "startedAt": "2026-03-09T14:25:33Z",
-      "durationMs": 142,
-      "sizeBytes": 1024,
-      "hasError": true,
-      "hasRequestBody": true,
-      "hasResponseBody": true
-    }
-  ]
-}
+[
+  { "id": "uuid-xxx", "name": "Mock user API", "type": "map_local",
+    "url_pattern": "api.example.com/user", "enabled": true, "source": "ai_mcp", "group": "Default" }
+]
 ```
-
-**设计要点**：返回的是轻量索引（FlowIndex），不含 headers/body，避免单次响应过大。AI 需要看详情时再调用 `get_flow`。
 
 ---
 
-### Tool 3: `get_flow`
+### 写操作 Tool（需 Bearer Token）
 
-获取单条请求的完整数据，包含完整 headers 和 body。
+#### `create_rule`
 
-**输入参数**
+创建代理规则，**直接执行**，立即生效，前端规则列表即时刷新。
 
-| 参数 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `id` | string | 是 | Flow ID，从 `list_flows` 结果中获取 |
+支持 6 种规则类型，使用简化参数，无需了解内部规则格式。
 
-**输出**
+**map_local** — 返回 Mock 响应：
+```json
+{ "type": "map_local", "name": "Mock user API", "url_pattern": "api.example.com/user",
+  "mock_body": "{\"id\":1}", "mock_status": 200, "mock_content_type": "application/json" }
+```
+
+**map_remote** — 重定向到另一个服务器：
+```json
+{ "type": "map_remote", "name": "Redirect to dev", "url_pattern": "api.example.com",
+  "target_url": "http://localhost:3000" }
+```
+
+**rewrite_body** — 修改响应体（4 种子模式）：
+
+| `rewrite_mode` | 说明 | 必填参数 |
+|---|---|---|
+| `set`（默认） | 替换整个 body | `rewrite_content` |
+| `replace` | 文本查找替换 | `rewrite_pattern` + `rewrite_replacement` |
+| `regex_replace` | 正则查找替换 | `rewrite_pattern` + `rewrite_replacement` |
+| `status_code` | 仅修改状态码 | `rewrite_status` |
 
 ```json
-{
-  "id": "flow_xyz",
-  "startedAt": "2026-03-09T14:25:33Z",
-  "durationMs": 142,
-  "request": {
-    "method": "POST",
-    "url": "https://api.example.com/v1/users",
-    "httpVersion": "HTTP/1.1",
-    "headers": [
-      { "name": "Content-Type", "value": "application/json" },
-      { "name": "Authorization", "value": "Bearer eyJ..." }
-    ],
-    "queryString": [],
-    "body": "{\"name\": \"Alice\", \"email\": \"alice@example.com\"}"
-  },
-  "response": {
-    "status": 422,
-    "statusText": "Unprocessable Entity",
-    "headers": [
-      { "name": "Content-Type", "value": "application/json" }
-    ],
-    "body": "{\"error\": \"email_already_exists\", \"message\": \"该邮箱已被注册\"}",
-    "sizeBytes": 1024
-  },
-  "timings": {
-    "dns": 0,
-    "connect": 12,
-    "ssl": 23,
-    "wait": 98,
-    "receive": 9
-  }
-}
+// 文本替换示例
+{ "type": "rewrite_body", "name": "Switch env flag", "url_pattern": "api.example.com/config",
+  "rewrite_mode": "replace", "rewrite_pattern": "\"env\":\"production\"",
+  "rewrite_replacement": "\"env\":\"staging\"" }
 ```
 
-**设计要点**：
-- body 超过 100KB 时截断，附加 `"bodyTruncated": true` 标识
-- Binary body（图片、文件等）返回 `"bodyEncoding": "base64"`
-- Authorization header 等敏感字段**不做脱敏**（本地工具，用户自主决策）
+**rewrite_header** — 增删改请求/响应 Header：
+```json
+{ "type": "rewrite_header", "name": "Add debug header", "url_pattern": "api.example.com",
+  "header_phase": "request", "header_operation": "set", "header_name": "X-Debug", "header_value": "true" }
+```
+
+**throttle** — 模拟网络限速/延迟：
+```json
+{ "type": "throttle", "name": "Slow network", "url_pattern": "api.example.com",
+  "bandwidth_kbps": 100, "delay_ms": 500 }
+```
+
+**block_request** — 屏蔽请求：
+```json
+{ "type": "block_request", "name": "Block analytics", "url_pattern": "analytics.example.com" }
+```
+
+所有规则通用参数：
+- `method`（可选）：HTTP 方法过滤，如 `POST`
+- `intent`（可选）：创建意图说明，显示在规则列表 tooltip
 
 ---
 
-### Tool 4: `search_flows`
+#### `delete_rule`
 
-关键词全文搜索，在 URL、响应体内容中匹配。
+按 ID 删除规则，返回被删规则的名称和来源确认。
 
-**输入参数**
+```json
+// 输入
+{ "rule_id": "uuid-xxx" }
+// 输出
+"Deleted rule 'Mock user API' (id: uuid-xxx, source: ai_mcp)."
+```
 
-| 参数 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `query` | string | 是 | 搜索关键词 |
-| `session_id` | string | 否 | 不传时默认当前活跃 session |
-| `limit` | number | 否 | 默认 20，最大 50 |
-| `search_in` | string[] | 否 | 搜索范围，可选 `url`、`request_body`、`response_body`，默认全部 |
+---
 
-**输出**：同 `list_flows` 格式，附加匹配位置高亮字段
+#### `toggle_rule`
 
-**说明**：MVP 阶段只做 URL 匹配，response_body 搜索因性能原因放到后续迭代。
+启用或禁用规则，无需删除重建。常用于对比有无规则时的行为差异。
+
+```json
+// 输入
+{ "rule_id": "uuid-xxx", "enabled": false }
+// 输出
+"Rule 'Mock user API' is now disabled."
+```
+
+---
+
+#### `replay_request`
+
+通过 RelayCraft 代理端口重放历史请求，结果出现在流量列表中，可立刻用 `get_flow` 读取。
+
+```json
+// 输入
+{ "flow_id": "原始请求 ID",
+  "modifications": {
+    "headers": { "Authorization": "Bearer new_token" },
+    "body": "{\"user_id\": \"test_uuid\"}"
+  }}
+// 输出
+{ "new_flow_id": "replay 产生的新 flow ID", "status": 200, "durationMs": 142 }
+```
+
+**核心价值**：AI 自己发出的 HTTP 请求 RelayCraft 看不见；通过此 Tool 重放的请求走代理端口，被捕获进流量列表，AI 可立刻读取响应，形成完整的"发送→捕获→分析"闭环。
+
+---
+
+## 标准调试工作流
+
+AI 接入 RelayCraft MCP 后的典型调试流程：
+
+```
+1. get_session_stats          ← 快速建立全局认知
+2. list_flows (has_error=true) ← 定位有问题的请求
+3. get_flow(id)               ← 读取完整请求/响应细节
+4. create_rule                ← 创建规则干预（mock / rewrite / redirect）
+5. replay_request             ← 重放请求，验证规则效果
+6. get_flow(new_flow_id)      ← 读取修改后的响应
+7. toggle_rule(false)         ← 临时关掉规则，对比原始行为
+8. delete_rule                ← 清理错误的规则，重新创建
+```
+
+---
+
+## 安全模型 (Security Model)
+
+### Token 认证
+
+应用启动时生成 Token，存储于 `~/.config/relaycraft/mcp-token`（权限 0600），格式 `rc_<uuid>`。Token **几乎永不变更**——仅在用户手动删除 `mcp-token` 文件时重新生成。设置界面提供一键复制含 Token 的完整接入配置 JSON。
+
+只读操作（read tools）：无需 Token，localhost-only 绑定足够。
+写操作（write tools）：必须携带 `Authorization: Bearer <token>` Header，缺失返回 401。
+
+### 写操作风险分级
+
+| 操作 | 风险 | 当前行为 |
+|---|---|---|
+| `replay_request` | 低（无持久化） | 直接执行 |
+| `create_rule` / `toggle_rule` | 中（持久化，可逆） | 直接执行，规则标记 `ai_mcp` 来源 |
+| `delete_rule` | 中（可通过重建恢复） | 直接执行，响应中返回被删规则名和来源 |
+
+### 不可越界原则
+
+无论用户如何配置，以下操作永远不通过 MCP 执行：
+- 修改代理端口或系统代理配置
+- 删除历史流量或 Session 数据
+- 访问 RelayCraft 数据目录以外的文件系统
 
 ---
 
 ## 数据模型 (Data Model)
 
-### AppConfig 新增字段
-
-```rust
-#[derive(Serialize, Deserialize)]
-pub struct McpConfig {
-    pub enabled: bool,       // 是否启动 MCP Server，默认 false
-    pub port: u16,           // 监听端口，默认 7090
-}
-
-// 集成到 AppConfig
-pub struct AppConfig {
-    // ... 现有字段
-    pub mcp: McpConfig,
-}
-```
-
-### MCP Server 内部状态
-
-```rust
-pub struct McpServerState {
-    pub engine_port: Arc<Mutex<u16>>,  // Python 引擎当前端口，动态同步
-}
-```
-
-### TypeScript 类型（设置 UI）
+### Rule 来源标记
 
 ```typescript
-interface McpConfig {
-  enabled: boolean;
-  port: number;
-}
-
-interface McpStatus {
-  running: boolean;
-  port: number;
-  connectedClients: number;  // 当前连接的 MCP 客户端数
+interface RuleMetadata {
+  source?: "user" | "ai_assistant" | "ai_mcp";
+  // "user"         — 在 RelayCraft UI 中手动创建
+  // "ai_assistant" — 由 RelayCraft 内置 AI 助手创建
+  // "ai_mcp"       — 由外部 MCP 工具创建（Claude Desktop、Cursor 等）
+  aiIntent?: string;  // AI 描述的创建意图，显示在规则列表 tooltip
 }
 ```
 
----
+UI 中：`source !== "user"` 的规则左侧显示 ✦ 徽标，tooltip 显示来源类型和 `aiIntent`。
 
-## 接口契约 (Interface Contract)
+### MCP Config
 
-### Tauri Commands
-
-```
-get_mcp_config() -> Result<McpConfig, String>
-save_mcp_config(config: McpConfig) -> Result<(), String>
-get_mcp_status() -> Result<McpStatus, String>
-restart_mcp_server() -> Result<(), String>
-```
-
-### MCP Server HTTP 端点
-
-```
-POST /mcp
-Content-Type: application/json
-
-请求体（JSON-RPC 2.0）:
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "initialize" | "tools/list" | "tools/call",
-  "params": { ... }
+```rust
+pub struct McpConfig {
+    pub enabled: bool,  // 默认 false
+    pub port: u16,      // 默认 7090
 }
-```
-
-方法说明：
-
-| JSON-RPC Method | 说明 |
-|---|---|
-| `initialize` | 握手，返回 server info 和 capabilities |
-| `tools/list` | 返回所有可用 Tool 的 schema |
-| `tools/call` | 调用具体 Tool，params 包含 `name` 和 `arguments` |
-
-### Python Engine API（只读调用，无修改）
-
-```
-GET /_relay/sessions
-GET /_relay/poll?session_id={id}&since=0
-GET /_relay/detail?id={flow_id}
 ```
 
 ---
 
 ## UI 设计 (Interface Design)
 
-### 入口位置
+### 设置页（已实现）
 
-设置页 → 新增 **MCP Server** 分区（位于现有 "代理设置" 之后）
+设置 → 外部集成 → MCP 服务器
 
-### 面板布局
+- 开关（默认关闭）+ 端口输入
+- 状态徽标（运行中 / 已停止）
+- 一键复制接入配置 JSON（含 Token）
+- 隐私安全提示（警告色样式）
+
+### 规则来源标识（已实现）
+
+规则列表中 AI 创建的规则：
+- 左侧显示 ✦（Sparkles）图标
+- 悬停 tooltip 显示来源：`MCP 外部工具创建` / `RelayCraft AI 助手创建` + `aiIntent`
+
+### Phase 3 规划：AI 操作审批面板
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  MCP Server                                         │
-│                                                     │
-│  允许 AI 工具（Claude Desktop、Cursor 等）读取流量数据   │
-│                                                     │
-│  启用 MCP Server          ┌─────────────────────┐   │
-│  ●──────────────────── ON │ ● 运行中 · 端口 7090 │   │
-│                            └─────────────────────┘   │
-│                                                     │
-│  监听端口                                            │
-│  ┌───────────────┐                                  │
-│  │  7090         │                                  │
-│  └───────────────┘                                  │
-│                                                     │
-│  接入配置                                            │
-│  ┌─────────────────────────────────────────────┐    │
-│  │ {                                           │    │
-│  │   "mcpServers": {                           │    │
-│  │     "relaycraft": {                         │    │
-│  │       "type": "http",                       │    │
-│  │       "url": "http://localhost:7090/mcp"    │    │
-│  │     }                                       │    │
-│  │   }                                         │    │
-│  │ }                                           │    │
-│  └─────────────────────────────────────────────┘    │
-│                          [ 复制配置 ]  [ 打开文档 ]   │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  AI 提案  (2 条待审批)           [全部批准]  [全部拒绝]  │
+├──────────────────────────────────────────────────────────┤
+│  ✦ 创建规则：Rewrite Body                                 │
+│    Match: api.example.com/orders   意图：复现 422 报错   │
+│                             [查看详情]  [拒绝]  [批准] ✓ │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### 交互细节
-
-- **启用开关**：关闭时 MCP Server 停止监听，端口释放
-- **端口修改**：失焦后自动检测端口占用，冲突时显示红色提示
-- **状态指示器**：
-  - `● 运行中` — 绿色圆点
-  - `○ 已停止` — 灰色圆点
-  - `⚠ 端口占用` — 黄色警告
-- **复制配置按钮**：点击后按钮文字变为"已复制 ✓"，2 秒后恢复
-- **打开文档**：跳转到 RelayCraft 官网 MCP 接入指南（待创建）
+入口：状态栏徽标 `AI 提案 (2)`，不打断当前工作流。
 
 ---
 
-## 引用技能 (Required Skills)
+## Phase 3 规划 (Future Roadmap)
 
-- MUST USE `skills/tauri-command.md` — Tauri 命令实现（get/save config）
-- MUST USE `skills/react-component.md` — 设置面板组件
-- MUST USE `skills/i18n-workflow.md` — 国际化（英文 + 中文）
-- SHOULD USE `skills/error-handling.md` — 端口占用等错误处理
+Phase 2 完成了"AI 可以干什么"，Phase 3 目标是"AI 可以主导什么"。
 
----
+### 会话级操作管理
 
-## 实现计划 (Implementation Plan)
+AI 在一次调试对话中可能创建多条规则，现在只能逐条管理。
 
-### Phase 1：Rust MCP Server 骨架（后端）
+- **AI Session 概念**：将一次 MCP 对话关联的所有写操作打包为 Session，支持一键"撤销本次 AI 操作"
+- **批量清理**：`clear_ai_rules` 删除当前 AI Session 创建的所有规则
+- **操作审批模式**（高级用户可配置）：AI 写操作先入队，用户在审批面板一键批准，而非立即执行
 
-1. `src-tauri/Cargo.toml` 新增 `axum`、`tower-http`
-2. 新建 `src-tauri/src/mcp/` 模块：
-   - `mod.rs` — `start_server(engine_port, mcp_port)` 入口
-   - `router.rs` — axum router，挂载 `POST /mcp` 端点
-   - `protocol.rs` — JSON-RPC 2.0 请求/响应结构体
-   - `tools.rs` — 4 个 Tool 的业务逻辑（调用 `/_relay/*`）
-3. `AppConfig` 新增 `mcp: McpConfig` 字段，默认 `enabled: false`
-4. `lib.rs` 启动时根据配置条件 spawn MCP Server
+### 更完整的规则能力暴露
 
-### Phase 2：Tool 实现
+当前 `create_rule` 使用简化参数以降低 AI 出错率，未暴露的能力：
 
-1. `list_sessions` — 调用 `/_relay/sessions`，格式转换
-2. `list_flows` — 调用 `/_relay/poll?session_id=X&since=0`，实现过滤逻辑
-3. `get_flow` — 调用 `/_relay/detail?id=X`，body 截断处理
-4. `search_flows` — 调用 `/_relay/poll` + URL 关键词过滤
+- **高级匹配条件**：regex URL、Host 匹配、Header/Query 参数条件匹配、响应状态码匹配
+- **rewrite_body JSON 模式**：通过 JSONPath 修改响应中的特定字段（`$.user.id`）
+- **rewrite_header 多操作**：一条规则同时增删多个 Header
+- **update_rule**：修改现有规则，而非只能删除重建
 
-### Phase 3：Tauri Commands + 设置 UI
+### 流量控制扩展
 
-1. 实现 `get_mcp_config`、`save_mcp_config`、`get_mcp_status`、`restart_mcp_server`
-2. 新建 `src/components/settings/McpServerSection.tsx`
-3. 集成到现有设置页面布局
-4. 更新 i18n 文件（zh.json + en.json）
+- `create_session` / `activate_session`：通过 MCP 切换流量录制 Session
+- `toggle_capture`：控制抓包开关（批量测试时静默）
+- `export_flow_curl`：将 flow 导出为 cURL 命令，方便 AI 直接在终端执行
 
-### Phase 4：端到端测试 + 接入文档
+### 实时感知（SSE 推送）
 
-1. 使用 Claude Desktop 完整验证 4 个工具的可用性
-2. 编写接入指南（Claude Desktop / Cursor 配置方式）
-3. 错误边界处理：引擎未启动时的友好提示
+当前 AI 需要主动 poll 才能感知新流量。SSE 支持后 AI 可订阅事件流：
 
----
-
-## 后期功能规划 (Future Roadmap)
-
-### 近期（MVP 稳定后）
-
-**`get_session_stats` Tool**
-
-汇总当前 session 的统计数据，让 AI 能快速了解全局状况，再决定是否深入查看某个请求。
-
-```json
-{
-  "totalRequests": 342,
-  "errorRate": 0.08,
-  "topDomains": [
-    { "domain": "api.example.com", "count": 156, "errorCount": 12 }
-  ],
-  "statusDistribution": { "2xx": 290, "4xx": 38, "5xx": 14 },
-  "slowestRequests": [
-    { "id": "flow_abc", "url": "...", "durationMs": 3200 }
-  ]
-}
+```
+GET /mcp/events
+← data: {"type": "flow.error", "flow_id": "xxx", "status": 500}
+← data: {"type": "flow.slow", "flow_id": "xxx", "durationMs": 5000}
 ```
 
-**`list_flows` 扩展**：支持 `response_body` 关键词搜索（需评估引擎侧性能）
+AI 可以在后台"守望"流量，5xx 出现时主动介入分析，从被动工具变为主动助手。
 
-### 中期
+### MCP Resources
 
-**`create_rule` Tool**（写操作，需额外安全设计）
-
-AI 分析流量后，可以直接创建代理规则（如 Map Remote、Rewrite Header），无需用户手动配置。这是规则能力和 MCP 的结合点，使用场景：
-
-> "帮我把 api.example.com 的请求都代理到本地 3000 端口"
-
-实现前需要解决：用户确认机制（写操作不能静默执行）
-
-**MCP Resources**（补充 Tool 能力）
-
-除 Tool 外，暴露 MCP Resources 让 AI 可以"订阅"流量：
-
-- `traffic://current-session` — 当前 session 的活跃流量流
-- `traffic://flow/{id}` — 特定请求的详情
-
-### 远期
-
-**实时通知（SSE Push）**
-
-当有新请求满足某条件时（如出现 5xx 错误），主动推送到 MCP 客户端，让 AI 能感知实时异常。
-
-**多租户 / API Key 鉴权**
-
-当 RelayCraft 服务化（如团队共享代理模式）后，MCP Server 需要鉴权机制，避免本地流量被未授权的进程访问。
-
----
-
-## 验收标准 (Acceptance Criteria)
-
-- [ ] RelayCraft 启动后，在设置页开启 MCP Server，端口可监听
-- [ ] Claude Desktop 按文档配置后，可以调用 4 个 Tool 并返回正确数据
-- [ ] `list_flows` 过滤参数（method / status / domain）均有效
-- [ ] `get_flow` 返回完整 headers + body，超大 body 正确截断
-- [ ] 引擎未启动时，Tool 调用返回明确的错误提示而非超时
-- [ ] 关闭 MCP Server 开关后，端口立即释放
-- [ ] 修改端口后重启生效，config 持久化
-- [ ] 复制配置按钮生成的 JSON 可以直接粘贴到 Claude Desktop 配置文件
-- [ ] i18n 覆盖（中英文设置 UI 均完整）
-- [ ] 通过 `pnpm lint` + `cargo test`
-
----
-
-## 约束 (Constraints)
-
-- MCP Server **只在 localhost 监听**，不对外网开放，无需鉴权
-- MVP 阶段**只读**，不提供任何写操作 Tool
-- body 响应大小上限 100KB，超出截断，与现有 IPC 传输限制（5MB）一致但更保守（AI context window 友好）
-- MCP Server 端口不得与代理端口（9090/9091）及常见开发端口冲突，默认 7090
-- 遵循 `AGENTS.md` §三 的不可违反原则
-- MCP Server 崩溃不影响主应用和代理引擎的正常运行（独立 tokio task，panic 隔离）
+```
+traffic://current-session    当前 Session 的流量摘要（随时间更新）
+rules://active               当前启用的规则列表
+```
 
 ---
 
 ## 设计决策 (Design Decisions)
 
-| 决策点 | 选项 A | 选项 B | 选择 | 原因 |
-|:---|:---|:---|:---|:---|
-| 传输协议 | stdio | Streamable HTTP | **HTTP** | 桌面应用不适合 stdio；HTTP 支持多客户端并发连接 |
-| 数据边界 | 时间戳（since） | Session | **Session** | AI 上下文语义更清晰；支持历史 session 对比分析 |
-| MCP SDK | `rmcp` crate | 手写 JSON-RPC | **手写** | rmcp 尚不稳定；MCP 协议简单，自行实现可控性更高 |
-| 默认状态 | 默认开启 | 默认关闭 | **默认关闭** | 避免用户不知情下暴露本地流量数据；需显式开启 |
-| body 脱敏 | 自动脱敏 Authorization | 原样返回 | **原样返回** | 本地工具，用户对自己的数据有完全控制权；AI 分析时可能需要看完整 token |
-| 数据存储 | MCP Server 本地缓存 | 直接代理引擎 API | **直接代理** | 避免数据冗余；引擎 SQLite 已是单一数据源 |
+| 决策点 | 选择 | 原因 |
+|:---|:---|:---|
+| 传输协议 | Streamable HTTP | 支持多客户端并发；stdio 不适合桌面应用 |
+| 数据边界 | Session（非时间戳） | AI 上下文语义更清晰；支持历史 Session 对比 |
+| MCP SDK | 手写 JSON-RPC | rmcp 尚不稳定；协议简单，自行实现可控性更高 |
+| 默认状态 | 默认关闭 | 避免用户不知情下暴露流量数据 |
+| 读操作 body 脱敏 | 原样返回 | 本地工具，用户自主决策；AI 分析可能需要完整 Token |
+| Token 变更时机 | 手动删除文件才变更 | 1.0 简化实现；Token 轮转 UI 留 1.0 后迭代 |
+| 写操作执行时机（Phase 2） | 直接执行 | Proxyman 验证了此方案可接受；审批队列留 Phase 3 |
+| delete_rule 权限 | 不限制来源 | Token 即信任边界；响应中回传来源供 AI 自行决策是否告知用户 |
+| create_rule 参数风格 | 简化参数 + 示例驱动 | 降低 AI 调用出错率；内部自动转换为完整规则结构 |
+| session_id 必填性 | 全部可省略 | 省略时使用当前活跃 Session，减少 AI 调用步骤 |
+
+---
+
+## 开放问题 (Open Questions)
+
+**Q1：`replay_request` 频率限制？**
+AI 可能连续重放几十次，可能对被测服务造成压力。是否需要频率限制或用户预授权？目前无限制，待观察实际使用情况。
+
+**Q2：AI Session 和流量 Session 的关系？**
+AI Session（MCP 对话上下文）和 RelayCraft Session（流量录制边界）是否应该绑定？绑定后 AI 可以精准感知"本次对话中产生的所有流量"，是 Phase 3 审批系统的前置能力。
+
+**Q3：写操作是否加可选审批模式？**
+高级用户可配置"来自 Claude 的 Map Local 规则自动批准"，默认审批。Phase 3 规划，不影响当前直接执行模式。
+
+**Q4：实时 SSE 的客户端支持现状？**
+Claude Desktop、Cursor 等客户端对 SSE event stream 的支持程度不一，需等待 MCP 生态成熟后再实现。
