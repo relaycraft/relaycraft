@@ -441,6 +441,7 @@ mod tests {
             },
             actions: vec![RuleAction::BlockRequest],
             tags: None,
+            metadata: None,
         };
 
         storage.save(&rule, None).unwrap();
@@ -495,6 +496,7 @@ mod tests {
             },
             actions: vec![],
             tags: None,
+            metadata: None,
         };
         storage.save(&rule, None).unwrap();
 
@@ -549,6 +551,7 @@ mod tests {
             },
             actions: vec![action],
             tags: None,
+            metadata: None,
         };
 
         storage.save(&rule, None).unwrap();

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.11](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.10...v1.0.0-rc.11) (2026-03-18)
+
+
+### Features
+
+* enhance MCP Server with token management and rule metadata tracking ([9fac284](https://github.com/relaycraft/relaycraft/commit/9fac284fff2fb96f74506d23b9128592ec7bb474))
+
 ## [1.0.0-rc.10](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.9...v1.0.0-rc.10) (2026-03-12)
 
 
