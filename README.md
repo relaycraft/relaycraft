@@ -17,50 +17,65 @@
 
 ---
 
-**RelayCraft** is a powerful, AI-native network debugging tool designed for modern development. Built with **Tauri**, **React**, and **Rust**, it bridges the gap between professional-grade proxy engines and modern developer experience with deep AI integration.
+**RelayCraft** is a powerful, AI-native network debugging tool designed for modern development. Built with **Tauri**, **React**, and **Rust**, it pairs a professional-grade proxy engine with deep AI integration and an extensible plugin system — all running fully offline, with zero accounts required.
 
-> 🌟 **Powerful Features for Modern Development**: Traffic Monitor + Rules Engine + AI Assistant + Breakpoints + Request Composer + Python Scripting + Extensibility.
+> 🌟 **Traffic Monitor · Rules Engine · AI Assistant · MCP Server · Breakpoints · Request Composer · Python Scripting · Plugins**
 
 ## ✨ Why RelayCraft?
 
-RelayCraft isn't just another proxy tool. It's an **AI-native workflow** for the modern web.
-
-- **🤖 AI-Native Everything**: Create complex rewrite rules using natural language, analyze requests intelligently, and get context-aware suggestions.
-- **🏗️ Modern Architecture**: A lightweight and robust core built with Tauri and Rust, powered by the industry-standard **mitmproxy** engine.
-- **🛡️ Security & Privacy**: Your data, only yours. Fully Offline, Zero Accounts, Local Storage, Local AI Support, Open Source, and No Telemetry.
-- **🐍 Python & Ecosystem**: Manipulate traffic with the full power of the **mitmproxy** Python ecosystem for ultimate flexibility.
-- **🎨 Extensibility & Customization**: A powerful plugin system and a comprehensive theme engine to craft your own professional workspace.
+- **🤖 AI-Native Throughout**: Create complex rewrite rules in natural language, diagnose failed requests with one click, and search traffic with plain English. Every core workflow has AI built in.
+- **🔌 MCP Server**: Expose live traffic data and rule management to any external AI tool (Claude Desktop, Cursor, etc.) via the [Model Context Protocol](https://modelcontextprotocol.io). Let your AI agent debug alongside you.
+- **🏗️ Modern Architecture**: A lightweight, robust core built with Tauri and Rust, powered by the industry-standard **mitmproxy** engine.
+- **🛡️ Privacy First**: Your data stays yours. Fully offline, zero accounts, local storage, local AI support, open source, and no telemetry.
+- **🐍 Python Scripting**: Manipulate traffic with the full power of the mitmproxy Python ecosystem for unlimited flexibility.
+- **🎨 Extensible**: A plugin system and comprehensive theme engine to craft your own professional workspace.
 
 ## 🚀 Key Features
 
 ### 📊 Traffic Monitor
-- **Multi-protocol Support**: Inspect HTTP, HTTPS, and WebSocket traffic with ease.
-- **Deep Analysis**: JSON syntax highlighting and image previews for thorough inspection.
-- **Smart Filtering**: Filter by method, domain, status code, or content type with a powerful custom query syntax.
-- **Export Options**: One-click export to **cURL**, **HAR**, or **Relay Session** (.relay).
+- **Multi-protocol**: Capture and inspect HTTP, HTTPS, and WebSocket traffic.
+- **Deep Analysis**: JSON syntax highlighting, image previews, and timing breakdowns.
+- **Smart Filtering**: Filter by method, domain, status code, or content type using a powerful query syntax.
+- **Export**: One-click export to **cURL**, **HAR**, or **Relay Session** (.relay).
 
 ### ⚙️ Rules Engine
-Say goodbye to complex configurations. Manage traffic behavior with a visual rule builder with 6 powerful rule types:
+Manage traffic behavior with a visual rule builder — no config files needed. Supports 6 rule types:
 
 | Action | Description |
 | :--- | :--- |
-| **Map Local** | Redirect requests to local files or custom content. |
-| **Map Remote** | Forward traffic to different URLs or environments. |
+| **Map Local** | Return custom content or redirect to a local file. |
+| **Map Remote** | Forward traffic to a different URL or environment. |
 | **Rewrite Header** | Modify request or response headers dynamically. |
-| **Rewrite Body** | Change request/response content (JSON/Regex/Text). |
+| **Rewrite Body** | Change request/response content (JSON / Regex / Text). |
 | **Throttling** | Simulate slow network conditions (3G, Edge, etc.). |
 | **Block Request** | Intercept and block matching requests instantly. |
 
+Rules track their origin — whether created manually, by the built-in AI assistant, or by an external MCP client — so you always know where a rule came from.
+
 ### 🧠 AI Assistant
-AI is everywhere — from request analysis to rule/script creation, from smart search to intelligent regex. Global **Ctrl(⌘) + K** command center makes it the tool that understands you best.
-- **Natural Language Creation**: Create complex rewrite rules or Python scripts using plain English.
-- **Intelligent Analysis**: One-click diagnostics for failed requests to understand the root cause.
-- **Smart Search**: Find specific requests in the traffic list using natural language queries.
+Global **Ctrl(⌘) + K** command center with context-aware AI across every workflow:
+- **Natural Language Rules**: Describe what you want intercepted or rewritten; AI builds the rule.
+- **Request Diagnostics**: One-click analysis of failed requests to find the root cause.
+- **Smart Search**: Find specific traffic using natural language queries.
+- **Script Generation**: Generate Python mitmproxy scripts from plain descriptions.
+
+### 🔌 MCP Server
+RelayCraft runs a built-in **MCP (Model Context Protocol) server**, letting any compatible AI client connect and work with your live traffic data.
+
+**Read tools** (no auth required — zero config):
+- `list_sessions` / `list_flows` / `get_flow` / `search_flows` / `get_session_stats` / `list_rules`
+
+**Write tools** (Bearer token, shown in Settings → Integrations):
+- `create_rule` — create any of the 6 rule types using natural language parameters
+- `delete_rule` / `toggle_rule` — manage rules in the session
+- `replay_request` — replay captured traffic through the proxy
+
+Compatible with **Claude Desktop**, **Cursor**, **Windsurf**, and any tool supporting the MCP HTTP transport.
 
 ### 🛠️ Developer Tools
-- **Breakpoints**: Real-time pause, edit, and resume requests/responses.
-- **Request Composer**: Built-in API client tailored for debugging (think Postman, but integrated).
-- **Script Editor**: Built-in **CodeMirror** editor with syntax highlighting and Python support. Write and run scripts instantly with independent logs.
+- **Breakpoints**: Pause, edit, and resume requests or responses in real time.
+- **Request Composer**: Built-in API client designed for debugging — think Postman, deeply integrated.
+- **Script Editor**: Built-in CodeMirror editor with Python syntax support and per-script independent logs.
 
 ## 🛠️ Getting Started
 
@@ -76,8 +91,8 @@ git clone https://github.com/relaycraft/relaycraft.git
 cd relaycraft
 
 # 2. Set up the Python Engine
-# Follow the instructions in [engine-core/README.md](engine-core/README.md)
-# to build and place the engine binary/bundle in the required directory.
+# Follow the instructions in engine-core/README.md
+# to build and place the engine binary in the required directory.
 
 # 3. Install frontend dependencies
 pnpm install
@@ -91,9 +106,9 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [Releases 
 
 ## 📖 Community & Support
 
-- [**Contributing Guide**](CONTRIBUTING.md) - Learn how to help us build the future of network debugging.
-- [**Commercial Use**](COMMERCIAL.md) - Information about sponsorship and corporate licensing.
-- [**Plugin Registry**](https://github.com/relaycraft/plugins) - Explore community-built plugins.
+- [**Contributing Guide**](CONTRIBUTING.md) — Learn how to contribute to the project.
+- [**Commercial Use**](COMMERCIAL.md) — Sponsorship and enterprise licensing information.
+- [**Plugin Registry**](https://github.com/relaycraft/plugins) — Explore community-built plugins.
 
 ## 📄 License
 
