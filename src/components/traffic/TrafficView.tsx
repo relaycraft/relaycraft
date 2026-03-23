@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import { matchFlow, parseFilter } from "../../lib/filterParser";
+import { searchFlowContent } from "../../lib/trafficMonitor";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTrafficStore } from "../../stores/trafficStore";
@@ -112,23 +113,89 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
   // Use debounced filter text
   const filterCriteria = useMemo(() => parseFilter(debouncedFilterText), [debouncedFilterText]);
 
+  // Deep search state — backend API results for body/header criteria
+  const [deepMatchIds, setDeepMatchIds] = useState<Set<string> | null>(null);
+  const [deepSearching, setDeepSearching] = useState(false);
+
+  // Trigger backend deep search when body or header criteria change
+  useEffect(() => {
+    const resTerms = filterCriteria.body;
+    const reqTerms = filterCriteria.reqbody;
+    const headerTerms = filterCriteria.header;
+    if (resTerms.length === 0 && reqTerms.length === 0 && headerTerms.length === 0) {
+      setDeepMatchIds(null);
+      return;
+    }
+
+    let cancelled = false;
+    setDeepSearching(true);
+
+    const run = async () => {
+      try {
+        const ids = new Set<string>();
+        const tasks: Promise<void>[] = [];
+        for (const term of resTerms) {
+          tasks.push(
+            searchFlowContent(term.value, "response", showSessionId).then(({ matches }) => {
+              if (!cancelled) for (const id of matches) ids.add(id);
+            }),
+          );
+        }
+        for (const term of reqTerms) {
+          tasks.push(
+            searchFlowContent(term.value, "request", showSessionId).then(({ matches }) => {
+              if (!cancelled) for (const id of matches) ids.add(id);
+            }),
+          );
+        }
+        for (const term of headerTerms) {
+          tasks.push(
+            searchFlowContent(term.value, "header", showSessionId).then(({ matches }) => {
+              if (!cancelled) for (const id of matches) ids.add(id);
+            }),
+          );
+        }
+        await Promise.all(tasks);
+        if (!cancelled) setDeepMatchIds(ids);
+      } catch (_e) {
+        if (!cancelled) setDeepMatchIds(new Set());
+      } finally {
+        if (!cancelled) setDeepSearching(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [filterCriteria.body, filterCriteria.reqbody, filterCriteria.header, showSessionId]);
+
+  // filterCriteria without deep-search fields — those are handled by deepMatchIds
+  const filterCriteriaNoDeep = useMemo(
+    () => ({ ...filterCriteria, body: [], reqbody: [], header: [] }),
+    [filterCriteria],
+  );
+
   // Filter indices instead of full flows
   const filteredIndices = useMemo(() => {
     const sourceIndices = pausedIndices || indices;
     return sourceIndices.filter((idx) => {
       if (onlyMatched && (!idx.hits || idx.hits.length === 0)) return false;
       if (!debouncedFilterText) return true;
-      // Match index fields
-      return matchFlow(idx, filterCriteria, isRegex, caseSensitive);
+      // Deep search: require flow to be in backend match set (null = no deep filter active)
+      if (deepMatchIds !== null && !deepMatchIds.has(idx.id)) return false;
+      // Match index fields — body/header criteria stripped (handled by deepMatchIds)
+      return matchFlow(idx, filterCriteriaNoDeep, isRegex, caseSensitive);
     });
   }, [
     pausedIndices,
     indices,
     onlyMatched,
     debouncedFilterText,
-    filterCriteria,
+    filterCriteriaNoDeep,
     isRegex,
     caseSensitive,
+    deepMatchIds,
   ]);
 
   const [lastBaselineCount, setLastBaselineCount] = useState(0);
@@ -342,6 +409,7 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
             filteredCount={filteredIndices.length}
             totalCount={indices.length}
             autoScroll={autoScroll}
+            bodySearching={deepSearching}
             onToggleAutoScroll={() => {
               const nextValue = !autoScroll;
               setAutoScroll(nextValue);

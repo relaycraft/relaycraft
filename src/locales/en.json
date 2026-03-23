@@ -1063,7 +1063,8 @@
       "or_desc": "Union of same types",
       "placeholder": "Enter filter conditions...",
       "quick": "Quick Filters",
-      "regex_tooltip": "Regex"
+      "regex_tooltip": "Regex",
+      "deep_search_notice": "Deep search (resbody/reqbody/header) scans up to 5000 recent flows. Negation, regex, and case-sensitivity not supported; multiple conditions use OR logic"
     },
     "list_cleared": "Traffic list cleared",
     "listening": "Listening for traffic...",

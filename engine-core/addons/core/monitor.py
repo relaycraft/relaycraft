@@ -1062,6 +1062,47 @@ class TrafficMonitor:
                     {"Access-Control-Allow-Origin": "*"}
                 )
 
+        # Body / header search — POST /_relay/search  { keyword, type, session_id }
+        # type: "response" | "request" (body) | "header"
+        elif "/_relay/search" in flow.request.path and flow.request.method == "POST":
+            try:
+                data = json.loads(flow.request.content.decode("utf-8"))
+                keyword = data.get("keyword", "").strip()
+                search_type = data.get("type", "response")
+                session_id_param = data.get("session_id", None)
+                case_sensitive = bool(data.get("case_sensitive", False))
+
+                if not keyword:
+                    result = {"matches": [], "scanned": 0}
+                elif search_type == "header":
+                    result = self.db.search_by_header(
+                        keyword=keyword,
+                        session_id=session_id_param,
+                        case_sensitive=case_sensitive,
+                    )
+                else:
+                    if search_type not in ("response", "request"):
+                        search_type = "response"
+                    result = self.db.search_by_body(
+                        keyword=keyword,
+                        body_type=search_type,
+                        session_id=session_id_param,
+                        case_sensitive=case_sensitive,
+                    )
+
+                json_str = json.dumps(result, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                )
+            except Exception as e:
+                flow.response = Response.make(
+                    500,
+                    str(e).encode("utf-8"),
+                    {"Access-Control-Allow-Origin": "*"},
+                )
+
         # Get database stats
         elif "/_relay/stats" in flow.request.path:
             try:

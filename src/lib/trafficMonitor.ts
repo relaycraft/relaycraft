@@ -23,6 +23,21 @@ export function getBackendPort(): number {
   return currentPort;
 }
 
+export async function searchFlowContent(
+  keyword: string,
+  type: "response" | "request" | "header",
+  sessionId?: string | null,
+): Promise<{ matches: string[]; scanned: number }> {
+  const url = `http://127.0.0.1:${currentPort}/_relay/search`;
+  const res = await tauriFetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ keyword, type, session_id: sessionId ?? null }),
+  });
+  if (!res.ok) throw new Error(`Content search failed: ${res.status}`);
+  return res.json();
+}
+
 export async function startTrafficMonitor(port: number = 9090) {
   if (pollInterval) {
     Logger.debug("Traffic monitor already running, stopping existing one...");

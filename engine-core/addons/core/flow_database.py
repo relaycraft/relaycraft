@@ -1348,6 +1348,145 @@ class FlowDatabase:
         ).fetchone()
         return row[0] if row else 0
 
+    # Max number of flow bodies to decompress per body search request.
+    # Acts as a performance safety net for large sessions.
+    BODY_SEARCH_SCAN_LIMIT = 5000
+
+    def search_by_body(self, keyword: str, body_type: str = "response",
+                       session_id: str = None, case_sensitive: bool = False) -> dict:
+        """Search flow bodies for a keyword.
+
+        Scans up to BODY_SEARCH_SCAN_LIMIT most-recent bodies for the session.
+        Covers both compressed bodies (flow_bodies table) and inline bodies
+        (< 10KB, stored inside flow_details.data JSON).
+        Large file-stored bodies (> 1MB) are not searched.
+
+        Args:
+            keyword:        Search term.
+            body_type:      "response" or "request".
+            session_id:     Target session; defaults to active session.
+            case_sensitive: If False (default), search is case-insensitive.
+
+        Returns:
+            { "matches": [flow_id, ...], "scanned": N }
+        """
+        session_id = self._get_session_id(session_id)
+        if not session_id or not keyword:
+            return {"matches": [], "scanned": 0}
+
+        kw = keyword if case_sensitive else keyword.lower()
+        body_ref_col = "request_body_ref" if body_type == "request" else "response_body_ref"
+        body_json_path = ("request", "postData", "text") if body_type == "request" \
+            else ("response", "content", "text")
+
+        def _check(text: str) -> bool:
+            return kw in (text if case_sensitive else text.lower())
+
+        def _query(conn):
+            # One query covering both inline and compressed bodies, ordered by
+            # recency — guarantees exactly BODY_SEARCH_SCAN_LIMIT flows scanned.
+            candidates = conn.execute(
+                f"""
+                SELECT fd.id, fd.data, fd.{body_ref_col} AS body_ref
+                FROM flow_details fd
+                JOIN flow_indices fi ON fd.id = fi.id
+                WHERE fi.session_id = ?
+                  AND fd.{body_ref_col} IN ('inline', 'compressed')
+                ORDER BY fi.msg_ts DESC
+                LIMIT ?
+                """,
+                (session_id, self.BODY_SEARCH_SCAN_LIMIT),
+            ).fetchall()
+
+            # Bulk-fetch compressed body data for candidates that need it
+            compressed_ids = [r["id"] for r in candidates if r["body_ref"] == "compressed"]
+            compressed_data: dict = {}
+            if compressed_ids:
+                placeholders = ",".join("?" * len(compressed_ids))
+                rows = conn.execute(
+                    f"SELECT flow_id, data FROM flow_bodies "
+                    f"WHERE flow_id IN ({placeholders}) AND type = ?",
+                    compressed_ids + [body_type],
+                ).fetchall()
+                for row in rows:
+                    compressed_data[row["flow_id"]] = row["data"]
+
+            k1, k2, k3 = body_json_path
+            matches = []
+            for candidate in candidates:
+                fid = candidate["id"]
+                try:
+                    if candidate["body_ref"] == "compressed":
+                        raw = compressed_data.get(fid)
+                        if raw is None:
+                            continue
+                        text = gzip.decompress(bytes(raw)).decode("utf-8", errors="replace")
+                    else:  # inline
+                        data = json.loads(candidate["data"])
+                        text = data.get(k1, {}).get(k2, {}).get(k3, "") or ""
+                    if text and _check(text):
+                        matches.append(fid)
+                except Exception:
+                    pass
+
+            return {"matches": matches, "scanned": len(candidates)}
+
+        return self._execute_with_retry("search_by_body", _query)
+
+    def search_by_header(self, keyword: str, session_id: str = None,
+                         case_sensitive: bool = False) -> dict:
+        """Search flow headers for a keyword.
+
+        Parses flow_details.data JSON and searches only the headers arrays,
+        avoiding false positives from URLs, body text, or metadata.
+
+        Args:
+            keyword:        Search term.
+            session_id:     Target session; defaults to active session.
+            case_sensitive: If False (default), search is case-insensitive.
+
+        Returns:
+            { "matches": [flow_id, ...], "scanned": N }
+        """
+        session_id = self._get_session_id(session_id)
+        if not session_id or not keyword:
+            return {"matches": [], "scanned": 0}
+
+        kw = keyword if case_sensitive else keyword.lower()
+
+        def _check(s: str) -> bool:
+            return kw in (s if case_sensitive else s.lower())
+
+        def _query(conn):
+            rows = conn.execute(
+                """
+                SELECT fd.id, fd.data
+                FROM flow_details fd
+                JOIN flow_indices fi ON fd.id = fi.id
+                WHERE fi.session_id = ?
+                ORDER BY fi.msg_ts DESC
+                LIMIT ?
+                """,
+                (session_id, self.BODY_SEARCH_SCAN_LIMIT),
+            ).fetchall()
+
+            matches = []
+            for row in rows:
+                try:
+                    data = json.loads(row["data"])
+                    req_headers = data.get("request", {}).get("headers", [])
+                    res_headers = data.get("response", {}).get("headers", [])
+                    for h in req_headers + res_headers:
+                        if _check(str(h.get("name", ""))) or _check(str(h.get("value", ""))):
+                            matches.append(row["id"])
+                            break  # One match per flow is enough
+                except Exception:
+                    pass
+
+            return {"matches": matches, "scanned": len(rows)}
+
+        return self._execute_with_retry("search_by_header", _query)
+
     # ==================== Background Cleanup Thread ====================
 
     # Idle time (seconds) before running a TRUNCATE WAL checkpoint

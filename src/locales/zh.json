@@ -1063,7 +1063,8 @@
       "or_desc": "同类型取并集",
       "placeholder": "请输入过滤条件...",
       "quick": "快速过滤",
-      "regex_tooltip": "正则匹配"
+      "regex_tooltip": "正则匹配",
+      "deep_search_notice": "请求/响应体、请求/响应头等深度搜索最多扫描最近 5000 条，不支持负条件、正则及大小写区分，多条件取并集"
     },
     "list_cleared": "流量列表已清空",
     "listening": "正在监听网络流量...",

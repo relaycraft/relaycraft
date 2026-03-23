@@ -1,5 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, HelpCircle, ListFilter, Regex as RegexIcon, Search, X } from "lucide-react";
+import {
+  Activity,
+  HelpCircle,
+  Info,
+  ListFilter,
+  Loader2,
+  Regex as RegexIcon,
+  Search,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUIStore } from "../../stores/uiStore";
@@ -20,6 +29,7 @@ interface FilterBarProps {
   filteredCount: number;
   totalCount: number;
   autoScroll: boolean;
+  bodySearching?: boolean;
   onToggleAutoScroll: () => void;
 }
 // Props definition for FilterBar
@@ -36,6 +46,7 @@ export function FilterBar({
   filteredCount,
   totalCount,
   autoScroll,
+  bodySearching = false,
   onToggleAutoScroll,
 }: FilterBarProps) {
   const { t } = useTranslation();
@@ -83,7 +94,11 @@ export function FilterBar({
     <div className="p-3 flex-shrink-0 z-50 relative flex flex-col gap-2 bg-muted/15 backdrop-blur-xl border-b border-border/40">
       <div className="flex items-center gap-2">
         <div className="relative flex-1 group">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+          {bodySearching ? (
+            <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary animate-spin transition-colors z-10" />
+          ) : (
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+          )}
           <Input
             ref={inputRef}
             type="text"
@@ -219,6 +234,9 @@ export function FilterBar({
                   "size:>1mb",
                   "duration:>500ms",
                   "-domain:google",
+                  "resbody:keyword",
+                  "reqbody:keyword",
+                  "header:Authorization",
                 ].map((filter) => (
                   <button
                     key={filter}
@@ -246,6 +264,10 @@ export function FilterBar({
                   • <b>{t("traffic.filter.compare")}</b>{" "}
                   <span className="opacity-60 text-tiny">(e.g. size:&gt;1mb)</span>
                 </div>
+              </div>
+              <div className="flex items-start gap-1.5 mt-2 px-2 py-1.5 bg-primary/5 border border-primary/15 rounded-md text-xs text-muted-foreground">
+                <Info className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary/60" />
+                <span>{t("traffic.filter.deep_search_notice")}</span>
               </div>
             </div>
           </motion.div>
