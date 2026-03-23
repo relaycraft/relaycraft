@@ -16,8 +16,6 @@ body:
       options:
         - label: I searched existing issues and discussions and did not find a duplicate. | 我已搜索 Issue 和 Discussions，未发现重复建议。
           required: true
-        - label: This request describes a concrete user problem, not just a preferred implementation. | 该请求描述了明确的用户问题，而不仅是实现偏好。
-          required: true
 
   - type: textarea
     id: problem
@@ -33,14 +31,6 @@ body:
     attributes:
       label: Proposed Solution | 建议的解决方案
       description: How would you like this to work? | 您希望如何实现？
-    validations:
-      required: true
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives Considered | 已考虑的替代方案
-      description: Any alternative solutions or workarounds you've considered. | 您考虑过的其他方案或临时解决方法。
 
   - type: dropdown
     id: category
@@ -55,11 +45,9 @@ body:
         - Performance | 性能
         - Plugin System | 插件系统
         - Other | 其他
-    validations:
-      required: true
 
   - type: textarea
-    id: context
+    id: extra
     attributes:
-      label: Additional Context | 其他信息
-      description: Screenshots, mockups, or any other context. | 截图、原型或其他背景信息。
+      label: Anything else? | 其他补充
+      description: Priority, screenshots, mockups, constraints, or anything else. | 优先级、截图、约束条件等，不确定写哪就写这里。

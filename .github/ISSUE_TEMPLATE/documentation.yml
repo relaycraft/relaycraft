@@ -10,8 +10,6 @@ body:
       options:
         - label: I searched existing issues and did not find a duplicate doc issue. | 我已搜索现有 Issue，未发现重复文档问题。
           required: true
-        - label: I identified where the documentation is missing/incorrect. | 我已明确缺失或错误文档的位置。
-          required: true
 
   - type: textarea
     id: description
@@ -30,3 +28,9 @@ body:
     id: suggestion
     attributes:
       label: Suggested Improvement | 改进建议
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else? | 其他补充
+      description: Screenshots, links, or anything else. | 截图、链接等，不确定写哪就写这里。

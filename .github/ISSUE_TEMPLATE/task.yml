@@ -16,8 +16,6 @@ body:
       options:
         - label: I searched existing issues and did not find a duplicate task. | 我已搜索现有 Issue，未发现重复任务。
           required: true
-        - label: I defined clear scope and acceptance criteria for this task. | 我已定义清晰的任务范围和验收标准。
-          required: true
 
   - type: textarea
     id: background
@@ -29,23 +27,10 @@ body:
       required: true
 
   - type: textarea
-    id: scope
-    attributes:
-      label: Scope | 范围
-      description: What should be included and excluded? | 需要包含和不包含什么？
-      placeholder: |
-        Included:
-        - ...
-        Excluded:
-        - ...
-    validations:
-      required: true
-
-  - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance Criteria | 验收标准
-      description: List verifiable outcomes. | 列出可验证的结果。
+      label: Acceptance Criteria / Definition of Done | 验收标准 / 完成定义
+      description: List verifiable outcomes. | 列出可验证的结果（尽量可测试/可检查）。
       placeholder: |
         - [ ] ...
         - [ ] ...
@@ -57,3 +42,9 @@ body:
     attributes:
       label: References | 关联信息
       description: Related PRs, issues, files, or design docs. | 相关 PR、Issue、文件或设计文档。
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else? | 其他补充
+      description: Constraints, rollout plan, risks, or anything else. | 约束、发布计划、风险等，不确定写哪就写这里。

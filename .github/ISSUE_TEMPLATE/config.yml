@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: 🔐 Report a Security Vulnerability
+    url: https://github.com/relaycraft/relaycraft/security/policy
+    about: Please DO NOT open a public issue for security reports. | 安全漏洞请勿提交公开 Issue，请按安全策略私下报告。
   - name: 🔎 Search Existing Issues
     url: https://github.com/relaycraft/relaycraft/issues?q=is%3Aissue
     about: Please search for duplicates before creating a new issue. | 提交前请先搜索是否已有重复 Issue。

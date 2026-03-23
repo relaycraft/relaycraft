@@ -114,6 +114,10 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [Releases 
 
 RelayCraft is open-sourced under the **AGPLv3** license. See the [LICENSE](LICENSE) file for details.
 
+## 🙌 Contributors
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ---
 
 <p align="center">

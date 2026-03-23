@@ -19,8 +19,7 @@ body:
       options:
         - label: I searched existing issues and did not find a duplicate. | 我已搜索现有 Issue，未发现重复项。
           required: true
-        - label: I can reproduce this issue consistently with clear steps. | 我可以通过清晰步骤稳定复现此问题。
-          required: true
+        - label: I can provide steps to reproduce if needed. | 如有需要我可以补充复现步骤。
 
   - type: input
     id: version
@@ -28,8 +27,6 @@ body:
       label: RelayCraft Version | 版本
       description: Which version are you using? You can find it in the app's About page.
       placeholder: e.g. 1.0.0-rc1
-    validations:
-      required: true
 
   - type: dropdown
     id: platform
@@ -39,22 +36,12 @@ body:
         - macOS
         - Windows
         - Linux
-    validations:
-      required: true
-
-  - type: input
-    id: os-version
-    attributes:
-      label: OS Version | 系统版本
-      placeholder: e.g. macOS 15.3, Windows 11 24H2, Ubuntu 24.04
-    validations:
-      required: true
 
   - type: textarea
-    id: description
+    id: what-happened
     attributes:
-      label: Bug Description | 问题描述
-      description: A clear and concise description of what the bug is. | 清晰简洁地描述发生了什么问题。
+      label: What happened? | 发生了什么？
+      description: A clear and concise description. | 请用清晰简洁的方式描述问题。
       placeholder: When I do X, Y happens instead of Z...
     validations:
       required: true
@@ -69,24 +56,18 @@ body:
         2. Go to '...'
         3. Click on '...'
         4. See error
-    validations:
-      required: true
 
   - type: textarea
     id: expected
     attributes:
       label: Expected Behavior | 预期行为
       description: What did you expect to happen? | 您期望发生什么？
-    validations:
-      required: true
 
   - type: textarea
     id: actual
     attributes:
       label: Actual Behavior | 实际行为
       description: What actually happened? | 实际发生了什么？
-    validations:
-      required: true
 
   - type: textarea
     id: logs
@@ -95,11 +76,13 @@ body:
       description: |
         Paste any relevant logs or attach screenshots.
         粘贴相关日志或附上截图。
+        Please redact sensitive data (tokens, cookies, Authorization headers, internal domains/IPs).
+        请对敏感信息脱敏（token、cookie、Authorization、内网域名/IP 等）。
         You can find logs at: macOS `~/Library/Logs/com.relaycraft.app/`, Windows `%APPDATA%\com.relaycraft.app\logs\`
       render: shell
 
   - type: textarea
-    id: context
+    id: extra
     attributes:
-      label: Additional Context | 其他信息
-      description: Any other context about your setup, proxy configuration, or network environment. | 其他背景信息，如代理配置、网络环境等。
+      label: Anything else? | 其他补充
+      description: If you're not sure where to put something, put it here. | 不确定写哪就写这里。
