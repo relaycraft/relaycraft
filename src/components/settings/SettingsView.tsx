@@ -468,10 +468,20 @@ export function SettingsView() {
                               onConfirm: async () => {
                                 btn.innerText = t("settings.about.downloading");
                                 try {
+                                  // Stop engine before installer runs so it can overwrite engine files (Windows file lock)
+                                  try {
+                                    const { invoke } = await import("@tauri-apps/api/core");
+                                    await invoke("stop_proxy");
+                                  } catch (_) {}
                                   await update.downloadAndInstall();
                                   await relaunch();
                                 } catch (error) {
                                   console.error("Installation failed:", error);
+                                  // Restore proxy that was stopped before install attempt
+                                  try {
+                                    const { invoke } = await import("@tauri-apps/api/core");
+                                    await invoke("restart_proxy");
+                                  } catch (_) {}
                                   const { notify } = await import("../../lib/notify");
                                   notify.error(t("settings.about.error_fetch"));
                                   btn.innerText = originalText;
