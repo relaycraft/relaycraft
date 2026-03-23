@@ -342,8 +342,8 @@ pub fn run() {
 
 
 fn apply_upstream_proxy(config: &config::AppConfig) {
-    if config.upstream_proxy.enabled && !config.upstream_proxy.url.is_empty() {
-        let proxy_url = &config.upstream_proxy.url;
+    if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
+        let proxy_url = config.upstream_proxy.url.trim();
         log::info!("Applying upstream proxy to environment: {}", proxy_url);
         std::env::set_var("HTTP_PROXY", proxy_url);
         std::env::set_var("HTTPS_PROXY", proxy_url);

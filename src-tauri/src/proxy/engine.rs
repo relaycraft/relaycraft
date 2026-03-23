@@ -146,10 +146,10 @@ impl ProxyEngine for MitmproxyEngine {
         if config.ssl_insecure {
             args.push("--ssl-insecure".to_string());
         }
-        if config.upstream_proxy.enabled && !config.upstream_proxy.url.is_empty() {
+        if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
             args.extend_from_slice(&[
                 "--mode".to_string(),
-                format!("upstream:{}", config.upstream_proxy.url),
+                format!("upstream:{}", config.upstream_proxy.url.trim()),
             ]);
         }
 
