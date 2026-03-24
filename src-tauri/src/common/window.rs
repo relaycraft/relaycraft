@@ -1,8 +1,15 @@
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 use std::sync::Mutex;
 
 #[cfg(target_os = "macos")]
 static VIBRANCY_VIEW: Mutex<Option<usize>> = Mutex::new(None);
+
+// Track the currently applied Windows effect to avoid redundant DWM recomposition.
+// Key insight: clear_vibrancy() + apply_*() is what causes the flicker frame.
+// By skipping when effect hasn't changed and only clearing on type switches,
+// we avoid the blank frame entirely.
+#[cfg(target_os = "windows")]
+static WINDOWS_CURRENT_EFFECT: Mutex<Option<String>> = Mutex::new(None);
 
 pub fn setup_window(window: &tauri::WebviewWindow) {
     #[cfg(target_os = "macos")]
@@ -152,26 +159,53 @@ fn setup_windows_linux_window(window: &tauri::WebviewWindow) {
 fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     use window_vibrancy::{apply_acrylic, apply_mica, clear_vibrancy};
 
-    // On Windows, we clear first to avoid stacking effects
-    let _ = clear_vibrancy(window);
+    let current = WINDOWS_CURRENT_EFFECT.lock().unwrap().clone();
+
+    // Skip entirely if same effect is already applied.
+    // This prevents redundant DWM recomposition (a common source of flicker and
+    // unresponsiveness when applyVibrancy is called multiple times at startup).
+    if current.as_deref() == Some(effect) {
+        return;
+    }
+
+    // Only call clear_vibrancy when switching effect *types* or disabling.
+    // clear_vibrancy() removes the DWM composition for one frame before the
+    // new effect is applied — that gap is exactly what causes the visible flash.
+    // When staying in the same effect family, re-applying in-place avoids the gap.
+    let needs_clear = matches!(
+        (current.as_deref(), effect),
+        // Always clear when disabling
+        (_, "none") |
+        // Clear when switching between different effect types
+        (Some("dark"), "light") |
+        (Some("light"), "dark")
+    );
+
+    if needs_clear {
+        let _ = clear_vibrancy(window);
+    }
 
     match effect {
         "dark" => {
-            // Acrylic looks great on Windows 10/11 for dark themes
-            let _ = apply_acrylic(window, Some((20, 20, 25, 200)));
+            // Alpha 80/255 ≈ 31%: enough tint for readability without looking opaque.
+            // The previous value of 200 (78%) was the main reason it looked "too dark".
+            let _ = apply_acrylic(window, Some((18, 18, 22, 80)));
         }
         "light" => {
-            // Mica is a nice, subtle alternative for light themes on Windows 11
-            let _ = apply_mica(window, None);
+            // Try Mica first (Windows 11, build ≥ 22000) — it's more stable and
+            // doesn't flicker during window drag. Fall back to Acrylic on Windows 10
+            // where Mica is unavailable and apply_mica() returns an error.
+            if apply_mica(window, Some(false)).is_err() {
+                let _ = apply_acrylic(window, Some((242, 242, 250, 50)));
+            }
         }
-        "none" => {
-            // Already cleared. The frontend will handle making the CSS background opaque
-            // so it doesn't look like a broken glass window.
-        }
-        _ => {
-            let _ = apply_mica(window, None);
+        "none" | _ => {
+            // clear_vibrancy already called above if needed.
+            // Frontend CSS handles rendering a fully opaque background.
         }
     }
+
+    *WINDOWS_CURRENT_EFFECT.lock().unwrap() = Some(effect.to_string());
 }
 
 #[tauri::command]

@@ -4,6 +4,11 @@ import { Logger } from "../lib/logger";
 import { useSettingsStore } from "./settingsStore";
 import { useUIStore } from "./uiStore";
 
+// Debounce timer for set_window_vibrancy IPC calls.
+// Prevents rapid-fire DWM recomposition when applyVibrancy() is called
+// multiple times during startup or theme switching.
+let _vibrancyTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
  * CSS variables that are specifically for vibrancy/blur backgrounds.
  * Only these variables will have their rgba values blended when vibrancy is disabled.
@@ -454,11 +459,16 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       });
     }
 
-    // Send effect to Rust backend
+    // Send effect to Rust backend (debounced).
+    // The Rust side also deduplicates by tracking current effect state,
+    // but debouncing here avoids even the IPC overhead on rapid calls.
     const effect = vibrancyEnabled ? getThemeType() : "none";
-    invoke("set_window_vibrancy", { effect }).catch((err) => {
-      Logger.error("[ThemeStore] Failed to set window vibrancy:", err);
-    });
+    if (_vibrancyTimer) clearTimeout(_vibrancyTimer);
+    _vibrancyTimer = setTimeout(() => {
+      invoke("set_window_vibrancy", { effect }).catch((err) => {
+        Logger.error("[ThemeStore] Failed to set window vibrancy:", err);
+      });
+    }, 150);
   },
 
   setTheme: async (themeId) => {
