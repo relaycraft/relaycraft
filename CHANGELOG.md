@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.12](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.11...v1.0.0-rc.12) (2026-03-24)
+
+
+### Features
+
+* enhance splash screen design with new animations and improved theme variables ([eaa0826](https://github.com/relaycraft/relaycraft/commit/eaa08265ad33d2488108515793fc58a77c35b55e))
+* implement deep search functionality for flow bodies and headers ([dcca5bd](https://github.com/relaycraft/relaycraft/commit/dcca5bd81b1fc10c99f03a51b0e84a30c05b176f))
+
+
+### Bug Fixes
+
+* prevent Windows auto-update file write failures by stopping proxy before install ([8ff6bda](https://github.com/relaycraft/relaycraft/commit/8ff6bda0878160bb9556a511d60a4b13f484f070))
+* reduce window vibrancy flicker by debouncing update calls ([baa25bc](https://github.com/relaycraft/relaycraft/commit/baa25bc2f7a444f3af986e0602b38e42c056753b))
+* trim whitespace from upstream proxy URL checks [#23](https://github.com/relaycraft/relaycraft/issues/23) ([c9ea052](https://github.com/relaycraft/relaycraft/commit/c9ea052fd94ee1aaf173ec7b9abe2ae336b414bb))
+
 ## [1.0.0-rc.11](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.10...v1.0.0-rc.11) (2026-03-18)
 
 
