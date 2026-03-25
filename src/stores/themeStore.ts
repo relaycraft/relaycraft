@@ -30,10 +30,13 @@ const VIBRANCY_RELATED_VARS = new Set([
  * due to differences in DWM composition vs NSVisualEffectView.
  */
 const ALPHA_COMPENSATION_CONFIG = {
-  /** Compensation factor for Windows: newAlpha = alpha + (1 - alpha) * factor */
-  windowsFactor: 0.45,
+  /** Compensation factor for Windows: newAlpha = alpha + (1 - alpha) * factor
+   *  Lowered from 0.45 to 0.30 to match the reduced Acrylic tint alpha (80/255 ≈ 31%).
+   *  The previous 0.45 was calibrated for alpha=200 Acrylic — now that the OS effect
+   *  is more translucent, the CSS layer needs less compensation to stay readable. */
+  windowsFactor: 0.3,
   /** Maximum alpha cap to prevent fully opaque colors */
-  maxAlpha: 0.95,
+  maxAlpha: 0.92,
   /** Alpha threshold below which compensation is applied (skip already-opaque colors) */
   alphaThreshold: 0.9,
 } as const;
@@ -94,12 +97,51 @@ function blendRgbaWithBackground(
 }
 
 /**
- * Process color value for vibrancy setting.
- * Only processes rgba() values for vibrancy-related CSS variables.
+ * Default alpha values applied when a third-party theme uses solid hex colors for
+ * vibrancy-related variables. These mirror the opacity ratios of the built-in
+ * Modern Charcoal theme so custom themes get a sensible glass effect out of the box.
  *
- * Two-stage processing:
- * 1. Platform alpha compensation (when vibrancy enabled) - adjusts transparency for OS differences
- * 2. Background blending (when vibrancy disabled) - composites onto solid background
+ * Theme authors can always override by using rgba() in their theme.yaml/colors,
+ * which gives them full control over the transparency level.
+ */
+const VIBRANCY_DEFAULT_ALPHA: Readonly<Record<string, number>> = {
+  "--color-background": 0.35,
+  "--color-muted": 0.4,
+  "--color-card": 0.72,
+  "--color-popover": 0.78,
+  "--color-input": 0.58,
+  "--color-secondary": 0.47,
+  "--color-accent": 0.58,
+};
+
+/** Parse #RGB or #RRGGBB hex strings into RGB components. Returns null on failure. */
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const s = hex.trim().replace(/^#/, "");
+  if (s.length === 3) {
+    return {
+      r: parseInt(s[0] + s[0], 16),
+      g: parseInt(s[1] + s[1], 16),
+      b: parseInt(s[2] + s[2], 16),
+    };
+  }
+  if (s.length === 6) {
+    return {
+      r: parseInt(s.slice(0, 2), 16),
+      g: parseInt(s.slice(2, 4), 16),
+      b: parseInt(s.slice(4, 6), 16),
+    };
+  }
+  return null;
+}
+
+/**
+ * Process color value for vibrancy setting.
+ * Handles both rgba() (built-in themes) and hex (third-party themes).
+ *
+ * Three-stage logic:
+ * 1. Hex colors with vibrancy OFF  → return original hex (solid, as intended by author)
+ * 2. Hex colors with vibrancy ON   → convert to rgba using per-variable default alpha
+ * 3. rgba() colors                 → existing platform compensation / background blending
  */
 function processColorForVibrancy(
   varName: string,
@@ -112,10 +154,28 @@ function processColorForVibrancy(
     return value;
   }
 
+  // ── Hex color path (third-party themes) ──────────────────────────────────
+  const hexMatch = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hexMatch) {
+    // Vibrancy OFF: hex is already a fully opaque color — the theme author's
+    // intended solid surface. No blending needed; return as-is.
+    if (!vibrancyEnabled) return value;
+
+    // Vibrancy ON: make the surface semi-transparent so the OS blur shows through.
+    const rgb = hexToRgb(value);
+    if (!rgb) return value;
+
+    const defaultAlpha = VIBRANCY_DEFAULT_ALPHA[varName] ?? 0.6;
+    const isMac = useUIStore.getState().isMac;
+    const compensatedAlpha = compensateAlphaForPlatform(defaultAlpha, isMac);
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${compensatedAlpha.toFixed(3)})`;
+  }
+
+  // ── rgba() color path (built-in themes) ──────────────────────────────────
   // Match rgba(r, g, b, a) format (with optional spaces)
   const rgbaMatch = value.match(/^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/i);
   if (!rgbaMatch) {
-    return value; // Not an rgba color, pass through
+    return value; // rgb(), hsl(), custom property — pass through unchanged
   }
 
   const r = Number.parseInt(rgbaMatch[1], 10);
@@ -179,13 +239,19 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
          * These use rgba with transparency for vibrancy/glass effect.
          * When vibrancy is disabled, these are blended with solid background.
          * ═══════════════════════════════════════════════════════════════ */
-        "--color-background": "rgba(11, 12, 15, 0.4)", // Main app background
-        "--color-muted": "rgba(17, 20, 26, 0.45)", // Secondary surfaces, sidebars
-        "--color-card": "rgba(22, 26, 34, 0.75)", // Cards, panels, detail views
-        "--color-popover": "rgba(22, 27, 34, 0.75)", // Dropdowns, tooltips, modals
-        "--color-input": "rgba(13, 15, 20, 0.6)", // Input fields, text boxes
-        "--color-secondary": "rgba(13, 17, 23, 0.5)", // Secondary buttons, badges
-        "--color-accent": "rgba(30, 34, 41, 0.6)", // Accent surfaces, highlights
+        // Vibrancy-aware surface colors.
+        // RGB values carry a subtle cool-blue bias matching the primary color (#60a5fa),
+        // so when the OS blur bleeds through, the tint feels intentional rather than accidental.
+        // Alpha values are slightly lower than before to let the OS effect breathe;
+        // when vibrancy is disabled, blendRgbaWithBackground() composites these onto
+        // the solid dark background — the result is visually indistinguishable from the old values.
+        "--color-background": "rgba(13, 15, 22, 0.35)", // Main app background
+        "--color-muted": "rgba(16, 18, 27, 0.40)", // Secondary surfaces, sidebars
+        "--color-card": "rgba(20, 23, 34, 0.72)", // Cards, panels, detail views
+        "--color-popover": "rgba(20, 24, 34, 0.78)", // Dropdowns, tooltips, modals
+        "--color-input": "rgba(12, 14, 22, 0.58)", // Input fields, text boxes
+        "--color-secondary": "rgba(12, 15, 24, 0.47)", // Secondary buttons, badges
+        "--color-accent": "rgba(26, 30, 42, 0.58)", // Accent surfaces, highlights
 
         /* ═══════════════════════════════════════════════════════════════
          * TEXT COLORS (Solid - no transparency)
@@ -457,6 +523,36 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
         const processedValue = processColorForVibrancy(key, value, vibrancyEnabled, isDarkTheme);
         root.style.setProperty(key, processedValue);
       });
+    }
+
+    // Mark the document so CSS can conditionally adjust glass/blur rules.
+    // This is the single source of truth for vibrancy state in CSS-land.
+    document.documentElement.dataset.vibrancy = vibrancyEnabled ? "on" : "off";
+
+    // When vibrancy is active, glass surfaces need crisper border definition —
+    // the OS blur makes content behind panels visible, so edges matter more.
+    // We override border vars here (after the theme color loop) so this applies
+    // to both built-in and custom themes without touching theme files.
+    if (activeTheme) {
+      const root = document.documentElement;
+      if (vibrancyEnabled) {
+        if (isDarkTheme) {
+          root.style.setProperty("--color-border", "rgba(255, 255, 255, 0.12)");
+          root.style.setProperty("--color-border-subtle", "rgba(255, 255, 255, 0.06)");
+          root.style.setProperty("--color-border-muted", "rgba(255, 255, 255, 0.20)");
+        } else {
+          root.style.setProperty("--color-border", "rgba(0, 0, 0, 0.10)");
+          root.style.setProperty("--color-border-subtle", "rgba(0, 0, 0, 0.05)");
+          root.style.setProperty("--color-border-muted", "rgba(0, 0, 0, 0.15)");
+        }
+      } else {
+        // Restore theme-defined border values
+        const borderVars = ["--color-border", "--color-border-subtle", "--color-border-muted"];
+        borderVars.forEach((v) => {
+          const themeValue = activeTheme.colors[v];
+          if (themeValue) root.style.setProperty(v, themeValue);
+        });
+      }
     }
 
     // Send effect to Rust backend (debounced).

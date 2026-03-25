@@ -296,6 +296,32 @@ html.lang-zh .font-bold {
   box-shadow: inset 0 1px 1px 0 color-mix(in srgb, var(--color-foreground), transparent 98%);
 }
 
+/* ── Vibrancy-aware overrides ──────────────────────────────────────────────
+ * When the OS provides background blur (Acrylic / NSVisualEffectView),
+ * CSS backdrop-filter stacks on top and creates "blur on blur" muddiness.
+ * In vibrancy-on mode we drop the CSS blur and let the OS layer own it,
+ * keeping only the saturation boost which enhances colour richness without
+ * adding extra blur layers. Blob intensity is also reduced so the OS effect
+ * (not the blobs) remains the visual anchor.
+ * ─────────────────────────────────────────────────────────────────────── */
+[data-vibrancy="on"] .glass-panel {
+  backdrop-filter: saturate(180%);
+}
+
+[data-vibrancy="on"] .vibrancy-blob {
+  filter: blur(55px);
+  opacity: 0.08;
+  mix-blend-mode: screen;
+}
+
+[data-vibrancy="on"] .blob-2 {
+  opacity: 0.05;
+}
+
+[data-vibrancy="on"] .relaycraft-toast-container {
+  backdrop-filter: saturate(200%);
+}
+
 .bg-vibrancy-container {
   position: fixed;
   inset: 0;
