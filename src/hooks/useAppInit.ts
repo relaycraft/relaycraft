@@ -4,6 +4,7 @@ import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../lib/logger";
 import { notify } from "../lib/notify";
 import { initPlugins } from "../plugins/pluginLoader";
 import { useAIStore } from "../stores/aiStore";
@@ -147,7 +148,9 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       if (currentConfig.auto_start_proxy && isEngineRunning && !isTrafficActive) {
         console.log("[init] Auto-starting traffic monitoring...");
         await emit("init-status", t("init.status_proxy"));
-        startProxy().catch((err) => console.error("Failed to auto-start traffic monitoring:", err));
+        startProxy().catch((err) =>
+          Logger.error("Failed to auto-start traffic monitoring:", err).then(() => undefined),
+        );
       }
 
       console.log("[init] Initialization complete");

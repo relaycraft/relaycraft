@@ -106,7 +106,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       });
     } catch (error) {
       const errorMsg = error as string;
-      console.error("Failed to start proxy:", errorMsg);
+      await Logger.error("Failed to start proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
       // 添加错误通知
@@ -154,7 +154,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       });
     } catch (error) {
       const errorMsg = error as string;
-      console.error("Failed to stop proxy:", errorMsg);
+      await Logger.error("Failed to stop proxy:", errorMsg);
       set({ error: errorMsg });
 
       // 添加错误通知
@@ -217,7 +217,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       });
     } catch (error) {
       const errorMsg = error as string;
-      console.error("Failed to restart proxy:", errorMsg);
+      await Logger.error("Failed to restart proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
       // Add error notification

@@ -179,7 +179,11 @@ impl ProxyEngine for MitmproxyEngine {
         }
 
         // Add anchor script as the final capture step
-        let addon_dir = self.get_addon_path(app)?.parent().unwrap().to_path_buf();
+        let addon_dir = self
+            .get_addon_path(app)?
+            .parent()
+            .ok_or_else(|| AppError::Config("addon entry.py has no parent directory".into()))?
+            .to_path_buf();
         let anchor_path = addon_dir.join("anchor.py");
         if anchor_path.exists() {
             args.extend_from_slice(&["-s".to_string(), anchor_path.to_string_lossy().to_string()]);
@@ -392,8 +396,18 @@ impl ProxyEngine for MitmproxyEngine {
     }
 
     fn get_status(&self) -> ProxyStatus {
-        let mut child_lock = self.inner.child.lock().unwrap();
-        let active_lock = self.inner.active_scripts.lock().unwrap();
+        // Recover from poisoned mutexes — a panic in another thread shouldn't
+        // make status polling permanently unavailable.
+        let mut child_lock = self
+            .inner
+            .child
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let active_lock = self
+            .inner
+            .active_scripts
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         let running = if let Some(child) = child_lock.as_mut() {
             child.try_wait().map(|s| s.is_none()).unwrap_or(false)
@@ -456,8 +470,16 @@ impl ProxyEngine for MitmproxyEngine {
         use std::time::{Duration, Instant};
         use sysinfo::ProcessesToUpdate;
 
-        let mut cached_pids_lock = self.inner.cached_pids.lock().unwrap();
-        let mut last_refresh_lock = self.inner.last_pid_refresh.lock().unwrap();
+        let mut cached_pids_lock = self
+            .inner
+            .cached_pids
+            .lock()
+            .map_err(|_| AppError::Config("cached_pids lock poisoned".into()))?;
+        let mut last_refresh_lock = self
+            .inner
+            .last_pid_refresh
+            .lock()
+            .map_err(|_| AppError::Config("last_pid_refresh lock poisoned".into()))?;
         let now = Instant::now();
 
         // Refresh PID tree cache periodically
@@ -469,7 +491,8 @@ impl ProxyEngine for MitmproxyEngine {
 
             // BFS from the main Tauri process to include all descendants,
             // including the WebView which is a major part of actual memory usage.
-            let main_pid = sysinfo::get_current_pid().unwrap();
+            let main_pid = sysinfo::get_current_pid()
+                .map_err(|e| AppError::Config(format!("Failed to get current PID: {}", e)))?;
             let mut pids = vec![main_pid];
             let mut queue = vec![main_pid];
 
@@ -498,7 +521,8 @@ impl ProxyEngine for MitmproxyEngine {
         let mut total_memory = 0u64;
         let mut total_cpu = 0.0;
         let mut uptime = 0;
-        let main_pid = sysinfo::get_current_pid().unwrap();
+        let main_pid = sysinfo::get_current_pid()
+            .map_err(|e| AppError::Config(format!("Failed to get current PID: {}", e)))?;
         let num_cpus = sys.cpus().len() as f32;
 
         for pid in &*cached_pids_lock {
@@ -544,7 +568,12 @@ impl MitmproxyEngine {
         if cfg!(debug_assertions) {
             let current_dir = std::env::current_dir()?;
             let project_root = if current_dir.ends_with("src-tauri") {
-                current_dir.parent().unwrap().to_path_buf()
+                current_dir
+                    .parent()
+                    .ok_or_else(|| {
+                        AppError::Config("src-tauri directory has no parent".into())
+                    })?
+                    .to_path_buf()
             } else {
                 current_dir
             };

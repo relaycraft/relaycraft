@@ -1,5 +1,6 @@
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
+import { Logger } from "../lib/logger";
 import { useSettingsStore } from "./settingsStore";
 
 export interface Breakpoint {
@@ -51,7 +52,7 @@ export const useBreakpointStore = create<BreakpointState>((set) => ({
         cache: "no-store",
       });
     } catch (e) {
-      console.error("Failed to add breakpoint to backend", e);
+      await Logger.error("Failed to add breakpoint to backend", e);
     }
 
     set((state) => ({
@@ -68,7 +69,7 @@ export const useBreakpointStore = create<BreakpointState>((set) => ({
         cache: "no-store",
       });
     } catch (e) {
-      console.error("Failed to remove breakpoint from backend", e);
+      await Logger.error("Failed to remove breakpoint from backend", e);
     }
 
     set((state) => ({
@@ -91,7 +92,7 @@ export const useBreakpointStore = create<BreakpointState>((set) => ({
         cache: "no-store",
       });
     } catch (e) {
-      console.error("Failed to clear breakpoints from backend", e);
+      await Logger.error("Failed to clear breakpoints from backend", e);
     }
 
     set({ breakpoints: [] });
