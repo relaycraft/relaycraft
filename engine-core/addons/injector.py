@@ -17,7 +17,7 @@ class TrackingInjector(ast.NodeTransformer):
     """AST transformer to inject record_hit calls into hook functions"""
 
     def __init__(self):
-        self.hooks = {'request', 'response', 'error', 'websocket_message'}
+        self.hooks = {'request', 'response', 'error', 'websocket_start', 'websocket_message', 'websocket_end'}
         self.injected_count = 0
 
     def visit_Module(self, node):

@@ -1101,6 +1101,7 @@
     "websocket": {
       "frames": "WebSocket 帧",
       "messages_count": "{{count}} 条消息",
+      "showing_last": "显示最近 {{count}} 条",
       "no_frames": "尚未捕获到 WebSocket 帧"
     }
   },

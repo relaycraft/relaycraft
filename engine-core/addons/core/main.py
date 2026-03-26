@@ -188,6 +188,17 @@ class CoreAddon:
         except Exception as e:
             self.logger.error(f"Error capturing error flow: {e}")
 
+    def websocket_start(self, flow: http.HTTPFlow) -> None:
+        """Called when a WebSocket connection is established (after handshake)."""
+        if self.is_internal_request(flow):
+            return
+
+        try:
+            # Record connection-open timestamp for scripts that need it
+            flow.metadata["_relaycraft_ws_started"] = True
+        except Exception as e:
+            self.logger.error(f"Error handling WebSocket start: {e}")
+
     def websocket_message(self, flow: http.HTTPFlow) -> None:
         """Called when a WebSocket message is received."""
         if self.is_internal_request(flow):
@@ -198,6 +209,19 @@ class CoreAddon:
             self.traffic_monitor.handle_websocket_message(flow)
         except Exception as e:
             self.logger.error(f"Error handling WebSocket message: {e}")
+
+    def websocket_end(self, flow: http.HTTPFlow) -> None:
+        """Called when a WebSocket connection closes."""
+        if self.is_internal_request(flow):
+            return
+
+        try:
+            # Final store to capture the definitive frame count and last frames
+            flow_data = self.traffic_monitor.process_flow(flow)
+            if flow_data:
+                self.traffic_monitor._store_flow(flow_data)
+        except Exception as e:
+            self.logger.error(f"Error handling WebSocket end: {e}")
 
     def tls_failed_client(self, tls_start: tls.TlsData) -> None:
         """

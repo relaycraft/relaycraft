@@ -314,7 +314,7 @@ class TrafficMonitor:
 
             if is_websocket and flow.websocket and flow.websocket.messages:
                 ws_frame_count = len(flow.websocket.messages)
-                # Only include last 100 frames in the flow
+                # Only include last 500 frames in the flow
                 ws_frames = [
                     {
                         "id": str(uuid.uuid4()),
@@ -330,7 +330,7 @@ class TrafficMonitor:
                         "timestamp": m.timestamp * 1000,
                         "length": len(m.content) if m.content else 0,
                     }
-                    for i, m in enumerate(flow.websocket.messages[-100:])
+                    for i, m in enumerate(flow.websocket.messages[-500:])
                 ]
 
             # ========== URL Processing ==========

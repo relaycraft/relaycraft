@@ -1101,6 +1101,7 @@
     "websocket": {
       "frames": "WebSocket Frames",
       "messages_count": "{{count}} messages",
+      "showing_last": "showing last {{count}}",
       "no_frames": "No WebSocket frames captured yet"
     }
   },

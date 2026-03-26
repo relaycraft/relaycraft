@@ -53,6 +53,24 @@ def response(flow: http.HTTPFlow) -> None:
         except Exception as e:
             logger.error(f"RelayCraft: Anchor sync error: {e}")
 
+def websocket_end(flow: http.HTTPFlow) -> None:
+    """Re-sync WebSocket flow after all user scripts' websocket_end hooks have run."""
+    if not _should_resync(flow):
+        return
+
+    main = _get_relaycraft_main()
+    if main:
+        try:
+            flow_data = main.traffic_monitor.process_flow(flow)
+            if flow_data:
+                main.traffic_monitor._store_flow(flow_data)
+                flow.metadata["_relaycraft_dirty"] = False
+                if hasattr(flow, "_relaycraft_script_hits"):
+                    flow._relaycraft_script_hits = []
+        except Exception as e:
+            logger.error(f"RelayCraft: Anchor WebSocket end sync error: {e}")
+
+
 def error(flow: http.HTTPFlow) -> None:
     """Handle final error capture"""
     main = _get_relaycraft_main()

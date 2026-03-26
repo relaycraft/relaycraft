@@ -654,6 +654,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                             count: flow._rc.websocketFrameCount || 0,
                           })}
                         </span>
+                        {(flow._rc.websocketFrames?.length ?? 0) <
+                          (flow._rc.websocketFrameCount ?? 0) && (
+                          <span className="text-tiny px-1.5 py-0.5 rounded bg-warning/10 text-warning-foreground/70">
+                            {t("traffic.websocket.showing_last", {
+                              count: flow._rc.websocketFrames?.length ?? 0,
+                            })}
+                          </span>
+                        )}
                         <button
                           onClick={async () => {
                             const { loadDetail, selectedFlow } = useTrafficStore.getState();
