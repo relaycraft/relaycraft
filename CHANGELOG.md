@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.13](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.12...v1.0.0-rc.13) (2026-03-26)
+
+
+### Features
+
+* enhance search_flows and replay_request tools with additional parameters and improved functionality ([5f6fd77](https://github.com/relaycraft/relaycraft/commit/5f6fd77f785ecd86199f1e9ef17310201d2a6d76))
+* enhance WebSocket handling with new hooks and improved frame storage ([04ec5b6](https://github.com/relaycraft/relaycraft/commit/04ec5b61f7f5558dd19ed1305d6033ec2eb893c9))
+* implement vibrancy-aware CSS overrides and adjust color variables for improved visual clarity ([b21405a](https://github.com/relaycraft/relaycraft/commit/b21405a4b8c0007fb511f1ba6eac105394b37d38))
+
 ## [1.0.0-rc.12](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.11...v1.0.0-rc.12) (2026-03-24)
 
 

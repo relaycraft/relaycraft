@@ -1,7 +1,7 @@
 {
   "name": "relaycraft",
   "private": true,
-  "version": "1.0.0-rc.12",
+  "version": "1.0.0-rc.13",
   "description": "AI-Native Web Traffic Debugging Tool",
   "homepage": "https://relaycraft.dev",
   "repository": {

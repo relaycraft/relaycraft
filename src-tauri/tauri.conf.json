@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "RelayCraft",
-  "version": "1.0.0-rc.12",
+  "version": "1.0.0-rc.13",
   "identifier": "com.relaycraft.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
