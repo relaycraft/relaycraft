@@ -277,14 +277,25 @@ fn handle_tools_list() -> Value {
             },
             {
                 "name": "search_flows",
-                "description": "Search HTTP flows by keyword. Matches against the full URL. Returns a filtered list of flows sorted by recency.",
+                "description": "Search HTTP flows by keyword. By default searches the URL. Use search_in to search request/response bodies or headers instead.",
                 "inputSchema": {
                     "type": "object",
                     "required": ["query"],
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Keyword to search for in flow URLs."
+                            "description": "Keyword to search for."
+                        },
+                        "search_in": {
+                            "type": "string",
+                            "enum": ["url", "response_body", "request_body", "header"],
+                            "description": "Where to search. 'url' (default): match URL/host/path. 'response_body': scan response bodies. 'request_body': scan request bodies. 'header': scan request and response header names/values.",
+                            "default": "url"
+                        },
+                        "case_sensitive": {
+                            "type": "boolean",
+                            "description": "Case-sensitive match. Default false.",
+                            "default": false
                         },
                         "session_id": {
                             "type": "string",
@@ -301,7 +312,7 @@ fn handle_tools_list() -> Value {
             },
             {
                 "name": "replay_request",
-                "description": "Replay a previously captured HTTP request through the RelayCraft proxy port. The replayed request will appear in the traffic list so you can inspect the response with get_flow. You can optionally override headers or the body before sending.",
+                "description": "Replay a previously captured HTTP request through the RelayCraft proxy port. The replayed request will appear in the traffic list so you can inspect the response with get_flow. You can optionally override the URL, method, headers, or body before sending.",
                 "inputSchema": {
                     "type": "object",
                     "required": ["flow_id"],
@@ -314,6 +325,14 @@ fn handle_tools_list() -> Value {
                             "type": "object",
                             "description": "Optional overrides to apply before sending.",
                             "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "description": "Override the full request URL, including scheme, host, path, and query string. e.g. https://api.example.com/v2/users?id=2"
+                                },
+                                "method": {
+                                    "type": "string",
+                                    "description": "Override the HTTP method."
+                                },
                                 "headers": {
                                     "type": "object",
                                     "description": "Key-value pairs to set/override in the request headers."
@@ -321,10 +340,6 @@ fn handle_tools_list() -> Value {
                                 "body": {
                                     "type": "string",
                                     "description": "Replacement request body."
-                                },
-                                "method": {
-                                    "type": "string",
-                                    "description": "Override the HTTP method."
                                 }
                             }
                         }
@@ -721,16 +736,90 @@ async fn tool_get_flow(state: &ServerState, engine_port: u16, args: &Value) -> R
 
 async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
     let query = args["query"].as_str().ok_or("Missing required argument: query")?;
-    let query_lower = query.to_lowercase();
     let session_id = args["session_id"].as_str();
     let limit = args["limit"].as_u64().unwrap_or(20).min(50) as usize;
+    let search_in = args["search_in"].as_str().unwrap_or("url");
+    let case_sensitive = args["case_sensitive"].as_bool().unwrap_or(false);
 
-    let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
-    if let Some(sid) = session_id {
-        url.push_str(&format!("&session_id={sid}"));
+    // Deep search: body or header — delegate to /_relay/search
+    if search_in != "url" {
+        let search_type = match search_in {
+            "response_body" => "response",
+            "request_body"  => "request",
+            "header"        => "header",
+            other           => return Ok(error_result(format!("Unknown search_in value: '{other}'"))),
+        };
+
+        let search_url = format!("http://127.0.0.1:{engine_port}/_relay/search");
+        let payload = json!({
+            "keyword": query,
+            "type": search_type,
+            "session_id": session_id,
+            "case_sensitive": case_sensitive,
+        });
+        let resp = state.client.post(&search_url).json(&payload).send().await
+            .map_err(|e| format!("Cannot reach RelayCraft engine: {e}"))?;
+        if !resp.status().is_success() {
+            return Ok(error_result(format!("Engine returned status {}", resp.status())));
+        }
+        let result: Value = resp.json().await.map_err(|e| format!("Failed to parse search result: {e}"))?;
+        let matched_ids: Vec<&str> = result["matches"].as_array()
+            .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
+            .unwrap_or_default();
+        let scanned = result["scanned"].as_u64().unwrap_or(0);
+
+        if matched_ids.is_empty() {
+            return Ok(text_result(format!(
+                "No flows found matching '{query}' in {search_in} (scanned {scanned} flow(s))."
+            )));
+        }
+
+        // Fetch index to enrich matched IDs with metadata
+        let mut poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
+        if let Some(sid) = session_id {
+            poll_url.push_str(&format!("&session_id={sid}"));
+        }
+        let poll_resp = state.client.get(&poll_url).send().await
+            .map_err(|e| format!("Cannot reach engine: {e}"))?;
+        let poll_body: Value = poll_resp.json().await.map_err(|e| format!("Failed to parse flows: {e}"))?;
+        let indices = poll_body["indices"].as_array().cloned().unwrap_or_default();
+
+        let total_matched = matched_ids.len();
+        let matches: Vec<Value> = indices.iter()
+            .filter(|f| matched_ids.contains(&f["id"].as_str().unwrap_or("")))
+            .take(limit)
+            .map(|flow| json!({
+                "id": flow["id"],
+                "method": flow["method"],
+                "url": flow["url"],
+                "status": flow["status"],
+                "contentType": flow["contentType"],
+                "startedAt": flow["startedDateTime"],
+                "durationMs": flow["time"],
+                "hasError": flow["hasError"]
+            }))
+            .collect();
+
+        let showing = matches.len();
+        let summary = if total_matched > showing {
+            format!("Found {total_matched} total, showing {showing} (scanned {scanned} flow(s)).")
+        } else {
+            format!("Found {total_matched} match(es) (scanned {scanned} flow(s)).")
+        };
+        return Ok(text_result(format!(
+            "{summary} Query: '{query}' in {search_in}\n\n{}",
+            serde_json::to_string_pretty(&matches).unwrap_or_default()
+        )));
     }
 
-    let resp = state.client.get(&url).send().await.map_err(|e| {
+    // URL search (default)
+    let query_lower = if case_sensitive { query.to_string() } else { query.to_lowercase() };
+    let mut poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
+    if let Some(sid) = session_id {
+        poll_url.push_str(&format!("&session_id={sid}"));
+    }
+
+    let resp = state.client.get(&poll_url).send().await.map_err(|e| {
         format!("Cannot reach RelayCraft engine at port {engine_port}. Is the proxy running? Error: {e}")
     })?;
 
@@ -748,9 +837,10 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
     let matches: Vec<Value> = indices
         .iter()
         .filter(|flow| {
-            let url_str = flow["url"].as_str().unwrap_or("").to_lowercase();
-            let host = flow["host"].as_str().unwrap_or("").to_lowercase();
-            let path = flow["path"].as_str().unwrap_or("").to_lowercase();
+            let normalize = |s: &str| if case_sensitive { s.to_string() } else { s.to_lowercase() };
+            let url_str = normalize(flow["url"].as_str().unwrap_or(""));
+            let host = normalize(flow["host"].as_str().unwrap_or(""));
+            let path = normalize(flow["path"].as_str().unwrap_or(""));
             url_str.contains(&query_lower)
                 || host.contains(&query_lower)
                 || path.contains(&query_lower)
@@ -888,7 +978,11 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
     // 2. Extract request fields, apply modifications
     let method_str = mods["method"].as_str()
         .unwrap_or_else(|| flow["request"]["method"].as_str().unwrap_or("GET"));
-    let url = flow["request"]["url"].as_str().ok_or("Flow has no URL")?;
+    let url = mods["url"].as_str()
+        .unwrap_or_else(|| flow["request"]["url"].as_str().unwrap_or(""));
+    if url.is_empty() {
+        return Ok(error_result("Flow has no URL — cannot replay."));
+    }
     let body = if !mods["body"].is_null() {
         mods["body"].as_str().map(|s| s.to_string())
     } else {
@@ -943,7 +1037,7 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
     let _body_text = response.text().await.unwrap_or_default();
 
     Ok(text_result(format!(
-        "Replayed request to {url}\n\nStatus: {status}\nDuration: {duration_ms}ms\n\nThe request was captured through the proxy and is now visible in RelayCraft's traffic list. Use list_flows to find it and get_flow to inspect the full response."
+        "Replayed {method_str} {url}\n\nStatus: {status}\nDuration: {duration_ms}ms\n\nThe request was captured through the proxy and is now visible in RelayCraft's traffic list. Use list_flows to find it and get_flow to inspect the full response."
     )))
 }
 
