@@ -2,7 +2,7 @@ use crate::config;
 use crate::logging;
 use crate::plugins::{resolve_plugin_path, PluginCache};
 use serde::Deserialize;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 #[derive(Debug, Deserialize)]
 pub struct PluginCallArgs {
@@ -93,6 +93,161 @@ pub async fn plugin_call(
                 crate::ai::commands::ai_chat_completion(messages, None, app.state()).await?;
             Ok(serde_json::to_value(response).map_err(|e| e.to_string())?)
         }
+        // ── http.send ────────────────────────────────────────────────────────────
+        "http_send" => {
+            if !permissions.contains(&"network:outbound".to_string()) {
+                return Err(
+                    "Security Violation: Missing 'network:outbound' permission".to_string(),
+                );
+            }
+
+            #[derive(serde::Deserialize)]
+            struct HttpSendArgs {
+                method: String,
+                url: String,
+                headers: Option<std::collections::HashMap<String, String>>,
+                body: Option<String>,
+            }
+
+            let args: HttpSendArgs = serde_json::from_value(payload.args)
+                .map_err(|e| format!("Invalid http_send args: {e}"))?;
+
+            let req = crate::traffic::commands::ReplayRequest {
+                method: args.method,
+                url: args.url,
+                headers: args.headers.unwrap_or_default(),
+                body: args.body,
+            };
+            let response = crate::traffic::commands::replay_request_inner(req).await?;
+            serde_json::to_value(response).map_err(|e| e.to_string())
+        }
+
+        // ── storage ──────────────────────────────────────────────────────────────
+        "storage_get" => {
+            let key = payload.args["key"]
+                .as_str()
+                .ok_or("storage_get: missing 'key'")?;
+            let result =
+                crate::plugins::storage::get(&payload.plugin_id, key).await?;
+            Ok(serde_json::to_value(result).unwrap_or(serde_json::Value::Null))
+        }
+        "storage_set" => {
+            let key = payload.args["key"]
+                .as_str()
+                .ok_or("storage_set: missing 'key'")?;
+            let value = payload.args["value"]
+                .as_str()
+                .ok_or("storage_set: missing 'value'")?
+                .to_string();
+            crate::plugins::storage::set(&payload.plugin_id, key, value).await?;
+            Ok(serde_json::Value::Null)
+        }
+        "storage_delete" => {
+            let key = payload.args["key"]
+                .as_str()
+                .ok_or("storage_delete: missing 'key'")?;
+            crate::plugins::storage::delete(&payload.plugin_id, key).await?;
+            Ok(serde_json::Value::Null)
+        }
+        "storage_list" => {
+            let prefix = payload.args["prefix"].as_str();
+            let result =
+                crate::plugins::storage::list(&payload.plugin_id, prefix).await?;
+            serde_json::to_value(result).map_err(|e| e.to_string())
+        }
+        "storage_clear" => {
+            crate::plugins::storage::clear(&payload.plugin_id).await?;
+            Ok(serde_json::Value::Null)
+        }
+
+        // ── rules.createMock ─────────────────────────────────────────────────────
+        "rules_create_mock" => {
+            if !permissions.contains(&"rules:write".to_string()) {
+                return Err(
+                    "Security Violation: Missing 'rules:write' permission".to_string(),
+                );
+            }
+
+            #[derive(serde::Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct CreateMockArgs {
+                name: String,
+                url_pattern: String,
+                response_body: String,
+                status_code: Option<u16>,
+                content_type: Option<String>,
+                method: Option<String>,
+            }
+
+            let args: CreateMockArgs = serde_json::from_value(payload.args)
+                .map_err(|e| format!("Invalid rules_create_mock args: {e}"))?;
+
+            let rule_id = uuid::Uuid::new_v4().to_string();
+
+            // URL match atom — "contains" semantics so patterns like `/api/users` work broadly.
+            let mut request_atoms = vec![crate::rules::model::MatchAtom {
+                atom_type: "url".to_string(),
+                match_type: "contains".to_string(),
+                key: None,
+                value: Some(serde_json::Value::String(args.url_pattern)),
+                invert: None,
+            }];
+
+            // Optional method filter.
+            if let Some(method) = args.method {
+                request_atoms.push(crate::rules::model::MatchAtom {
+                    atom_type: "method".to_string(),
+                    match_type: "equals".to_string(),
+                    key: None,
+                    value: Some(serde_json::Value::String(method)),
+                    invert: None,
+                });
+            }
+
+            let rule = crate::rules::model::Rule {
+                id: rule_id.clone(),
+                name: args.name,
+                r#type: crate::rules::model::RuleType::MapLocal,
+                execution: crate::rules::model::RuleExecution {
+                    enabled: true,
+                    priority: 50,
+                    stop_on_match: None,
+                },
+                match_config: crate::rules::model::RuleMatchConfig {
+                    request: request_atoms,
+                    response: vec![],
+                },
+                actions: vec![crate::rules::model::RuleAction::MapLocal(
+                    crate::rules::model::MapLocalAction {
+                        source: Some("manual".to_string()),
+                        local_path: None,
+                        content: Some(args.response_body),
+                        content_type: Some(
+                            args.content_type
+                                .unwrap_or_else(|| "application/json".to_string()),
+                        ),
+                        status_code: Some(args.status_code.unwrap_or(200) as u32),
+                        headers: None,
+                    },
+                )],
+                tags: None,
+                metadata: Some(crate::rules::model::RuleMetadata {
+                    source: Some(format!("plugin:{}", payload.plugin_id)),
+                    ai_intent: None,
+                }),
+            };
+
+            crate::rules::storage::RuleStorage::from_config()
+                .map_err(|e| e.to_string())?
+                .save(&rule, None)
+                .map_err(|e| e.to_string())?;
+
+            // Notify frontend so the Rules panel refreshes immediately.
+            let _ = app.emit("rules-changed", ());
+
+            Ok(serde_json::to_value(rule_id).unwrap())
+        }
+
         _ => Err(format!(
             "Security Violation: Command '{}' is not registered in the bridge or is restricted.",
             payload.command

@@ -1,4 +1,43 @@
 import { invoke } from "@tauri-apps/api/core";
+import {
+  AlertTriangle,
+  BookOpen,
+  Bot,
+  Bug,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  Copy,
+  File,
+  FileCode2,
+  FileJson,
+  Filter,
+  Folder,
+  Globe,
+  Image,
+  Info,
+  KeyRound,
+  Link,
+  ListTree,
+  Loader2,
+  Pause,
+  Pencil,
+  Play,
+  Plus,
+  RefreshCcw,
+  Search,
+  Send,
+  Settings,
+  Sparkles,
+  SquareTerminal,
+  Trash2,
+  WandSparkles,
+  Wifi,
+  X,
+  XCircle,
+} from "lucide-react";
 // UI Components for Plugins
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
@@ -30,9 +69,56 @@ const SharedComponents = {
   Textarea,
 };
 
+/**
+ * Curated icon set exposed to plugins.
+ * Security/compat rationale:
+ * - Plugins get ready-to-use icon components without importing arbitrary libs.
+ * - Host controls the surface area and can version/deprecate predictably.
+ */
+const PluginIcons = {
+  AlertTriangle,
+  BookOpen,
+  Bot,
+  Bug,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  Copy,
+  File,
+  FileCode2,
+  FileJson,
+  Filter,
+  Folder,
+  Globe,
+  Image,
+  Info,
+  KeyRound,
+  Link,
+  ListTree,
+  Loader2,
+  Pause,
+  Pencil,
+  Play,
+  Plus,
+  RefreshCcw,
+  Search,
+  Send,
+  Settings,
+  Sparkles,
+  SquareTerminal,
+  Trash2,
+  WandSparkles,
+  Wifi,
+  X,
+  XCircle,
+} as const;
+
 // Internal registry for scoped APIs
 (window as any).__PLUGIN_APIS = (window as any).__PLUGIN_APIS || {};
 (window as any).__PLUGIN_COMPONENTS = SharedComponents;
+(window as any).__PLUGIN_ICONS = PluginIcons;
 
 /**
  * Dynamically loads a plugin's UI assets
@@ -86,8 +172,9 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
     const pluginId = "${plugin.manifest.id}";
     const scopedApi = globalThis.__PLUGIN_APIS[pluginId];
     const components = globalThis.__PLUGIN_COMPONENTS;
+    const icons = globalThis.__PLUGIN_ICONS;
     const React = globalThis.React;
-    const RelayCraft = { api: scopedApi, components: components };
+    const RelayCraft = { api: scopedApi, components: components, icons: icons };
     globalThis.RelayCraft = RelayCraft;
     globalThis.ProxyPilot = RelayCraft;
     console.log('[PluginLoader] Initialized API for ' + pluginId);

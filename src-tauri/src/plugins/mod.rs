@@ -2,6 +2,7 @@ pub mod bridge;
 pub mod commands;
 pub mod config;
 pub mod market;
+pub mod storage;
 
 use crate::plugins::config::PluginInfo;
 use std::fs;

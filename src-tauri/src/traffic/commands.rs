@@ -25,8 +25,8 @@ pub struct ReplayResponse {
     pub total_bytes: usize, // actual content-length or bytes read
 }
 
-#[tauri::command]
-pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String> {
+/// Core implementation, usable by both the Tauri command and the plugin bridge.
+pub async fn replay_request_inner(req: ReplayRequest) -> Result<ReplayResponse, String> {
     // Load config to get the current proxy port
     let config = crate::config::load_config().unwrap_or_default();
     let proxy_url = format!("http://127.0.0.1:{}", config.proxy_port);
@@ -124,6 +124,12 @@ pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String
         truncated,
         total_bytes,
     })
+}
+
+/// Tauri command wrapper — delegates to the shared inner implementation.
+#[tauri::command]
+pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String> {
+    replay_request_inner(req).await
 }
 
 #[tauri::command]

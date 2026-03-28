@@ -4,12 +4,13 @@ import { Markdown } from "../components/common/Markdown";
 import i18n from "../i18n";
 import { useAIStore } from "../stores/aiStore";
 import { useNotificationStore } from "../stores/notificationStore";
+import { usePluginContextMenuStore } from "../stores/pluginContextMenuStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
 import { usePluginSettingsStore } from "../stores/pluginSettingsStore";
 import { usePluginSlotStore } from "../stores/pluginSlotStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useUIStore } from "../stores/uiStore";
-import type { PluginAPI } from "../types/plugin";
+import type { ContextMenuItemConfig, CreateMockConfig, PluginAPI } from "../types/plugin";
 import { sanitizeNamespace } from "./pluginUtils";
 
 declare global {
@@ -132,6 +133,16 @@ export const createPluginApi = (
         DiffEditor,
         Markdown,
       },
+      registerContextMenuItem: (config: ContextMenuItemConfig) => {
+        return usePluginContextMenuStore.getState().register({
+          pluginId,
+          itemId: config.id,
+          label: config.label,
+          icon: config.icon,
+          when: config.when,
+          onClick: config.onClick,
+        });
+      },
     },
     ai: {
       chat: async (messages) => {
@@ -168,6 +179,42 @@ export const createPluginApi = (
           Logger.plugin(`[ERROR] ${message} ${errorObj ? JSON.stringify(errorObj) : ""}`, pluginId);
         });
       },
+    },
+    http: {
+      send: (request) => scopedInvoke("http_send", request),
+    },
+    storage: {
+      get: (key) => scopedInvoke("storage_get", { key }),
+      set: (key, value) => scopedInvoke("storage_set", { key, value }),
+      delete: (key) => scopedInvoke("storage_delete", { key }),
+      list: (prefix) => scopedInvoke("storage_list", { prefix: prefix ?? null }),
+      clear: () => scopedInvoke("storage_clear", {}),
+    },
+    events: {
+      on: (eventName, callback) => {
+        let unlisten: (() => void) | null = null;
+        let cancelled = false;
+
+        import("@tauri-apps/api/event").then(({ listen }) => {
+          if (cancelled) return;
+          listen(eventName, (event) => callback(event.payload)).then((unlistenFn) => {
+            if (cancelled) {
+              // unlisten() was called before the promise resolved
+              unlistenFn();
+            } else {
+              unlisten = unlistenFn;
+            }
+          });
+        });
+
+        return () => {
+          cancelled = true;
+          unlisten?.();
+        };
+      },
+    },
+    rules: {
+      createMock: (config: CreateMockConfig) => scopedInvoke<string>("rules_create_mock", config),
     },
   };
 };

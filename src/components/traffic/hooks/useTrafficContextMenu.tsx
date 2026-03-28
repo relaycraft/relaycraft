@@ -5,6 +5,10 @@ import { generateCurlCommand } from "../../../lib/curl";
 import { notify } from "../../../lib/notify";
 import { fetchFlowDetail } from "../../../lib/trafficMonitor";
 import { useComposerStore } from "../../../stores/composerStore";
+import {
+  type TrafficFlowSummary,
+  usePluginContextMenuStore,
+} from "../../../stores/pluginContextMenuStore";
 import { useRuleStore } from "../../../stores/ruleStore";
 import { useTrafficStore } from "../../../stores/trafficStore";
 import { useUIStore } from "../../../stores/uiStore";
@@ -38,6 +42,8 @@ export function useTrafficContextMenu() {
   const [menuTargetFlow, setMenuTargetFlow] = useState<Flow | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [pausedIndices, setPausedIndices] = useState<FlowIndex[] | null>(null);
+
+  const pluginMenuItems = usePluginContextMenuStore((s) => s.items);
 
   // Open breakpoint modal with the target URL
   const openBreakpointModal = useCallback((url: string, method: string = "GET") => {
@@ -258,6 +264,37 @@ export function useTrafficContextMenu() {
             }
           },
         },
+        // ── Plugin-contributed context menu items ────────────────────────────
+        ...(() => {
+          if (!menuTargetFlow || pluginMenuItems.length === 0) return [];
+
+          const flowSummary: TrafficFlowSummary = {
+            method: menuTargetFlow.request.method,
+            url: menuTargetFlow.request.url,
+            headers: Object.fromEntries(
+              (menuTargetFlow.request.headers ?? []).map((h) => [h.name, h.value]),
+            ),
+            body: menuTargetFlow.request.postData?.text ?? null,
+          };
+
+          const entries: ContextMenuItem[] = pluginMenuItems
+            .filter((item) => !item.when || item.when(flowSummary))
+            .map((item) => {
+              const Icon = item.icon;
+              return {
+                label: typeof item.label === "function" ? item.label() : item.label,
+                icon: Icon ? <Icon className="w-3.5 h-3.5" /> : undefined,
+                disabled: false,
+                onClick: () => {
+                  item.onClick(flowSummary);
+                  handleCloseMenu();
+                },
+              };
+            });
+
+          if (entries.length === 0) return [];
+          return [{ separator: true, label: "" } as ContextMenuItem, ...entries];
+        })(),
       ]
     : [];
 
