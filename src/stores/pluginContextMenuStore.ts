@@ -31,6 +31,8 @@ interface PluginContextMenuStore {
    * Returns an unregister function — call it when the plugin unloads.
    */
   register: (entry: PluginContextMenuEntry) => () => void;
+  /** Remove all context menu entries registered by a given plugin. */
+  unregisterPlugin: (pluginId: string) => void;
 }
 
 export const usePluginContextMenuStore = create<PluginContextMenuStore>((set) => ({
@@ -41,5 +43,8 @@ export const usePluginContextMenuStore = create<PluginContextMenuStore>((set) =>
       set((s) => ({
         items: s.items.filter((i) => !(i.pluginId === entry.pluginId && i.itemId === entry.itemId)),
       }));
+  },
+  unregisterPlugin: (pluginId) => {
+    set((s) => ({ items: s.items.filter((i) => i.pluginId !== pluginId) }));
   },
 }));

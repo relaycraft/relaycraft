@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import {
   AlertTriangle,
+  Bookmark,
+  BookmarkPlus,
   BookOpen,
   Bot,
   Bug,
@@ -8,14 +10,19 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Circle,
   CircleHelp,
+  Clock,
+  Code2,
   Copy,
   File,
   FileCode2,
   FileJson,
   Filter,
   Folder,
+  FolderInput,
   Globe,
+  History,
   Image,
   Info,
   KeyRound,
@@ -24,6 +31,8 @@ import {
   Loader2,
   Pause,
   Pencil,
+  Pin,
+  PinOff,
   Play,
   Plus,
   RefreshCcw,
@@ -31,6 +40,7 @@ import {
   Send,
   Settings,
   Sparkles,
+  Square,
   SquareTerminal,
   Trash2,
   WandSparkles,
@@ -46,8 +56,10 @@ import { Skeleton } from "../components/common/Skeleton";
 import { Switch } from "../components/common/Switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/common/Tabs";
 import { Textarea } from "../components/common/Textarea";
+import { Tooltip } from "../components/common/Tooltip";
 import i18n from "../i18n";
 import { Logger } from "../lib/logger";
+import { usePluginContextMenuStore } from "../stores/pluginContextMenuStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
 import { usePluginSlotStore } from "../stores/pluginSlotStore";
 import { useSettingsStore } from "../stores/settingsStore";
@@ -67,6 +79,7 @@ const SharedComponents = {
   TabsTrigger,
   TabsContent,
   Textarea,
+  Tooltip,
 };
 
 /**
@@ -77,6 +90,8 @@ const SharedComponents = {
  */
 const PluginIcons = {
   AlertTriangle,
+  Bookmark,
+  BookmarkPlus,
   BookOpen,
   Bot,
   Bug,
@@ -84,14 +99,19 @@ const PluginIcons = {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Circle,
   CircleHelp,
+  Clock,
+  Code2,
   Copy,
   File,
   FileCode2,
   FileJson,
   Filter,
   Folder,
+  FolderInput,
   Globe,
+  History,
   Image,
   Info,
   KeyRound,
@@ -100,6 +120,8 @@ const PluginIcons = {
   Loader2,
   Pause,
   Pencil,
+  Pin,
+  PinOff,
   Play,
   Plus,
   RefreshCcw,
@@ -107,6 +129,7 @@ const PluginIcons = {
   Send,
   Settings,
   Sparkles,
+  Square,
   SquareTerminal,
   Trash2,
   WandSparkles,
@@ -328,6 +351,7 @@ export function unloadPluginUI(pluginId: string) {
 
   usePluginSlotStore.getState().unregisterPluginComponents(pluginId);
   usePluginPageStore.getState().unregisterPluginPages(pluginId);
+  usePluginContextMenuStore.getState().unregisterPlugin(pluginId);
   const currentLang = useSettingsStore.getState().config.language;
   const pluginLangs = useUIStore
     .getState()

@@ -28,6 +28,7 @@
 | 涉及错误处理 | `skills/error-handling.md` |
 | 架构级变更、不确定规范 | 本文件相关章节 |
 | 开始一个大功能 | 对应 `specs/*.md` + 引用的 skills |
+| 2.0 引擎 / relay-core / Deno 插件 | 本文件 §2.3 |
 
 ### 6 条核心速记
 
@@ -76,9 +77,8 @@
 │  Serde · Reqwest · Tokio · rcgen                 │
 │  代理进程管理 · 证书 · 配置 · AI 桥接 · 插件系统 │
 ├─────────────────────────────────────────────────┤
-│  Engine Core (Python 3.10+ / mitmproxy 12)       │  ← 代理引擎
-│  规则引擎 · 流量捕获 · 断点调试 · 脚本执行       │
-│  作为 Sidecar 进程运行，通过 HTTP API 与 Rust 通信│
+│  Engine mitmproxy→relay-core (§2.3)             │  ← 代理引擎
+│  规则 · 抓包 · 断点 · 脚本 · Sidecar / API              │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -143,6 +143,25 @@ relaycraft/
 └── skills/                  # AI 技能包 (SOP)    ← 需要建设
 ```
 
+### 2.3 路线图：2.0（relay-core）与扩展生态
+
+以下为**规划目标**（落地时代码布局与仓库结构以实际 spec 为准），用于统一 AI Agent 与贡献者对「核心边界」的长期预期。
+
+| 维度 | 1.x（当前） | 2.0（目标） |
+|:---|:---|:---|
+| **代理引擎** | Python / mitmproxy 12（`engine-core/`） | **relay-core**，Rust 自研，替代 mitmproxy |
+| **流量与规则执行** | Python 引擎内完成 | **relay-core** 内完成；与 Tauri 宿主仍通过约定 IPC/HTTP（或等价边界）通信 |
+| **用户扩展（逻辑）** | mitmproxy Addon / Python 用户脚本 | **Deno** 支撑的 **JavaScript / TypeScript** 插件生态（沙箱、权限模型需单独 spec） |
+| **既有 Python 脚本** | 一阶段主力 | **迁移工具**与/或**过渡期兼容中间层**（限时）；长期默认扩展形态为 JS/TS |
+
+**在 2.0 仍应成立的边界契约（与 §3.2 呼应）：**
+
+1. **单一事实源**：拦截、TLS、连接与 HTTP 语义处理只在**引擎**（1.x Python → 2.0 relay-core）内实现；Tauri **业务 Rust 模块**不复制一套抓包/改写管线。
+2. **层间通信方式不变**：前端不直接碰引擎套接字；仍通过 Tauri Commands、引擎暴露的 API、事件总线等**显式契约**。
+3. **持久化与版本**：规则、会话、脚本等格式的演进必须有 **`schema_version` 或主版本迁移策略**，避免 2.0 升级静默损坏用户数据。
+4. **插件权限与安全**：从「Python 注入」迁到「Deno + 权限声明」时，**默认最小权限、本地优先、零遥测**等原则不变（见 §3.1）。
+5. **UI 插件（React 注入）**：与引擎扩展解耦；官方/第三方 UI 插件仍遵循 `.{plugin-name}-root` 隔离等现有前端契约（见 §4.4）。
+
 ---
 
 ## 三、不可违反的原则 (Constitutional Rules)
@@ -156,8 +175,8 @@ relaycraft/
 
 ### 3.2 架构约束
 
-5. **三层分离**：前端（React）、系统层（Rust）、引擎层（Python）职责严格分离，层间仅通过 Tauri Commands 或 HTTP API 通信。
-6. **Rust 不直接处理流量**：所有流量拦截、修改、分析由 Python 引擎（mitmproxy）负责，Rust 层仅负责进程管理和前端桥接。
+5. **三层分离**：前端（React）、系统层（Tauri Rust）、**引擎层**职责严格分离，层间仅通过 Tauri Commands、引擎 HTTP API 或等价显式边界通信。**1.x** 引擎层为 Python（mitmproxy）；**2.0** 引擎层为 **relay-core（Rust 自研）**（见 §2.3）。
+6. **流量处理仅在引擎内**：所有流量拦截、修改、分析必须在**引擎进程**内完成。**1.x** 由 Python 引擎（mitmproxy）负责；**2.0** 由 **relay-core** 负责。Tauri 宿主侧负责证书、进程/生命周期、配置与 UI 桥接，**不在宿主内另起一套与引擎并行的抓包/改写实现**（避免双实现、双真源）。
 7. **前端不直接访问文件系统**：所有文件操作必须通过 Tauri Commands（`@tauri-apps/api` 或 `invoke`）完成。
 8. **Zustand 单向数据流**：状态变更必须通过 Store actions，禁止组件直接修改 Store 内部状态。
 
@@ -242,9 +261,11 @@ relaycraft/
 - **`log` crate**：使用标准 `log` 宏（`log::info!`, `log::error!`）。
 - **审计日志**：配置变更等敏感操作通过 `logging::write_domain_log("audit", ...)` 记录。
 
-### 4.3 引擎核心 (Python / mitmproxy)
+### 4.3 引擎核心
 
-#### 架构
+**1.x**：Python / mitmproxy（`engine-core/`）。**2.0**：Rust **relay-core**（细节见 §2.3）；本节描述 1.x 形态，迁移后由专项 spec 替换。
+
+#### 架构（1.x）
 
 - **CoreAddon**：主入口 `engine-core/addons/core/main.py`，实现 mitmproxy 的 `request`, `response`, `error` 等 Hooks。
 - **规则引擎管线**：`RuleEngine` → `RuleLoader`（加载/索引） → `RuleMatcher`（匹配） → `ActionExecutor`（执行），按 `priority` 排序确定性执行。
@@ -261,15 +282,19 @@ relaycraft/
 
 - **Addon 类模板**：用户脚本必须使用 mitmproxy Addon 类结构，包含 `addons = [Addon()]` 导出。
 - **脚本注入**：`injector.py` 负责在引擎启动时加载用户脚本，脚本在 CoreAddon 之后执行。
+- **2.0**：用户侧逻辑扩展以 **Deno + JS/TS** 为主；Python 脚本迁移路径见 §2.3。
 
 ### 4.4 插件系统
 
 - **Manifest**：每个插件包含 `manifest.json`（类型 `PluginManifest`），声明 `capabilities` 和 `permissions`。
 - **双域能力**：
   - `capabilities.ui`：前端 UI 扩展（React 组件通过 `<script>` 注入）。
-  - `capabilities.logic`：后端流量处理扩展（Python 脚本）。
+  - `capabilities.logic`：后端流量处理扩展（**1.x** 为 Python 脚本；**2.0** 目标为 **Deno 支撑的 JS/TS**，见 §2.3）。
 - **Plugin API**：插件通过 `RelayCraft.api` 对象访问宿主功能（`ui`, `ai`, `stats`, `invoke`, `settings`, `log`）。
 - **生命周期**：`initPlugins()` → `loadPluginUI()` → 运行时 → `unloadPluginUI()`。
+- **共享组件**（`pluginLoader.ts` → `SharedComponents`）：`Button`, `Input`, `Textarea`, `Select`, `Switch`, `Skeleton`, `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent`, `Tooltip`。
+- **共享图标**（`pluginLoader.ts` → `PluginIcons`）：Lucide 子集，约 38 个图标。添加新图标需在 `PluginIcons` 中注册。
+- **样式隔离**：插件必须自包含所有 CSS（含 Tailwind 构建），通过 PostCSS 将所有规则 scope 到 `.{plugin-name}-root`（如 `api-manager-root`、`privacy-guard-root`），禁止使用缩写以避免跨插件冲突，禁止污染宿主。颜色使用 `var(--color-*)` 桥接主题。详见 `skills/plugin-development.md`。
 
 ---
 
@@ -384,7 +409,7 @@ cargo fmt                     # Rust 格式化
 | **规则引擎** | `skills/rule-type.md` | 新增规则类型的端到端流程（类型 → UI → Rust → Python） |
 | **i18n** | `skills/i18n-workflow.md` | 添加新翻译键的标准流程和检查清单 |
 | **Python 引擎** | `skills/engine-addon.md` | mitmproxy Addon 编写模式、CoreAddon Hook 扩展 |
-| **插件开发** | `skills/plugin-development.md` | 插件 Manifest 编写、UI/Logic 能力实现、API 使用 |
+| **插件开发** | `skills/plugin-development.md` | 插件 CSS 隔离管线、共享组件/图标使用、主题桥接、视觉层次模式 |
 | **测试** | `skills/testing-patterns.md` | Vitest 前端测试 + Rust cargo test + Python pytest 模板 |
 | **错误处理** | `skills/error-handling.md` | 三层统一的错误处理模式（前端 notify + Rust Result + Python try/except） |
 | **AI 集成** | `skills/ai-integration.md` | AI Provider 模式、Prompt 工程、流式响应处理 |
@@ -495,7 +520,7 @@ AI Agent 在开始任务前，应按以下优先级加载上下文：
 | React | ^19.1.0 | React 19 新特性可用 |
 | Tauri | 2.10.0 | Tauri v2，非 v1 |
 | Zustand | ^5.0.10 | v5 API |
-| mitmproxy | 12.2.1 | 引擎核心，精确锁定 |
+| mitmproxy | 12.2.1 | 1.x 引擎核心，精确锁定；2.0 由 relay-core 替代（见 §2.3） |
 | Vite | ^7.0.4 | Vite 7 |
 | TypeScript | ~5.8.3 | 严格模式 |
 | Biome | ^2.3.14 | Linter + Formatter |
@@ -503,5 +528,5 @@ AI Agent 在开始任务前，应按以下优先级加载上下文：
 
 ---
 
-*最后更新：2026-02-26*
+*最后更新：2026-03-30*
 *维护者：RelayCraft Team*
