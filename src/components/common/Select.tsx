@@ -113,7 +113,7 @@ export const Select = ({
       {isOpen && !disabled && (
         <div
           className={cn(
-            "absolute z-50 mt-1 min-w-full w-max max-w-[300px] bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+            "relaycraft-popup absolute z-50 mt-1 min-w-full w-max max-w-[300px] bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200",
             align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left",
           )}
         >

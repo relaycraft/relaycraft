@@ -322,6 +322,36 @@ html.lang-zh .font-bold {
   backdrop-filter: saturate(200%);
 }
 
+/* ── Floating element opacity rule (VIBRANCY) ─────────────────────────────
+ *
+ * RULE FOR NEW COMPONENTS: Any floating/overlay element added in future MUST
+ * carry one of these two classes, or it will appear semi-transparent when
+ * OS-level vibrancy is enabled (because --color-background/card/popover all
+ * have reduced alpha in vibrancy mode by design).
+ *
+ *   relaycraft-dialog → full-size panels: modals, side drawers, large sheets
+ *   relaycraft-popup  → smaller floats: dropdowns, tooltips, context menus,
+ *                        hover action bars, inline popovers
+ *
+ * Both classes override the background to a more opaque surface token and
+ * strip CSS backdrop-filter to prevent "blur-on-blur" stacking on top of the
+ * OS Acrylic / NSVisualEffectView effect.
+ *
+ * Current consumers:
+ *   dialog → Modal, MarketView, LogViewer, NotificationCenter
+ *   popup  → Select, ContextMenu, Tooltip, SessionSwitcher, StatusBar
+ *            (breakpoint panel), ScriptManager (hover bar), RuleList (hover bar)
+ * ─────────────────────────────────────────────────────────────────────────── */
+[data-vibrancy="on"] .relaycraft-dialog {
+  background-color: var(--color-card) !important;
+  backdrop-filter: none !important;
+}
+
+[data-vibrancy="on"] .relaycraft-popup {
+  background-color: var(--color-popover) !important;
+  backdrop-filter: none !important;
+}
+
 .bg-vibrancy-container {
   position: fixed;
   inset: 0;

@@ -343,7 +343,7 @@ export function ScriptManager() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-1.5 opacity-0 pointer-events-none group-hover/script-row:opacity-100 group-hover/script-row:pointer-events-auto group-focus-within/script-row:opacity-100 group-focus-within/script-row:pointer-events-auto transition-all shrink-0 absolute right-1.5 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm border border-border/40 p-1 px-1.5 rounded-lg shadow-sm">
+                <div className="relaycraft-popup flex items-center gap-1.5 opacity-0 pointer-events-none group-hover/script-row:opacity-100 group-hover/script-row:pointer-events-auto group-focus-within/script-row:opacity-100 group-focus-within/script-row:pointer-events-auto transition-all shrink-0 absolute right-1.5 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm border border-border/40 p-1 px-1.5 rounded-lg shadow-sm">
                   <div className="flex items-center bg-muted/20 rounded-md border border-border/20 overflow-hidden">
                     <Tooltip content={t("common.move_up")}>
                       <button

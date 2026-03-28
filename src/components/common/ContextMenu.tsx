@@ -92,7 +92,7 @@ export function ContextMenu({ x, y, visible, items, onClose }: ContextMenuProps)
     <div
       ref={menuRef}
       className={cn(
-        "fixed z-50 min-w-[180px] bg-popover/80 backdrop-blur-xl border border-border/50 rounded-lg shadow-xl p-1",
+        "relaycraft-popup fixed z-50 min-w-[180px] bg-popover/80 backdrop-blur-xl border border-border/50 rounded-lg shadow-xl p-1",
       )}
       style={style}
       onContextMenu={(e) => e.preventDefault()}

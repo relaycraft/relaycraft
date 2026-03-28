@@ -59,7 +59,7 @@ export function Tooltip({
       {isVisible &&
         createPortal(
           <div
-            className={`fixed z-[9999] px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
+            className={`relaycraft-popup fixed z-[9999] px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
               multiline ? "whitespace-pre-wrap break-all max-w-[320px]" : "whitespace-nowrap"
             }`}
             style={{

@@ -260,7 +260,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
               </div>
 
               {/* Actions */}
-              <div className="absolute right-2 flex items-center gap-0.5 opacity-0 pointer-events-none group-hover/rule-item:opacity-100 group-hover/rule-item:pointer-events-auto group-focus-within/rule-item:opacity-100 group-focus-within/rule-item:pointer-events-auto transition-all duration-200 bg-card/90 backdrop-blur-sm pl-2 py-1 rounded-xl shadow-[-8px_0_12px_rgba(0,0,0,0.1)] z-20">
+              <div className="relaycraft-popup absolute right-2 flex items-center gap-0.5 opacity-0 pointer-events-none group-hover/rule-item:opacity-100 group-hover/rule-item:pointer-events-auto group-focus-within/rule-item:opacity-100 group-focus-within/rule-item:pointer-events-auto transition-all duration-200 bg-card/90 backdrop-blur-sm pl-2 py-1 rounded-xl shadow-[-8px_0_12px_rgba(0,0,0,0.1)] z-20">
                 <Tooltip content={t("common.move_up")}>
                   <button
                     onClick={(e) => {

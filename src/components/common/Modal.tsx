@@ -86,7 +86,7 @@ export function Modal({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`relative w-full ${className} bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
+            className={`relaycraft-dialog relative w-full ${className} bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

@@ -178,7 +178,7 @@ export function StatusBar() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
+                    className="relaycraft-popup breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
                   >
                     <BreakpointManager variant="minimal" />
                   </motion.div>

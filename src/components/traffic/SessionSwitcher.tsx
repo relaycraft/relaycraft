@@ -206,7 +206,7 @@ export function SessionSwitcher() {
         createPortal(
           <div
             ref={portalRef}
-            className="fixed bg-popover/95 backdrop-blur-xl border border-border/60 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="relaycraft-popup fixed bg-popover/95 backdrop-blur-xl border border-border/60 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             style={{
               position: "fixed",
               top: dropdownPosition.top + 6,

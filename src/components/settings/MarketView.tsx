@@ -97,7 +97,7 @@ export const MarketView: React.FC = () => {
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="w-full max-w-4xl h-[600px] max-h-[85vh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-border/50"
+        className="relaycraft-dialog w-full max-w-4xl h-[600px] max-h-[85vh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-border/50"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

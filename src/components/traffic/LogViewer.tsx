@@ -218,7 +218,7 @@ export function LogViewer({ onClose }: LogViewerProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-4xl h-[85vh] bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl flex flex-col overflow-hidden relative"
+          className="relaycraft-dialog w-full max-w-4xl h-[85vh] bg-background/95 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl flex flex-col overflow-hidden relative"
         >
           {/* Header Area */}
           <div className="flex flex-col shrink-0">
