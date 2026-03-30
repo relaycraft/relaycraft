@@ -588,6 +588,12 @@
     "restart_success_title": "Proxy Engine Restarted"
   },
   "rules": {
+    "creator": {
+      "ai_assistant": "Created by RelayCraft AI Assistant",
+      "mcp": "Created by MCP External Tool",
+      "plugin": "Created by Plugin",
+      "plugin_unknown": "Unknown plugin"
+    },
     "add_group": "Add New Group",
     "alerts": {
       "delete_msg": "Are you sure you want to delete this rule? This action cannot be undone.",

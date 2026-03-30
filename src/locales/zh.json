@@ -588,6 +588,12 @@
     "restart_success_title": "代理引擎已重启"
   },
   "rules": {
+    "creator": {
+      "ai_assistant": "RelayCraft AI 助手创建",
+      "mcp": "MCP 外部工具创建",
+      "plugin": "插件创建",
+      "plugin_unknown": "未知插件"
+    },
     "add_group": "添加新分组",
     "alerts": {
       "delete_msg": "确定要删除此规则吗？此操作无法撤销。",

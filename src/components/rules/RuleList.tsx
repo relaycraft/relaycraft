@@ -59,6 +59,59 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
     return `${theme.text} ${theme.bg} ${theme.border}`;
   };
 
+  const prettifyPluginId = (pluginId: string) => {
+    const normalized = pluginId.trim();
+    if (!normalized) return t("rules.creator.plugin_unknown");
+
+    const leaf = normalized.split(".").filter(Boolean).pop() || normalized;
+    const tokens = leaf
+      .split(/[-_\s]+/)
+      .map((token) => token.trim())
+      .filter(Boolean);
+    if (tokens.length === 0) return normalized;
+
+    const acronymMap: Record<string, string> = {
+      ai: "AI",
+      api: "API",
+      http: "HTTP",
+      https: "HTTPS",
+      mcp: "MCP",
+      ui: "UI",
+      url: "URL",
+    };
+
+    return tokens
+      .map((token) => {
+        const lower = token.toLowerCase();
+        if (acronymMap[lower]) return acronymMap[lower];
+        return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+      })
+      .join(" ");
+  };
+
+  const getPluginSourceLabel = (source: string) => {
+    const pluginId = source.slice("plugin:".length).trim();
+    return pluginId ? prettifyPluginId(pluginId) : t("rules.creator.plugin_unknown");
+  };
+
+  const getCreatorMeta = (
+    rule: Rule,
+  ): { title: string; subtitle?: string; aiIntent?: string } | null => {
+    const source = rule.metadata?.source;
+    if (!source || source === "user") return null;
+    if (source === "ai_mcp") {
+      return { title: t("rules.creator.mcp"), aiIntent: rule.metadata?.aiIntent };
+    }
+    if (source.startsWith("plugin:")) {
+      return {
+        title: t("rules.creator.plugin"),
+        subtitle: getPluginSourceLabel(source),
+        aiIntent: rule.metadata?.aiIntent,
+      };
+    }
+    return { title: t("rules.creator.ai_assistant"), aiIntent: rule.metadata?.aiIntent };
+  };
+
   const belowLabel = (rule: Rule) => {
     const actions = rule.actions || [];
     if (actions.length === 0) return "";
@@ -129,6 +182,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
           const colorClass = getRuleColorCheck(rule.type);
           const conflict = conflicts[rule.id];
           const isSelected = rule.id === selectedRuleId;
+          const creatorMeta = getCreatorMeta(rule);
 
           return (
             <motion.div
@@ -190,18 +244,19 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                   >
                     {rule.name}
                   </span>
-                  {rule.metadata?.source && rule.metadata.source !== "user" && (
+                  {creatorMeta && (
                     <Tooltip
                       content={
                         <div className="max-w-[200px] whitespace-normal space-y-0.5">
-                          <p className="font-semibold text-xs">
-                            {rule.metadata.source === "ai_mcp"
-                              ? "MCP 外部工具创建"
-                              : "RelayCraft AI 助手创建"}
-                          </p>
-                          {rule.metadata.aiIntent && (
+                          <p className="font-semibold text-xs">{creatorMeta.title}</p>
+                          {creatorMeta.subtitle && (
                             <p className="text-xs opacity-75 leading-tight">
-                              {rule.metadata.aiIntent}
+                              {creatorMeta.subtitle}
+                            </p>
+                          )}
+                          {creatorMeta.aiIntent && (
+                            <p className="text-xs opacity-75 leading-tight">
+                              {creatorMeta.aiIntent}
                             </p>
                           )}
                         </div>

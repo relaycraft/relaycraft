@@ -157,6 +157,11 @@ export const createPluginApi = (
         return scopedInvoke<any>("get_process_stats");
       },
     },
+    proxy: {
+      getStatus: async () => {
+        return scopedInvoke<any>("get_proxy_status");
+      },
+    },
     settings: {
       get: (key?: string) => {
         const settings = usePluginSettingsStore.getState().getSettings(pluginId);

@@ -81,6 +81,13 @@ pub async fn plugin_call(
             let stats = crate::proxy::monitor::get_process_stats(app.state()).await?;
             Ok(serde_json::to_value(stats).map_err(|e| e.to_string())?)
         }
+        "get_proxy_status" => {
+            if !permissions.contains(&"proxy:read".to_string()) {
+                return Err("Security Violation: Missing 'proxy:read' permission".to_string());
+            }
+            let status = crate::proxy::get_proxy_status(app.state()).await?;
+            Ok(serde_json::to_value(status).map_err(|e| e.to_string())?)
+        }
         "ai_chat_completion" => {
             if !permissions.contains(&"ai:chat".to_string()) {
                 return Err("Security Violation: Missing 'ai:chat' permission".to_string());
@@ -184,10 +191,10 @@ pub async fn plugin_call(
 
             let rule_id = uuid::Uuid::new_v4().to_string();
 
-            // URL match atom — "contains" semantics so patterns like `/api/users` work broadly.
+            // URL match atom — use wildcard semantics so `*` patterns work as expected.
             let mut request_atoms = vec![crate::rules::model::MatchAtom {
                 atom_type: "url".to_string(),
-                match_type: "contains".to_string(),
+                match_type: "wildcard".to_string(),
                 key: None,
                 value: Some(serde_json::Value::String(args.url_pattern)),
                 invert: None,

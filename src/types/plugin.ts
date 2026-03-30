@@ -171,6 +171,13 @@ export interface PluginAPI {
       up_time: number;
     }>;
   };
+  proxy: {
+    getStatus: () => Promise<{
+      running: boolean;
+      active: boolean;
+      active_scripts: string[];
+    }>;
+  };
   settings: {
     get: (key?: string) => any;
   };
