@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.14](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.13...v1.0.0-rc.14) (2026-03-30)
+
+
+### Features
+
+* add proxy status retrieval and enhance plugin creator metadata in UI ([29c24ce](https://github.com/relaycraft/relaycraft/commit/29c24cef9bb4f14dc5050f6c7c74efb946f740d8))
+* enhance plugin development documentation with shared components, icons, and CSS isolation guidelines ([3341102](https://github.com/relaycraft/relaycraft/commit/3341102a5ea84e8fddc07568d2352367182b22b7))
+* implement plugin context menu and storage functionality with HTTP request support ([0db377a](https://github.com/relaycraft/relaycraft/commit/0db377a9c15b4767ba88cba021561e78883fa427))
+
+
+### Bug Fixes
+
+* normalize floating element opacity and script logging under vibrancy ([69c4f78](https://github.com/relaycraft/relaycraft/commit/69c4f7812cbb7be5fa8a82f51f9f8d9aa6bd887b))
+
 ## [1.0.0-rc.13](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.12...v1.0.0-rc.13) (2026-03-26)
 
 
