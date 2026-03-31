@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRuleStore } from "../../../stores/ruleStore";
+import { getNextRulePriority, useRuleStore } from "../../../stores/ruleStore";
 import type {
   HeaderOperation,
   HttpMethod,
@@ -141,7 +141,7 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       type: ruleType,
       execution: {
         enabled: rule?.execution?.enabled ?? true,
-        priority: rule?.execution?.priority || 1,
+        priority: rule?.execution?.priority ?? getNextRulePriority(),
         stopOnMatch: ["map_local", "block_request"].includes(ruleType),
       },
       match: {
@@ -610,7 +610,7 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       name: finalName,
       execution: {
         enabled: rule?.execution?.enabled ?? true,
-        priority: rule?.execution?.priority || 1,
+        priority: rule?.execution?.priority ?? getNextRulePriority(),
         stopOnMatch: ["map_local", "block_request"].includes(ruleType),
       },
       type: ruleType,

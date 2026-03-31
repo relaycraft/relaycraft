@@ -14,6 +14,7 @@ import type { HarHeader } from "../../types";
 import { getHeaderValue } from "../../types";
 import { CodeBlock } from "../common/CodeBlock";
 import { CopyButton } from "../common/CopyButton";
+import { Editor } from "../common/Editor";
 import { Tooltip } from "../common/Tooltip";
 
 // Threshold for large content (500KB)
@@ -93,6 +94,37 @@ export function ContentPreview({ content, encoding, headers, url }: ContentPrevi
     return new TextEncoder().encode(content).length;
   }, [content, encoding]);
 
+  const previewDecodedContent = useMemo(() => {
+    if (!displayContent) return "";
+    if (encoding !== "base64") return displayContent;
+    try {
+      return atob(displayContent);
+    } catch {
+      return displayContent;
+    }
+  }, [displayContent, encoding]);
+
+  // Full decoded content — always based on complete (non-truncated) data.
+  // Used for copy, JSON formatting, and any operation that must not lose data.
+  const fullDecodedContent = useMemo(() => {
+    if (!content) return "";
+    if (encoding !== "base64") return content;
+    try {
+      return atob(content);
+    } catch {
+      return content;
+    }
+  }, [content, encoding]);
+
+  const formattedJsonContent = useMemo(() => {
+    if (contentType !== "json") return "";
+    const source = showFullContent ? fullDecodedContent : previewDecodedContent;
+    return formatJson(source);
+  }, [contentType, fullDecodedContent, previewDecodedContent, showFullContent]);
+
+  const copyContent =
+    contentType === "json" && viewMode === "preview" ? formattedJsonContent : fullDecodedContent;
+
   if (!content) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-muted-foreground/50 bg-muted/5 rounded-lg border border-border/30 mt-2 h-24">
@@ -164,13 +196,24 @@ export function ContentPreview({ content, encoding, headers, url }: ContentPrevi
     }
 
     if (contentType === "json") {
-      const decoded = encoding === "base64" ? atob(displayContent || "") : displayContent;
-      const formatted = formatJson(decoded || "");
-      return <CodeBlock code={formatted} language="json" />;
+      return (
+        <div className="h-full min-h-[220px] border border-border/40 rounded-xl overflow-hidden bg-muted/5">
+          <Editor
+            value={formattedJsonContent}
+            language="json"
+            options={{
+              readOnly: true,
+              lineWrapping: true,
+              lineNumbers: "off",
+            }}
+          />
+        </div>
+      );
     }
 
     if (contentType === "html" || contentType === "xml") {
-      const formatted = contentType === "xml" ? formatXml(displayContent || "") : displayContent;
+      const formatted =
+        contentType === "xml" ? formatXml(previewDecodedContent || "") : previewDecodedContent;
       return <CodeBlock code={formatted || ""} language={contentType} />;
     }
 
@@ -234,7 +277,7 @@ export function ContentPreview({ content, encoding, headers, url }: ContentPrevi
             </Tooltip>
           )}
 
-          <CopyButton text={content} className="p-1.5" />
+          <CopyButton text={copyContent || ""} className="p-1.5" />
 
           <Tooltip content={t("content_preview.download")}>
             <button
@@ -282,7 +325,7 @@ export function ContentPreview({ content, encoding, headers, url }: ContentPrevi
 
       <div className="flex-1 min-h-0 relative">
         {viewMode === "raw" ? (
-          <CodeBlock code={displayContent || ""} language="text" hideHeader />
+          <CodeBlock code={previewDecodedContent || ""} language="text" hideHeader />
         ) : (
           renderContent()
         )}

@@ -1,3 +1,4 @@
+import { getNextRulePriority } from "../../stores/ruleStore";
 import type { Rule } from "../../types/rules";
 
 export interface AIRule extends Partial<Rule> {
@@ -18,7 +19,7 @@ export function mapAIRuleToInternal(aiRule: AIRule): Partial<Rule> {
     type: aiRule.type || "block_request",
     execution: {
       enabled: aiRule.execution?.enabled ?? (aiRule as any).enabled ?? true,
-      priority: aiRule.execution?.priority ?? (aiRule as any).priority ?? 1,
+      priority: aiRule.execution?.priority ?? (aiRule as any).priority ?? getNextRulePriority(),
       stopOnMatch: aiRule.execution?.stopOnMatch ?? (aiRule as any).stopOnMatch ?? true,
     },
     match: {

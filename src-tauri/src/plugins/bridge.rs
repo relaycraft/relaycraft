@@ -178,6 +178,7 @@ pub async fn plugin_call(
             #[derive(serde::Deserialize)]
             #[serde(rename_all = "camelCase")]
             struct CreateMockArgs {
+                rule_id: Option<String>,
                 name: String,
                 url_pattern: String,
                 response_body: String,
@@ -190,6 +191,104 @@ pub async fn plugin_call(
                 .map_err(|e| format!("Invalid rules_create_mock args: {e}"))?;
 
             let rule_id = uuid::Uuid::new_v4().to_string();
+
+            // Load existing rules for conflict resolution and priority calculation.
+            let storage = crate::rules::storage::RuleStorage::from_config()
+                .map_err(|e| e.to_string())?;
+            let mut next_priority: i32 = 10;
+            let plugin_source = format!("plugin:{}", payload.plugin_id);
+            let new_method = args.method.as_ref().map(|m| m.to_ascii_uppercase());
+            let mut target_group_id: Option<String> = None;
+            let mut rules_to_disable: Vec<(crate::rules::model::Rule, String)> = Vec::new();
+            let mut target_rule_id = rule_id.clone();
+            let mut target_priority: Option<i32> = None;
+            if let Ok(existing) = storage.load_all() {
+                // Compute next priority: max(existing) + 10
+                next_priority = existing
+                    .rules
+                    .iter()
+                    .map(|e| e.rule.execution.priority)
+                    .max()
+                    .map(|m| m + 10)
+                    .unwrap_or(10);
+
+                if let Some(existing_rule_id) = args.rule_id.as_deref() {
+                    if let Some(entry) = existing.rules.iter().find(|entry| entry.rule.id == existing_rule_id) {
+                        let existing_rule = &entry.rule;
+                        if existing_rule.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(&plugin_source) {
+                            return Err("Security Violation: Cannot update mock rule owned by another source".to_string());
+                        }
+                        if existing_rule.r#type != crate::rules::model::RuleType::MapLocal {
+                            return Err("Only map_local mock rules can be updated via rules.createMock".to_string());
+                        }
+                        target_group_id = Some(entry.group_id.clone());
+                        target_rule_id = existing_rule.id.clone();
+                        target_priority = Some(existing_rule.execution.priority);
+                    }
+                }
+
+                // Auto-disable existing enabled mock rules from the same plugin
+                // whose match scope overlaps with the new rule (same URL + overlapping method scope),
+                // so the new rule takes effect immediately without being shadowed.
+                for entry in &existing.rules {
+                    let r = &entry.rule;
+                    if args.rule_id.as_deref() == Some(r.id.as_str()) { continue; }
+                    if !r.execution.enabled { continue; }
+                    if r.r#type != crate::rules::model::RuleType::MapLocal { continue; }
+                    if r.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(&plugin_source) {
+                        continue;
+                    }
+                    let same_url = r.match_config.request.iter().any(|atom| {
+                        atom.atom_type == "url"
+                            && atom.value.as_ref().map(|v| v.as_str()) == Some(Some(&args.url_pattern))
+                    });
+                    if !same_url {
+                        continue;
+                    }
+
+                    // Method overlap rules:
+                    // - New rule without method => overlaps all existing methods
+                    // - Existing rule without method => overlaps any new method
+                    // - Otherwise overlap only when methods are equal (case-insensitive)
+                    let existing_methods: Option<std::collections::HashSet<String>> = r
+                        .match_config
+                        .request
+                        .iter()
+                        .find(|atom| atom.atom_type == "method")
+                        .map(|atom| {
+                            let mut set = std::collections::HashSet::new();
+                            if let Some(val) = atom.value.as_ref() {
+                                match val {
+                                    serde_json::Value::String(s) => {
+                                        set.insert(s.to_ascii_uppercase());
+                                    }
+                                    serde_json::Value::Array(arr) => {
+                                        for item in arr {
+                                            if let Some(s) = item.as_str() {
+                                                set.insert(s.to_ascii_uppercase());
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            set
+                        });
+                    let method_overlaps = match (&new_method, &existing_methods) {
+                        (None, _) => true,
+                        (Some(_), None) => true,
+                        (Some(m), Some(set)) => set.contains(m),
+                    };
+                    if method_overlaps {
+                        let mut disabled = r.clone();
+                        disabled.execution.enabled = false;
+                        if target_group_id.is_none() {
+                            target_group_id = Some(entry.group_id.clone());
+                        }
+                        rules_to_disable.push((disabled, entry.group_id.clone()));
+                    }
+                }
+            }
 
             // URL match atom — use wildcard semantics so `*` patterns work as expected.
             let mut request_atoms = vec![crate::rules::model::MatchAtom {
@@ -212,12 +311,12 @@ pub async fn plugin_call(
             }
 
             let rule = crate::rules::model::Rule {
-                id: rule_id.clone(),
+                id: target_rule_id.clone(),
                 name: args.name,
                 r#type: crate::rules::model::RuleType::MapLocal,
                 execution: crate::rules::model::RuleExecution {
                     enabled: true,
-                    priority: 50,
+                    priority: target_priority.unwrap_or(next_priority),
                     stop_on_match: None,
                 },
                 match_config: crate::rules::model::RuleMatchConfig {
@@ -239,20 +338,25 @@ pub async fn plugin_call(
                 )],
                 tags: None,
                 metadata: Some(crate::rules::model::RuleMetadata {
-                    source: Some(format!("plugin:{}", payload.plugin_id)),
+                    source: Some(plugin_source),
                     ai_intent: None,
                 }),
             };
 
-            crate::rules::storage::RuleStorage::from_config()
-                .map_err(|e| e.to_string())?
-                .save(&rule, None)
+            for (disabled, group_id) in rules_to_disable {
+                storage
+                    .save(&disabled, Some(&group_id))
+                    .map_err(|e| e.to_string())?;
+            }
+
+            storage
+                .save(&rule, target_group_id.as_deref())
                 .map_err(|e| e.to_string())?;
 
             // Notify frontend so the Rules panel refreshes immediately.
             let _ = app.emit("rules-changed", ());
 
-            Ok(serde_json::to_value(rule_id).unwrap())
+            Ok(serde_json::to_value(target_rule_id).unwrap())
         }
 
         _ => Err(format!(

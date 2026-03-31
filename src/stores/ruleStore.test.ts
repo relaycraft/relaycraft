@@ -81,6 +81,60 @@ describe("ruleStore and algorithm logic", () => {
       expect(useRuleStore.getState().rules.length).toBe(0);
       expect(useRuleStore.getState().ruleGroups.r1).toBeUndefined();
     });
+
+    it("should move rules even when adjacent priorities are equal", () => {
+      const store = useRuleStore.getState();
+      store.addGroup(createGroup("G1"));
+      store.addRule(createRule("r1", "G1", 10), "G1");
+      store.addRule(createRule("r2", "G1", 10), "G1");
+
+      store.moveRule("r2", "up");
+
+      const state = useRuleStore.getState();
+      const r1 = state.rules.find((r) => r.id === "r1")!;
+      const r2 = state.rules.find((r) => r.id === "r2")!;
+      expect(r2.execution.priority).toBeLessThan(r1.execution.priority);
+    });
+
+    it("should only move one step within an equal-priority block", () => {
+      const store = useRuleStore.getState();
+      store.addGroup(createGroup("G1"));
+      store.addRule(createRule("r1", "G1", 10), "G1");
+      store.addRule(createRule("r2", "G1", 10), "G1");
+      store.addRule(createRule("r3", "G1", 10), "G1");
+
+      store.moveRule("r3", "up");
+
+      const ordered = [...useRuleStore.getState().rules].sort((a, b) => {
+        if (a.execution.priority !== b.execution.priority) {
+          return a.execution.priority - b.execution.priority;
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+      expect(ordered.map((rule) => rule.id)).toEqual(["r1", "r3", "r2"]);
+    });
+
+    it("should keep changes scoped to the minimal conflicting window", () => {
+      const store = useRuleStore.getState();
+      store.addGroup(createGroup("G1"));
+      store.addRule(createRule("r1", "G1", 10), "G1");
+      store.addRule(createRule("r2", "G1", 10), "G1");
+      store.addRule(createRule("r3", "G1", 20), "G1");
+      store.addRule(createRule("r4", "G1", 30), "G1");
+
+      store.moveRule("r3", "up");
+
+      const state = useRuleStore.getState();
+      const priorities = Object.fromEntries(
+        state.rules.map((rule) => [rule.id, rule.execution.priority]),
+      );
+
+      expect(priorities.r1).toBe(10);
+      expect(priorities.r3).toBe(11);
+      expect(priorities.r2).toBe(12);
+      expect(priorities.r4).toBe(30);
+    });
   });
 
   describe("Superset and Conflict Algorithm", () => {

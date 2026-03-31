@@ -108,8 +108,10 @@ export interface ContextMenuItemConfig {
 }
 
 export interface CreateMockConfig {
+  /** Existing rule ID to update in place. If omitted, a new rule is created. */
+  ruleId?: string;
   name: string;
-  /** URL pattern (substring match). E.g. "/api/users" */
+  /** URL pattern (wildcard match). Example: "https://api.example.com/v1/users*" */
   urlPattern: string;
   /** Response body string (usually JSON.stringify of your mock data) */
   responseBody: string;

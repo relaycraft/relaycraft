@@ -60,6 +60,92 @@ interface RuleStore {
   clearLoadErrors: () => void;
 }
 
+function sortRulesByExecutionOrder(rules: Rule[]) {
+  return [...rules].sort((a, b) => {
+    if (a.execution.priority !== b.execution.priority) {
+      return a.execution.priority - b.execution.priority;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function assignWindowPriorities(
+  count: number,
+  lowerBound?: number,
+  upperBound?: number,
+): number[] | null {
+  if (count <= 0) return [];
+
+  if (lowerBound !== undefined && upperBound !== undefined) {
+    const available = upperBound - lowerBound - 1;
+    if (available < count) return null;
+    return Array.from({ length: count }, (_, index) => lowerBound + index + 1);
+  }
+
+  if (lowerBound !== undefined) {
+    return Array.from({ length: count }, (_, index) => lowerBound + index + 1);
+  }
+
+  if (upperBound !== undefined) {
+    const start = upperBound - count;
+    return Array.from({ length: count }, (_, index) => start + index);
+  }
+
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+function computeMoveWindow(
+  orderedRules: Rule[],
+  fromIndex: number,
+  toIndex: number,
+): { start: number; end: number; priorities: number[] } {
+  const reordered = [...orderedRules];
+  const [moved] = reordered.splice(fromIndex, 1);
+  reordered.splice(toIndex, 0, moved);
+
+  let start = Math.min(fromIndex, toIndex);
+  let end = Math.max(fromIndex, toIndex);
+
+  while (true) {
+    while (
+      start > 0 &&
+      reordered[start - 1].execution.priority === reordered[start].execution.priority
+    ) {
+      start -= 1;
+    }
+    while (
+      end < reordered.length - 1 &&
+      reordered[end + 1].execution.priority === reordered[end].execution.priority
+    ) {
+      end += 1;
+    }
+
+    const lowerBound = start > 0 ? reordered[start - 1].execution.priority : undefined;
+    const upperBound =
+      end < reordered.length - 1 ? reordered[end + 1].execution.priority : undefined;
+    const priorities = assignWindowPriorities(end - start + 1, lowerBound, upperBound);
+
+    if (priorities) {
+      return { start, end, priorities };
+    }
+
+    if (start > 0) {
+      start -= 1;
+      continue;
+    }
+    if (end < reordered.length - 1) {
+      end += 1;
+      continue;
+    }
+
+    return {
+      start: 0,
+      end: reordered.length - 1,
+      priorities: Array.from({ length: reordered.length }, (_, index) => index + 1),
+    };
+  }
+}
+
 export const useRuleStore = create<RuleStore>((set, get) => ({
   version: 0,
   rules: [],
@@ -197,48 +283,40 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
   clearActiveRule: () => set({ selectedRule: null, draftRule: null, isEditorDirty: false }),
 
   moveRule: (id: string, direction: "up" | "down") => {
+    const preMoveState = get();
+    const groupId = preMoveState.ruleGroups[id];
+    const groupRules = sortRulesByExecutionOrder(
+      preMoveState.rules.filter((r) => preMoveState.ruleGroups[r.id] === groupId),
+    );
+    const index = groupRules.findIndex((r) => r.id === id);
+    if (index === -1) return;
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= groupRules.length) return;
+
+    const reordered = [...groupRules];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(newIndex, 0, moved);
+    const moveWindow = computeMoveWindow(groupRules, index, newIndex);
+
+    const priorityUpdates = new Map<string, number>();
+    reordered.slice(moveWindow.start, moveWindow.end + 1).forEach((rule, windowIndex) => {
+      priorityUpdates.set(rule.id, moveWindow.priorities[windowIndex]);
+    });
+
     set((state) => {
-      const rule = state.rules.find((r) => r.id === id);
-      if (!rule) return state;
-
-      // Get rules in same group
-      const groupId = state.ruleGroups[id];
-      const groupRules = state.rules
-        .filter((r) => state.ruleGroups[r.id] === groupId)
-        .sort((a, b) => {
-          if (a.execution.priority !== b.execution.priority)
-            return a.execution.priority - b.execution.priority;
-          return a.id.localeCompare(b.id);
-        });
-
-      const index = groupRules.findIndex((r) => r.id === id);
-      if (index === -1) return state;
-
-      const newIndex = direction === "up" ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= groupRules.length) return state;
-
-      // Swap in group rules subset
-      const result = [...groupRules];
-      const [removed] = result.splice(index, 1);
-      result.splice(newIndex, 0, removed);
-
-      // Update global list priorities
-      const updatedRules = [...state.rules];
-      result.forEach((r, idx) => {
-        const globalIdx = updatedRules.findIndex((gr) => gr.id === r.id);
-        if (globalIdx !== -1) {
-          updatedRules[globalIdx] = {
-            ...r,
-            execution: { ...r.execution, priority: idx + 1 },
-          };
+      const updatedRules = state.rules.map((r) => {
+        const nextPriority = priorityUpdates.get(r.id);
+        if (nextPriority !== undefined && nextPriority !== r.execution.priority) {
+          return { ...r, execution: { ...r.execution, priority: nextPriority } };
         }
+        return r;
       });
 
       return { version: state.version + 1, rules: updatedRules };
     });
-    // Only save rules in the affected group
-    const groupId = get().ruleGroups[id];
-    const affectedRules = get().rules.filter((r) => get().ruleGroups[r.id] === groupId);
+
+    const affectedIds = new Set(priorityUpdates.keys());
+    const affectedRules = get().rules.filter((r) => affectedIds.has(r.id));
     for (const rule of affectedRules) {
       get().saveRule(rule);
     }
@@ -643,6 +721,17 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 }));
 
 /**
+ * Compute the next available priority value for a new rule.
+ * Uses max(existing) + 10 to leave gaps for manual insertion.
+ */
+export function getNextRulePriority(): number {
+  const rules = useRuleStore.getState().rules;
+  if (rules.length === 0) return 10;
+  const max = Math.max(...rules.map((r) => r.execution.priority));
+  return max + 10;
+}
+
+/**
  * Check if ruleA is a logical SUPERSET of ruleB
  */
 function isSuperset(ruleA: Rule, ruleB: Rule): boolean {
@@ -701,6 +790,25 @@ function isSuperset(ruleA: Rule, ruleB: Rule): boolean {
             // If B requires CONTAINS valB, and valB contains valA, then A covers it.
             // e.g. A contains "google", B contains "google.com" -> A is wider.
             if (typeB === "contains" && valB.includes(valA)) covered = true;
+          } else if (typeA === "wildcard") {
+            // Same wildcard pattern → mutual superset
+            if (typeB === "wildcard" && valA === valB) covered = true;
+            // Wildcard covers an exact value if the exact value matches the pattern
+            if (typeB === "exact" || typeB === "equals") {
+              try {
+                const re = new RegExp(
+                  "^" +
+                    valA
+                      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+                      .replace(/\*/g, ".*")
+                      .replace(/\?/g, ".") +
+                    "$",
+                );
+                if (re.test(valB)) covered = true;
+              } catch {
+                /* invalid pattern, skip */
+              }
+            }
           } else if (typeA === "regex") {
             // Harder, but for same regex it works
             if (typeB === "regex" && valA === valB) covered = true;
@@ -728,35 +836,24 @@ function isSuperset(ruleA: Rule, ruleB: Rule): boolean {
 export function getRuleConflicts(rules: Rule[], groups: RuleGroup[]) {
   const conflicts: Record<string, { type: "shadowed" | "redundant"; byRuleId: string }> = {};
 
-  // 1. Sort groups and rules to get execution order
-  const sortedGroups = [...groups].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority - b.priority;
-    return a.id.localeCompare(b.id);
-  });
-
-  const activeRules: Rule[] = [];
+  // Flat sort by (priority, name, id) — matches engine execution order exactly.
+  // Group priority is display-only and does not affect execution.
   const ruleGroups = useRuleStore.getState().ruleGroups;
+  const disabledGroupIds = new Set(groups.filter((g) => !g.enabled).map((g) => g.id));
 
-  sortedGroups.forEach((group) => {
-    if (!group.enabled) return;
-    const groupRules = rules
-      .filter((r) => ruleGroups[r.id] === group.id && r.execution.enabled)
-      .sort((a, b) => {
-        if (a.execution.priority !== b.execution.priority)
-          return a.execution.priority - b.execution.priority;
-        return a.id.localeCompare(b.id);
-      });
-    activeRules.push(...groupRules);
-  });
-
-  const uncategorizedRules = rules
-    .filter((r) => (!ruleGroups[r.id] || ruleGroups[r.id] === "Default") && r.execution.enabled)
+  const activeRules = rules
+    .filter((r) => {
+      if (!r.execution.enabled) return false;
+      const gid = ruleGroups[r.id];
+      if (gid && disabledGroupIds.has(gid)) return false;
+      return true;
+    })
     .sort((a, b) => {
       if (a.execution.priority !== b.execution.priority)
         return a.execution.priority - b.execution.priority;
+      if (a.name !== b.name) return a.name.localeCompare(b.name);
       return a.id.localeCompare(b.id);
     });
-  activeRules.push(...uncategorizedRules);
 
   // 2. Detect shadowing with disjoint check
   // We maintain a list of rules that have "Terminated" the phase.
