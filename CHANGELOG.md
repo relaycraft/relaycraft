@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.15](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.14...v1.0.0-rc.15) (2026-03-31)
+
+
+### Features
+
+* enhance rule management with conflict resolution and priority handling ([3b6f2ae](https://github.com/relaycraft/relaycraft/commit/3b6f2aeeab66c4908c6f215e70ca068babcf5947))
+
 ## [1.0.0-rc.14](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.13...v1.0.0-rc.14) (2026-03-30)
 
 
