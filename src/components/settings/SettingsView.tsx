@@ -468,11 +468,19 @@ export function SettingsView() {
                               onConfirm: async () => {
                                 btn.innerText = t("settings.about.downloading");
                                 try {
-                                  // Stop engine before installer runs so it can overwrite engine files (Windows file lock)
+                                  // Release engine file locks before updater writes files.
+                                  // This is especially important on Windows where engine.exe
+                                  // can remain locked by child processes.
                                   try {
                                     const { invoke } = await import("@tauri-apps/api/core");
-                                    await invoke("stop_proxy");
-                                  } catch (_) {}
+                                    await invoke("prepare_update_install");
+                                  } catch (_) {
+                                    // Fallback for older backend builds.
+                                    try {
+                                      const { invoke } = await import("@tauri-apps/api/core");
+                                      await invoke("stop_proxy");
+                                    } catch (_) {}
+                                  }
                                   await update.downloadAndInstall();
                                   await relaunch();
                                 } catch (error) {

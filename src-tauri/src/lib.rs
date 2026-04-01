@@ -302,6 +302,7 @@ pub fn run() {
             proxy::restart_proxy,
             proxy::get_proxy_status,
             proxy::set_proxy_active,
+            proxy::prepare_update_install,
             proxy::get_process_stats,
             common::utils::get_local_ip,
             certificate::get_cert_path,
