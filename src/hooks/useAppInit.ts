@@ -206,6 +206,48 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     };
   }, []);
 
+  // Handle plugin/theme installed via OS file association (double-click .rcplugin/.rctheme)
+  useEffect(() => {
+    const unlistenOk = listen<string>("plugin-installed-from-file", async (event) => {
+      const id = event.payload;
+      Logger.info(`[FileOpen] Plugin/theme installed from file: ${id}`);
+      // Refresh stores first, then branch by actual installed type.
+      await usePluginStore.getState().fetchPlugins();
+      const { useThemeStore: ts } = await import("../stores/themeStore");
+      await ts.getState().fetchThemes();
+      const installedPlugin = usePluginStore.getState().plugins.find((p) => p.manifest.id === id);
+      const installedTheme = ts.getState().themes.find((theme) => theme.id === id);
+
+      // Only plugins should be toggled into enabled state.
+      if (installedPlugin) {
+        await usePluginStore.getState().togglePlugin(id, true);
+      }
+
+      const displayName = installedPlugin?.manifest.name || installedTheme?.name || id;
+      useUIStore.getState().showConfirm({
+        title: t("plugins.notifications.install_success_title"),
+        message: t("plugins.notifications.install_success_msg", { id: displayName }),
+        variant: "success",
+        confirmLabel: t("common.ok", { defaultValue: "OK" }),
+        onConfirm: () => {},
+      });
+    });
+    const unlistenErr = listen<string>("plugin-install-failed-from-file", (event) => {
+      Logger.error(`[FileOpen] Installation failed: ${event.payload}`);
+      useUIStore.getState().showConfirm({
+        title: t("plugins.errors.install_failed"),
+        message: event.payload,
+        variant: "danger",
+        confirmLabel: t("common.ok", { defaultValue: "OK" }),
+        onConfirm: () => {},
+      });
+    });
+    return () => {
+      unlistenOk.then((f) => f());
+      unlistenErr.then((f) => f());
+    };
+  }, [t]);
+
   // Handle Close Interception
   useEffect(() => {
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {

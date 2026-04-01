@@ -339,7 +339,7 @@ export const MarketView: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-micro font-bold text-muted-foreground/40 uppercase tracking-wider">
-                              by {item.author}
+                              {t("plugins.market.by_author", { author: item.author })}
                             </span>
                             {item.downloadCount != null && (
                               <span className="text-micro text-muted-foreground/30 flex items-center border-l border-border/40 pl-2">
@@ -386,7 +386,7 @@ export const MarketView: React.FC = () => {
                         </Button>
                         {hasUpdate && (
                           <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-tighter">
-                            New Update
+                            {t("plugins.market.new_update")}
                           </span>
                         )}
                       </div>

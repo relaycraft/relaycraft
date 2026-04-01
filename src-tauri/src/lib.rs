@@ -10,7 +10,7 @@ mod session;
 mod traffic;
 
 use std::sync::{Arc, Mutex};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 mod logging;
 mod scripts;
@@ -23,6 +23,60 @@ pub struct StartupWarnings {
 #[tauri::command]
 fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
     state.config_was_reset
+}
+
+/// Handle file-open requests from the OS (double-click on .rcplugin / .rctheme).
+/// Installs the file and emits an event so the frontend can refresh & notify.
+fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::path::PathBuf]) {
+    let app_root = match config::get_app_root_dir() {
+        Ok(d) => d,
+        Err(e) => {
+            log::error!("[FileOpen] Cannot resolve app root: {}", e);
+            return;
+        }
+    };
+
+    for path in paths {
+        let ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+        if ext != "rcplugin" && ext != "rctheme" {
+            continue;
+        }
+        log::info!("[FileOpen] Installing from OS file association: {:?}", path);
+
+        match plugins::install_plugin_from_zip(path, &app_root) {
+            Ok(id) => {
+                log::info!("[FileOpen] Installed successfully: {}", id);
+                let _ = logging::write_domain_log(
+                    "audit",
+                    &format!("Installed via file association: {}", id),
+                );
+                let _ = app.emit("plugin-installed-from-file", &id);
+            }
+            Err(e) => {
+                log::error!("[FileOpen] Installation failed: {}", e);
+                let _ = app.emit("plugin-install-failed-from-file", &e);
+            }
+        }
+    }
+}
+
+/// Extract installable file paths (.rcplugin / .rctheme) from CLI arguments.
+fn extract_file_paths_from_args(args: &[String]) -> Vec<std::path::PathBuf> {
+    args.iter()
+        .filter_map(|arg| {
+            let p = std::path::PathBuf::from(arg);
+            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+            if (ext == "rcplugin" || ext == "rctheme") && p.exists() {
+                Some(p)
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -78,12 +132,17 @@ pub fn run() {
     }
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             // Focus existing window on second instance
             let windows = app.webview_windows();
             if let Some(window) = windows.values().next() {
                 let _ = window.set_focus();
                 let _ = window.unminimize();
+            }
+            // Handle file associations passed as CLI args (Windows/Linux hot start)
+            let paths = extract_file_paths_from_args(&args);
+            if !paths.is_empty() {
+                handle_file_open(app, &paths);
             }
         }))
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -220,6 +279,21 @@ pub fn run() {
                 mcp::start(&mcp_state, app_config.mcp_config.port, app_config.proxy_port, app.handle().clone());
             }
 
+            // Cold start: handle file association from CLI args (Windows/Linux)
+            #[cfg(not(target_os = "macos"))]
+            {
+                let args: Vec<String> = std::env::args().collect();
+                let paths = extract_file_paths_from_args(&args);
+                if !paths.is_empty() {
+                    let handle = app.handle().clone();
+                    // Delay briefly so the frontend has time to mount its event listeners
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_secs(2));
+                        handle_file_open(&handle, &paths);
+                    });
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -334,6 +408,17 @@ pub fn run() {
                 }
 
                 log::info!("Cleanup complete");
+            }
+            // macOS: handle file-open events (double-click .rcplugin/.rctheme, or cold start)
+            #[cfg(target_os = "macos")]
+            tauri::RunEvent::Opened { urls } => {
+                let paths: Vec<std::path::PathBuf> = urls
+                    .iter()
+                    .filter_map(|u| u.to_file_path().ok())
+                    .collect();
+                if !paths.is_empty() {
+                    handle_file_open(app_handle, &paths);
+                }
             }
             _ => {}
         });

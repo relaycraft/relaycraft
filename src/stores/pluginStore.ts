@@ -247,16 +247,22 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
 
       const { useThemeStore } = await import("./themeStore");
       await useThemeStore.getState().fetchThemes();
+      const installedPlugin = get().plugins.find((p) => p.manifest.id === id);
+      const installedTheme = useThemeStore.getState().themes.find((theme) => theme.id === id);
 
-      await get().togglePlugin(id, true);
+      // Only plugins should be toggled into enabled state.
+      if (installedPlugin) {
+        await get().togglePlugin(id, true);
+      }
 
       set({ loading: false });
 
-      // Show success message
+      // Show success message — prefer plugin/theme display name over raw ID.
       const { useUIStore } = await import("./uiStore");
+      const displayName = installedPlugin?.manifest.name || installedTheme?.name || id;
       useUIStore.getState().showConfirm({
         title: i18n.t("plugins.notifications.install_success_title"),
-        message: i18n.t("plugins.notifications.install_success_msg", { id }),
+        message: i18n.t("plugins.notifications.install_success_msg", { id: displayName }),
         variant: "success",
         confirmLabel: i18n.t("common.ok", { defaultValue: "OK" }),
         onConfirm: () => {},
