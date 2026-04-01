@@ -73,7 +73,6 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
           check();
         });
         console.log("[init] i18n initialized now", { language: i18n.language });
-        console.log("[init] i18n initialized now", { language: i18n.language });
       }
 
       // Critical path - must complete first

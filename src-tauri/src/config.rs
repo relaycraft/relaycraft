@@ -262,17 +262,102 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
         }
     }
 
+    fn format_string_list(values: &[String]) -> String {
+        if values.is_empty() {
+            "[]".to_string()
+        } else {
+            format!("[{}]", values.join(", "))
+        }
+    }
+
+    fn diff_ai_config(
+        old_val: &serde_json::Value,
+        new_val: &serde_json::Value,
+    ) -> Vec<String> {
+        let mut diffs = Vec::new();
+        let Some(old_obj) = old_val.as_object() else { return diffs };
+        let Some(new_obj) = new_val.as_object() else { return diffs };
+
+        let mut keys: Vec<String> = old_obj
+            .keys()
+            .chain(new_obj.keys())
+            .cloned()
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        keys.sort();
+
+        for key in keys {
+            let old_field = old_obj.get(&key).unwrap_or(&serde_json::Value::Null);
+            let new_field = new_obj.get(&key).unwrap_or(&serde_json::Value::Null);
+            if old_field == new_field {
+                continue;
+            }
+            diffs.push(format!(
+                "{}: {} -> {}",
+                key,
+                format_value(old_field),
+                format_value(new_field)
+            ));
+        }
+
+        diffs
+    }
+
     let mut changes: Vec<String> = Vec::new();
     if let (Some(new_obj), Some(old_obj)) = (new_json.as_object(), old_json.as_object()) {
         for (key, new_val) in new_obj {
             if let Some(old_val) = old_obj.get(key) {
                 if new_val != old_val {
-                    changes.push(format!(
-                        "{}: {} -> {}",
-                        key,
-                        format_value(old_val),
-                        format_value(new_val)
-                    ));
+                    if key == "enabled_plugins" {
+                        let old_plugins: Vec<String> = old_val
+                            .as_array()
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+                        let new_plugins: Vec<String> = new_val
+                            .as_array()
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+
+                        let old_set: std::collections::BTreeSet<String> =
+                            old_plugins.iter().cloned().collect();
+                        let new_set: std::collections::BTreeSet<String> =
+                            new_plugins.iter().cloned().collect();
+                        let added: Vec<String> =
+                            new_set.difference(&old_set).cloned().collect();
+                        let removed: Vec<String> =
+                            old_set.difference(&new_set).cloned().collect();
+
+                        changes.push(format!(
+                            "enabled_plugins: {} -> {} (added: {}, removed: {})",
+                            old_plugins.len(),
+                            new_plugins.len(),
+                            format_string_list(&added),
+                            format_string_list(&removed),
+                        ));
+                    } else if key == "ai_config" {
+                        let ai_diffs = diff_ai_config(old_val, new_val);
+                        if ai_diffs.is_empty() {
+                            changes.push("ai_config: updated".to_string());
+                        } else {
+                            changes.push(format!("ai_config: {}", ai_diffs.join("; ")));
+                        }
+                    } else {
+                        changes.push(format!(
+                            "{}: {} -> {}",
+                            key,
+                            format_value(old_val),
+                            format_value(new_val)
+                        ));
+                    }
                 }
             }
         }

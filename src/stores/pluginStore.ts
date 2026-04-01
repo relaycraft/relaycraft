@@ -194,9 +194,12 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       const { useThemeStore } = await import("./themeStore");
       await useThemeStore.getState().fetchThemes();
 
-      // Auto-enable plugin (this will now find the plugin in the list and update UI state)
-      Logger.debug(`[PluginStore] Auto-enabling plugin ${id}...`);
-      await get().togglePlugin(id, true);
+      const installedPlugin = get().plugins.find((plugin) => plugin.manifest.id === id);
+      if (installedPlugin) {
+        // Auto-enable only when the installed package is actually a plugin.
+        Logger.debug(`[PluginStore] Auto-enabling plugin ${id}...`);
+        await get().togglePlugin(id, true);
+      }
 
       // Force re-render of market view by ensuring state update propagation
       set((state) => ({
