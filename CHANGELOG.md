@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.16](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.15...v1.0.0-rc.16) (2026-04-01)
+
+
+### Bug Fixes
+
+* avoid updater file lock failures on windows ([bd8212b](https://github.com/relaycraft/relaycraft/commit/bd8212bca88a4142fe1ae000a3d34e2748632577))
+* improve plugin/theme install UX and i18n ([d000258](https://github.com/relaycraft/relaycraft/commit/d0002580a249dc288c229856c7ea1847c1f39dfc))
+* polish install flow and audit logs ([2ed56b0](https://github.com/relaycraft/relaycraft/commit/2ed56b07bb325476eec9f272f2e237f1c910619d))
+
 ## [1.0.0-rc.15](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.14...v1.0.0-rc.15) (2026-03-31)
 
 
