@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0-rc.17](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.16...v1.0.0-rc.17) (2026-04-02)
+
+
+### Features
+
+* enhance plugin/theme installation feedback and UI navigation ([ee42480](https://github.com/relaycraft/relaycraft/commit/ee42480e68f2321e4fc683ed3d1c6bf8c79fc76b))
+* finalize plugin api v1 capabilities ([aabba79](https://github.com/relaycraft/relaycraft/commit/aabba79f264c54fb10cad64128a39cfce71dcc74))
+
 ## [1.0.0-rc.16](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.15...v1.0.0-rc.16) (2026-04-01)
 
 
