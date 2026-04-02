@@ -17,6 +17,17 @@ const AUDITED_COMMANDS: &[&str] = &[
     // Add more sensitive commands here as needed
 ];
 
+fn truncate_utf8(input: &str, max_bytes: usize) -> (String, bool) {
+    if input.len() <= max_bytes {
+        return (input.to_string(), false);
+    }
+    let mut cut = max_bytes;
+    while cut > 0 && !input.is_char_boundary(cut) {
+        cut -= 1;
+    }
+    (input[..cut].to_string(), true)
+}
+
 #[tauri::command]
 pub async fn plugin_call(
     payload: PluginCallArgs,
@@ -184,6 +195,7 @@ pub async fn plugin_call(
                 response_body: String,
                 status_code: Option<u16>,
                 content_type: Option<String>,
+                response_headers: Option<std::collections::HashMap<String, String>>,
                 method: Option<String>,
             }
 
@@ -310,6 +322,34 @@ pub async fn plugin_call(
                 });
             }
 
+            // Optional response header overrides for map_local action.
+            // `content-type` is managed by `content_type` field above to avoid duplication.
+            let response_header_ops: Vec<crate::rules::model::HeaderOperation> = args
+                .response_headers
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|(key, value)| {
+                    let trimmed_key = key.trim().to_string();
+                    if trimmed_key.is_empty() || trimmed_key.eq_ignore_ascii_case("content-type") {
+                        return None;
+                    }
+                    Some(crate::rules::model::HeaderOperation {
+                        operation: "set".to_string(),
+                        key: trimmed_key,
+                        value: Some(value),
+                    })
+                })
+                .collect();
+
+            let mock_headers = if response_header_ops.is_empty() {
+                None
+            } else {
+                Some(crate::rules::model::HeaderConfig {
+                    request: vec![],
+                    response: response_header_ops,
+                })
+            };
+
             let rule = crate::rules::model::Rule {
                 id: target_rule_id.clone(),
                 name: args.name,
@@ -333,7 +373,7 @@ pub async fn plugin_call(
                                 .unwrap_or_else(|| "application/json".to_string()),
                         ),
                         status_code: Some(args.status_code.unwrap_or(200) as u32),
-                        headers: None,
+                        headers: mock_headers,
                     },
                 )],
                 tags: None,
@@ -357,6 +397,303 @@ pub async fn plugin_call(
             let _ = app.emit("rules-changed", ());
 
             Ok(serde_json::to_value(target_rule_id).unwrap())
+        }
+
+        // ── rules.list ───────────────────────────────────────────────────────────
+        "rules_list" => {
+            if !permissions.contains(&"rules:read".to_string()) {
+                return Err("Security Violation: Missing 'rules:read' permission".to_string());
+            }
+            use crate::rules::storage::RuleStorage;
+
+            #[derive(serde::Deserialize, Default)]
+            #[serde(rename_all = "camelCase")]
+            struct RulesListFilter {
+                enabled: Option<bool>,
+                source: Option<String>,
+                r#type: Option<String>,
+            }
+
+            let filter: RulesListFilter = serde_json::from_value(payload.args)
+                .unwrap_or_default();
+
+            let storage = RuleStorage::from_config().map_err(|e| e.to_string())?;
+            let loaded = storage.load_all().map_err(|e| e.to_string())?;
+
+            let rules: Vec<serde_json::Value> = loaded.rules.iter()
+                .filter(|entry| {
+                    let r = &entry.rule;
+                    if let Some(enabled) = filter.enabled {
+                        if r.execution.enabled != enabled { return false; }
+                    }
+                    if let Some(ref source) = filter.source {
+                        let rule_source = r.metadata.as_ref()
+                            .and_then(|m| m.source.as_deref())
+                            .unwrap_or("user");
+                        if rule_source != source { return false; }
+                    }
+                    if let Some(ref type_str) = filter.r#type {
+                        let rule_type = serde_json::to_value(&r.r#type)
+                            .ok()
+                            .and_then(|v| v.as_str().map(|s| s.to_string()))
+                            .unwrap_or_default();
+                        if &rule_type != type_str { return false; }
+                    }
+                    true
+                })
+                .map(|entry| {
+                    let r = &entry.rule;
+                    let url_pattern = r.match_config.request.iter()
+                        .find(|a| a.atom_type == "url")
+                        .and_then(|a| a.value.as_ref()?.as_str().map(|s| s.to_string()))
+                        .unwrap_or_default();
+                    let source = r.metadata.as_ref()
+                        .and_then(|m| m.source.as_deref())
+                        .unwrap_or("user");
+                    serde_json::json!({
+                        "id": r.id,
+                        "name": r.name,
+                        "type": r.r#type,
+                        "enabled": r.execution.enabled,
+                        "priority": r.execution.priority,
+                        "urlPattern": url_pattern,
+                        "source": source,
+                        "groupId": entry.group_id
+                    })
+                })
+                .collect();
+
+            Ok(serde_json::to_value(rules).unwrap())
+        }
+
+        // ── rules.get ────────────────────────────────────────────────────────────
+        "rules_get" => {
+            if !permissions.contains(&"rules:read".to_string()) {
+                return Err("Security Violation: Missing 'rules:read' permission".to_string());
+            }
+            use crate::rules::storage::RuleStorage;
+
+            let id = payload.args["id"].as_str()
+                .ok_or("Invalid Args: missing 'id'")?;
+
+            let storage = RuleStorage::from_config().map_err(|e| e.to_string())?;
+            let loaded = storage.load_all().map_err(|e| e.to_string())?;
+
+            let entry = loaded.rules.into_iter()
+                .find(|e| e.rule.id == id)
+                .ok_or_else(|| format!("Host Error: rule '{}' not found", id))?;
+
+            Ok(serde_json::to_value(&entry.rule).map_err(|e| e.to_string())?)
+        }
+
+        // ── host.getRuntime ──────────────────────────────────────────────────────
+        "host_get_runtime" => {
+            // No permission required — only exposes non-sensitive runtime info.
+            let config = crate::config::load_config().unwrap_or_default();
+            let proxy_status = crate::proxy::get_proxy_status(app.state()).await?;
+            let mcp_state = app.state::<crate::mcp::McpState>();
+            let mcp_running = mcp_state.running.load(std::sync::atomic::Ordering::Relaxed);
+            let mcp_port = *mcp_state.port.lock().unwrap();
+
+            Ok(serde_json::json!({
+                "proxyPort": config.proxy_port,
+                "proxyRunning": proxy_status.running,
+                "proxyActive": proxy_status.active,
+                "mcpEnabled": config.mcp_config.enabled,
+                "mcpRunning": mcp_running,
+                "mcpPort": mcp_port,
+            }))
+        }
+
+        // ── traffic.listFlows (compat: traffic.searchFlows) ─────────────────────
+        "traffic_list_flows" | "traffic_search_flows" => {
+            if !permissions.contains(&"traffic:read".to_string()) {
+                return Err("Security Violation: Missing 'traffic:read' permission".to_string());
+            }
+
+            #[derive(serde::Deserialize, Default)]
+            #[serde(rename_all = "camelCase")]
+            struct ListFlowsArgs {
+                session_id: Option<String>,
+                method: Option<String>,
+                host: Option<String>,
+                url_pattern: Option<String>,
+                status: Option<String>,
+                #[serde(default)]
+                offset: usize,
+                #[serde(default = "default_flow_limit")]
+                limit: usize,
+            }
+            fn default_flow_limit() -> usize { 100 }
+
+            let args: ListFlowsArgs = serde_json::from_value(payload.args)
+                .map_err(|e| format!("Invalid Args: {e}"))?;
+            let limit = args.limit.min(1000);
+
+            let engine_port = crate::config::load_config()
+                .map(|c| c.proxy_port)
+                .unwrap_or(9090);
+
+            let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
+            if let Some(ref sid) = args.session_id {
+                url.push_str(&format!("&session_id={sid}"));
+            }
+
+            let client = reqwest::Client::new();
+            let resp = client.get(&url).send().await
+                .map_err(|e| format!("Host Error: cannot reach proxy engine — {e}"))?;
+
+            if !resp.status().is_success() {
+                return Err(format!("Host Error: engine returned {}", resp.status()));
+            }
+
+            let body: serde_json::Value = resp.json().await
+                .map_err(|e| format!("Host Error: failed to parse engine response — {e}"))?;
+
+            let indices = body["indices"].as_array().cloned().unwrap_or_default();
+            let method_filter = args.method.map(|s| s.to_uppercase());
+            let host_filter = args.host.map(|s| s.to_lowercase());
+            let status_filter = args.status;
+            let url_filter = args.url_pattern;
+
+            let filtered: Vec<&serde_json::Value> = indices.iter()
+                .filter(|flow| {
+                    if let Some(ref m) = method_filter {
+                        if flow["method"].as_str().unwrap_or("").to_uppercase() != *m {
+                            return false;
+                        }
+                    }
+                    if let Some(ref h) = host_filter {
+                        if !flow["host"].as_str().unwrap_or("").to_lowercase().contains(h.as_str()) {
+                            return false;
+                        }
+                    }
+                    if let Some(ref pattern) = url_filter {
+                        if !flow["url"].as_str().unwrap_or("").contains(pattern.as_str()) {
+                            return false;
+                        }
+                    }
+                    if let Some(ref s) = status_filter {
+                        let code = flow["status"].as_u64().unwrap_or(0);
+                        if s.ends_with("xx") {
+                            let prefix = s.chars().next().and_then(|c| c.to_digit(10)).unwrap_or(0) as u64;
+                            if code / 100 != prefix { return false; }
+                        } else if let Ok(exact) = s.parse::<u64>() {
+                            if code != exact { return false; }
+                        }
+                    }
+                    true
+                })
+                .collect();
+
+            let total = filtered.len();
+            let flows: Vec<serde_json::Value> = filtered.iter()
+                .skip(args.offset)
+                .take(limit)
+                .map(|flow| serde_json::json!({
+                    "id": flow["id"],
+                    "method": flow["method"],
+                    "url": flow["url"],
+                    "host": flow["host"],
+                    "path": flow["path"],
+                    "status": flow["status"],
+                    "contentType": flow["contentType"],
+                    "startedAt": flow["startedDateTime"],
+                    "durationMs": flow["time"],
+                    "sizeBytes": flow["size"],
+                    "hasError": flow["hasError"],
+                    "hasRequestBody": flow["hasRequestBody"],
+                    "hasResponseBody": flow["hasResponseBody"],
+                }))
+                .collect();
+
+            let has_more = args.offset.saturating_add(flows.len()) < total;
+            Ok(serde_json::json!({
+                "flows": flows,
+                "total": total,
+                "offset": args.offset,
+                "limit": limit,
+                "hasMore": has_more,
+            }))
+        }
+
+        // ── traffic.getFlow ──────────────────────────────────────────────────────
+        "traffic_get_flow" => {
+            if !permissions.contains(&"traffic:read".to_string()) {
+                return Err("Security Violation: Missing 'traffic:read' permission".to_string());
+            }
+
+            let id = payload.args["id"].as_str()
+                .ok_or("Invalid Args: missing 'id'")?;
+            let include_bodies = payload.args["includeBodies"].as_bool().unwrap_or(false);
+            let max_body_bytes = payload.args["maxBodyBytes"]
+                .as_u64()
+                .map(|n| n as usize)
+                .unwrap_or(128 * 1024)
+                .min(2 * 1024 * 1024); // 128 KB default, hard cap 2 MB
+
+            let engine_port = crate::config::load_config()
+                .map(|c| c.proxy_port)
+                .unwrap_or(9090);
+
+            let url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={id}");
+            let client = reqwest::Client::new();
+            let resp = client.get(&url).send().await
+                .map_err(|e| format!("Host Error: cannot reach proxy engine — {e}"))?;
+
+            if resp.status().as_u16() == 404 {
+                return Err(format!("Host Error: flow '{}' not found", id));
+            }
+            if !resp.status().is_success() {
+                return Err(format!("Host Error: engine returned {}", resp.status()));
+            }
+
+            let flow: serde_json::Value = resp.json().await
+                .map_err(|e| format!("Host Error: failed to parse flow — {e}"))?;
+
+            let req = &flow["request"];
+            let res = &flow["response"];
+
+            let (req_body, req_body_truncated) = if include_bodies {
+                let raw = req["postData"]["text"].as_str().unwrap_or("");
+                let (text, truncated) = truncate_utf8(raw, max_body_bytes);
+                (Some(text), truncated)
+            } else {
+                (None, false)
+            };
+
+            let (res_body, res_body_truncated) = if include_bodies {
+                let raw = res["content"]["text"].as_str().unwrap_or("");
+                let (text, truncated) = truncate_utf8(raw, max_body_bytes);
+                (Some(text), truncated)
+            } else {
+                (None, false)
+            };
+
+            Ok(serde_json::json!({
+                "id": id,
+                "startedAt": flow["startedDateTime"],
+                "durationMs": flow["time"],
+                "request": {
+                    "method": req["method"],
+                    "url": req["url"],
+                    "headers": req["headers"],
+                    "queryString": req["queryString"],
+                    "body": req_body,
+                    "bodyTruncated": req_body_truncated,
+                    "bodySize": req["bodySize"],
+                },
+                "response": {
+                    "status": res["status"],
+                    "statusText": res["statusText"],
+                    "headers": res["headers"],
+                    "body": res_body,
+                    "bodyTruncated": res_body_truncated,
+                    "bodySize": res["content"]["size"],
+                    "mimeType": res["content"]["mimeType"],
+                },
+                "ruleHits": flow["_rc"]["hits"],
+            }))
         }
 
         _ => Err(format!(

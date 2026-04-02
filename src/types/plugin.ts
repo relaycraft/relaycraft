@@ -59,6 +59,8 @@ export type PluginPermission =
   | "ai:chat" // Access to AI Chat Completion models
   | "stats:read" // Access to system performance stats
   | "rules:write" // Create / modify proxy rules
+  | "rules:read" // Read proxy rules
+  | "traffic:read" // Read captured traffic flows
   | string; // Future proofing
 
 export interface PluginInfo {
@@ -119,6 +121,8 @@ export interface CreateMockConfig {
   statusCode?: number;
   /** Content-Type header, defaults to "application/json" */
   contentType?: string;
+  /** Additional response headers to set on mocked responses (except Content-Type). */
+  responseHeaders?: Record<string, string>;
   /** If set, only requests with this method are matched */
   method?: string;
 }
@@ -128,6 +132,103 @@ export interface AICommand {
   name: string;
   description: string;
   handler: (context: any) => Promise<void>;
+}
+
+// ── Traffic API types ─────────────────────────────────────────────────────────
+
+/** Summary of a captured traffic flow, as returned by traffic.listFlows. */
+export interface PluginFlowSummary {
+  id: string;
+  method: string;
+  url: string;
+  host: string;
+  path: string;
+  status: number | null;
+  contentType: string | null;
+  /** ISO-8601 timestamp when the request started. */
+  startedAt: string;
+  durationMs: number | null;
+  sizeBytes: number | null;
+  hasError: boolean;
+  hasRequestBody: boolean;
+  hasResponseBody: boolean;
+}
+
+/** Full detail of a single captured flow, as returned by traffic.getFlow. */
+export interface PluginFlowDetail {
+  id: string;
+  startedAt: string;
+  durationMs: number | null;
+  request: {
+    method: string;
+    url: string;
+    headers: Array<{ name: string; value: string }>;
+    queryString: Array<{ name: string; value: string }>;
+    /** Present only when `includeBodies: true` was requested. */
+    body: string | null;
+    bodyTruncated: boolean;
+    bodySize: number;
+  };
+  response: {
+    status: number;
+    statusText: string;
+    headers: Array<{ name: string; value: string }>;
+    /** Present only when `includeBodies: true` was requested. */
+    body: string | null;
+    bodyTruncated: boolean;
+    bodySize: number;
+    mimeType: string;
+  };
+  /** Rule IDs that matched this flow, or null when unavailable. */
+  ruleHits: string[] | null;
+}
+
+export interface SearchFlowsFilter {
+  sessionId?: string;
+  method?: string;
+  host?: string;
+  /** Substring match against the full URL. */
+  urlPattern?: string;
+  /** Exact code ("200"), or class prefix ("4xx", "5xx"). */
+  status?: string;
+  /** Pagination offset, defaults to 0. */
+  offset?: number;
+  /** Max flows to return. Capped at 1000, default 100. */
+  limit?: number;
+}
+
+export interface PluginFlowListResult {
+  flows: PluginFlowSummary[];
+  /** Total matched flows in current session snapshot (before pagination). */
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+// ── Rules API types ───────────────────────────────────────────────────────────
+
+/** Lightweight rule summary returned by rules.list. */
+export interface PluginRule {
+  id: string;
+  name: string;
+  type: string;
+  enabled: boolean;
+  priority: number;
+  urlPattern: string;
+  source: string;
+  groupId: string | null;
+}
+
+// ── Host runtime type ─────────────────────────────────────────────────────────
+
+export interface HostRuntime {
+  proxyPort: number;
+  proxyRunning: boolean;
+  proxyActive: boolean;
+  mcpEnabled: boolean;
+  mcpRunning: boolean;
+  mcpPort: number;
 }
 
 export interface SlotOptions {
@@ -227,5 +328,35 @@ export interface PluginAPI {
      * Returns the new rule's ID.
      */
     createMock: (config: CreateMockConfig) => Promise<string>;
+    /**
+     * List all rules with optional filtering.
+     * Requires `rules:read` permission.
+     */
+    list: (filter?: { enabled?: boolean; source?: string; type?: string }) => Promise<PluginRule[]>;
+    /**
+     * Get a single rule by ID (full rule object).
+     * Requires `rules:read` permission.
+     */
+    get: (id: string) => Promise<unknown>;
+  };
+  /**
+   * Access captured traffic flows from the proxy engine.
+   * Requires `traffic:read` permission.
+   */
+  traffic: {
+    /** List flows with optional filtering and offset-based pagination. */
+    listFlows: (filter?: SearchFlowsFilter) => Promise<PluginFlowListResult>;
+    /** Get full details of a single flow by ID. */
+    getFlow: (
+      id: string,
+      options?: { includeBodies?: boolean; maxBodyBytes?: number },
+    ) => Promise<PluginFlowDetail>;
+  };
+  /**
+   * Read host runtime state (proxy port, status, MCP info).
+   * No permission required.
+   */
+  host: {
+    getRuntime: () => Promise<HostRuntime>;
   };
 }

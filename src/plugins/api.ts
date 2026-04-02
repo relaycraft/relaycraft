@@ -220,6 +220,15 @@ export const createPluginApi = (
     },
     rules: {
       createMock: (config: CreateMockConfig) => scopedInvoke<string>("rules_create_mock", config),
+      list: (filter?) => scopedInvoke("rules_list", filter ?? {}),
+      get: (id) => scopedInvoke("rules_get", { id }),
+    },
+    traffic: {
+      listFlows: (filter?) => scopedInvoke("traffic_list_flows", filter ?? {}),
+      getFlow: (id, options?) => scopedInvoke("traffic_get_flow", { id, ...options }),
+    },
+    host: {
+      getRuntime: () => scopedInvoke("host_get_runtime", {}),
     },
   };
 };
