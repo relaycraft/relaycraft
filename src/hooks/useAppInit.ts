@@ -222,10 +222,18 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         await usePluginStore.getState().togglePlugin(id, true);
       }
 
+      // Navigate users to the most relevant settings panel after file-association install.
+      const ui = useUIStore.getState();
+      ui.setActiveTab("settings");
+      ui.setSettingsTab(installedTheme ? "appearance" : "plugins");
+
       const displayName = installedPlugin?.manifest.name || installedTheme?.name || id;
+      const successMessage = installedTheme
+        ? t("plugins.notifications.install_success_theme_msg", { name: displayName })
+        : t("plugins.notifications.install_success_msg", { id: displayName });
       useUIStore.getState().showConfirm({
         title: t("plugins.notifications.install_success_title"),
-        message: t("plugins.notifications.install_success_msg", { id: displayName }),
+        message: successMessage,
         variant: "success",
         confirmLabel: t("common.ok", { defaultValue: "OK" }),
         onConfirm: () => {},

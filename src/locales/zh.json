@@ -551,6 +551,7 @@
       "enabled_msg": "插件 \"{{name}}\" 已成功启用。",
       "enabled_title": "插件已启用",
       "install_success_msg": "插件 \"{{id}}\" 已成功安装并启用。",
+      "install_success_theme_msg": "主题 \"{{name}}\" 已成功安装。",
       "install_success_title": "安装成功",
       "load_failed_msg": "无法获取插件列表: {{error}}",
       "load_failed_title": "加载插件失败",

@@ -551,6 +551,7 @@
       "enabled_msg": "Plugin \"{{name}}\" has been successfully enabled.",
       "enabled_title": "Plugin Enabled",
       "install_success_msg": "Plugin \"{{id}}\" has been successfully installed and enabled.",
+      "install_success_theme_msg": "Theme \"{{name}}\" has been successfully installed.",
       "install_success_title": "Installation Successful",
       "load_failed_msg": "Could not fetch plugin list: {{error}}",
       "load_failed_title": "Plugin Load Failed",

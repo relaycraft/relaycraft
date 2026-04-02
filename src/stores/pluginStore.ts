@@ -262,10 +262,17 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
 
       // Show success message — prefer plugin/theme display name over raw ID.
       const { useUIStore } = await import("./uiStore");
+      const ui = useUIStore.getState();
+      ui.setActiveTab("settings");
+      ui.setSettingsTab(installedTheme ? "appearance" : "plugins");
+
       const displayName = installedPlugin?.manifest.name || installedTheme?.name || id;
-      useUIStore.getState().showConfirm({
+      const successMessage = installedTheme
+        ? i18n.t("plugins.notifications.install_success_theme_msg", { name: displayName })
+        : i18n.t("plugins.notifications.install_success_msg", { id: displayName });
+      ui.showConfirm({
         title: i18n.t("plugins.notifications.install_success_title"),
-        message: i18n.t("plugins.notifications.install_success_msg", { id: displayName }),
+        message: successMessage,
         variant: "success",
         confirmLabel: i18n.t("common.ok", { defaultValue: "OK" }),
         onConfirm: () => {},
@@ -276,6 +283,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
 
       // Show user-friendly error message
       const { useUIStore } = await import("./uiStore");
+      const ui = useUIStore.getState();
       const errorMessage = String(error);
 
       let title = i18n.t("plugins.errors.install_failed");
@@ -301,7 +309,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
         message = i18n.t("plugins.errors.already_exists_msg");
       }
 
-      useUIStore.getState().showConfirm({
+      ui.showConfirm({
         title,
         message,
         variant: "danger",

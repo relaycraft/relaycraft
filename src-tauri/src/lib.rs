@@ -27,6 +27,14 @@ fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
 
 /// Handle file-open requests from the OS (double-click on .rcplugin / .rctheme).
 /// Installs the file and emits an event so the frontend can refresh & notify.
+fn activate_main_window<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
+
 fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::path::PathBuf]) {
     let app_root = match config::get_app_root_dir() {
         Ok(d) => d,
@@ -46,6 +54,8 @@ fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::
             continue;
         }
         log::info!("[FileOpen] Installing from OS file association: {:?}", path);
+        // Bring app to front so users immediately see install result feedback.
+        activate_main_window(app);
 
         match plugins::install_plugin_from_zip(path, &app_root) {
             Ok(id) => {
