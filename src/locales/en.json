@@ -1025,7 +1025,9 @@
     "port": "Listening Port",
     "engine_healthy": "Engine running",
     "engine_idle": "Engine idle",
-    "engine_error": "Engine not running"
+    "engine_error": "Engine not running",
+    "engine_crashed_title": "Proxy Engine Crashed",
+    "engine_crashed_msg": "The proxy engine stopped unexpectedly. Check the crash log for details, then restart the engine."
   },
   "titlebar": {
     "close": "Close",

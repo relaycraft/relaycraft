@@ -1025,7 +1025,9 @@
     "port": "监听端口",
     "engine_healthy": "引擎工作中",
     "engine_idle": "引擎空闲",
-    "engine_error": "引擎未运行"
+    "engine_error": "引擎未运行",
+    "engine_crashed_title": "代理引擎崩溃",
+    "engine_crashed_msg": "代理引擎意外停止，请查看崩溃日志，然后重启引擎。"
   },
   "titlebar": {
     "close": "关闭",

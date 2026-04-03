@@ -1,3 +1,5 @@
+import heapq
+import time # Added for new record_rule_hit
 from typing import List, Dict, Any, Optional
 from mitmproxy import http, ctx
 from mitmproxy.http import Response
@@ -5,7 +7,6 @@ from .loader import RuleLoader
 from .matcher import RuleMatcher
 from .actions import ActionExecutor
 from ..utils import setup_logging
-import time # Added for new record_rule_hit
 
 class RuleEngine:
     def __init__(self):
@@ -20,22 +21,20 @@ class RuleEngine:
         matched_rules = []
 
         # 1. Tiered Candidate Selection
+        # Each bucket is already sorted by (priority, name, id) after load.
+        # Use heapq.merge to produce a globally sorted iterator in O(k) instead
+        # of re-sorting O(k log k) on every request.
         host = flow.request.host
-        candidates = []
-
-        # Add Global Rules
-        candidates.extend(self.loader.global_rules)
-        # Add Exact Host Matches
-        if host in self.loader.exact_host_rules:
-            candidates.extend(self.loader.exact_host_rules[host])
-        # Add Wildcard/Complex Host Matches
-        candidates.extend(self.loader.wildcard_host_rules)
-
-        # Sort by priority for deterministic execution
-        candidates.sort(key=lambda r: (
+        _sort_key = lambda r: (
             r.get("execution", {}).get("priority", 9999),
             r.get("name", ""),
             r.get("id", "")
+        )
+        candidates = list(heapq.merge(
+            self.loader.global_rules,
+            self.loader.exact_host_rules.get(host, []),
+            self.loader.wildcard_host_rules,
+            key=_sort_key,
         ))
 
         # 2. Identify all matching rules (Optimized matching)

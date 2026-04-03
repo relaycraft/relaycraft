@@ -255,6 +255,26 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     };
   }, [t]);
 
+  // Proxy engine crash notification
+  useEffect(() => {
+    const unlisten = listen<string>("proxy-engine-crashed", async (event) => {
+      Logger.error("[ProxyEngine] Unexpected crash:", event.payload);
+      useProxyStore.getState().checkStatus();
+      const { useNotificationStore } = await import("../stores/notificationStore");
+      useNotificationStore.getState().addNotification({
+        title: t("status_bar.engine_crashed_title"),
+        message: t("status_bar.engine_crashed_msg"),
+        type: "error",
+        category: "system",
+        priority: "critical",
+        source: "System",
+      });
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, [t]);
+
   // Handle Close Interception
   useEffect(() => {
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {

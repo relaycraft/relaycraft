@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// On Linux, read `RssAnon` (anonymous RSS) from `/proc/[pid]/status`.
 ///
@@ -232,6 +232,10 @@ impl ProxyEngine for MitmproxyEngine {
             *port_lock = Some(port);
         }
 
+        // Release the lock before the port-wait loop so that concurrent
+        // calls to stop() / terminate() don't block for up to 120 seconds.
+        drop(child_lock);
+
         // Wait for port to be ready
         let start_time = std::time::Instant::now();
         let mut last_log_time = std::time::Instant::now();
@@ -251,15 +255,25 @@ impl ProxyEngine for MitmproxyEngine {
                 break;
             }
 
-            // Check if process crashed while waiting
-            if let Some(child) = child_lock.as_mut() {
-                if let Ok(Some(status)) = child.try_wait() {
-                    // Crash detected
-                    *child_lock = None; // Clear the dead child
-                    let err_msg = format!("Engine crashed during startup with status: {}", status);
-                    log::error!("{}", err_msg);
-                    return Err(AppError::Config(err_msg));
+            // Briefly acquire the lock to check if child crashed during startup.
+            let startup_crash = {
+                let mut lock = self.inner.child.lock()
+                    .map_err(|_| AppError::Config("Lock poisoned".into()))?;
+                if let Some(child) = lock.as_mut() {
+                    if let Ok(Some(status)) = child.try_wait() {
+                        *lock = None;
+                        Some(status)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
+            };
+            if let Some(status) = startup_crash {
+                let err_msg = format!("Engine crashed during startup with status: {}", status);
+                log::error!("{}", err_msg);
+                return Err(AppError::Config(err_msg));
             }
 
             // Periodic logging every 2 seconds
@@ -279,23 +293,18 @@ impl ProxyEngine for MitmproxyEngine {
         }
 
         if !ready {
-            // Timeout occurred - cleanup the zombie process
-            if let Some(mut child) = child_lock.take() {
-                #[cfg(target_os = "windows")]
-                {
-                    let _ = child.kill();
-                }
-                #[cfg(not(target_os = "windows"))]
-                {
-                    let _ = child.kill();
-                }
+            // Timeout occurred — re-acquire lock to clean up the zombie process.
+            let mut lock = self.inner.child.lock()
+                .map_err(|_| AppError::Config("Lock poisoned".into()))?;
+            if let Some(mut child) = lock.take() {
+                let _ = child.kill();
                 let _ = child.wait();
             }
             return Err(AppError::Config("Timeout waiting for proxy engine to start (120s). Check if something is blocking port or if antivirus is interfering.".into()));
         }
 
-        // Spawn crash watcher
-        self.spawn_crash_watcher();
+        // Spawn crash watcher, passing a cloned app handle so it can notify the frontend.
+        self.spawn_crash_watcher(app.clone());
 
         Ok(())
     }
@@ -637,7 +646,7 @@ impl MitmproxyEngine {
         }
     }
 
-    fn spawn_crash_watcher(&self) {
+    fn spawn_crash_watcher(&self, app: AppHandle) {
         let inner = self.inner.clone();
         std::thread::Builder::new()
             .name("rc-crash-watcher".into())
@@ -661,6 +670,8 @@ impl MitmproxyEngine {
                                 );
                                 log::error!("{}", msg);
                                 logging::write_domain_log("crash", &msg).ok();
+                                // Notify the frontend so the UI can surface the crash.
+                                let _ = app.emit("proxy-engine-crashed", &msg);
                             }
                             // Clean up
                             if let Ok(mut active) = inner.active_scripts.lock() {
