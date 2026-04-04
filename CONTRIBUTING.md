@@ -14,8 +14,8 @@ RelayCraft is a cross-platform application built with a modern multi-language st
 
 | Component | Minimum Version | Notes |
 | :--- | :--- | :--- |
-| **Node.js** | v18.0.0+ | Use `pnpm` as package manager |
-| **pnpm** | v8.0.0+ | `npm i -g pnpm` |
+| **Node.js** | 20.19+ or 22.12+ | Same range as Vite; Node 21 is unsupported |
+| **pnpm** | v9.0.0+ | `npm i -g pnpm` (lockfile v9) |
 | **Rust** | Stable | Latest stable toolchain via `rustup` |
 | **Python** | v3.10+ | Used for the mitmproxy sidecar |
 
@@ -70,7 +70,7 @@ RelayCraft is a cross-platform application built with a modern multi-language st
 ## Coding Guidelines
 
 ### Code Style
-- **Frontend**: 4-space indentation. We use Prettier and ESLint (auto-fix on save recommended).
+- **Frontend**: 4-space indentation. We use **Biome** for lint and format (`pnpm lint` / `pnpm format`; auto-fix on save recommended).
 - **Rust**: 4-space indentation. Run `cargo fmt` before committing.
 - **Python**: 4-space indentation. Follow PEP 8 guidelines.
 

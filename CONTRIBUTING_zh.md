@@ -14,8 +14,8 @@ RelayCraft 是一个基于现代多语言技术栈构建的跨平台应用。
 
 | 组件 | 最低版本 | 备注 |
 | :--- | :--- | :--- |
-| **Node.js** | v18.0.0+ | 请使用 `pnpm` 作为包管理器 |
-| **pnpm** | v8.0.0+ | `npm i -g pnpm` |
+| **Node.js** | 20.19+ 或 22.12+ | 与 Vite 一致；不支持 Node 21 |
+| **pnpm** | v9.0.0+ | `npm i -g pnpm`（lockfile v9） |
 | **Rust** | Stable | 通过 `rustup` 安装最新稳定版 |
 | **Python** | v3.10+ | 用于运行 mitmproxy sidecar 引擎 |
 
@@ -70,7 +70,7 @@ RelayCraft 是一个基于现代多语言技术栈构建的跨平台应用。
 ## 代码规范
 
 ### 代码风格
-- **Frontend**: 4空格缩进。我们使用 Prettier 和 ESLint (建议开启保存自动修复)。
+- **Frontend**: 4 空格缩进。使用 **Biome** 负责 lint 与格式化（`pnpm lint` / `pnpm format`；建议开启保存自动修复）。
 - **Rust**: 4空格缩进。提交前请运行 `cargo fmt`。
 - **Python**: 4空格缩进。遵循 PEP 8 指南。
 

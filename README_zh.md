@@ -15,6 +15,10 @@
   <a href="./README.md">English</a> | <a href="./README_zh.md">简体中文</a>
 </p>
 
+<p align="center">
+  <a href="https://relaycraft.dev">relaycraft.dev</a>
+</p>
+
 ---
 
 **RelayCraft** 是一款专为现代化开发设计的 AI 原生网络流量调试工具。基于 **Tauri**、**React** 和 **Rust** 构建，在提供专业级代理引擎能力的同时，深度融合 AI 能力与可扩展的插件体系 — 完全本地运行，无需注册账号。
@@ -80,9 +84,10 @@ RelayCraft 内置 **MCP（Model Context Protocol）服务器**，任何兼容的
 ## 🛠️ 快速开始
 
 ### 环境依赖
-- **Node.js** (v18+) & pnpm
-- **Rust** (stable toolchain)
-- **Python** (v3.10+)
+- **Node.js** 20.19+ 或 22.12+（[Vite 兼容性说明](https://vite.dev/guide/#scaffolding-your-first-vite-project)；**不支持** Node 21）
+- **pnpm** 9+（[安装](https://pnpm.io/installation)；本仓库 lockfile 为 v9）
+- **Rust**（stable toolchain）
+- **Python**（3.10+）
 
 ### 安装与运行
 ```bash
@@ -107,12 +112,18 @@ macOS、Windows 和 Linux 的预构建二进制文件可在 [Releases 页面](ht
 ## 📖 社区与支持
 
 - [**贡献指南**](CONTRIBUTING.md) — 了解如何参与项目贡献。
+- [**路线图**](https://github.com/relaycraft/relaycraft/discussions/31) — 产品方向与后续里程碑（GitHub Discussion）。
 - [**商业使用**](COMMERCIAL.md) — 赞助与企业许可信息。
-- [**插件仓库**](https://github.com/relaycraft/plugins) — 探索社区插件。
+- [**插件仓库**](https://github.com/relaycraft/relaycraft-plugins) — 探索社区插件。
 
 ## 📄 许可证
 
-RelayCraft 基于 **AGPLv3** 开源协议发布。详情请参阅 [LICENSE](LICENSE) 文件。
+RelayCraft 基于 **GNU AGPL v3 或更高版本** 开源。详情请参阅 [LICENSE](LICENSE) 文件。
+
+## 🙌 贡献者
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ---
 

@@ -15,6 +15,10 @@
   <a href="./README.md">English</a> | <a href="./README_zh.md">简体中文</a>
 </p>
 
+<p align="center">
+  <a href="https://relaycraft.dev">relaycraft.dev</a>
+</p>
+
 ---
 
 **RelayCraft** is a powerful, AI-native network debugging tool designed for modern development. Built with **Tauri**, **React**, and **Rust**, it pairs a professional-grade proxy engine with deep AI integration and an extensible plugin system — all running fully offline, with zero accounts required.
@@ -80,9 +84,10 @@ Compatible with **Claude Desktop**, **Cursor**, **Windsurf**, and any tool suppo
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- **Node.js** (v18+) & pnpm
+- **Node.js** 20.19+ or 22.12+ ([Vite compatibility](https://vite.dev/guide/#scaffolding-your-first-vite-project); Node 21 is not supported)
+- **pnpm** 9+ ([install](https://pnpm.io/installation); this repo uses lockfile v9)
 - **Rust** (stable toolchain)
-- **Python** (v3.10+)
+- **Python** (3.10+)
 
 ### Setup & Run
 ```bash
@@ -107,12 +112,13 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [Releases 
 ## 📖 Community & Support
 
 - [**Contributing Guide**](CONTRIBUTING.md) — Learn how to contribute to the project.
+- [**Roadmap**](https://github.com/relaycraft/relaycraft/discussions/31) — Product direction and upcoming milestones (GitHub Discussion).
 - [**Commercial Use**](COMMERCIAL.md) — Sponsorship and enterprise licensing information.
-- [**Plugin Registry**](https://github.com/relaycraft/plugins) — Explore community-built plugins.
+- [**Plugin Registry**](https://github.com/relaycraft/relaycraft-plugins) — Explore community-built plugins.
 
 ## 📄 License
 
-RelayCraft is open-sourced under the **AGPLv3** license. See the [LICENSE](LICENSE) file for details.
+RelayCraft is open-sourced under the **GNU AGPL v3 or later**. See the [LICENSE](LICENSE) file for details.
 
 ## 🙌 Contributors
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->

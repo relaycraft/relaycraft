@@ -69,7 +69,7 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  Frontend (React 19 + TypeScript + Vite 7)      │  ← UI 层
+│  Frontend (React 19 + TypeScript + Vite 8)      │  ← UI 层
 │  Zustand · Tailwind CSS 4 · Framer Motion       │
 │  CodeMirror 6 · i18next · react-virtuoso         │
 ├─────────────────────────────────────────────────┤
@@ -304,7 +304,7 @@ relaycraft/
 
 ```bash
 # 前置要求
-Node.js >= 18, pnpm >= 8, Rust stable, Python >= 3.10
+Node.js 20.19+ 或 22.12+（见 package.json engines；不支持 Node 21）, pnpm >= 9, Rust stable, Python >= 3.10
 
 # 启动开发
 pnpm install                  # 安装前端依赖
@@ -517,16 +517,16 @@ AI Agent 在开始任务前，应按以下优先级加载上下文：
 
 | 依赖 | 版本 | 备注 |
 |:---|:---|:---|
-| React | ^19.1.0 | React 19 新特性可用 |
-| Tauri | 2.10.0 | Tauri v2，非 v1 |
+| React | ^19.2.0 | React 19 |
+| Tauri | ~2.10.0 | Tauri v2，非 v1 |
 | Zustand | ^5.0.10 | v5 API |
 | mitmproxy | 12.2.1 | 1.x 引擎核心，精确锁定；2.0 由 relay-core 替代（见 §2.3） |
-| Vite | ^7.0.4 | Vite 7 |
-| TypeScript | ~5.8.3 | 严格模式 |
-| Biome | ^2.3.14 | Linter + Formatter |
-| Tailwind CSS | ^4.1.18 | v4 新配置语法 |
+| Vite | ^8.0.0 | 要求 Node 20.19+ / 22.12+ 等（见 `package.json` `engines`） |
+| TypeScript | ~6.0.0 | 严格模式 |
+| Biome | ^2.4.0 | Linter + Formatter |
+| Tailwind CSS | ^4.2.0 | v4 新配置语法 |
 
 ---
 
-*最后更新：2026-03-30*
+*最后更新：2026-04-05*
 *维护者：RelayCraft Team*
