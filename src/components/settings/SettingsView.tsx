@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   FolderOpen,
-  Github,
   Globe,
   Info,
   Package as PackageIcon,
@@ -24,6 +23,7 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 import { AISettingsPanel } from "../ai/AISettingsPanel";
 import { Button } from "../common/Button";
+import { GitHubMark } from "../common/icons/GitHubMark";
 import { AppLogo } from "../layout/AppLogo";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { CertificateSettings } from "./CertificateSettings";
@@ -565,7 +565,7 @@ export function SettingsView() {
                       openUrl("https://github.com/relaycraft/relaycraft").catch(console.error);
                     }}
                   >
-                    <Github className="w-3.5 h-3.5" />
+                    <GitHubMark className="w-3.5 h-3.5" />
                     {t("settings.about.visit_github")}
                   </Button>
                 </SettingsRow>
@@ -582,7 +582,7 @@ export function SettingsView() {
                       openUrl("https://github.com/mitmproxy/mitmproxy").catch(console.error);
                     }}
                   >
-                    <Github className="w-3.5 h-3.5" />
+                    <GitHubMark className="w-3.5 h-3.5" />
                     {t("settings.about.visit_engine")}
                   </Button>
                 </SettingsRow>

@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# translate_release.mjs local dry-run (repo root)
+/release_body_en.md
+/translated_release.md
+
 # Editor directories and files
 .vscode/*
 

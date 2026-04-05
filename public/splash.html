@@ -340,12 +340,15 @@
         }
 
         .footer-line {
-            font-size: 9px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            letter-spacing: 0.07em;
+            font-size: 10px;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, "Helvetica Neue", Arial, sans-serif;
+            letter-spacing: normal;
+            font-variant-numeric: tabular-nums;
+            /* Same tier as .slogan / .status-text — use --muted only (no extra opacity) */
             color: var(--muted);
-            opacity: 0.28;
             text-align: center;
+            white-space: nowrap;
         }
 
         /* ── Logo SVG internal animations ── */
@@ -511,7 +514,7 @@
         </div>
 
         <div class="footer">
-            <div class="footer-line">v1.0.0-rc.17 · © 2026 RelayCraft Team</div>
+            <div class="footer-line">v1.0.0 · © 2026 RelayCraft Team</div>
         </div>
     </div>
 </body>

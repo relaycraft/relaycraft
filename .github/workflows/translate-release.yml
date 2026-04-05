@@ -1,0 +1,77 @@
+# After a GitHub Release is published, optionally append a Chinese translation
+# to the release notes via an OpenAI-compatible API (OpenAI / DeepSeek / etc.).
+#
+# Setup:
+# 1. Repository secret: LLM_API_KEY (optional — if unset, workflow succeeds and skips translation)
+# 2. Optional secrets: LLM_BASE_URL (MiniMax 国内: https://api.minimaxi.com/v1), LLM_MODEL, LLM_TEMPERATURE
+# 3. Settings → Actions → General → Workflow permissions: Read and write
+#
+# Note: Job-level `if:` cannot use `secrets.*` (GitHub limitation). We detect the key in a step instead.
+
+name: Translate Release Notes
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: translate-release-${{ github.event.release.tag_name }}
+  cancel-in-progress: true
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # secrets 上下文不能写在 job 级 if 中；用 env 注入后在 shell 里判断是否为空
+      - name: Check LLM_API_KEY
+        id: llm
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -n "$LLM_API_KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "LLM_API_KEY not set; skipping translation."
+          fi
+
+      - name: Setup Node.js
+        if: steps.llm.outputs.has_key == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch English release body
+        if: steps.llm.outputs.has_key == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release view "$RELEASE_TAG" --json body -q .body > release_body_en.md
+
+      - name: Translate with LLM
+        if: steps.llm.outputs.has_key == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.LLM_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_TEMPERATURE: ${{ secrets.LLM_TEMPERATURE }}
+        run: node .github/scripts/translate_release.mjs
+
+      - name: Update GitHub Release
+        if: steps.llm.outputs.has_key == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ ! -s translated_release.md ]; then
+            echo "No translated_release.md; nothing to update."
+            exit 0
+          fi
+          gh release edit "$RELEASE_TAG" --notes-file translated_release.md
