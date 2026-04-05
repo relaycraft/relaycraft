@@ -109,52 +109,52 @@ All notable changes to this project will be documented in this file. See [standa
 
 * optimize flow processing and error handling ([bd6132d](https://github.com/relaycraft/relaycraft/commit/bd6132da4d43a79bc04ef41a71810565f41b4aa7))
 
-## [1.0.0-rc.7](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-03-05)
+## [1.0.0-rc.7](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-03-05)
 
 
 ### Features
 
-* enforce strict CSP and formalize internal TLS bypass ([31267d8](https://github-relaycraft/relaycraft/relaycraft/commit/31267d843b41a6fe64246766f29883310292dc53))
+* enforce strict CSP and formalize internal TLS bypass ([31267d8](https://github.com/relaycraft/relaycraft/commit/31267d843b41a6fe64246766f29883310292dc53))
 
-## [1.0.0-rc.6](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-03-04)
+## [1.0.0-rc.6](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-03-04)
 
 
 ### Features
 
-* improve robustness for rule import and config initialization ([c9d0b87](https://github-relaycraft/relaycraft/relaycraft/commit/c9d0b873577d2821c5e96d907743f80308cb8dc1))
-* truncate large responses to prevent UI freezing ([ed41ac1](https://github-relaycraft/relaycraft/relaycraft/commit/ed41ac11124f6e66c6cdd304764e9e467f190d4b))
+* improve robustness for rule import and config initialization ([c9d0b87](https://github.com/relaycraft/relaycraft/commit/c9d0b873577d2821c5e96d907743f80308cb8dc1))
+* truncate large responses to prevent UI freezing ([ed41ac1](https://github.com/relaycraft/relaycraft/commit/ed41ac11124f6e66c6cdd304764e9e467f190d4b))
 
-## [1.0.0-rc.5](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2026-03-03)
+## [1.0.0-rc.5](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2026-03-03)
 
 
 ### Performance Improvements
 
-* optimize large .relay and .har file imports using ijson streaming and async background threads ([50ca4e8](https://github-relaycraft/relaycraft/relaycraft/commit/50ca4e849ba77456f0eb598cbfb3ae418ba2d788))
+* optimize large .relay and .har file imports using ijson streaming and async background threads ([50ca4e8](https://github.com/relaycraft/relaycraft/commit/50ca4e849ba77456f0eb598cbfb3ae418ba2d788))
 
-## [1.0.0-rc.4](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2026-03-01)
-
-
-### Features
-
-* add image preview support in request composer ([bd2f01d](https://github-relaycraft/relaycraft/relaycraft/commit/bd2f01d3dceacbf9f126f9215adbb7c9d42ebb97))
-* enhance vibrancy effect and fix rendering issues ([ddeb2d8](https://github-relaycraft/relaycraft/relaycraft/commit/ddeb2d87b5737acb455842cb8223f5a50fba9ae7))
-
-## [1.0.0-rc.3](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-02-27)
+## [1.0.0-rc.4](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2026-03-01)
 
 
 ### Features
 
-* implement cross-platform vibrancy support and refactor window logic ([406504e](https://github-relaycraft/relaycraft/relaycraft/commit/406504ef0e0f900397f8d172cada5873dcfe505f)), closes [#17](https://github-relaycraft/relaycraft/relaycraft/issues/17)
+* add image preview support in request composer ([bd2f01d](https://github.com/relaycraft/relaycraft/commit/bd2f01d3dceacbf9f126f9215adbb7c9d42ebb97))
+* enhance vibrancy effect and fix rendering issues ([ddeb2d8](https://github.com/relaycraft/relaycraft/commit/ddeb2d87b5737acb455842cb8223f5a50fba9ae7))
 
-## [1.0.0-rc.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-26)
+## [1.0.0-rc.3](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-02-27)
+
+
+### Features
+
+* implement cross-platform vibrancy support and refactor window logic ([406504e](https://github.com/relaycraft/relaycraft/commit/406504ef0e0f900397f8d172cada5873dcfe505f)), closes [#17](https://github.com/relaycraft/relaycraft/issues/17)
+
+## [1.0.0-rc.2](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-02-26)
 
 
 ### Bug Fixes
 
-* bypass internal relay traffic overhead and standardize issue intake ([44b4368](https://github-relaycraft/relaycraft/relaycraft/commit/44b4368f56e53a5e8cb18ec74221aa698c7050da))
-* harden import flow and engine script runtime ([3126a80](https://github-relaycraft/relaycraft/relaycraft/commit/3126a8064de292866d5b9b5cd4e9a93d1081f4b2))
+* bypass internal relay traffic overhead and standardize issue intake ([44b4368](https://github.com/relaycraft/relaycraft/commit/44b4368f56e53a5e8cb18ec74221aa698c7050da))
+* harden import flow and engine script runtime ([3126a80](https://github.com/relaycraft/relaycraft/commit/3126a8064de292866d5b9b5cd4e9a93d1081f4b2))
 
-## [1.0.0-rc.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.0.0-rc1...v1.0.0-rc.1) (2026-02-25)
+## [1.0.0-rc.1](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc1...v1.0.0-rc.1) (2026-02-25)
 
 > [!IMPORTANT]
 > **🎉 版本格式升级：需手动更新**
@@ -162,19 +162,19 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
-* display build date, optimize script hit icon and upstream status ([51cf8a4](https://github-relaycraft/relaycraft/relaycraft/commit/51cf8a4f69e9e0ad90be81ae10a469e41b08cd30))
-* improve audit logging and system stability ([7f92520](https://github-relaycraft/relaycraft/relaycraft/commit/7f92520e67273443e64df8a57444853c221bf087))
-* restructure settings UI and overhaul license management ([99599b0](https://github-relaycraft/relaycraft/relaycraft/commit/99599b0ea56227bf8cc4a74873b38985e145f8d3))
+* display build date, optimize script hit icon and upstream status ([51cf8a4](https://github.com/relaycraft/relaycraft/commit/51cf8a4f69e9e0ad90be81ae10a469e41b08cd30))
+* improve audit logging and system stability ([7f92520](https://github.com/relaycraft/relaycraft/commit/7f92520e67273443e64df8a57444853c221bf087))
+* restructure settings UI and overhaul license management ([99599b0](https://github.com/relaycraft/relaycraft/commit/99599b0ea56227bf8cc4a74873b38985e145f8d3))
 
 
 ### Bug Fixes
 
-* improve script logging and suppress windows asyncio errors ([fcfea1c](https://github-relaycraft/relaycraft/relaycraft/commit/fcfea1ce39149986181f7f3db8aa2b2756546d69))
+* improve script logging and suppress windows asyncio errors ([fcfea1c](https://github.com/relaycraft/relaycraft/commit/fcfea1ce39149986181f7f3db8aa2b2756546d69))
 
 
 ### Performance Improvements
 
-* optimize database persistence and add notification system ([c2a879b](https://github-relaycraft/relaycraft/relaycraft/commit/c2a879b56cd86e1f86b510a2fe0b486227f63bfc))
+* optimize database persistence and add notification system ([c2a879b](https://github.com/relaycraft/relaycraft/commit/c2a879b56cd86e1f86b510a2fe0b486227f63bfc))
 
 ## 1.0.0-rc1 (2026-02-24)
 

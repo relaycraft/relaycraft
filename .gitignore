@@ -15,6 +15,9 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 
+# Kilo Code (local worktrees / tooling; not part of the repo)
+.kilo/
+
 .idea
 .DS_Store
 *.suo
