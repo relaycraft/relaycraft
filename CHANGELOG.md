@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.17...v1.0.0) (2026-04-05)
+
+
+### Features
+
+* add proxy engine crash notification and localization support ([8a06fa6](https://github.com/relaycraft/relaycraft/commit/8a06fa64f6382fe19d94c2da1a5df79e6d20402a))
+* add translation workflow and scripts for Chinese release notes ([21a6b65](https://github.com/relaycraft/relaycraft/commit/21a6b652543cb6a703a4e1761256407ff92bdb23))
+
 ## [1.0.0-rc.17](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.16...v1.0.0-rc.17) (2026-04-02)
 
 
