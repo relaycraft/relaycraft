@@ -23,17 +23,15 @@ const output = {
   platforms: {},
 };
 
-// Platform mapping: Tauri bundle name pattern -> Tauri platform key
-const _platformMap = [
-  { pattern: /\.msi\.zip$/, key: "windows-x86_64" },
-  { pattern: /\.nsis\.zip$/, key: "windows-x86_64" },
-  { pattern: /\.msi$/, key: "windows-x86_64" },
-  { pattern: /\.exe$/, key: "windows-x86_64" },
-  { pattern: /\.app\.tar\.gz$/, key: "macos-aarch64" },
-  { pattern: /\.app\.tar\.gz$/, key: "macos-x86_64" },
-  { pattern: /\.deb\.gz$/, key: "linux-x86_64" },
-  { pattern: /\.AppImage\.tar\.gz$/, key: "linux-x86_64" },
-];
+function validateWindowsPlatformKeys(platforms) {
+  // We intentionally disallow generic Windows target to avoid MSI/NSIS fallback mixing.
+  if (Object.prototype.hasOwnProperty.call(platforms, "windows-x86_64")) {
+    throw new Error(
+      "Invalid updater manifest: found forbidden key 'windows-x86_64'. Use only 'windows-x86_64-msi' and/or 'windows-x86_64-nsis'."
+    );
+  }
+}
+
 
 function getSignature(filePath) {
   const sigPath = `${filePath}.sig`;
@@ -65,18 +63,21 @@ function getPlatformKeys(filename) {
 
   if (lowerFile.includes("x64") || lowerFile.includes("x86_64") || lowerFile.includes("amd64")) {
     if (lowerFile.includes("macos") || lowerFile.includes("apple-darwin")) return ["darwin-x86_64"];
-    if (lowerFile.includes("windows")) return ["windows-x86_64"];
+    if (lowerFile.includes("windows")) {
+      if (lowerFile.endsWith(".msi.zip") || lowerFile.endsWith(".msi")) return ["windows-x86_64-msi"];
+      if (lowerFile.endsWith(".nsis.zip") || lowerFile.endsWith(".exe")) return ["windows-x86_64-nsis"];
+      return [];
+    }
     if (lowerFile.includes("linux")) return ["linux-x86_64"];
   }
 
   // Fallback based on extension
-  if (
-    lowerFile.endsWith(".msi.zip") ||
-    lowerFile.endsWith(".msi") ||
-    lowerFile.endsWith(".exe") ||
-    lowerFile.endsWith(".nsis.zip")
-  ) {
-    return ["windows-x86_64"];
+  if (lowerFile.endsWith(".msi.zip") || lowerFile.endsWith(".msi")) {
+    return ["windows-x86_64-msi"];
+  }
+
+  if (lowerFile.endsWith(".nsis.zip") || lowerFile.endsWith(".exe")) {
+    return ["windows-x86_64-nsis"];
   }
 
   if (
@@ -127,6 +128,7 @@ files.forEach((file) => {
   }
 });
 
+validateWindowsPlatformKeys(output.platforms);
 fs.writeFileSync(path.join(artifactsDir, "latest.json"), JSON.stringify(output, null, 2));
 console.log(`✅ successfully generated latest.json in ${artifactsDir}`);
 console.log(JSON.stringify(output, null, 2));
