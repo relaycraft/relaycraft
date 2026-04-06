@@ -105,10 +105,15 @@ ${translationContext}
 const prompt = `你是一个资深的技术研发文档翻译专家。请将以下 GitHub Release / Changelog 从英文翻译为中文。
 
 规则：
-1. 保持原有的 Markdown 格式（缩进、列表、加粗、链接、代码块）不变。
-2. 专业术语（如 UI、Hook、Proxy、API、TLS、WebSocket、MCP 等）在中文语境下可保留英文或常见译法，保持一致性；若「参考文档」中有约定译名或产品名，请优先遵循参考文档。
-3. 语气专业、自然，符合中国开发者阅读习惯。
-4. 只输出译文正文，不要前言、不要 "Here is the translation" 等套话。
+1. 保持原有的 Markdown 结构（缩进、列表、加粗、链接、代码块）不变。
+2. 必须将 Changelog 的标准英文大纲标题翻译为固定中文（默认不新增 Emoji，除非原文标题本身已包含 Emoji）：
+   - "Features" -> "新特性"
+   - "Bug Fixes" -> "问题修复"
+   - "Performance Improvements" -> "性能优化"
+   - "Documentation" -> "文档"
+3. 专业术语（如 UI、Hook、Proxy、API、TLS、WebSocket、MCP 等）在中文语境下可保留英文或常见译法，保持一致性；若「参考文档」中有约定译名或产品名，请优先遵循参考文档。
+4. 语气专业、自然，符合中国开发者阅读习惯。
+5. 只输出译文正文，不要前言、不要 "Here is the translation" 等套话。
 ${contextSection}
 待翻译原文：
 
@@ -160,8 +165,6 @@ try {
   const finalMarkdown = `${originalBody.trimEnd()}
 
 ---
-
-## 简体中文
 
 ${translatedBody.trim()}
 `;

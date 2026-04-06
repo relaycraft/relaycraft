@@ -21,7 +21,7 @@
 - **API Key**：在 [MiniMax 开放平台](https://platform.minimaxi.com/) 创建；Coding Plan / Token Plan 等订阅下的可用额度以控制台为准
 - **模型示例**：`MiniMax-M2.7`、`MiniMax-M2.7-highspeed`、`MiniMax-M2.5` 等
 - 脚本对 `api.minimaxi.com` / `api.minimax.io` 会自动加 **`reasoning_split: true`**（与官方 OpenAI 兼容说明一致），把思考过程从正文中拆开；若仍夹带 `<redacted_thinking>…</redacted_thinking>` 块，会在写文件前剔除
-- 双语小节标题为 **`## 简体中文`**（不再带「AI 翻译」字样）
+- 输出为“英文原文 + 分隔线 + 中文译文正文”，不再强制插入 `## 简体中文` 小节标题
 
 MiniMax 文档说明 `temperature` 须在 **(0, 1]**，若接口报错可尝试：
 
@@ -58,6 +58,12 @@ cat translated_release.md
 ```
 
 `release_body_en.md` 与 `translated_release.md` 已列入根目录 `.gitignore`，避免误提交本地试跑文件。
+
+## 译文风格稳定性建议
+
+- 标题建议使用固定中文映射，避免每次 release 因“同义词/Emoji”出现风格抖动
+- 建议默认不新增 Emoji（除非原文标题已包含），减少视觉风格波动
+- 若需要“营销化版本”，建议在发布前人工微调，而不是让模型每次自由发挥
 
 ## GitHub Actions 中的配置
 
