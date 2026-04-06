@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/relaycraft/relaycraft/compare/v1.0.0...v1.0.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* map Windows updater targets to specific -msi and -nsis keys to prevent cross-installation ([705c4ab](https://github.com/relaycraft/relaycraft/commit/705c4ab731a89305352323f546afbe940b3182dd))
+* resolve broken theme preview images by allowing RelayCraft raw GitHub source in CSP ([047acad](https://github.com/relaycraft/relaycraft/commit/047acada84ee14c6b7a276af34379790d3b213c0))
+
 ## [1.0.0](https://github.com/relaycraft/relaycraft/compare/v1.0.0-rc.17...v1.0.0) (2026-04-05)
 
 
