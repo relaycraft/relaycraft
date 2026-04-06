@@ -55,7 +55,7 @@ pub struct AppConfig {
     pub theme_registry_url: String,
     #[serde(default)]
     pub cert_warning_ignored: bool,
-    #[serde(default = "default_true")]
+    #[serde(default = "default_vibrancy")]
     pub enable_vibrancy: bool,
     #[serde(default)]
     pub mcp_config: McpConfig,
@@ -75,6 +75,10 @@ fn default_language() -> String {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_vibrancy() -> bool {
+    cfg!(target_os = "macos")
 }
 
 fn default_density() -> String {
@@ -98,7 +102,7 @@ impl Default for AppConfig {
             plugin_registry_url: default_registry_url(),
             theme_registry_url: default_theme_registry_url(),
             cert_warning_ignored: false,
-            enable_vibrancy: true,
+            enable_vibrancy: default_vibrancy(),
             mcp_config: McpConfig::default(),
         }
     }
@@ -461,7 +465,7 @@ mod tests {
         assert_eq!(config.proxy_port, 9090);
         assert_eq!(config.language, "zh");
         assert!(config.confirm_exit);
-        assert!(config.enable_vibrancy);
+        assert_eq!(config.enable_vibrancy, cfg!(target_os = "macos"));
     }
 
     #[test]

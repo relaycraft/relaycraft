@@ -81,7 +81,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     confirm_exit: false,
     auto_start_proxy: false,
     display_density: "comfortable",
-    enable_vibrancy: true,
+    enable_vibrancy: typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent),
     mcp_config: {
       enabled: false,
       port: 7090,
