@@ -11,9 +11,12 @@ import { useUIStore } from "../stores/uiStore";
 
 export function useAppShortcuts() {
   const { t } = useTranslation();
-  const { selectedFlow, clearFlows } = useTrafficStore();
-  const { running, startProxy, stopProxy } = useProxyStore();
-  const { activeTab } = useUIStore();
+  const selectedFlow = useTrafficStore((s) => s.selectedFlow);
+  const clearFlows = useTrafficStore((s) => s.clearFlows);
+  const running = useProxyStore((s) => s.running);
+  const startProxy = useProxyStore((s) => s.startProxy);
+  const stopProxy = useProxyStore((s) => s.stopProxy);
+  const activeTab = useUIStore((s) => s.activeTab);
   const { navigate } = useNavigate();
 
   useEffect(() => {

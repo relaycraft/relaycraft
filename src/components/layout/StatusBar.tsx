@@ -15,8 +15,8 @@ export function StatusBar() {
   const running = useProxyStore((state) => state.running);
   const active = useProxyStore((state) => state.active);
   const port = useProxyStore((state) => state.port);
-  // indices is high-frequency (500ms polling), use selector to avoid full store subscription
-  const indices = useTrafficStore((state) => state.indices);
+  // Only length is displayed; subscribe to the number to avoid re-rendering on every poll batch
+  const capturedCount = useTrafficStore((state) => state.indices.length);
   const breakpoints = useBreakpointStore((state) => state.breakpoints);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const { t } = useTranslation();
@@ -144,7 +144,7 @@ export function StatusBar() {
         <Tooltip content={t("status_bar.captured")}>
           <div className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-default">
             <Database className="w-3 h-3" />
-            <span className="font-mono text-foreground">{indices.length}</span>
+            <span className="font-mono text-foreground">{capturedCount}</span>
           </div>
         </Tooltip>
 

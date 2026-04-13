@@ -4,8 +4,11 @@ import { type TabType, useUIStore } from "../stores/uiStore";
 
 export function useNavigate() {
   const { t } = useTranslation();
-  const { activeTab, setActiveTab, showConfirm } = useUIStore();
-  const { isEditorDirty, clearActiveRule } = useRuleStore();
+  const activeTab = useUIStore((s) => s.activeTab);
+  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const showConfirm = useUIStore((s) => s.showConfirm);
+  const isEditorDirty = useRuleStore((s) => s.isEditorDirty);
+  const clearActiveRule = useRuleStore((s) => s.clearActiveRule);
 
   const navigate = (targetTab: TabType) => {
     // If we're already on the target tab, do nothing

@@ -1,5 +1,4 @@
 import { save } from "@tauri-apps/plugin-dialog";
-import { AnimatePresence, motion } from "framer-motion";
 import { FileDown, FileUp, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
 import { Suspense, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -268,168 +267,176 @@ function App() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden bg-transparent relative">
           <div className="flex-1 relative overflow-hidden">
-            <AnimatePresence>
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="absolute inset-0 flex flex-col overflow-hidden"
-              >
-                {/* Context Header - Glassy */}
-                <div className="h-11 px-4 border-b border-border/40 flex items-center justify-between bg-muted/20 flex-shrink-0">
-                  <div>
-                    <h1 className="text-ui font-bold tracking-tight text-foreground/90">
-                      {activeTab === "traffic" && t("sidebar.traffic")}
-                      {activeTab === "composer" && t("composer.title")}
-                      {activeTab === "rules" && t("sidebar.rules")}
-                      {activeTab === "scripts" && t("sidebar.scripts")}
-                      {activeTab === "settings" && t("sidebar.settings")}
-                      {/* Plugin Page Title */}
-                      {(() => {
-                        const page = pluginPages.find((p) => p.id === activeTab);
-                        if (!page) return null;
-                        return page.nameKey
-                          ? t(page.nameKey, {
-                              ns: page.i18nNamespace || page.pluginId,
-                            })
-                          : page.name;
-                      })()}
-                    </h1>
+            <div className="absolute inset-0 flex flex-col overflow-hidden">
+              {/* Context Header - Glassy */}
+              <div className="h-11 px-4 border-b border-border/40 flex items-center justify-between bg-muted/20 flex-shrink-0">
+                <div>
+                  <h1 className="text-ui font-bold tracking-tight text-foreground/90">
+                    {activeTab === "traffic" && t("sidebar.traffic")}
+                    {activeTab === "composer" && t("composer.title")}
+                    {activeTab === "rules" && t("sidebar.rules")}
+                    {activeTab === "scripts" && t("sidebar.scripts")}
+                    {activeTab === "settings" && t("sidebar.settings")}
+                    {/* Plugin Page Title */}
+                    {(() => {
+                      const page = pluginPages.find((p) => p.id === activeTab);
+                      if (!page) return null;
+                      return page.nameKey
+                        ? t(page.nameKey, {
+                            ns: page.i18nNamespace || page.pluginId,
+                          })
+                        : page.name;
+                    })()}
+                  </h1>
+                </div>
+
+                {/* Traffic Actions */}
+                {activeTab === "traffic" && <TrafficActionButtons />}
+
+                {/* Rule Management Actions */}
+                {activeTab === "rules" && (
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder={t("common.search")}
+                        value={ruleSearchQuery}
+                        onChange={(e) => useRuleStore.getState().setSearchQuery(e.target.value)}
+                        className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-ui placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const { isEditorDirty, selectRule, setDraftRule } = useRuleStore.getState();
+                        const { showConfirm } = useUIStore.getState();
+
+                        const createNewRule = () => {
+                          selectRule(null);
+                          setDraftRule({});
+                        };
+
+                        if (isEditorDirty) {
+                          showConfirm({
+                            title: t("rules.alerts.discard_title"),
+                            message: t("rules.alerts.discard_msg"),
+                            variant: "warning",
+                            onConfirm: createNewRule,
+                          });
+                        } else {
+                          createNewRule();
+                        }
+                      }}
+                      className="gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t("rules.new")}
+                    </Button>
+
+                    <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
+                      <Tooltip content={t("common.export")} side="bottom">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={handleExportRules}
+                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                        >
+                          <FileUp className="w-3.5 h-3.5" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content={t("common.import")} side="bottom">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => useUIStore.getState().setImportModalOpen(true)}
+                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  </div>
+                )}
+
+                {/* Script Management Actions */}
+                {activeTab === "scripts" && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const existingNames = useScriptStore.getState().scripts.map((s) => s.name);
+                        const uniqueName = getUniqueName("Untitled Script.py", existingNames);
+
+                        useScriptStore.getState().selectScript(null);
+                        useScriptStore.getState().setDraftScript({
+                          name: uniqueName,
+                          content: DEFAULT_SCRIPT_TEMPLATE,
+                        });
+
+                        useUIStore.getState().setActiveTab("scripts");
+                      }}
+                      className="gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t("scripts.create_script")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-hidden relative">
+                <Suspense fallback={null}>
+                  {/* Keep core tabs mounted to preserve UI state and avoid remount jank on tab switch */}
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "traffic" ? "" : "hidden"}`}
+                  >
+                    <TrafficView onToggleProxy={handleToggleProxy} loading={loading} />
                   </div>
 
-                  {/* Traffic Actions */}
-                  {activeTab === "traffic" && <TrafficActionButtons />}
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "rules" ? "" : "hidden"}`}
+                  >
+                    <RuleView />
+                  </div>
 
-                  {/* Rule Management Actions */}
-                  {activeTab === "rules" && (
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder={t("common.search")}
-                          value={ruleSearchQuery}
-                          onChange={(e) => useRuleStore.getState().setSearchQuery(e.target.value)}
-                          className="w-48 pl-8 pr-3 h-8 bg-background border border-border text-ui placeholder:text-xs placeholder:text-muted-foreground/60 focus-visible:ring-primary/20"
-                        />
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const { isEditorDirty, selectRule, setDraftRule } =
-                            useRuleStore.getState();
-                          const { showConfirm } = useUIStore.getState();
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "scripts" ? "" : "hidden"}`}
+                  >
+                    <ScriptManager />
+                  </div>
 
-                          const createNewRule = () => {
-                            selectRule(null);
-                            setDraftRule({});
-                          };
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "composer" ? "" : "hidden"}`}
+                  >
+                    <ComposerView />
+                  </div>
 
-                          if (isEditorDirty) {
-                            showConfirm({
-                              title: t("rules.alerts.discard_title"),
-                              message: t("rules.alerts.discard_msg"),
-                              variant: "warning",
-                              onConfirm: createNewRule,
-                            });
-                          } else {
-                            createNewRule();
-                          }
-                        }}
-                        className="gap-1.5"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        {t("rules.new")}
-                      </Button>
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "settings" ? "" : "hidden"}`}
+                  >
+                    <SettingsView />
+                  </div>
 
-                      <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
-                        <Tooltip content={t("common.export")} side="bottom">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={handleExportRules}
-                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                          >
-                            <FileUp className="w-3.5 h-3.5" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content={t("common.import")} side="bottom">
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => useUIStore.getState().setImportModalOpen(true)}
-                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                          </Button>
-                        </Tooltip>
-                      </div>
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "certificate" ? "" : "hidden"}`}
+                  >
+                    <CertificateSettings />
+                  </div>
+
+                  {/* Plugin pages are also kept mounted after first render */}
+                  {pluginPages.map((page) => (
+                    <div
+                      key={page.id}
+                      className={`h-full w-full overflow-hidden ${activeTab === page.id ? "" : "hidden"}`}
+                    >
+                      <PluginPageWrapper pluginId={page.pluginId} component={page.component} />
                     </div>
-                  )}
-
-                  {/* Script Management Actions */}
-                  {activeTab === "scripts" && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const existingNames = useScriptStore
-                            .getState()
-                            .scripts.map((s) => s.name);
-                          const uniqueName = getUniqueName("Untitled Script.py", existingNames);
-
-                          useScriptStore.getState().selectScript(null);
-                          useScriptStore.getState().setDraftScript({
-                            name: uniqueName,
-                            content: DEFAULT_SCRIPT_TEMPLATE,
-                          });
-
-                          useUIStore.getState().setActiveTab("scripts");
-                        }}
-                        className="gap-1.5"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        {t("scripts.create_script")}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tab Content */}
-                <div className="flex-1 overflow-hidden relative">
-                  <Suspense fallback={null}>
-                    {activeTab === "traffic" && (
-                      <TrafficView onToggleProxy={handleToggleProxy} loading={loading} />
-                    )}
-
-                    {activeTab === "rules" && <RuleView />}
-
-                    {activeTab === "scripts" && <ScriptManager />}
-
-                    {activeTab === "composer" && <ComposerView />}
-
-                    {activeTab === "settings" && <SettingsView />}
-
-                    {activeTab === "certificate" && <CertificateSettings />}
-
-                    {/* Plugin Pages */}
-                    {pluginPages.map(
-                      (page) =>
-                        activeTab === page.id && (
-                          <div key={page.id} className="h-full w-full overflow-hidden">
-                            <PluginPageWrapper
-                              pluginId={page.pluginId}
-                              component={page.component}
-                            />
-                          </div>
-                        ),
-                    )}
-                  </Suspense>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                  ))}
+                </Suspense>
+              </div>
+            </div>
           </div>
 
           <StatusBar />

@@ -91,10 +91,13 @@ export function CommandCenter() {
   const selectedRule = useRuleStore((state) => state.selectedRule);
   const draftRule = useRuleStore((state) => state.draftRule);
 
-  const { setDraftRule, selectRule, rules } = useRuleStore();
-  const { startProxy, stopProxy } = useProxyStore();
-  const { clearFlows } = useTrafficStore();
-  const { scripts } = useScriptStore();
+  const setDraftRule = useRuleStore((state) => state.setDraftRule);
+  const selectRule = useRuleStore((state) => state.selectRule);
+  const rules = useRuleStore((state) => state.rules);
+  const startProxy = useProxyStore((state) => state.startProxy);
+  const stopProxy = useProxyStore((state) => state.stopProxy);
+  const clearFlows = useTrafficStore((state) => state.clearFlows);
+  const scripts = useScriptStore((state) => state.scripts);
 
   const activeRulesCount = rules.filter((r) => r.execution.enabled).length;
   const activeScriptsCount = scripts.filter((s) => s.enabled).length;

@@ -28,11 +28,11 @@ initProviders();
 
 export const useSuggestionEngine = () => {
   const { t } = useTranslation();
-  const { activeTab } = useUIStore();
-  const { selectedFlow } = useTrafficStore();
-  const { selectedRule } = useRuleStore();
-  const { settings: aiSettings } = useAIStore();
-  const { running } = useProxyStore();
+  const activeTab = useUIStore((s) => s.activeTab);
+  const selectedFlow = useTrafficStore((s) => s.selectedFlow);
+  const selectedRule = useRuleStore((s) => s.selectedRule);
+  const aiEnabled = useAIStore((s) => s.settings.enabled);
+  const running = useProxyStore((s) => s.running);
 
   const getSuggestions = useCallback(
     (input: string) => {
@@ -43,12 +43,12 @@ export const useSuggestionEngine = () => {
           selectedRule,
           input,
           running,
-          aiEnabled: aiSettings.enabled,
+          aiEnabled,
         },
         t,
       );
     },
-    [activeTab, selectedFlow, selectedRule, running, aiSettings.enabled, t],
+    [activeTab, selectedFlow, selectedRule, running, aiEnabled, t],
   );
 
   return { getSuggestions };

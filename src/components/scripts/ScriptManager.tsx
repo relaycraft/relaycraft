@@ -13,7 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
 import { notify } from "../../lib/notify";
@@ -27,23 +27,23 @@ import { ScriptEditor } from "./ScriptEditor";
 
 export function ScriptManager() {
   const { t } = useTranslation();
-  const {
-    scripts,
-    selectedScript,
-    loading,
-    fetchScripts,
-    selectScript,
-    deleteScript,
-    toggleScript,
-    renameScript,
-    moveScript,
-    modifiedSinceStart,
-  } = useScriptStore();
+  const scripts = useScriptStore((s) => s.scripts);
+  const selectedScript = useScriptStore((s) => s.selectedScript);
+  const loading = useScriptStore((s) => s.loading);
+  const fetchScripts = useScriptStore((s) => s.fetchScripts);
+  const selectScript = useScriptStore((s) => s.selectScript);
+  const deleteScript = useScriptStore((s) => s.deleteScript);
+  const toggleScript = useScriptStore((s) => s.toggleScript);
+  const renameScript = useScriptStore((s) => s.renameScript);
+  const moveScript = useScriptStore((s) => s.moveScript);
+  const modifiedSinceStart = useScriptStore((s) => s.modifiedSinceStart);
+  const draftScript = useScriptStore((s) => s.draftScript);
+  const setDraftScript = useScriptStore((s) => s.setDraftScript);
 
-  const { restartProxy, running, activeScripts } = useProxyStore();
-  const { showConfirm } = useUIStore();
-
-  const { draftScript, setDraftScript } = useScriptStore();
+  const restartProxy = useProxyStore((s) => s.restartProxy);
+  const running = useProxyStore((s) => s.running);
+  const activeScripts = useProxyStore((s) => s.activeScripts);
+  const showConfirm = useUIStore((s) => s.showConfirm);
 
   const [restarting, setRestarting] = useState(false);
 
@@ -51,11 +51,8 @@ export function ScriptManager() {
   const [editingScriptId, setEditingScriptId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
-  // Check if a script is currently active (loaded in running engine)
-  // activeScripts stores script names (not temp paths) for consistent comparison
-  const checkIsScriptActive = (name: string) => {
-    return activeScripts.includes(name);
-  };
+  // activeScripts stores script names; use Set for O(1) membership.
+  const activeScriptSet = useMemo(() => new Set(activeScripts), [activeScripts]);
 
   useEffect(() => {
     fetchScripts();
@@ -83,8 +80,8 @@ export function ScriptManager() {
     (modifiedSinceStart.size > 0 ||
       scripts.some(
         (s) =>
-          (s.enabled && !activeScripts.includes(s.name)) ||
-          (!s.enabled && activeScripts.includes(s.name)),
+          (s.enabled && !activeScriptSet.has(s.name)) ||
+          (!s.enabled && activeScriptSet.has(s.name)),
       ));
 
   const handleDelete = async (e: React.MouseEvent, name: string) => {
@@ -263,7 +260,7 @@ export function ScriptManager() {
               animation="float"
             />
           ) : (
-            scripts.map((script) => (
+            scripts.map((script, idx) => (
               <div
                 key={script.name}
                 onClick={() => selectScript(script.name)}
@@ -275,11 +272,8 @@ export function ScriptManager() {
               >
                 {/* Status Indicator with Pending State */}
                 {(() => {
-                  const isScriptActive = checkIsScriptActive(script.name);
+                  const isScriptActive = activeScriptSet.has(script.name);
                   const isContentModified = modifiedSinceStart.has(script.name);
-
-                  // Pending if: engine is running, and (content modified or enabled state differs from active state)
-                  // Scripts are loaded at engine start, so changes require engine restart to take effect
                   const isPending =
                     running &&
                     (isContentModified ||
@@ -348,7 +342,7 @@ export function ScriptManager() {
                     <Tooltip content={t("common.move_up")}>
                       <button
                         onClick={(e) => handleMove(e, script.name, "up")}
-                        disabled={scripts.indexOf(script) === 0}
+                        disabled={idx === 0}
                         className="p-1 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         <ChevronUp className="w-3 h-3" />
@@ -358,7 +352,7 @@ export function ScriptManager() {
                     <Tooltip content={t("common.move_down")}>
                       <button
                         onClick={(e) => handleMove(e, script.name, "down")}
-                        disabled={scripts.indexOf(script) === scripts.length - 1}
+                        disabled={idx === scripts.length - 1}
                         className="p-1 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         <ChevronDown className="w-3 h-3" />
