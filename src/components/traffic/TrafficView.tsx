@@ -18,6 +18,7 @@ import { matchFlow, parseFilter } from "../../lib/filterParser";
 import { searchFlowContent } from "../../lib/trafficMonitor";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useSessionStore } from "../../stores/sessionStore";
+import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { FlowIndex } from "../../types";
@@ -47,8 +48,32 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
   const certWarningIgnored = useProxyStore((state) => state.certWarningIgnored);
   const setCertWarningIgnored = useProxyStore((state) => state.setCertWarningIgnored);
   const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const displayDensity = useSettingsStore((state) => state.config.display_density);
   const showSessionId = useSessionStore((state) => state.showSessionId);
   const dbSessions = useSessionStore((state) => state.dbSessions);
+
+  // Keep virtualized row height aligned with actual row layout per density mode.
+  const trafficRowHeight = useMemo(() => {
+    switch (displayDensity) {
+      case "compact":
+        return 48;
+      case "relaxed":
+        return 60;
+      default:
+        return 54;
+    }
+  }, [displayDensity]);
+
+  const trafficViewportBuffer = useMemo(() => {
+    switch (displayDensity) {
+      case "compact":
+        return { top: 420, bottom: 700 };
+      case "relaxed":
+        return { top: 620, bottom: 980 };
+      default:
+        return { top: 500, bottom: 800 };
+    }
+  }, [displayDensity]);
 
   // Check if viewing historical session
   const isHistoricalSession = useMemo(() => {
@@ -83,6 +108,7 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
   const [idColWidth, setIdColWidth] = useState(40); // Fixed base width to prevent layout shifts
   const [showJumpBubble, setShowJumpBubble] = useState(false);
   const bubbleTimeoutRef = useRef<any>(null);
+  const scrollActiveRef = useRef(false);
   const filterText = useTrafficStore((state) => state.filterText);
   const setFilterText = useTrafficStore((state) => state.setFilterText);
   const [debouncedFilterText, setDebouncedFilterText] = useState("");
@@ -102,8 +128,12 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
   const handleScrollStateChange = (scrolling: boolean) => {
     if (scrolling) {
       if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-      setShowJumpBubble(true);
+      if (!scrollActiveRef.current) {
+        scrollActiveRef.current = true;
+        setShowJumpBubble(true);
+      }
     } else {
+      scrollActiveRef.current = false;
       bubbleTimeoutRef.current = setTimeout(() => {
         setShowJumpBubble(false);
       }, 5000);
@@ -352,6 +382,21 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
     [selectFlow],
   );
 
+  const virtuosoItemContent = useCallback(
+    (index: number, idx: FlowIndex) => (
+      <TrafficListItem
+        index={idx}
+        seq={index + 1}
+        isSelected={selectedFlow?.id === idx.id}
+        idColWidth={idColWidth}
+        rowHeight={trafficRowHeight}
+        onSelect={handleSelect}
+        onContextMenu={handleContextMenu}
+      />
+    ),
+    [selectedFlow?.id, idColWidth, trafficRowHeight, handleSelect, handleContextMenu],
+  );
+
   return (
     <div className="h-full flex flex-col">
       {!(certTrusted || certWarningIgnored) && (
@@ -541,27 +586,14 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
                   ref={virtuosoRef}
                   data={filteredIndices}
                   style={{ height: "100%" }}
-                  // Use unique key for position tracking
                   computeItemKey={(_, item) => item.id}
-                  // Increase buffer to stabilize height calculation
-                  increaseViewportBy={{ top: 500, bottom: 500 }}
-                  // Relax at bottom threshold for stickiness
+                  fixedItemHeight={trafficRowHeight}
+                  increaseViewportBy={trafficViewportBuffer}
                   atBottomThreshold={100}
-                  // Native auto scroll
                   followOutput={autoScroll}
                   atBottomStateChange={setAtBottom}
                   isScrolling={handleScrollStateChange}
-                  itemContent={(index: number, idx: FlowIndex) => (
-                    <TrafficListItem
-                      key={idx.id}
-                      index={idx}
-                      seq={index + 1}
-                      isSelected={selectedFlow?.id === idx.id}
-                      idColWidth={idColWidth}
-                      onSelect={handleSelect}
-                      onContextMenu={handleContextMenu}
-                    />
-                  )}
+                  itemContent={virtuosoItemContent}
                 />
 
                 {/* Jump to bottom bubble logic */}

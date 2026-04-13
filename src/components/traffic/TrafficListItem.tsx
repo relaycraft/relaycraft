@@ -24,12 +24,21 @@ interface TrafficListItemProps {
   seq: number; // Display sequence number (calculated from array index)
   isSelected: boolean;
   idColWidth: number;
+  rowHeight: number;
   onSelect: (index: FlowIndex) => void;
   onContextMenu: (e: React.MouseEvent, index: FlowIndex) => void;
 }
 
 export const TrafficListItem = memo(
-  ({ index, seq, isSelected, idColWidth, onSelect, onContextMenu }: TrafficListItemProps) => {
+  ({
+    index,
+    seq,
+    isSelected,
+    idColWidth,
+    rowHeight,
+    onSelect,
+    onContextMenu,
+  }: TrafficListItemProps) => {
     const { t } = useTranslation();
     // Use isIntercepted from backend - only true for flows actually intercepted by breakpoints
     const isIntercepted = index.isIntercepted;
@@ -37,16 +46,12 @@ export const TrafficListItem = memo(
     // Determine if flow has error
     const isError = index.hasError || String(index.status) === "0";
 
-    // Determine if request is from local machine or remote device (mobile)
-    // Only 127.0.0.1 and ::1 are truly "local" (from the same machine)
-    // 192.168.x.x, 10.x.x.x, etc. are remote devices on local network (like phones on WiFi)
     const isLocal =
       !index.clientIp ||
       index.clientIp === "127.0.0.1" ||
       index.clientIp === "::1" ||
       index.clientIp === "localhost";
 
-    // Use httpVersion from backend, fallback to HTTP/1.1
     const httpVersion = index.httpVersion || "HTTP/1.1";
 
     // Deduplicate hits while preserving script/breakpoint/rule distinctions.
@@ -64,14 +69,18 @@ export const TrafficListItem = memo(
         ]
       : [];
 
+    const showHitColumn = (index.hits && index.hits.length > 0) || isIntercepted;
+
     return (
       <div
         onClick={() => onSelect(index)}
         onContextMenu={(e) => onContextMenu(e, index)}
-        className={`group flex items-center gap-2 px-3 cursor-pointer transition-all relative border-b border-subtle ${
+        className={`group flex items-center gap-2 px-3 cursor-pointer relative border-b border-subtle transition-[background-color] duration-150 ${
           isSelected ? "bg-primary/5" : "bg-transparent hover:bg-muted/40"
         }`}
         style={{
+          height: rowHeight,
+          boxSizing: "border-box",
           paddingTop: "var(--density-p, 8px)",
           paddingBottom: "var(--density-p, 8px)",
         }}
@@ -85,7 +94,7 @@ export const TrafficListItem = memo(
 
         {/* ID Column */}
         <div
-          className="text-micro text-right font-mono text-muted-foreground/60 select-none mr-0.5 transition-all"
+          className="text-micro text-right font-mono text-muted-foreground/60 select-none mr-0.5"
           style={{ minWidth: idColWidth, maxWidth: idColWidth }}
         >
           {seq}
@@ -165,62 +174,65 @@ export const TrafficListItem = memo(
           </div>
         </div>
 
-        {/* Hit Indicators */}
-        {(index.hits && index.hits.length > 0) || isIntercepted ? (
-          <div className="flex items-center gap-1.5 flex-shrink-0 px-2">
-            {/* Currently intercepted indicator (pulsing) */}
-            {isIntercepted && (
-              <Tooltip content={t("traffic.breakpoint_active_tooltip")} side="left">
-                <div className="relative flex items-center justify-center w-5 h-5">
-                  <div className="absolute inset-0 bg-red-500/30 rounded-full blur-[4px] animate-pulse" />
-                  <div className="relative w-3.5 h-3.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse flex items-center justify-center">
-                    <CirclePause className="w-2.5 h-2.5 text-white" strokeWidth={2} />
+        {/* Hit indicators: fixed slot so Virtuoso row height stays stable while scrolling */}
+        <div className="flex min-h-[28px] min-w-[5.5rem] flex-shrink-0 items-center justify-end gap-1.5 px-2">
+          {showHitColumn ? (
+            <>
+              {isIntercepted && (
+                <Tooltip content={t("traffic.breakpoint_active_tooltip")} side="left">
+                  <div className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                    <div className="absolute inset-0 rounded-full bg-red-500/30 blur-[4px] animate-pulse" />
+                    <div className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse">
+                      <CirclePause className="h-2.5 w-2.5 text-white" strokeWidth={2} />
+                    </div>
                   </div>
-                </div>
-              </Tooltip>
-            )}
-            {/* File not found warning */}
-            {index.hits?.some((h) => h.status === "file_not_found") && (
-              <Tooltip content={t("traffic.file_not_found")} side="left">
-                <AlertTriangle className="w-3 h-3 text-error" />
-              </Tooltip>
-            )}
-            <div className="flex -space-x-1">
-              {dedupedHits.slice(0, 5).map((hit, idx) => {
-                const isScript = hit.type === "script";
-                const isBreakpoint = hit.type === "breakpoint";
-                let tooltipContent = "";
-                if (isScript) {
-                  tooltipContent = `${t("common.script")}: ${hit.name}`;
-                } else if (isBreakpoint) {
-                  tooltipContent = `${t("common.breakpoint")}: ${hit.name}`;
-                } else {
-                  tooltipContent = `${t("common.rule")}: ${hit.name}`;
-                }
-                return (
-                  <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
-                    {isScript ? (
-                      <div className="w-3 h-3 flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0 shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
-                        <Terminal className="w-[9px] h-[9px]" strokeWidth={2.5} />
-                      </div>
-                    ) : isBreakpoint ? (
-                      <CirclePause className="w-3 h-3 text-red-500 flex-shrink-0" strokeWidth={2} />
-                    ) : (
-                      <div
-                        className={`w-2 h-2 rounded-full ring-1 ring-background/70 shadow-sm ${getRuleTypeDotClass(hit.type, hit.status)}`}
-                      />
-                    )}
-                  </Tooltip>
-                );
-              })}
-              {dedupedHits.length > 5 && (
-                <span className="text-xs text-muted-foreground ml-1">
-                  +{dedupedHits.length - 5}
-                </span>
+                </Tooltip>
               )}
-            </div>
-          </div>
-        ) : null}
+              {index.hits?.some((h) => h.status === "file_not_found") && (
+                <Tooltip content={t("traffic.file_not_found")} side="left">
+                  <AlertTriangle className="h-3 w-3 flex-shrink-0 text-error" />
+                </Tooltip>
+              )}
+              <div className="flex -space-x-1">
+                {dedupedHits.slice(0, 5).map((hit, idx) => {
+                  const isScript = hit.type === "script";
+                  const isBreakpoint = hit.type === "breakpoint";
+                  let tooltipContent = "";
+                  if (isScript) {
+                    tooltipContent = `${t("common.script")}: ${hit.name}`;
+                  } else if (isBreakpoint) {
+                    tooltipContent = `${t("common.breakpoint")}: ${hit.name}`;
+                  } else {
+                    tooltipContent = `${t("common.rule")}: ${hit.name}`;
+                  }
+                  return (
+                    <Tooltip key={`${hit.id}-${idx}`} content={tooltipContent} side="left">
+                      {isScript ? (
+                        <div className="flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white shadow-[0_1px_2px_rgba(99,102,241,0.4)]">
+                          <Terminal className="h-[9px] w-[9px]" strokeWidth={2.5} />
+                        </div>
+                      ) : isBreakpoint ? (
+                        <CirclePause
+                          className="h-3 w-3 flex-shrink-0 text-red-500"
+                          strokeWidth={2}
+                        />
+                      ) : (
+                        <div
+                          className={`h-2 w-2 rounded-full ring-1 ring-background/70 shadow-sm ${getRuleTypeDotClass(hit.type, hit.status)}`}
+                        />
+                      )}
+                    </Tooltip>
+                  );
+                })}
+                {dedupedHits.length > 5 && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    +{dedupedHits.length - 5}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     );
   },
