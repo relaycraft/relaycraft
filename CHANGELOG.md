@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.2](https://github.com/relaycraft/relaycraft/compare/v1.0.1...v1.0.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* render telemetry URLs reliably in traffic views ([437270f](https://github.com/relaycraft/relaycraft/commit/437270f3483fd993ca42b53d379e953eb07e2349))
+
+
+### Performance Improvements
+
+* faster tab switches via mounted panels and selective store reads ([4319c0a](https://github.com/relaycraft/relaycraft/commit/4319c0a8032f1db5cc57ec0bf75b8134a99c004d))
+* smoother traffic list scroll with fixed Virtuoso row height ([6844075](https://github.com/relaycraft/relaycraft/commit/6844075a0d4e30720c70780f9f6846ffeec5e8fb))
+
 ### [1.0.1](https://github.com/relaycraft/relaycraft/compare/v1.0.0...v1.0.1) (2026-04-06)
 
 
