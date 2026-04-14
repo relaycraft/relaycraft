@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { getReadableUrlPreview } from "../../lib/flowUrl";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -53,6 +54,9 @@ export const TrafficListItem = memo(
       index.clientIp === "localhost";
 
     const httpVersion = index.httpVersion || "HTTP/1.1";
+    const displayUrlPreview = getReadableUrlPreview(
+      index.url || `${index.host || ""}${index.path || ""}`,
+    );
 
     // Deduplicate hits while preserving script/breakpoint/rule distinctions.
     // For breakpoints, merge request/response phase into one indicator.
@@ -124,7 +128,7 @@ export const TrafficListItem = memo(
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <div className="text-xs font-mono font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors flex-1">
-              {index.url}
+              {displayUrlPreview || t("traffic.url_unavailable")}
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -1084,6 +1084,7 @@
     "proxy_stopped": "Capture Stopped",
     "replay_failed": "Replay failed",
     "replay_success": "Request replayed",
+    "url_unavailable": "(URL unavailable)",
     "source": {
       "local": "Local",
       "remote": "Remote Device"

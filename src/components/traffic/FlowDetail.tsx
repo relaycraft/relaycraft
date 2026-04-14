@@ -27,6 +27,7 @@ import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
+import { getReadableUrlPreview, resolveFlowRequestUrl } from "../../lib/flowUrl";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -62,6 +63,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [replaying, setReplaying] = useState(false);
+  const resolvedUrl = resolveFlowRequestUrl(flow.request) || t("traffic.url_unavailable");
+  const resolvedUrlPreview = getReadableUrlPreview(resolvedUrl);
 
   // Use smart auto-scroll hook for AI analysis
   const { scrollRef: analysisScrollRef } = useAutoScroll({
@@ -290,14 +293,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         {/* Row 2: URL & Matched Rules */}
         <div className="space-y-3">
           <div className="flex items-center group/url w-full overflow-hidden relative">
-            <Tooltip content={flow.request.url} side="bottom" className="flex-1 min-w-0">
+            <Tooltip content={resolvedUrl} side="bottom" className="flex-1 min-w-0">
               <p className="text-xs font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-subtle">
-                {flow.request.url}
+                {resolvedUrlPreview || t("traffic.url_unavailable")}
               </p>
             </Tooltip>
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/url:opacity-100 transition-opacity flex-shrink-0 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 py-1">
               <CopyButton
-                text={flow.request.url}
+                text={resolvedUrl}
                 label={t("traffic.context_menu.copy_url")}
                 showLabel={false}
                 className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"

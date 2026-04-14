@@ -1084,6 +1084,7 @@
     "proxy_stopped": "监听未启动",
     "replay_failed": "重发失败",
     "replay_success": "请求已重发",
+    "url_unavailable": "(URL 不可用)",
     "security": {
       "fix_now": "立即安装",
       "untrusted_desc": "在安装并信任根证书之前，HTTPS 流量将无法正常解密。",
