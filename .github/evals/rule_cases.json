@@ -1,0 +1,38 @@
+[
+  {
+    "id": "block_domain",
+    "tier": "basic",
+    "input": "拦截所有发往 ads.example.com 的请求",
+    "mustContain": ["block_request", "ads.example.com"]
+  },
+  {
+    "id": "map_remote_api",
+    "tier": "basic",
+    "input": "把 test.local 下 /api/user 的请求转发到 https://httpbin.org",
+    "mustContain": ["map_remote", "httpbin.org"]
+  },
+  {
+    "id": "rewrite_header_auth",
+    "tier": "basic",
+    "input": "给 example.com 的请求添加 Authorization: Bearer test-token 头",
+    "mustContain": ["rewrite_header", "authorization", "test-token"]
+  },
+  {
+    "id": "map_local_static_file",
+    "tier": "extended",
+    "input": "把 /static/app.js 映射到本地文件 /tmp/app.js",
+    "mustContain": ["map_local", "app.js"]
+  },
+  {
+    "id": "throttle_order_api",
+    "tier": "extended",
+    "input": "给 /api/order 增加限速，每秒最多3个请求",
+    "mustContain": ["throttle", "/api/order"]
+  },
+  {
+    "id": "rewrite_body_mask_phone",
+    "tier": "extended",
+    "input": "对 /profile 响应体进行重写，把手机号替换成 ***",
+    "mustContain": ["rewrite_body", "/profile"]
+  }
+]

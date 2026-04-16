@@ -1,0 +1,58 @@
+[
+  {
+    "id": "status_or_range",
+    "tier": "basic",
+    "input": "查找所有4xx或5xx的错误请求",
+    "mustContain": ["status:4xx", "status:5xx"],
+    "mustNotContain": ["status:4xx,5xx"]
+  },
+  {
+    "id": "header_bearer",
+    "tier": "basic",
+    "input": "筛选带 Bearer 鉴权头的请求",
+    "mustContain": ["header:authorization:bearer"]
+  },
+  {
+    "id": "req_res_body",
+    "tier": "basic",
+    "input": "请求体包含 token 且响应体包含 unauthorized",
+    "mustContain": ["reqbody:token", "resbody:unauthorized"]
+  },
+  {
+    "id": "negative_status_and_method",
+    "tier": "basic",
+    "input": "排除200并只看post请求",
+    "mustContain": ["-status:200", "method:post"]
+  },
+  {
+    "id": "slow_and_large_json",
+    "tier": "basic",
+    "input": "只看慢且大的json响应",
+    "mustContain": ["duration:", "size:", "type:json"]
+  },
+  {
+    "id": "domain_and_path_combo",
+    "tier": "extended",
+    "input": "筛选 example.com 域名下 path 包含 /api/orders 的请求",
+    "mustContain": ["domain:example.com"],
+    "mustContainAny": [["path:/api/orders", "reqbody:/api/orders"]]
+  },
+  {
+    "id": "exclude_options_include_https",
+    "tier": "extended",
+    "input": "只看 443 端口请求",
+    "mustContainAny": [["port:443"]]
+  },
+  {
+    "id": "exclude_options_method",
+    "tier": "extended",
+    "input": "排除 options 请求",
+    "mustContain": ["-method:options"]
+  },
+  {
+    "id": "source_and_json_header",
+    "tier": "extended",
+    "input": "只看来自 mitmproxy 且 content-type 是 json 的流量",
+    "mustContainAny": [["source:mitmproxy", "source:proxy", "header:x-mitmproxy-version", "header:via:mitmproxy"], ["header:content-type:json", "type:json"]]
+  }
+]

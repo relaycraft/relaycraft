@@ -1,0 +1,38 @@
+[
+  {
+    "id": "api_v1_prefix",
+    "tier": "basic",
+    "input": "匹配所有 /api/v1/ 开头的路径",
+    "mustContain": ["^/api/v1/"]
+  },
+  {
+    "id": "png_with_query",
+    "tier": "basic",
+    "input": "匹配所有 png 资源，允许带查询参数",
+    "mustContain": [".png"]
+  },
+  {
+    "id": "example_and_subdomain",
+    "tier": "basic",
+    "input": "匹配 example.com 以及其所有子域名",
+    "mustContain": ["example\\.com"]
+  },
+  {
+    "id": "login_or_signin_path",
+    "tier": "extended",
+    "input": "匹配 /login 或 /signin 路径",
+    "mustContainAny": [["login", "signin"]]
+  },
+  {
+    "id": "exclude_static_ext",
+    "tier": "extended",
+    "input": "匹配非 js/css 的路径",
+    "mustContainAny": [["(?!", "?!"]]
+  },
+  {
+    "id": "uuid_in_path",
+    "tier": "extended",
+    "input": "匹配 path 中带 uuid 的请求",
+    "mustContainAny": [["[0-9a-f", "\\\\d", "\\\\da-f"]]
+  }
+]

@@ -1,0 +1,63 @@
+name: AI Generation Eval
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-generation-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval-filter-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check LLM_API_KEY
+        id: llm
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -n "$LLM_API_KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "LLM_API_KEY not set; skipping AI generation eval."
+          fi
+
+      - name: Setup Node.js
+        if: steps.llm.outputs.has_key == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run AI generation eval
+        if: steps.llm.outputs.has_key == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.LLM_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_TEMPERATURE: 0
+          AI_EVAL_SUITES: all
+          AI_EVAL_CASE_LEVEL: basic
+          AI_EVAL_CASES_DIR: .github/evals
+          AI_EVAL_REPORT_PATH: ai_eval_report.json
+          AI_EVAL_USE_TOOLS: true
+          AI_EVAL_PASS_RATE_THRESHOLD: 0.90
+          AI_EVAL_FAIL_ON_INFRA: false
+          AI_EVAL_MAX_RETRIES: 1
+        run: node .github/scripts/ai_generation_eval.mjs
+
+      - name: Upload eval report
+        if: always() && steps.llm.outputs.has_key == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-generation-eval-report
+          path: ai_eval_report.json
+          if-no-files-found: warn

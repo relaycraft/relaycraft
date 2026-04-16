@@ -11,10 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
 # translate_release.mjs local dry-run (repo root)
 /release_body_en.md
 /translated_release.md
+/ai_eval_report.json
 
 # Editor directories and files
 .vscode/*

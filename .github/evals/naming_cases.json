@@ -1,0 +1,66 @@
+[
+  {
+    "id": "block_ads_rule_name",
+    "tier": "basic",
+    "config": {
+      "urlPattern": "ads.example.com",
+      "urlMatchType": "contains",
+      "methods": ["GET"],
+      "type": "block_request"
+    },
+    "mustContainAny": [["ads", "广告"]]
+  },
+  {
+    "id": "map_remote_login_name",
+    "tier": "basic",
+    "config": {
+      "urlPattern": "/api/login",
+      "urlMatchType": "contains",
+      "methods": ["POST"],
+      "type": "map_remote"
+    },
+    "mustContainAny": [["login", "登录"]]
+  },
+  {
+    "id": "rewrite_header_auth_name",
+    "tier": "basic",
+    "config": {
+      "urlPattern": "api.example.com",
+      "urlMatchType": "contains",
+      "methods": ["GET", "POST"],
+      "type": "rewrite_header"
+    }
+  },
+  {
+    "id": "map_local_static_assets_name",
+    "tier": "extended",
+    "config": {
+      "urlPattern": "/assets/",
+      "urlMatchType": "contains",
+      "methods": ["GET"],
+      "type": "map_local"
+    },
+    "mustContainAny": [["assets", "静态", "本地"]]
+  },
+  {
+    "id": "throttle_checkout_name",
+    "tier": "extended",
+    "config": {
+      "urlPattern": "/checkout",
+      "urlMatchType": "contains",
+      "methods": ["POST"],
+      "type": "throttle"
+    },
+    "mustContainAny": [["checkout", "限速", "节流", "限流"]]
+  },
+  {
+    "id": "rewrite_body_error_mask_name",
+    "tier": "extended",
+    "config": {
+      "urlPattern": "/api/error",
+      "urlMatchType": "contains",
+      "methods": ["GET"],
+      "type": "rewrite_body"
+    }
+  }
+]

@@ -75,3 +75,76 @@ cat translated_release.md
 | `LLM_BASE_URL`    | 可选；使用 MiniMax 国内站时填 `https://api.minimaxi.com/v1`  |
 | `LLM_MODEL`       | 可选，如 `MiniMax-M2.7`                                      |
 | `LLM_TEMPERATURE` | 可选，如 `0.5` 或 `1`；未设置时脚本默认 `0.1`                |
+
+## AI 生成评测（多助手）
+
+新增脚本：`.github/scripts/ai_generation_eval.mjs`，对应工作流：
+`[AI Generation Eval](../workflows/ai-generation-eval.yml)`。
+
+用途：
+
+- 基于 OpenAI 兼容接口做**在线能力回归**（非 UT）
+- 统一评估 `filter / regex / naming / rule / script` 五类助手
+- 默认优先走 tool call 路径，更贴近线上
+
+默认用例集目录：
+
+- `.github/evals/filter_cases.json`
+- `.github/evals/regex_cases.json`
+- `.github/evals/naming_cases.json`
+- `.github/evals/rule_cases.json`
+- `.github/evals/script_cases.json`
+
+本地运行示例（推荐 `.env`）：
+
+1. 复制模板并填写 key（项目根目录）：
+
+```bash
+cp .env.example .env
+```
+
+2. 运行默认回归（`basic` 分层，速度更快）：
+
+```bash
+node --env-file=.env .github/scripts/ai_generation_eval.mjs
+```
+
+3. 只跑某个套件（如 rule）：
+
+```bash
+AI_EVAL_SUITES=rule node --env-file=.env .github/scripts/ai_generation_eval.mjs
+```
+
+4. 跑全量用例（`basic + extended`）：
+
+```bash
+AI_EVAL_CASE_LEVEL=all node --env-file=.env .github/scripts/ai_generation_eval.mjs
+```
+
+5. 本地做一轮禁用 tools 的对照基线（不建议放 CI）：
+
+```bash
+AI_EVAL_USE_TOOLS=false node --env-file=.env .github/scripts/ai_generation_eval.mjs
+```
+
+可选环境变量：
+
+- `AI_EVAL_SUITES`：要执行的套件（`all` / `filter,regex,naming,rule,script`）
+- `AI_EVAL_CASE_LEVEL`：用例分层（`basic` / `extended` / `all`，默认 `basic`）
+- `AI_EVAL_CASES_DIR`：用例目录（默认 `.github/evals`）
+- `AI_EVAL_REPORT_PATH`：报告输出路径（默认 `ai_eval_report.json`）
+- `AI_EVAL_USE_TOOLS`：是否使用 tools（默认 `true`）
+- `AI_EVAL_PASS_RATE_THRESHOLD`：成功率阈值（0~1，`basic` 默认 `0.95`）
+- `AI_EVAL_FAIL_ON_INFRA`：是否将 `infra_error` 作为门禁失败（默认 `false`）
+- `AI_EVAL_MAX_RETRIES`：单用例最大重试次数（默认 `0`）
+
+分层策略建议（业界常见）：
+
+- `basic`：PR/日常提交必跑，保持分钟级反馈
+- `all`：夜间定时、发版前、模型/提示词大改后执行
+- `extended`：用于专项排查（只跑深水区样例）
+
+命名助手说明：
+
+- 当前主链路是规则编辑器 `BasicInfo` 内的“一键自动命名”
+- `naming_cases.json` 使用 `config` 字段构造与线上一致的输入（而非自由文本提问）

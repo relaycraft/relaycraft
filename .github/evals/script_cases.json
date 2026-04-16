@@ -1,0 +1,38 @@
+[
+  {
+    "id": "add_auth_header",
+    "tier": "basic",
+    "input": "给发往 api.example.com 的请求统一添加 Authorization: Bearer demo-token 头",
+    "mustContain": ["authorization", "demo-token"]
+  },
+  {
+    "id": "block_login_path",
+    "tier": "basic",
+    "input": "阻断所有包含 /login 的请求并记录日志",
+    "mustContain": ["/login", "ctx.log"]
+  },
+  {
+    "id": "mock_500_response",
+    "tier": "basic",
+    "input": "对 /api/user 响应模拟500错误，返回 Internal Error 文本",
+    "mustContain": ["/api/user", "500", "internal error"]
+  },
+  {
+    "id": "rewrite_resp_header_cache",
+    "tier": "extended",
+    "input": "把 /assets 响应的 cache-control 改成 no-store",
+    "mustContain": ["/assets", "cache-control", "no-store"]
+  },
+  {
+    "id": "inject_trace_header",
+    "tier": "extended",
+    "input": "给所有请求注入 x-trace-id 请求头并输出日志",
+    "mustContain": ["x-trace-id", "ctx.log"]
+  },
+  {
+    "id": "mock_json_response",
+    "tier": "extended",
+    "input": "对 /health 请求直接返回 200 和 JSON body {\"ok\":true}",
+    "mustContain": ["/health", "200", "ok"]
+  }
+]
