@@ -71,6 +71,13 @@ export interface AIMessage {
   content: string;
 }
 
+export interface AIToolMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content?: string;
+  name?: string;
+  tool_call_id?: string;
+}
+
 export interface AISettings {
   enabled: boolean;
   provider: string;
@@ -83,10 +90,62 @@ export interface AISettings {
   maxHistoryMessages: number;
 }
 
+export interface FunctionParameter {
+  type?: "string" | "number" | "boolean" | "object" | "array";
+  description?: string;
+  enum?: string[];
+  properties?: Record<string, FunctionParameter>;
+  required?: string[];
+  items?: FunctionParameter;
+  minimum?: number;
+  maximum?: number;
+}
+
+export interface FunctionDefinition {
+  name: string;
+  description: string;
+  parameters: {
+    type: "object";
+    properties: Record<string, FunctionParameter>;
+    required?: string[];
+  };
+}
+
+export interface Tool {
+  type: "function";
+  function: FunctionDefinition;
+}
+
+export type ToolChoice = "auto" | { type: "function"; function: { name: string } };
+
+export interface ToolCall {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export interface ToolCompletionResult {
+  content?: string | null;
+  tool_calls?: ToolCall[] | null;
+}
+
+export interface StreamingToolCall {
+  index: number;
+  id?: string;
+  function?: {
+    name?: string;
+    arguments?: string;
+  };
+}
+
 export interface ChatCompletionChunk {
   choices: {
     delta: {
       content?: string;
+      tool_calls?: StreamingToolCall[];
     };
     finish_reason?: string;
   }[];

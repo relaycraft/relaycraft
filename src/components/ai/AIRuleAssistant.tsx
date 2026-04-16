@@ -15,9 +15,18 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { buildAIContext } from "../../lib/ai/contextBuilder";
+import {
+  classifyAIError,
+  composeActionableMessage,
+  toUserActionableMessage,
+} from "../../lib/ai/errorClassifier";
 import { getAILanguageInfo } from "../../lib/ai/lang";
+import { trackAIToolPath } from "../../lib/ai/metrics";
 import { PROXY_RULE_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { mapAIRuleToInternal } from "../../lib/ai/ruleMapper";
+import { parseToolCallArgs } from "../../lib/ai/toolArgs";
+import { RULE_GENERATION_TOOLS } from "../../lib/ai/tools";
+import { Logger } from "../../lib/logger";
 import { generateScriptFromRule } from "../../lib/scriptGenerator";
 import { parseYAML, stringifyYAML, validateRuleSchema } from "../../lib/yamlParser";
 import { useAIStore } from "../../stores/aiStore";
@@ -113,7 +122,7 @@ export function AIRuleAssistant({
         }
         setScriptName(name);
       } catch (e) {
-        console.error("Failed to generate script", e);
+        Logger.error("Failed to generate script", e);
       }
     }
   }, [mode, initialRule, scriptContent]);
@@ -168,7 +177,8 @@ export function AIRuleAssistant({
     setDetectedIntent("unknown");
 
     try {
-      const { chatCompletionStream } = useAIStore.getState();
+      const { chatCompletionStream, chatCompletionWithTools } = useAIStore.getState();
+      let fallbackDetail = "tool_empty";
       // Build fresh context including active rules
       const context = buildAIContext();
       const contextString = JSON.stringify(context, null, 2);
@@ -196,6 +206,55 @@ export function AIRuleAssistant({
 
       const userMsg = { role: "user" as const, content: finalPrompt };
 
+      // Function-calling fast path: structured result first, legacy streaming fallback second.
+      try {
+        const toolResult = await chatCompletionWithTools(
+          [systemMsg, userMsg],
+          RULE_GENERATION_TOOLS,
+          "auto",
+          0,
+        );
+
+        const firstToolCall = toolResult.tool_calls?.[0];
+        const parsedRuleArgs = parseToolCallArgs(firstToolCall, "generate_rule");
+        if (parsedRuleArgs) {
+          trackAIToolPath({ feature: "rule_assistant_generate", outcome: "tool_success" });
+          const internalRule = mapAIRuleToInternal(parsedRuleArgs);
+          setDetectedIntent("rule");
+          setPreview(internalRule);
+          setYamlErrors([]);
+          setYamlContent(stringifyYAML(internalRule));
+          setExplanation(null);
+          return;
+        }
+
+        const parsedExplainArgs = parseToolCallArgs(firstToolCall, "explain_rule");
+        if (parsedExplainArgs) {
+          trackAIToolPath({ feature: "rule_assistant_generate", outcome: "tool_success" });
+          const message =
+            parsedExplainArgs.message || toolResult.content || t("rules.editor.ai.generate_fail");
+          setDetectedIntent("explain");
+          setYamlErrors([]);
+          setPreview(null);
+          setExplanation(message);
+          return;
+        }
+      } catch (toolError) {
+        // Keep backward compatibility: if structured mode fails, continue with legacy parsing path.
+        fallbackDetail = "tool_error";
+        console.warn("Rule function-calling failed, fallback to legacy stream mode", toolError);
+        trackAIToolPath({
+          feature: "rule_assistant_generate",
+          outcome: "tool_error",
+          detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+        });
+      }
+
+      trackAIToolPath({
+        feature: "rule_assistant_generate",
+        outcome: "fallback_stream",
+        detail: fallbackDetail,
+      });
       let fullResponse = "";
       let currentDetectedIntent: "explain" | "rule" | "unknown" = "unknown";
 
@@ -254,6 +313,7 @@ export function AIRuleAssistant({
 
       // AI output should be JSON or contains JSON. Extract it.
       let jsonString = "";
+      let streamParseError: unknown = null;
 
       // 1. Try to find JSON in markdown code blocks first (highest priority)
       const codeBlockMatch = fullResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
@@ -266,7 +326,6 @@ export function AIRuleAssistant({
           // This is likely an explanation. We can extract it directly to avoid parsing issues.
           const content = msgMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
           setExplanation(content);
-          setGenerating(false);
           return;
         }
 
@@ -376,6 +435,7 @@ export function AIRuleAssistant({
           }
         } catch (e) {
           console.warn("Failed to parse extracted JSON", e, "Raw string:", jsonString);
+          streamParseError = e;
         }
       }
 
@@ -386,15 +446,15 @@ export function AIRuleAssistant({
         setYamlContent(fullResponse);
         setMode("yaml");
         setExplanation(null);
-        setYamlErrors([
-          `${t("rules.editor.ai.generate_fail")}: ${t("rules.editor.ai.parse_error_hint")}`,
-        ]);
+        const parseHint = `${t("rules.editor.ai.generate_fail")}: ${t("rules.editor.ai.parse_error_hint")}`;
+        setYamlErrors([composeActionableMessage(parseHint, streamParseError)]);
       } else if (!preview) {
         setExplanation(fullResponse);
       }
     } catch (error) {
-      console.error("AI Rule Generation failed", error);
-      setYamlErrors([t("rules.editor.ai.generate_fail")]);
+      Logger.error("AI Rule Generation failed", error);
+      const errorInfo = classifyAIError(error);
+      setYamlErrors([toUserActionableMessage(errorInfo)]);
     } finally {
       setGenerating(false);
     }
@@ -487,7 +547,7 @@ export function AIRuleAssistant({
             onClose();
           }
         } catch (error) {
-          console.error("Failed to create script:", error);
+          Logger.error("Failed to create script:", error);
           alert(`Failed to create script: ${error}`);
         }
       },

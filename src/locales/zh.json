@@ -39,6 +39,12 @@
         "title": "智能搜索助手"
       }
     },
+    "errors": {
+      "aborted": "请求已取消。请重新执行命令。",
+      "network_failure": "网络连接异常。请检查网络与代理设置后重试。",
+      "execution_failure": "AI 返回结果不可执行。建议重试，或使用更明确的指令。",
+      "generic_failure": "AI 命令执行失败。请稍后重试，或到设置页检查 AI 配置。"
+    },
     "clear_memory": "清空对话记忆",
     "connection": {
       "failure": "连接失败，请检查运行日志",

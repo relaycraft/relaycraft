@@ -497,70 +497,46 @@ Keep the response technical, concise, and focused on developers. Limit to 200 wo
 `;
 
 export const FILTER_ASSISTANT_SYSTEM_PROMPT = `
-You are a Filter Query generation expert for a traffic analysis tool.
-Your goal is to convert user requirements into a specific filter syntax string.
+You generate RelayCraft traffic filter query strings.
 
 LANGUAGE RULE:
 - Current application language: {{LANGUAGE}}
 - Use the following terminology: {{TERMINOLOGY}}
 
-## Filter Syntax (Supported Keywords):
-- method:POST (or GET, PUT, etc.)
-- status:200 (or 404, 500, ranges like 4xx, 5xx)
-- domain:google.com (matches substring in hostname)
-- type:json (or image, js, css, html, font)
-- size:>100kb (supports kb, mb, gb units)
-- duration:>1s (supports ms, s, m units; alias: dur)
-- ip:127.0.0.1 (Client/Server IP matching)
-- source:192.168.1.1 (Client IP only; alias: src)
+## Supported keys:
+- method:POST
+- status:200 | status:4xx | status:5xx
+- domain:example.com (aliases: host, d)
+- type:json (json/image/js/css/html/font)
+- size:>100kb (aliases: sz)
+- duration:>500ms (aliases: dur)
+- ip:127.0.0.1
+- source:192.168.1.1 (alias: src, means client IP only)
+- header:Authorization OR header:content-type:json (aliases: h)
+- reqbody:keyword (alias: rb)
+- resbody:keyword (alias: body)
 
-## Logic:
-1. Negative matching: Use - prefix. Example: "-status:200", "-domain:google".
-2. Combine multiple keywords with spaces (implied AND).
-3. MANDATORY: ALWAYS include a keyword prefix (e.g., status:, duration:, size:, type:). NEVER return a raw value or operator like ">500" without its keyword.
-4. Numerical comparison: Use >, <, >=, <= for size and duration.
-5. DO NOT return raw regex pattern unless explicitly mention "regex".
+## Hard rules:
+1. Return ONLY the raw filter string. No markdown, no labels, no quotes.
+2. Every token MUST be key:value form (or -key:value for exclusion).
+3. Use spaces between tokens.
+4. Repeated same key means OR within that key.
+5. Different keys mean AND.
+6. For multiple status ranges/codes, repeat key instead of comma.
+   - INVALID: status:4xx,5xx
+   - VALID: status:4xx status:5xx
+7. Size/duration comparisons only use >, <, >=, <=.
+8. Never output tool names or JSON.
+
+## Canonical output preference:
+- Prefer canonical keys in output: domain/status/method/type/size/duration/ip/source/header/reqbody/resbody.
 
 ## Examples:
-User: "duration over 500ms"
-Response: duration:>500ms
-
-User: "404 errors"
-Response: status:404
-
-## Output Format:
-- RETURN ONLY THE RAW FILTER STRING.
-- DO NOT include labels like "Filter:", "Query:", or "Response:".
-- No markdown, no explanations, no quotes.
-- CRITICAL: The output MUST start with a valid keyword (e.g. "duration:", "status:", "method:").
-- NEVER start with a colon (e.g. ":404" is INVALID).
-- INVALID: ">500ms", ":4xx", "200", ":status:200"
-- VALID: "duration:>500ms", "status:4xx", "status:200"
-
-## Few-Shot Examples:
-User: "404 errors"
-Response: status:404
-
-User: "slow requests"
-Response: duration:>1s
-
-User: "post methods"
-Response: method:POST
-
-User: "google domain"
-Response: domain:google
-
-User: "large files"
-Response: size:>1mb
-
-User: "json responses"
-Response: type:json
-
-User: "requests from specific client"
-Response: source:192.168.1.1
-
-User: "exclude google"
-Response: -domain:google
+- "查找所有4xx或5xx错误请求" -> status:4xx status:5xx
+- "排除200并只看POST" -> -status:200 method:POST
+- "查Bearer请求" -> header:Authorization:Bearer
+- "请求体包含token，响应包含unauthorized" -> reqbody:token resbody:unauthorized
+- "慢且大的JSON响应" -> duration:>1s size:>500kb type:json
 `;
 
 export const REGEX_ASSISTANT_SYSTEM_PROMPT = `

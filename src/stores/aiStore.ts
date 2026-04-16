@@ -2,7 +2,16 @@ import { Channel, invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { buildAIContext } from "../lib/ai/contextBuilder";
 import { Logger } from "../lib/logger";
-import type { AIContext, AIMessage, AISettings, ChatCompletionChunk } from "../types/ai";
+import type {
+  AIContext,
+  AIMessage,
+  AISettings,
+  AIToolMessage,
+  ChatCompletionChunk,
+  Tool,
+  ToolChoice,
+  ToolCompletionResult,
+} from "../types/ai";
 
 interface AIStore {
   settings: AISettings;
@@ -27,6 +36,21 @@ interface AIStore {
   chatCompletionStream: (
     messages: AIMessage[],
     onChunk: (content: string) => void,
+    temperature?: number,
+    signal?: AbortSignal,
+  ) => Promise<void>;
+  chatCompletionWithTools: (
+    messages: AIToolMessage[],
+    tools: Tool[],
+    toolChoice?: ToolChoice,
+    temperature?: number,
+    signal?: AbortSignal,
+  ) => Promise<ToolCompletionResult>;
+  chatCompletionStreamWithTools: (
+    messages: AIToolMessage[],
+    tools: Tool[],
+    onChunk: (chunk: ChatCompletionChunk) => void,
+    toolChoice?: ToolChoice,
     temperature?: number,
     signal?: AbortSignal,
   ) => Promise<void>;
@@ -190,6 +214,93 @@ export const useAIStore = create<AIStore>((set, get) => {
           return;
         }
         console.error("AI streaming failed:", error);
+        throw error;
+      }
+    },
+
+    chatCompletionWithTools: async (messages, tools, toolChoice, temperature, signal) => {
+      const context = get().context;
+      const finalMessages = messages.map((m) => ({ ...m }));
+
+      if (context) {
+        const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
+        if (finalMessages.length > 0 && finalMessages[0].role === "system") {
+          finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;
+        } else {
+          finalMessages.unshift({
+            role: "system",
+            content: `Current System Context: ${contextPrompt}`,
+          });
+        }
+      }
+
+      if (signal?.aborted) throw new Error("Aborted");
+
+      try {
+        const response = await invoke<ToolCompletionResult>("ai_chat_completion_with_tools", {
+          messages: finalMessages,
+          tools,
+          toolChoice: toolChoice ?? null,
+          temperature: temperature ?? null,
+        });
+
+        if (signal?.aborted) throw new Error("Aborted");
+        return response;
+      } catch (error) {
+        if (signal?.aborted || (error instanceof Error && error.message === "Aborted")) {
+          Logger.info("AI tool completion aborted");
+          throw new Error("Aborted");
+        }
+        console.error("AI tool completion failed:", error);
+        throw error;
+      }
+    },
+
+    chatCompletionStreamWithTools: async (
+      messages,
+      tools,
+      onChunk,
+      toolChoice,
+      temperature,
+      signal,
+    ) => {
+      const context = get().context;
+      const finalMessages = messages.map((m) => ({ ...m }));
+
+      if (context) {
+        const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
+        if (finalMessages.length > 0 && finalMessages[0].role === "system") {
+          finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;
+        } else {
+          finalMessages.unshift({
+            role: "system",
+            content: `Current System Context: ${contextPrompt}`,
+          });
+        }
+      }
+
+      if (signal?.aborted) return;
+
+      const on_chunk = new Channel<ChatCompletionChunk>();
+      on_chunk.onmessage = (chunk) => {
+        if (signal?.aborted) return;
+        onChunk(chunk);
+      };
+
+      try {
+        await invoke("ai_chat_completion_stream_with_tools", {
+          messages: finalMessages,
+          tools,
+          toolChoice: toolChoice ?? null,
+          temperature: temperature ?? null,
+          onChunk: on_chunk,
+        });
+      } catch (error) {
+        if (signal?.aborted) {
+          Logger.info("AI tool stream aborted");
+          return;
+        }
+        console.error("AI tool streaming failed:", error);
         throw error;
       }
     },

@@ -39,6 +39,12 @@
         "title": "Smart Search Assistant"
       }
     },
+    "errors": {
+      "aborted": "Request was canceled. Please run the command again.",
+      "network_failure": "Network connection issue. Please check network or proxy settings and retry.",
+      "execution_failure": "AI response is not executable. Please retry or use a more explicit instruction.",
+      "generic_failure": "AI command failed. Please retry later, or check AI settings."
+    },
     "clear_memory": "Clear Memory",
     "connection": {
       "failure": "Connection failed, check logs",

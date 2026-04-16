@@ -11,8 +11,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { classifyAIError, toUserActionableMessage } from "../../../lib/ai/errorClassifier";
 import { getAILanguageInfo } from "../../../lib/ai/lang";
+import { trackAIToolPath } from "../../../lib/ai/metrics";
 import { NAMING_ASSISTANT_SYSTEM_PROMPT } from "../../../lib/ai/prompts";
+import { parseToolCallArgs } from "../../../lib/ai/toolArgs";
+import { NAMING_GENERATION_TOOLS } from "../../../lib/ai/tools";
 import { cleanAIResult } from "../../../lib/ai/utils";
 import { Logger } from "../../../lib/logger";
 import { getRuleTypeTheme } from "../../../lib/ruleTypeTheme";
@@ -50,14 +54,17 @@ export function BasicInfo({
 }: BasicInfoProps) {
   const { t } = useTranslation();
   const { groups } = useRuleStore();
-  const { chatCompletionStream, settings: aiSettings } = useAIStore();
+  const { chatCompletionStream, chatCompletionWithTools, settings: aiSettings } = useAIStore();
   const [isGeneratingName, setIsGeneratingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const handleAutoName = async () => {
     if (isGeneratingName) return;
     setIsGeneratingName(true);
+    setNameError(null);
 
     try {
+      let fallbackDetail = "tool_empty";
       const langInfo = getAILanguageInfo();
 
       const systemMsg = {
@@ -78,6 +85,48 @@ export function BasicInfo({
         })}`,
       };
 
+      try {
+        const toolResult = await chatCompletionWithTools(
+          [systemMsg, userMsg],
+          NAMING_GENERATION_TOOLS,
+          { type: "function", function: { name: "generate_name" } },
+          0,
+        );
+        const firstToolCall = toolResult.tool_calls?.[0];
+        const parsedArgs = parseToolCallArgs(firstToolCall, "generate_name");
+        if (parsedArgs) {
+          trackAIToolPath({ feature: "rule_basicinfo_naming", outcome: "tool_success" });
+          const cleaned = cleanAIResult(parsedArgs.name)
+            .replace(/^["']|["']$/g, "")
+            .replace(/\.$/, "");
+          onChangeName(cleaned);
+          setNameError(null);
+          return;
+        }
+        if (toolResult.content?.trim()) {
+          trackAIToolPath({ feature: "rule_basicinfo_naming", outcome: "tool_success" });
+          const cleaned = cleanAIResult(toolResult.content)
+            .replace(/^["']|["']$/g, "")
+            .replace(/\.$/, "");
+          onChangeName(cleaned);
+          setNameError(null);
+          return;
+        }
+      } catch (toolError) {
+        fallbackDetail = "tool_error";
+        Logger.warn("Naming function-calling failed, fallback to stream mode", toolError);
+        trackAIToolPath({
+          feature: "rule_basicinfo_naming",
+          outcome: "tool_error",
+          detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+        });
+      }
+
+      trackAIToolPath({
+        feature: "rule_basicinfo_naming",
+        outcome: "fallback_stream",
+        detail: fallbackDetail,
+      });
       let fullName = "";
       await chatCompletionStream([systemMsg, userMsg], (chunk) => {
         fullName += chunk;
@@ -88,9 +137,12 @@ export function BasicInfo({
           .replace(/^["']|["']$/g, "")
           .replace(/\.$/, "");
         onChangeName(cleaned);
+        setNameError(null);
       }
     } catch (error) {
       Logger.error("Naming generation failed", error);
+      const errorInfo = classifyAIError(error);
+      setNameError(toUserActionableMessage(errorInfo));
     } finally {
       setIsGeneratingName(false);
     }
@@ -139,6 +191,9 @@ export function BasicInfo({
               )}
             </div>
           </div>
+          {nameError && (
+            <p className="text-xs text-destructive mt-1 leading-relaxed">{nameError}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">

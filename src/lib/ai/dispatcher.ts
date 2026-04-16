@@ -5,12 +5,15 @@ import { useUIStore } from "../../stores/uiStore";
 import type { AIMessage } from "../../types/ai";
 import { Logger } from "../logger";
 import { buildAIContext } from "./contextBuilder";
+import { classifyAIError } from "./errorClassifier";
 import { getAILanguageInfo } from "./lang";
+import { formatAIToolMetricsReport, trackAIToolPath } from "./metrics";
 import {
   CHAT_RESPONSE_SYSTEM_PROMPT,
   GLOBAL_COMMAND_SYSTEM_PROMPT,
   MITMPROXY_SYSTEM_PROMPT,
 } from "./prompts";
+import { COMMAND_DETECTION_TOOLS } from "./tools";
 
 /**
  * Robustly extracts a JSON object from a potentially messy string.
@@ -35,6 +38,43 @@ const extractJson = (text: string): CommandAction | null => {
     } catch (_e) {
       // fall through
     }
+  }
+
+  return null;
+};
+
+const VALID_INTENTS = [
+  "NAVIGATE",
+  "CREATE_RULE",
+  "CREATE_SCRIPT",
+  "TOGGLE_PROXY",
+  "OPEN_SETTINGS",
+  "GENERATE_REQUEST",
+  "CHAT",
+  "CLEAR_TRAFFIC",
+  "FILTER_TRAFFIC",
+] as const;
+
+const normalizeAction = (action: CommandAction): CommandAction => {
+  const normalizedIntent = (action.intent || "CHAT").toUpperCase();
+  if (!VALID_INTENTS.includes(normalizedIntent as (typeof VALID_INTENTS)[number])) {
+    return { ...action, intent: "CHAT" };
+  }
+  return { ...action, intent: normalizedIntent as CommandAction["intent"] };
+};
+
+const extractActionFromToolResult = (result: {
+  content?: string | null;
+  tool_calls?: { function: { arguments: string; name: string } }[] | null;
+}): CommandAction | null => {
+  const firstToolCall = result.tool_calls?.[0];
+  if (firstToolCall?.function?.arguments) {
+    const parsed = extractJson(firstToolCall.function.arguments);
+    if (parsed) return parsed;
+  }
+
+  if (result.content) {
+    return extractJson(result.content);
   }
 
   return null;
@@ -86,6 +126,15 @@ export async function dispatchCommand(
   const translate = t || ((s: string) => s);
   const cleanInput = input.trim();
   const cleanInputLower = cleanInput.toLowerCase();
+
+  if (cleanInputLower === "/ai-metrics") {
+    return {
+      intent: "CHAT",
+      params: { message: formatAIToolMetricsReport() },
+      confidence: 1.0,
+      explanation: "local_ai_metrics_report",
+    };
+  }
 
   // 1. 本地指令匹配 (Slash Commands & Shortcuts)
   const STATIC_COMMANDS: Record<string, CommandAction> = {
@@ -159,7 +208,13 @@ export async function dispatchCommand(
   }
 
   // 2. AI 是否启用检查
-  const { settings: aiSettings, chatCompletion, history, addMessage } = useAIStore.getState();
+  const {
+    settings: aiSettings,
+    chatCompletion,
+    chatCompletionWithTools,
+    history,
+    addMessage,
+  } = useAIStore.getState();
   if (!aiSettings.enabled) {
     return {
       intent: "CHAT",
@@ -186,35 +241,57 @@ export async function dispatchCommand(
   const userMsg: AIMessage = { role: "user" as const, content: input };
 
   try {
-    const intentResponse = await chatCompletion([intentSystemMsg, ...history, userMsg], 0, signal);
-    let action = extractJson(intentResponse);
+    let action: CommandAction | null = null;
+    let fallbackResponse = "";
+    let fallbackReason = "tool_empty";
+
+    try {
+      const toolResult = await chatCompletionWithTools(
+        [intentSystemMsg, ...history, userMsg],
+        COMMAND_DETECTION_TOOLS,
+        { type: "function", function: { name: "detect_intent" } },
+        0,
+        signal,
+      );
+      action = extractActionFromToolResult(toolResult);
+      if (action) {
+        trackAIToolPath({ feature: "command_dispatch", outcome: "tool_success" });
+      } else {
+        trackAIToolPath({
+          feature: "command_dispatch",
+          outcome: "tool_empty",
+          detail: "tool_result_not_parsable",
+        });
+      }
+    } catch (toolError) {
+      const errorInfo = classifyAIError(toolError);
+      Logger.warn("Intent tool-call failed, fallback to JSON mode", toolError);
+      trackAIToolPath({
+        feature: "command_dispatch",
+        outcome: "tool_error",
+        detail: `${errorInfo.kind}:${errorInfo.detail}`,
+      });
+      fallbackReason = errorInfo.kind;
+    }
+
+    if (!action) {
+      trackAIToolPath({
+        feature: "command_dispatch",
+        outcome: "fallback_json",
+        detail: fallbackReason,
+      });
+      fallbackResponse = await chatCompletion([intentSystemMsg, ...history, userMsg], 0, signal);
+      action = extractJson(fallbackResponse);
+    }
 
     if (!action) {
       action = {
         intent: "CHAT",
-        params: { message: intentResponse },
+        params: { message: fallbackResponse || input },
         confidence: 0.5,
       };
     } else {
-      // Robustness: ensure intent is always present and normalized
-      const validIntents = [
-        "NAVIGATE",
-        "CREATE_RULE",
-        "CREATE_SCRIPT",
-        "TOGGLE_PROXY",
-        "OPEN_SETTINGS",
-        "GENERATE_REQUEST",
-        "CHAT",
-        "CLEAR_TRAFFIC",
-        "FILTER_TRAFFIC",
-      ];
-      const normalizedIntent = (action.intent || "CHAT").toUpperCase();
-
-      if (!validIntents.includes(normalizedIntent)) {
-        action.intent = "CHAT";
-      } else {
-        action.intent = normalizedIntent as any;
-      }
+      action = normalizeAction(action);
     }
 
     // 两段式对话生成
@@ -225,8 +302,9 @@ export async function dispatchCommand(
     addMessage("user", input);
     return action;
   } catch (error) {
+    const errorInfo = classifyAIError(error);
     Logger.error("AI Recognition Failed", error);
-    throw error; // Propagate error to UI for better handling
+    throw new Error(`${errorInfo.kind}: ${errorInfo.detail}`); // Propagate classified error to UI
   }
 }
 

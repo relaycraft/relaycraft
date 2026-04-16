@@ -3,14 +3,19 @@ import { Bot, Check, Loader2, Wand2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
+import { classifyAIError, toUserActionableMessage } from "../../lib/ai/errorClassifier";
 import { getAILanguageInfo } from "../../lib/ai/lang";
+import { trackAIToolPath } from "../../lib/ai/metrics";
 import {
   getScriptExplanationPrompt,
   getScriptGenerationPrompt,
   MITMPROXY_SYSTEM_PROMPT,
   SCRIPT_EXPLAIN_SYSTEM_PROMPT,
 } from "../../lib/ai/prompts";
+import { parseToolCallArgs } from "../../lib/ai/toolArgs";
+import { SCRIPT_GENERATION_TOOLS } from "../../lib/ai/tools";
 import { stripThoughts } from "../../lib/ai/utils";
+import { Logger } from "../../lib/logger";
 import { useAIStore } from "../../stores/aiStore";
 import { useUIStore } from "../../stores/uiStore";
 import { AIMarkdown } from "./AIMarkdown";
@@ -84,6 +89,7 @@ export function AIScriptAssistant({
       const activePrompt = overridePrompt || prompt;
       if (generating || isGeneratingRef.current) return;
       if (mode === "generate" && !activePrompt) return;
+      let hasError = false;
 
       isGeneratingRef.current = true;
       setGenerating(true);
@@ -92,7 +98,8 @@ export function AIScriptAssistant({
       setTempCode(null);
 
       try {
-        const { chatCompletionStream } = useAIStore.getState();
+        let fallbackDetail = "tool_empty";
+        const { chatCompletionStream, chatCompletionWithTools } = useAIStore.getState();
         let systemMsg: { role: "system"; content: string };
         let userMsg: { role: "user"; content: string };
         const langInfo = getAILanguageInfo();
@@ -128,6 +135,45 @@ export function AIScriptAssistant({
           };
         }
 
+        if (mode === "generate") {
+          try {
+            const toolResult = await chatCompletionWithTools(
+              [systemMsg, userMsg],
+              SCRIPT_GENERATION_TOOLS,
+              { type: "function", function: { name: "generate_script" } },
+              0,
+            );
+
+            const firstToolCall = toolResult.tool_calls?.[0];
+            const parsedArgs = parseToolCallArgs(firstToolCall, "generate_script");
+            if (parsedArgs) {
+              trackAIToolPath({ feature: "script_assistant_generate", outcome: "tool_success" });
+              setTempCode(parsedArgs.code);
+              onApply(parsedArgs.code);
+              setExplanation("");
+              return;
+            }
+          } catch (toolError) {
+            fallbackDetail = "tool_error";
+            console.warn(
+              "Script function-calling failed, fallback to legacy stream extraction",
+              toolError,
+            );
+            trackAIToolPath({
+              feature: "script_assistant_generate",
+              outcome: "tool_error",
+              detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+            });
+          }
+        }
+
+        if (mode === "generate") {
+          trackAIToolPath({
+            feature: "script_assistant_generate",
+            outcome: "fallback_stream",
+            detail: fallbackDetail,
+          });
+        }
         let fullResponse = "";
         await chatCompletionStream(
           [systemMsg, userMsg],
@@ -142,19 +188,22 @@ export function AIScriptAssistant({
           0,
         );
       } catch (error) {
-        console.error("AI Generation failed", error);
+        Logger.error("AI Generation failed", error);
+        hasError = true;
+        const errorInfo = classifyAIError(error);
+        setExplanation(toUserActionableMessage(errorInfo));
       } finally {
         isGeneratingRef.current = false;
         setGenerating(false);
         // If we were in generate mode, clear the explanation so the suggestions footer reappears
         // and the "ghost" text is definitely gone.
-        if (mode === "generate") {
+        if (mode === "generate" && !hasError) {
           setExplanation("");
           setGenMode(null);
         }
       }
     },
-    [generating, prompt, currentCode, t],
+    [generating, prompt, currentCode, t, onApply],
   );
 
   useEffect(() => {

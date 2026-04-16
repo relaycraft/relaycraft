@@ -2,14 +2,23 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Bot, Loader2, Sparkles, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { classifyAIError, toUserActionableMessage } from "../../lib/ai/errorClassifier";
 import { getAILanguageInfo } from "../../lib/ai/lang";
+import { trackAIToolPath } from "../../lib/ai/metrics";
 import {
   FILTER_ASSISTANT_SYSTEM_PROMPT,
   NAMING_ASSISTANT_SYSTEM_PROMPT,
   REGEX_ASSISTANT_SYSTEM_PROMPT,
   REGEX_EXPLAIN_SYSTEM_PROMPT,
 } from "../../lib/ai/prompts";
-import { cleanAIResult } from "../../lib/ai/utils";
+import { parseToolCallArgs } from "../../lib/ai/toolArgs";
+import {
+  FILTER_GENERATION_TOOLS,
+  NAMING_GENERATION_TOOLS,
+  REGEX_EXPLAIN_TOOLS,
+  REGEX_GENERATION_TOOLS,
+} from "../../lib/ai/tools";
+import { cleanAIResult, normalizeFilterQuery } from "../../lib/ai/utils";
 import { Logger } from "../../lib/logger";
 import { useAIStore } from "../../stores/aiStore";
 import { useUIStore } from "../../stores/uiStore";
@@ -34,7 +43,12 @@ export function AIAssistant({
   align = "right",
 }: AIAssistantProps) {
   const { t } = useTranslation();
-  const { chatCompletionStream, abortChat, settings: aiSettings } = useAIStore();
+  const {
+    chatCompletionStream,
+    chatCompletionWithTools,
+    abortChat,
+    settings: aiSettings,
+  } = useAIStore();
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,6 +89,7 @@ export function AIAssistant({
     }
 
     try {
+      let fallbackDetail = "tool_empty";
       const systemPrompt = {
         naming: NAMING_ASSISTANT_SYSTEM_PROMPT,
         filter: FILTER_ASSISTANT_SYSTEM_PROMPT,
@@ -101,6 +116,116 @@ export function AIAssistant({
 
       const userMsg = { role: "user" as const, content: userContent };
 
+      if (mode === "filter") {
+        try {
+          const toolResult = await chatCompletionWithTools(
+            [systemMsg, userMsg],
+            FILTER_GENERATION_TOOLS,
+            { type: "function", function: { name: "generate_filter" } },
+            0,
+          );
+
+          const firstToolCall = toolResult.tool_calls?.[0];
+          const parsedArgs = parseToolCallArgs(firstToolCall, "generate_filter");
+          if (parsedArgs) {
+            trackAIToolPath({ feature: "assistant_filter_generate", outcome: "tool_success" });
+            onGenerate(normalizeFilterQuery(parsedArgs.filter));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+
+          if (toolResult.content?.trim()) {
+            trackAIToolPath({ feature: "assistant_filter_generate", outcome: "tool_success" });
+            onGenerate(normalizeFilterQuery(toolResult.content));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+        } catch (toolError) {
+          fallbackDetail = "tool_error";
+          Logger.warn("Filter function-calling failed, fallback to stream mode", toolError);
+          trackAIToolPath({
+            feature: "assistant_filter_generate",
+            outcome: "tool_error",
+            detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+          });
+        }
+      }
+
+      if (mode === "regex") {
+        try {
+          const toolResult = await chatCompletionWithTools(
+            [systemMsg, userMsg],
+            REGEX_GENERATION_TOOLS,
+            { type: "function", function: { name: "generate_regex" } },
+            0,
+          );
+
+          const firstToolCall = toolResult.tool_calls?.[0];
+          const parsedArgs = parseToolCallArgs(firstToolCall, "generate_regex");
+          if (parsedArgs) {
+            trackAIToolPath({ feature: "assistant_regex_generate", outcome: "tool_success" });
+            onGenerate(cleanAIResult(parsedArgs.pattern));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+
+          if (toolResult.content?.trim()) {
+            trackAIToolPath({ feature: "assistant_regex_generate", outcome: "tool_success" });
+            onGenerate(cleanAIResult(toolResult.content));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+        } catch (toolError) {
+          fallbackDetail = "tool_error";
+          Logger.warn("Regex function-calling failed, fallback to stream mode", toolError);
+          trackAIToolPath({
+            feature: "assistant_regex_generate",
+            outcome: "tool_error",
+            detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+          });
+        }
+      }
+
+      if (mode === "naming") {
+        try {
+          const toolResult = await chatCompletionWithTools(
+            [systemMsg, userMsg],
+            NAMING_GENERATION_TOOLS,
+            { type: "function", function: { name: "generate_name" } },
+            0,
+          );
+
+          const firstToolCall = toolResult.tool_calls?.[0];
+          const parsedArgs = parseToolCallArgs(firstToolCall, "generate_name");
+          if (parsedArgs) {
+            trackAIToolPath({ feature: "assistant_naming_generate", outcome: "tool_success" });
+            onGenerate(cleanAIResult(parsedArgs.name));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+
+          if (toolResult.content?.trim()) {
+            trackAIToolPath({ feature: "assistant_naming_generate", outcome: "tool_success" });
+            onGenerate(cleanAIResult(toolResult.content));
+            setTimeout(() => setIsOpen(false), 200);
+            return;
+          }
+        } catch (toolError) {
+          fallbackDetail = "tool_error";
+          Logger.warn("Naming function-calling failed, fallback to stream mode", toolError);
+          trackAIToolPath({
+            feature: "assistant_naming_generate",
+            outcome: "tool_error",
+            detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+          });
+        }
+      }
+
+      trackAIToolPath({
+        feature: `assistant_${mode}_generate`,
+        outcome: "fallback_stream",
+        detail: fallbackDetail,
+      });
       let fullResult = "";
       await chatCompletionStream([systemMsg, userMsg], (chunk) => {
         fullResult += chunk;
@@ -108,13 +233,17 @@ export function AIAssistant({
       });
 
       if (fullResult) {
-        const cleaned = cleanAIResult(fullResult);
+        const cleaned =
+          mode === "filter" ? normalizeFilterQuery(fullResult) : cleanAIResult(fullResult);
         onGenerate(cleaned);
         // For naming/regex/filter, we close after applying unless it's an explanation
         setTimeout(() => setIsOpen(false), 200);
       }
     } catch (error) {
       Logger.error("Assistant generation failed", error);
+      const errorInfo = classifyAIError(error);
+      setView("explanation");
+      setContent(toUserActionableMessage(errorInfo));
     } finally {
       setLoading(false);
     }
@@ -126,6 +255,7 @@ export function AIAssistant({
     setContent("");
     setView("explanation");
     try {
+      let fallbackDetail = "tool_empty";
       const langInfo = getAILanguageInfo();
 
       const systemMsg = {
@@ -143,14 +273,52 @@ export function AIAssistant({
         content: `Please explain this content: ${value}`,
       };
 
+      try {
+        const toolResult = await chatCompletionWithTools(
+          [systemMsg, userMsg],
+          REGEX_EXPLAIN_TOOLS,
+          { type: "function", function: { name: "explain_regex" } },
+          0,
+        );
+        const firstToolCall = toolResult.tool_calls?.[0];
+        const parsedArgs = parseToolCallArgs(firstToolCall, "explain_regex");
+        if (parsedArgs) {
+          trackAIToolPath({ feature: "assistant_regex_explain", outcome: "tool_success" });
+          setContent(parsedArgs.explanation);
+          return;
+        }
+        if (toolResult.content?.trim()) {
+          trackAIToolPath({ feature: "assistant_regex_explain", outcome: "tool_success" });
+          setContent(toolResult.content);
+          return;
+        }
+      } catch (toolError) {
+        fallbackDetail = "tool_error";
+        Logger.warn(
+          "Regex explanation function-calling failed, fallback to stream mode",
+          toolError,
+        );
+        trackAIToolPath({
+          feature: "assistant_regex_explain",
+          outcome: "tool_error",
+          detail: toolError instanceof Error ? toolError.message : "unknown_tool_error",
+        });
+      }
+
+      trackAIToolPath({
+        feature: "assistant_regex_explain",
+        outcome: "fallback_stream",
+        detail: fallbackDetail,
+      });
       let fullResult = "";
       await chatCompletionStream([systemMsg, userMsg], (chunk) => {
         fullResult += chunk;
         setContent(fullResult);
       });
     } catch (error) {
-      console.error("Assistant explanation failed", error);
-      setContent("Failed to generate explanation.");
+      Logger.error("Assistant explanation failed", error);
+      const errorInfo = classifyAIError(error);
+      setContent(toUserActionableMessage(errorInfo));
     } finally {
       setLoading(false);
     }

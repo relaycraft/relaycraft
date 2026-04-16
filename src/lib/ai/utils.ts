@@ -33,3 +33,63 @@ export function cleanAIResult(content: string): string {
     .replace(/^(filter|query|search|response|result|answer|output|pattern|regex):\s*/i, "") // Remove common labels safely
     .trim();
 }
+
+/**
+ * Normalize generated filter query for known model mistakes.
+ * This is intentionally conservative and only rewrites clearly supported patterns.
+ */
+export function normalizeFilterQuery(content: string): string {
+  const cleaned = cleanAIResult(content);
+  if (!cleaned) return "";
+
+  const aliasMap: Record<string, string> = {
+    host: "domain",
+    d: "domain",
+    s: "status",
+    m: "method",
+    t: "type",
+    h: "header",
+    rb: "reqbody",
+    body: "resbody",
+    src: "source",
+    dur: "duration",
+    sz: "size",
+  };
+
+  const out: string[] = [];
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  for (const token of tokens) {
+    const negative = token.startsWith("-") || token.startsWith("!");
+    const body = negative ? token.slice(1) : token;
+    const firstColon = body.indexOf(":");
+    if (firstColon === -1) {
+      out.push(token);
+      continue;
+    }
+
+    const rawKey = body.slice(0, firstColon).toLowerCase();
+    const value = body.slice(firstColon + 1).trim();
+    if (!value) continue;
+
+    const key = aliasMap[rawKey] || rawKey;
+    const prefix = negative ? "-" : "";
+
+    // Expand common status comma style to repeated tokens: status:4xx status:5xx
+    if (key === "status" && value.includes(",")) {
+      const values = value
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (values.length > 0) {
+        for (const item of values) {
+          out.push(`${prefix}${key}:${item}`);
+        }
+        continue;
+      }
+    }
+
+    out.push(`${prefix}${key}:${value}`);
+  }
+
+  return out.join(" ").trim();
+}

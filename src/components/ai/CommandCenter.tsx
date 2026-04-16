@@ -26,12 +26,16 @@ import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useSuggestionEngine } from "../../hooks/useSuggestionEngine";
 import { dispatchCommand } from "../../lib/ai/dispatcher";
+import { classifyAIError, toUserActionableMessage } from "../../lib/ai/errorClassifier";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FILTER_ASSISTANT_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { mapAIRuleToInternal } from "../../lib/ai/ruleMapper";
 import { SuggestionEngine } from "../../lib/ai/suggestionEngine";
-import { cleanAIResult } from "../../lib/ai/utils";
+import { parseToolCallArgs } from "../../lib/ai/toolArgs";
+import { FILTER_GENERATION_TOOLS } from "../../lib/ai/tools/filterTools";
+import { cleanAIResult, normalizeFilterQuery } from "../../lib/ai/utils";
 import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
+import { Logger } from "../../lib/logger";
 import { getUniqueName } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { type CommandAction, useCommandStore } from "../../stores/commandStore";
@@ -220,9 +224,9 @@ export function CommandCenter() {
         commandToRun.startsWith("/") ? commandToRun.split(" ")[0] : commandToRun,
       );
     } catch (error) {
-      console.error("Command failed", error);
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      setError(errorMsg);
+      Logger.error("Command failed", error);
+      const errorInfo = classifyAIError(error);
+      setError(toUserActionableMessage(errorInfo));
     } finally {
       setExecuting(false);
       abortControllerRef.current = null;
@@ -320,7 +324,7 @@ export function CommandCenter() {
         if (requirement) {
           setExecuting(true);
           try {
-            const { chatCompletion } = useAIStore.getState();
+            const { chatCompletion, chatCompletionWithTools } = useAIStore.getState();
             const langInfo = getAILanguageInfo();
             const systemMsg = {
               role: "system" as const,
@@ -330,11 +334,33 @@ export function CommandCenter() {
                 .replace(/{{CURRENT_FILTER}}/g, useTrafficStore.getState().filterText || "None"),
             };
             const userMsg = { role: "user" as const, content: requirement };
-            const result = await chatCompletion([systemMsg, userMsg]);
-            const cleaned = cleanAIResult(result);
+            let cleaned = "";
+            try {
+              const toolResult = await chatCompletionWithTools(
+                [systemMsg, userMsg],
+                FILTER_GENERATION_TOOLS,
+                { type: "function", function: { name: "generate_filter" } },
+                0,
+              );
+              const firstToolCall = toolResult.tool_calls?.[0];
+              const parsedArgs = parseToolCallArgs(firstToolCall, "generate_filter");
+              if (parsedArgs?.filter) {
+                cleaned = normalizeFilterQuery(parsedArgs.filter);
+              } else if (toolResult.content?.trim()) {
+                cleaned = normalizeFilterQuery(toolResult.content);
+              }
+            } catch {
+              const result = await chatCompletion([systemMsg, userMsg]);
+              cleaned = normalizeFilterQuery(result);
+            }
+
+            if (!cleaned) {
+              const result = await chatCompletion([systemMsg, userMsg]);
+              cleaned = normalizeFilterQuery(cleanAIResult(result));
+            }
             useUIStore.getState().setDraftTrafficFilter(cleaned);
           } catch (error) {
-            console.error("Filter generation failed", error);
+            Logger.error("Filter generation failed", error);
           } finally {
             setExecuting(false);
           }
@@ -362,6 +388,11 @@ export function CommandCenter() {
         }
         setActiveTab("composer");
         setIsOpen(false);
+        break;
+      case "CHAT":
+        if (typeof act.params?.message === "string" && act.params.message.trim().length > 0) {
+          setStreamingMessage(act.params.message);
+        }
         break;
       default:
         break;

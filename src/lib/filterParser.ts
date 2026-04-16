@@ -61,57 +61,120 @@ export function parseFilter(input: string): FilterCriteria {
         value = value.substring(1);
       }
 
-      const item: FilterItem = {
-        key,
-        value: value, // Retain case for sensitive searches
-        negative: isNegative,
-        operator,
-      };
-
       switch (key) {
         case "method":
         case "m":
-          criteria.method.push(item);
+          criteria.method.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "status":
         case "s":
-          criteria.status.push(item);
+          if (value.includes(",")) {
+            value
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean)
+              .forEach((statusValue) => {
+                criteria.status.push({
+                  key,
+                  value: statusValue,
+                  negative: isNegative,
+                  operator,
+                });
+              });
+          } else {
+            criteria.status.push({
+              key,
+              value, // Retain case for sensitive searches
+              negative: isNegative,
+              operator,
+            });
+          }
           break;
         case "domain":
         case "d":
         case "host":
-          criteria.domain.push(item);
+          criteria.domain.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "type":
         case "t":
-          criteria.type.push(item);
+          criteria.type.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "header":
         case "h":
-          criteria.header.push(item);
+          criteria.header.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "body":
         case "resbody":
-          criteria.body.push(item);
+          criteria.body.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "reqbody":
         case "rb":
-          criteria.reqbody.push(item);
+          criteria.reqbody.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "size":
         case "sz":
-          criteria.size.push(item);
+          criteria.size.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "duration":
         case "dur":
-          criteria.duration.push(item);
+          criteria.duration.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "ip":
-          criteria.ip.push(item);
+          criteria.ip.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         case "src":
         case "source":
-          criteria.source.push(item);
+          criteria.source.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
           break;
         default:
           criteria.text.push({
