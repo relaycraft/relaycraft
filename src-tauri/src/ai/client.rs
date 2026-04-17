@@ -510,11 +510,94 @@ impl AIClient {
             .clone()
             .unwrap_or_default())
     }
+
+    pub async fn test_stream_connection(&self) -> Result<String, AIError> {
+        let messages = vec![(
+            "user".to_string(),
+            "Reply with exactly: stream ok".to_string(),
+        )];
+
+        let mut stream = self.chat_completion_stream(messages, None).await?;
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result?;
+            let content = chunk
+                .choices
+                .first()
+                .and_then(|choice| choice.delta.content.clone());
+            if let Some(content) = content {
+                if !content.trim().is_empty() {
+                    return Ok(content);
+                }
+            }
+        }
+
+        Err(AIError::ParseError(
+            "Stream ended without content chunk".to_string(),
+        ))
+    }
+
+    pub async fn test_tools_connection(&self) -> Result<String, AIError> {
+        let messages = vec![ChatMessage {
+            role: "user".to_string(),
+            content: Some("Please call the tool once, then stop.".to_string()),
+            name: None,
+            tool_call_id: None,
+        }];
+        let tools = vec![Tool {
+            tool_type: "function".to_string(),
+            function: FunctionDefinition {
+                name: "ping".to_string(),
+                description: "Connectivity probe tool".to_string(),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "echo": { "type": "string" }
+                    },
+                    "required": ["echo"]
+                }),
+            },
+        }];
+
+        let response = self
+            .chat_completion_with_tools(
+                messages,
+                tools,
+                Some(ToolChoice::Mode("auto".to_string())),
+                None,
+            )
+            .await?;
+
+        extract_tools_probe_result(&response)
+    }
+
+}
+
+fn extract_tools_probe_result(response: &ChatCompletionResponse) -> Result<String, AIError> {
+    let choice = response
+        .choices
+        .first()
+        .ok_or_else(|| AIError::ParseError("AI returned empty choices".to_string()))?;
+
+    if let Some(tool_calls) = &choice.message.tool_calls {
+        if let Some(tool_call) = tool_calls.first() {
+            return Ok(format!("tool_call: {}", tool_call.function.name));
+        }
+    }
+
+    let content = choice.message.content.clone().unwrap_or_default();
+    Err(AIError::ParseError(format!(
+        "Tools probe did not return tool_calls. assistant_content={}",
+        content
+    )))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{drain_sse_events, parse_sse_event, ChatCompletionRequest, ChatMessage, ToolChoice};
+    use super::{
+        drain_sse_events, extract_tools_probe_result, parse_sse_event, ChatCompletionRequest,
+        ChatCompletionResponse, ChatMessage, Choice, FunctionCall, ResponseMessage, ToolCall,
+        ToolChoice,
+    };
 
     #[test]
     fn serializes_auto_tool_choice_as_string() {
@@ -554,5 +637,48 @@ mod tests {
             .expect("chunk should exist");
         assert_eq!(parsed.choices.len(), 1);
         assert_eq!(parsed.choices[0].delta.content.as_deref(), Some("hello"));
+    }
+
+    #[test]
+    fn tools_probe_requires_tool_calls() {
+        let response = ChatCompletionResponse {
+            choices: vec![Choice {
+                message: ResponseMessage {
+                    role: "assistant".to_string(),
+                    content: Some("I cannot call tools here".to_string()),
+                    tool_calls: None,
+                },
+                finish_reason: Some("stop".to_string()),
+            }],
+            usage: None,
+        };
+
+        let result = extract_tools_probe_result(&response);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tools_probe_succeeds_with_tool_calls() {
+        let response = ChatCompletionResponse {
+            choices: vec![Choice {
+                message: ResponseMessage {
+                    role: "assistant".to_string(),
+                    content: None,
+                    tool_calls: Some(vec![ToolCall {
+                        id: "call_1".to_string(),
+                        tool_type: "function".to_string(),
+                        function: FunctionCall {
+                            name: "ping".to_string(),
+                            arguments: "{\"echo\":\"ok\"}".to_string(),
+                        },
+                    }]),
+                },
+                finish_reason: Some("tool_calls".to_string()),
+            }],
+            usage: None,
+        };
+
+        let result = extract_tools_probe_result(&response).expect("tools probe should succeed");
+        assert_eq!(result, "tool_call: ping");
     }
 }

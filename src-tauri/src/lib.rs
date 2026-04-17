@@ -337,6 +337,8 @@ pub fn run() {
             ai::commands::load_ai_config,
             ai::commands::save_ai_config,
             ai::commands::test_ai_connection,
+            ai::commands::list_ai_profiles,
+            ai::commands::probe_ai_capabilities,
             ai::commands::ai_chat_completion,
             ai::commands::ai_chat_completion_with_tools,
             ai::commands::ai_chat_completion_stream,

@@ -47,12 +47,19 @@
     },
     "clear_memory": "Clear Memory",
     "connection": {
+      "checking": "Checking",
       "failure": "Connection failed, check logs",
+      "idle": "Not Tested",
       "placeholder_openai": "sk-...",
       "placeholder_optional": "Optional (if not required)",
+      "probe": "Probe Capabilities",
       "save": "Save Config",
       "success": "Connected",
       "test": "Test Connection"
+    },
+    "capabilities": {
+      "stream_tooltip": "Streaming is supported",
+      "tools_tooltip": "Tool calling is supported"
     },
     "enable": "Enable AI Features",
     "enable_desc": "Enable AI-powered script generation and rule creation",
@@ -63,18 +70,25 @@
     "memory_turns": "Memory Turns",
     "memory_turns_desc": "Number of recent turns AI will remember for context (Command Center only)",
     "model": "Model Name",
-    "model_desc": "e.g. gpt-5, qwen3-max, llama3",
+    "model_desc": "e.g. gpt-5, qwen3.6-plus, llama3",
+    "model_reset": "Reset Default",
     "provider": "API Provider",
     "provider_desc": "Select AI service provider",
+    "profile": "Profile",
+    "profile_desc": "Switch region/version via Profile",
     "providers": {
-      "aliyun": "Aliyun Bailian",
+      "aliyun": "Alibaba",
       "anthropic": "Anthropic",
       "custom": "Custom",
       "deepseek": "DeepSeek",
       "google": "Google",
+      "groq": "Groq",
+      "minimax": "MiniMax",
       "moonshot": "Moonshot AI",
       "openai": "OpenAI",
-      "openrouter": "OpenRouter"
+      "openrouter": "OpenRouter",
+      "siliconflow": "SiliconFlow",
+      "zhipu": "Zhipu AI"
     },
     "temperature": "Temperature",
     "temperature_desc": "Controls generation randomness. Only applies to Command Center (AI Chat).",

@@ -1,6 +1,7 @@
 use crate::ai::{
     crypto, AIClient, AIConfig, ChatCompletionChunk, ChatMessage, Tool, ToolChoice,
 };
+use crate::ai::profiles::{self, AIProviderProfile};
 use crate::ai::tool_args::normalize_and_validate_tool_calls;
 use futures_util::StreamExt;
 use serde::Serialize;
@@ -15,6 +16,46 @@ pub struct AIState {
 pub struct ToolCompletionResult {
     pub content: Option<String>,
     pub tool_calls: Option<Vec<crate::ai::client::ToolCall>>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CapabilityProbeItem {
+    pub ok: bool,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CapabilityProbeResult {
+    pub profile_id: Option<String>,
+    pub chat: CapabilityProbeItem,
+    pub stream: CapabilityProbeItem,
+    pub tools: CapabilityProbeItem,
+}
+
+fn normalize_profile_for_provider(config: &mut AIConfig) {
+    if config.provider == "custom" {
+        return;
+    }
+
+    let needs_repair = match config.profile_id.as_deref() {
+        Some(profile_id) => !profiles::profile_belongs_to_provider(profile_id, &config.provider),
+        None => true,
+    };
+
+    if !needs_repair {
+        return;
+    }
+
+    if let Some(default_profile) = profiles::default_profile_for_provider(&config.provider) {
+        log::warn!(
+            "Repairing mismatched AI profile. provider={}, old_profile={:?}, new_profile={}",
+            config.provider,
+            config.profile_id,
+            default_profile.id
+        );
+        config.profile_id = Some(default_profile.id);
+        config.adapter_mode = Some(default_profile.adapter_mode);
+    }
 }
 
 fn build_tool_completion_result(
@@ -41,11 +82,13 @@ fn tuple_messages_to_chat_messages(messages: Vec<(String, String)>) -> Vec<ChatM
 
 #[tauri::command]
 pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, String> {
-    let mut config = state
+    let mut config_guard = state
         .config
         .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
+        .map_err(|e| format!("Config lock poisoned: {}", e))?;
+
+    normalize_profile_for_provider(&mut config_guard);
+    let mut config = config_guard.clone();
 
     // Load API key from local storage
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
@@ -64,7 +107,13 @@ pub async fn get_api_key(provider: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+pub async fn list_ai_profiles() -> Result<Vec<AIProviderProfile>, String> {
+    Ok(profiles::default_profiles())
+}
+
+#[tauri::command]
 pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Result<(), String> {
+    let mut config = config;
     log::info!(
         "Saving AI config. Provider: {}, API Key provided: {}",
         config.provider,
@@ -73,6 +122,7 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
 
     // Validate configuration
     config.validate().map_err(|e| e.to_string())?;
+    normalize_profile_for_provider(&mut config);
 
     // Store API key if provided
     if !config.api_key.is_empty() {
@@ -142,6 +192,66 @@ pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, Str
             Err(e.to_string())
         }
     }
+}
+
+#[tauri::command]
+pub async fn probe_ai_capabilities(state: State<'_, AIState>) -> Result<CapabilityProbeResult, String> {
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
+
+    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
+        config.api_key = key;
+    }
+
+    if !config.enabled {
+        return Err("AI is not enabled".to_string());
+    }
+
+    let profile_id = config.profile_id.clone();
+    let client = AIClient::new(config);
+
+    let chat = match client.test_connection().await {
+        Ok(msg) => CapabilityProbeItem {
+            ok: true,
+            message: msg,
+        },
+        Err(e) => CapabilityProbeItem {
+            ok: false,
+            message: e.to_string(),
+        },
+    };
+
+    let stream = match client.test_stream_connection().await {
+        Ok(msg) => CapabilityProbeItem {
+            ok: true,
+            message: msg,
+        },
+        Err(e) => CapabilityProbeItem {
+            ok: false,
+            message: e.to_string(),
+        },
+    };
+
+    let tools = match client.test_tools_connection().await {
+        Ok(msg) => CapabilityProbeItem {
+            ok: true,
+            message: msg,
+        },
+        Err(e) => CapabilityProbeItem {
+            ok: false,
+            message: e.to_string(),
+        },
+    };
+
+    Ok(CapabilityProbeResult {
+        profile_id,
+        chat,
+        stream,
+        tools,
+    })
 }
 
 #[tauri::command]
@@ -266,7 +376,8 @@ pub async fn ai_chat_completion_stream(
 
 #[cfg(test)]
 mod tests {
-    use super::{build_tool_completion_result, tuple_messages_to_chat_messages};
+    use super::{build_tool_completion_result, normalize_profile_for_provider, tuple_messages_to_chat_messages};
+    use crate::ai::AIConfig;
     use crate::ai::client::{Choice, FunctionCall, ResponseMessage, ToolCall};
 
     #[test]
@@ -351,6 +462,17 @@ mod tests {
         assert_eq!(original.role, "tool");
         assert_eq!(original.name.as_deref(), Some("generate_rule"));
         assert_eq!(original.tool_call_id.as_deref(), Some("call_1"));
+    }
+
+    #[test]
+    fn normalize_profile_repairs_mismatched_profile_provider() {
+        let mut config = AIConfig {
+            provider: "groq".to_string(),
+            profile_id: Some("zhipu-cn".to_string()),
+            ..AIConfig::default()
+        };
+        normalize_profile_for_provider(&mut config);
+        assert_eq!(config.profile_id.as_deref(), Some("groq-default"));
     }
 }
 

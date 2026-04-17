@@ -3,6 +3,7 @@ pub mod commands;
 pub mod config;
 pub mod crypto;
 pub mod error;
+pub mod profiles;
 pub mod tool_args;
 
 pub use client::{

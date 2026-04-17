@@ -47,12 +47,19 @@
     },
     "clear_memory": "清空对话记忆",
     "connection": {
+      "checking": "检测中",
       "failure": "连接失败，请检查运行日志",
+      "idle": "未检测",
       "placeholder_openai": "sk-...",
       "placeholder_optional": "可选",
+      "probe": "能力探针",
       "save": "保存配置",
       "success": "连接成功",
       "test": "测试连接"
+    },
+    "capabilities": {
+      "stream_tooltip": "支持流式输出",
+      "tools_tooltip": "支持工具调用"
     },
     "enable": "启用 AI 功能",
     "enable_desc": "开启后可使用 AI 辅助脚本生成、规则创建等功能",
@@ -63,18 +70,25 @@
     "memory_turns": "对话上下文轮数",
     "memory_turns_desc": "AI 将记住最近的对话轮数以保持上下文连贯 (仅在命令中心生效)",
     "model": "模型名称",
-    "model_desc": "例如: gpt-5, qwen3-max, llama3",
+    "model_desc": "例如: gpt-5, qwen3.6-plus, llama3",
+    "model_reset": "恢复默认",
     "provider": "API 提供商",
     "provider_desc": "选择 AI 服务提供商",
+    "profile": "Profile 配置",
+    "profile_desc": "不同地域/版本请通过 Profile 切换",
     "providers": {
       "aliyun": "阿里云百炼",
       "anthropic": "Anthropic",
       "custom": "自定义接口",
       "deepseek": "DeepSeek",
       "google": "Google",
+      "groq": "Groq",
+      "minimax": "MiniMax",
       "moonshot": "月之暗面",
       "openai": "OpenAI",
-      "openrouter": "OpenRouter"
+      "openrouter": "OpenRouter",
+      "siliconflow": "硅基流动",
+      "zhipu": "智谱 AI"
     },
     "temperature": "生成温度",
     "temperature_desc": "控制内容生成的随机性。仅在命令中心 (AI 会话) 中生效。",

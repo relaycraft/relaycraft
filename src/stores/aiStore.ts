@@ -1,10 +1,13 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { buildAIContext } from "../lib/ai/contextBuilder";
+import { getProviderById } from "../lib/ai/providers";
 import { Logger } from "../lib/logger";
 import type {
+  AICapabilityProbeResult,
   AIContext,
   AIMessage,
+  AIProviderProfile,
   AISettings,
   AIToolMessage,
   ChatCompletionChunk,
@@ -13,6 +16,16 @@ import type {
   ToolCompletionResult,
 } from "../types/ai";
 
+export function sanitizeLoadedSettings(settings: AISettings): AISettings {
+  if (getProviderById(settings.provider)) {
+    return settings;
+  }
+  Logger.warn(
+    `Unknown provider loaded from config: ${settings.provider}. Preserving provider/model/endpoint for conservative migration.`,
+  );
+  return settings;
+}
+
 interface AIStore {
   settings: AISettings;
   context: AIContext | null;
@@ -20,6 +33,8 @@ interface AIStore {
   testingConnection: boolean;
   connectionStatus: "idle" | "success" | "error";
   connectionMessage: string;
+  profiles: AIProviderProfile[];
+  capabilityProbe: AICapabilityProbeResult | null;
   history: AIMessage[];
 
   // Actions
@@ -27,6 +42,8 @@ interface AIStore {
   refreshContext: () => void;
   saveSettings: (settings: AISettings) => Promise<void>;
   testConnection: () => Promise<void>;
+  loadProfiles: () => Promise<void>;
+  probeCapabilities: () => Promise<AICapabilityProbeResult>;
   getProviderKey: (provider: string) => Promise<string>;
   chatCompletion: (
     messages: AIMessage[],
@@ -65,9 +82,11 @@ export const useAIStore = create<AIStore>((set, get) => {
     settings: {
       enabled: false,
       provider: "openai",
+      profileId: "openai-default",
+      adapterMode: "openai_compatible",
       apiKey: "",
       customEndpoint: "",
-      model: "gpt-4-turbo-preview",
+      model: "gpt-5-mini",
       maxTokens: 4096,
       temperature: 0.3,
       enableCaching: true,
@@ -75,6 +94,8 @@ export const useAIStore = create<AIStore>((set, get) => {
     },
     context: null,
     history: [],
+    profiles: [],
+    capabilityProbe: null,
     loading: false,
     testingConnection: false,
     connectionStatus: "idle",
@@ -84,7 +105,7 @@ export const useAIStore = create<AIStore>((set, get) => {
       set({ loading: true });
       try {
         const settings = await invoke<AISettings>("load_ai_config");
-        set({ settings });
+        set({ settings: sanitizeLoadedSettings(settings) });
         get().refreshContext();
       } catch (error) {
         Logger.error("Failed to load AI settings:", error);
@@ -128,6 +149,30 @@ export const useAIStore = create<AIStore>((set, get) => {
           connectionStatus: "error",
           connectionMessage: error instanceof Error ? error.message : "Connection failed",
         });
+      } finally {
+        set({ testingConnection: false });
+      }
+    },
+
+    loadProfiles: async () => {
+      try {
+        const profiles = await invoke<AIProviderProfile[]>("list_ai_profiles");
+        set({ profiles });
+      } catch (error) {
+        Logger.error("Failed to load AI profiles:", error);
+      }
+    },
+
+    probeCapabilities: async () => {
+      set({ testingConnection: true });
+      try {
+        const result = await invoke<AICapabilityProbeResult>("probe_ai_capabilities");
+        set({
+          capabilityProbe: result,
+          connectionStatus: result.chat.ok ? "success" : "error",
+          connectionMessage: result.chat.message,
+        });
+        return result;
       } finally {
         set({ testingConnection: false });
       }

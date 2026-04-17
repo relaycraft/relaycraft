@@ -1,8 +1,20 @@
-import { CheckCircle, Eye, EyeOff, Loader2, RotateCw, Save, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Radio,
+  RotateCcw,
+  RotateCw,
+  Save,
+  Wrench,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AI_PROVIDERS, getProviderById } from "../../lib/ai/providers";
 import { useAIStore } from "../../stores/aiStore";
+import { Tooltip } from "../common/Tooltip";
 import {
   SettingsInput,
   SettingsRow,
@@ -19,18 +31,28 @@ export function AISettingsPanel() {
     testingConnection,
     connectionStatus,
     loadSettings,
+    loadProfiles,
     saveSettings,
-    testConnection,
+    probeCapabilities,
     connectionMessage,
+    profiles,
+    capabilityProbe,
   } = useAIStore();
 
   const [localSettings, setLocalSettings] = useState(settings);
   const [showApiKey, setShowApiKey] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const prevConnectionFingerprintRef = useRef("");
+  const [customDraft, setCustomDraft] = useState({
+    apiKey: "",
+    customEndpoint: "",
+    model: "",
+  });
 
   useEffect(() => {
     loadSettings();
-  }, [loadSettings]);
+    loadProfiles();
+  }, [loadProfiles, loadSettings]);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -40,13 +62,44 @@ export function AISettingsPanel() {
     setHasChanges(JSON.stringify(localSettings) !== JSON.stringify(settings));
   }, [localSettings, settings]);
 
-  // Reset connection status if settings change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when settings change
   useEffect(() => {
-    if (connectionStatus !== "idle") {
+    if (localSettings.provider !== "custom") {
+      return;
+    }
+    setCustomDraft({
+      apiKey: localSettings.apiKey || "",
+      customEndpoint: localSettings.customEndpoint || "",
+      model: localSettings.model || "",
+    });
+  }, [
+    localSettings.provider,
+    localSettings.apiKey,
+    localSettings.customEndpoint,
+    localSettings.model,
+  ]);
+
+  const connectionFingerprint = JSON.stringify({
+    provider: localSettings.provider,
+    profileId: localSettings.profileId,
+    adapterMode: localSettings.adapterMode,
+    customEndpoint: localSettings.customEndpoint,
+    apiKey: localSettings.apiKey,
+    model: localSettings.model,
+  });
+
+  // Reset connection status only when connection-critical config changes.
+  // Keep probe result when tuning non-connectivity params (temperature/tokens/history).
+  useEffect(() => {
+    const prevFingerprint = prevConnectionFingerprintRef.current;
+    if (
+      prevFingerprint &&
+      prevFingerprint !== connectionFingerprint &&
+      connectionStatus !== "idle"
+    ) {
       useAIStore.getState().resetConnectionStatus();
     }
-  }, [localSettings]);
+    prevConnectionFingerprintRef.current = connectionFingerprint;
+  }, [connectionFingerprint, connectionStatus]);
 
   const handleSave = async () => {
     try {
@@ -60,6 +113,48 @@ export function AISettingsPanel() {
       );
     }
   };
+
+  const visibleProfiles = profiles.filter((profile) => profile.supportLevel === "verified");
+
+  const providerProfiles = visibleProfiles.filter(
+    (profile) => profile.providerId === localSettings.provider,
+  );
+
+  const activeProfile =
+    providerProfiles.find((profile) => profile.id === localSettings.profileId) ||
+    providerProfiles[0];
+  const selectedProvider = getProviderById(localSettings.provider);
+  const preferredDefaultModel = activeProfile?.defaultModel || selectedProvider?.defaultModel || "";
+
+  const handleTestConnection = async () => {
+    try {
+      if (hasChanges) {
+        await saveSettings(localSettings);
+      }
+      await probeCapabilities();
+    } catch (error) {
+      console.error("Connection test failed:", error);
+    }
+  };
+  const hasAnyCapabilityIcon =
+    Boolean(capabilityProbe?.stream.ok) || Boolean(capabilityProbe?.tools.ok);
+  const canResetModel =
+    Boolean(preferredDefaultModel) && localSettings.model !== preferredDefaultModel;
+
+  const statusText = testingConnection
+    ? t("ai.connection.checking")
+    : connectionStatus === "success"
+      ? t("ai.connection.success")
+      : connectionStatus === "error"
+        ? t("ai.connection.failure")
+        : t("ai.connection.idle");
+  const statusClassName = testingConnection
+    ? "text-muted-foreground bg-muted/20"
+    : connectionStatus === "success"
+      ? "text-green-600 bg-green-500/10"
+      : connectionStatus === "error"
+        ? "text-destructive bg-destructive/10"
+        : "text-muted-foreground bg-muted/20";
 
   return (
     <SettingsSection title={t("ai.title")}>
@@ -85,18 +180,57 @@ export function AISettingsPanel() {
             <SettingsSelect
               value={localSettings.provider}
               onChange={(val) => {
-                const provider = getProviderById(val);
+                const providerId = val;
+                const provider = getProviderById(providerId);
+                const nextProfile = visibleProfiles.find(
+                  (profile) => profile.providerId === providerId,
+                );
+
+                setLocalSettings((prev) => {
+                  if (providerId === "custom") {
+                    return {
+                      ...prev,
+                      provider: "custom",
+                      profileId: undefined,
+                      adapterMode: "openai_compatible",
+                      apiKey: customDraft.apiKey,
+                      customEndpoint: customDraft.customEndpoint,
+                      model: customDraft.model,
+                    };
+                  }
+
+                  return {
+                    ...prev,
+                    provider: providerId as any,
+                    profileId: nextProfile?.id,
+                    adapterMode: nextProfile?.adapterMode,
+                    apiKey: "",
+                    customEndpoint: undefined,
+                    model: nextProfile?.defaultModel || provider?.defaultModel || prev.model,
+                  };
+                });
+
                 // Fetch saved key for this provider
                 useAIStore
                   .getState()
-                  .getProviderKey(val)
+                  .getProviderKey(providerId)
                   .then((key) => {
-                    setLocalSettings({
-                      ...localSettings,
-                      provider: val as any,
-                      apiKey: key || "", // Use fetched key or empty
-                      customEndpoint: undefined,
-                      model: provider?.defaultModel || localSettings.model,
+                    setLocalSettings((prev) => {
+                      if (prev.provider !== providerId) {
+                        return prev;
+                      }
+
+                      if (providerId === "custom") {
+                        return {
+                          ...prev,
+                          apiKey: key || prev.apiKey || "",
+                        };
+                      }
+
+                      return {
+                        ...prev,
+                        apiKey: key || "",
+                      };
                     });
                   });
               }}
@@ -106,6 +240,32 @@ export function AISettingsPanel() {
               }))}
             />
           </SettingsRow>
+
+          {localSettings.provider !== "custom" && (
+            <SettingsRow title={t("ai.profile")} description={t("ai.profile_desc")}>
+              <SettingsSelect
+                className="w-64"
+                value={activeProfile?.id || ""}
+                onChange={(val) => {
+                  const profile = providerProfiles.find((p) => p.id === val);
+                  if (!profile) {
+                    return;
+                  }
+                  setLocalSettings({
+                    ...localSettings,
+                    profileId: profile.id,
+                    adapterMode: profile.adapterMode,
+                    customEndpoint: undefined,
+                    model: profile.defaultModel || localSettings.model,
+                  });
+                }}
+                options={providerProfiles.map((p) => ({
+                  label: p.label,
+                  value: p.id,
+                }))}
+              />
+            </SettingsRow>
+          )}
 
           {/* Only show Endpoint for Custom provider OR if it differs from default */}
           {(localSettings.provider === "custom" ||
@@ -157,13 +317,33 @@ export function AISettingsPanel() {
           </SettingsRow>
 
           <SettingsRow title={t("ai.model")} description={t("ai.model_desc")}>
-            <SettingsInput
-              className="w-48"
-              type="text"
-              value={localSettings.model}
-              onChange={(e) => setLocalSettings({ ...localSettings, model: e.target.value })}
-              placeholder="gpt-4-turbo"
-            />
+            <div className="relative w-64">
+              <SettingsInput
+                className="w-64 pr-10"
+                type="text"
+                value={localSettings.model}
+                onChange={(e) => setLocalSettings({ ...localSettings, model: e.target.value })}
+                placeholder="gpt-5-mini"
+              />
+              {preferredDefaultModel && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLocalSettings({
+                      ...localSettings,
+                      model: preferredDefaultModel,
+                    })
+                  }
+                  disabled={!canResetModel}
+                  aria-label={t("ai.model_reset")}
+                  className="absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                >
+                  <Tooltip content={t("ai.model_reset")}>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </Tooltip>
+                </button>
+              )}
+            </div>
           </SettingsRow>
 
           {/* Advanced Params */}
@@ -224,22 +404,36 @@ export function AISettingsPanel() {
           <div className="flex items-center justify-between p-3 bg-muted/10 border-t border-border/40">
             <div className="flex items-center gap-2">
               {/* Connection Status */}
-              {connectionStatus !== "idle" && (
-                <div
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-ui font-medium ${
-                    connectionStatus === "success"
-                      ? "text-green-600 bg-green-500/10"
-                      : "text-destructive bg-destructive/10"
-                  }`}
-                >
-                  {connectionStatus === "success" ? (
-                    <CheckCircle className="w-3.5 h-3.5" />
-                  ) : (
-                    <XCircle className="w-3.5 h-3.5" />
+              <div
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${statusClassName}`}
+              >
+                {testingConnection ? (
+                  <RotateCw className="w-3.5 h-3.5" />
+                ) : connectionStatus === "success" ? (
+                  <CheckCircle className="w-3.5 h-3.5" />
+                ) : connectionStatus === "error" ? (
+                  <XCircle className="w-3.5 h-3.5" />
+                ) : (
+                  <RotateCw className="w-3.5 h-3.5" />
+                )}
+                {statusText}
+              </div>
+              {connectionStatus === "success" && !testingConnection && hasAnyCapabilityIcon && (
+                <div className="inline-flex h-8 items-center gap-1 rounded-md border border-border/60 bg-muted/20 px-1.5 text-muted-foreground">
+                  {capabilityProbe?.stream.ok && (
+                    <Tooltip content={t("ai.capabilities.stream_tooltip")}>
+                      <span className="rounded p-1 transition-colors hover:bg-muted/60">
+                        <Radio className="w-3.5 h-3.5" />
+                      </span>
+                    </Tooltip>
                   )}
-                  {connectionStatus === "success"
-                    ? t("ai.connection.success")
-                    : t("ai.connection.failure")}
+                  {capabilityProbe?.tools.ok && (
+                    <Tooltip content={t("ai.capabilities.tools_tooltip")}>
+                      <span className="rounded p-1 transition-colors hover:bg-muted/60">
+                        <Wrench className="w-3.5 h-3.5" />
+                      </span>
+                    </Tooltip>
+                  )}
                 </div>
               )}
               {connectionStatus !== "idle" &&
@@ -258,7 +452,7 @@ export function AISettingsPanel() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={testConnection}
+                onClick={handleTestConnection}
                 disabled={
                   testingConnection ||
                   (localSettings.provider !== "custom" && !localSettings.apiKey)

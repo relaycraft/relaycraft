@@ -81,6 +81,8 @@ export interface AIToolMessage {
 export interface AISettings {
   enabled: boolean;
   provider: string;
+  profileId?: string;
+  adapterMode?: string;
   apiKey: string;
   customEndpoint?: string;
   model: string;
@@ -88,6 +90,35 @@ export interface AISettings {
   temperature: number;
   enableCaching: boolean;
   maxHistoryMessages: number;
+}
+
+export interface AIProfileCapabilities {
+  chat: boolean;
+  stream: boolean;
+  tools: boolean;
+}
+
+export interface AIProviderProfile {
+  id: string;
+  providerId: string;
+  label: string;
+  adapterMode: string;
+  baseUrl: string;
+  defaultModel: string;
+  supportLevel: string;
+  capabilities: AIProfileCapabilities;
+}
+
+export interface AICapabilityProbeItem {
+  ok: boolean;
+  message: string;
+}
+
+export interface AICapabilityProbeResult {
+  profileId?: string;
+  chat: AICapabilityProbeItem;
+  stream: AICapabilityProbeItem;
+  tools: AICapabilityProbeItem;
 }
 
 export interface FunctionParameter {

@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AIToolMessage, Tool } from "../types/ai";
-import { useAIStore } from "./aiStore";
+import { sanitizeLoadedSettings, useAIStore } from "./aiStore";
 
 vi.mock("@tauri-apps/api/core", () => {
   class MockChannel<T> {
@@ -100,5 +100,27 @@ describe("aiStore tool-calling protocol", () => {
         temperature: null,
       }),
     );
+  });
+});
+
+describe("aiStore settings migration", () => {
+  it("keeps unknown provider config during sanitize to avoid destructive overwrite", () => {
+    const loaded = sanitizeLoadedSettings({
+      enabled: true,
+      provider: "anthropic",
+      profileId: "anthropic-default",
+      adapterMode: "anthropic",
+      apiKey: "",
+      customEndpoint: "https://api.anthropic.com/v1",
+      model: "claude-3-7-sonnet",
+      maxTokens: 4096,
+      temperature: 0.7,
+      enableCaching: true,
+      maxHistoryMessages: 10,
+    });
+
+    expect(loaded.provider).toBe("anthropic");
+    expect(loaded.customEndpoint).toBe("https://api.anthropic.com/v1");
+    expect(loaded.model).toBe("claude-3-7-sonnet");
   });
 });

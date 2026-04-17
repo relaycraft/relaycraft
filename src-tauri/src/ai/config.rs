@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use super::profiles;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -8,6 +9,14 @@ pub struct AIConfig {
 
     /// Provider type: "openai", "custom"
     pub provider: String,
+
+    /// Provider profile id (new path for profile-based config)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_id: Option<String>,
+
+    /// Adapter mode (e.g. openai_compatible)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub adapter_mode: Option<String>,
 
     /// Custom API endpoint (for local models)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -55,9 +64,11 @@ impl Default for AIConfig {
         Self {
             enabled: false,
             provider: "openai".to_string(),
+            profile_id: Some("openai-default".to_string()),
+            adapter_mode: Some("openai_compatible".to_string()),
             custom_endpoint: None,
             api_key: String::new(),
-            model: "gpt-4-turbo-preview".to_string(),
+            model: "gpt-5-mini".to_string(),
             max_tokens: 4096,
             temperature: 0.7,
             enable_caching: true,
@@ -76,15 +87,31 @@ impl AIConfig {
             }
         }
 
+        if let Some(profile_id) = &self.profile_id {
+            if let Some(profile) = profiles::get_profile(profile_id) {
+                if profile.provider_id == self.provider {
+                    return profile.base_url;
+                }
+                log::warn!(
+                    "AI profile/provider mismatch in endpoint resolution: provider={}, profile_id={}, profile_provider={}. Falling back to provider endpoint.",
+                    self.provider,
+                    profile_id,
+                    profile.provider_id
+                );
+            }
+        }
+
         // Fallback defaults based on provider (for legacy/convenience)
         match self.provider.as_str() {
             "openai" => "https://api.openai.com/v1".to_string(),
             "openrouter" => "https://openrouter.ai/api/v1".to_string(),
             "deepseek" => "https://api.deepseek.com/v1".to_string(),
+            "siliconflow" => "https://api.siliconflow.cn/v1".to_string(),
+            "groq" => "https://api.groq.com/openai/v1".to_string(),
             "aliyun" => "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
-            "google" => "https://generativelanguage.googleapis.com/v1beta/openai".to_string(),
-            "anthropic" => "https://api.anthropic.com/v1".to_string(),
             "moonshot" => "https://api.moonshot.cn/v1".to_string(),
+            "minimax" => "https://api.minimax.io/v1".to_string(),
+            "zhipu" => "https://open.bigmodel.cn/api/paas/v4".to_string(),
             _ => "https://api.openai.com/v1".to_string(), // Final fallback
         }
     }
@@ -106,7 +133,8 @@ mod tests {
         let config = AIConfig::default();
         assert!(!config.enabled);
         assert_eq!(config.provider, "openai");
-        assert_eq!(config.model, "gpt-4-turbo-preview");
+        assert_eq!(config.profile_id.as_deref(), Some("openai-default"));
+        assert_eq!(config.model, "gpt-5-mini");
         assert_eq!(config.max_tokens, 4096);
         assert!(config.enable_caching);
     }
@@ -114,6 +142,7 @@ mod tests {
     #[test]
     fn test_get_endpoint_with_custom() {
         let mut config = AIConfig::default();
+        config.profile_id = None;
         config.custom_endpoint = Some("https://my-custom-ai.dev/v1".to_string());
         
         assert_eq!(config.get_endpoint(), "https://my-custom-ai.dev/v1");
@@ -124,18 +153,39 @@ mod tests {
     }
 
     #[test]
+    fn test_get_endpoint_with_profile() {
+        let mut config = AIConfig::default();
+        config.provider = "zhipu".to_string();
+        config.custom_endpoint = None;
+        config.profile_id = Some("zhipu-cn".to_string());
+        assert_eq!(config.get_endpoint(), "https://open.bigmodel.cn/api/paas/v4");
+    }
+
+    #[test]
+    fn test_get_endpoint_ignores_mismatched_profile_provider() {
+        let mut config = AIConfig::default();
+        config.provider = "groq".to_string();
+        config.custom_endpoint = None;
+        config.profile_id = Some("zhipu-cn".to_string());
+        assert_eq!(config.get_endpoint(), "https://api.groq.com/openai/v1");
+    }
+
+    #[test]
     fn test_get_endpoint_provider_fallbacks() {
         let mut config = AIConfig::default();
         config.custom_endpoint = None; // Ensure fallback path
+        config.profile_id = None;
 
         let cases = vec![
             ("openai", "https://api.openai.com/v1"),
             ("openrouter", "https://openrouter.ai/api/v1"),
             ("deepseek", "https://api.deepseek.com/v1"),
+            ("siliconflow", "https://api.siliconflow.cn/v1"),
+            ("groq", "https://api.groq.com/openai/v1"),
             ("aliyun", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
-            ("google", "https://generativelanguage.googleapis.com/v1beta/openai"),
-            ("anthropic", "https://api.anthropic.com/v1"),
             ("moonshot", "https://api.moonshot.cn/v1"),
+            ("minimax", "https://api.minimax.io/v1"),
+            ("zhipu", "https://open.bigmodel.cn/api/paas/v4"),
             ("unknown_provider", "https://api.openai.com/v1"), // fallback
         ];
 
