@@ -1,12 +1,29 @@
 import { invoke } from "@tauri-apps/api/core";
+import { version as APP_VERSION } from "../../../package.json";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useScriptStore } from "../../stores/scriptStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { AIContext, AIContextOptions } from "../../types/ai";
+import type { AIContext, AIContextBudgetProfile, AIContextOptions } from "../../types/ai";
 import type { Rule } from "../../types/rules";
+
+const DEFAULT_CONTEXT_MAX_CHARS = 12_000;
+const CONTEXT_CACHE_TTL_MS = 1_500;
+const CONTEXT_MAX_CHARS_BY_PROFILE: Record<AIContextBudgetProfile, number> = {
+  default: DEFAULT_CONTEXT_MAX_CHARS,
+  command_center: 9_000,
+  rule_assistant: 14_000,
+  script_assistant: 13_000,
+  store_snapshot: 8_000,
+};
+
+let contextCache: {
+  key: string;
+  expiresAt: number;
+  context: AIContext;
+} | null = null;
 
 /**
  * Generates a human-readable summary of a single rule.
@@ -88,6 +105,104 @@ const sanitizeHarHeaders = (
   return sanitizeHeaders(record);
 };
 
+const estimateContextChars = (context: AIContext): number => JSON.stringify(context).length;
+
+const hashString = (input: string): string => {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+};
+
+const trimHeaderEntries = (
+  headers: Record<string, string> | undefined,
+  maxEntries: number,
+): Record<string, string> | undefined => {
+  if (!headers) return headers;
+  return Object.fromEntries(Object.entries(headers).slice(0, maxEntries));
+};
+
+const applyContextBudget = (context: AIContext, maxChars: number): AIContext => {
+  if (estimateContextChars(context) <= maxChars) return context;
+
+  const budgeted: AIContext = JSON.parse(JSON.stringify(context));
+
+  // Lowest-priority payload first.
+  if (budgeted.recentLogs?.length) {
+    budgeted.recentLogs = [];
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.recentTraffic && budgeted.recentTraffic.length > 3) {
+    budgeted.recentTraffic = budgeted.recentTraffic.slice(0, 3);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.recentTraffic && budgeted.recentTraffic.length > 1) {
+    budgeted.recentTraffic = budgeted.recentTraffic.slice(0, 1);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  budgeted.recentTraffic = [];
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.activeRules.length > 30) {
+    budgeted.activeRules = budgeted.activeRules.slice(0, 30);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.activeRules.length > 10) {
+    budgeted.activeRules = budgeted.activeRules.slice(0, 10);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.activeRules.length > 5) {
+    budgeted.activeRules = budgeted.activeRules.slice(0, 5);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  // Preserve selectedItem but trim heavy subfields if still oversized.
+  if (budgeted.selectedItem?.type === "flow") {
+    const details = budgeted.selectedItem.details || {};
+    details.requestBody =
+      typeof details.requestBody === "string" ? truncate(details.requestBody, 200) : undefined;
+    details.responseBody =
+      typeof details.responseBody === "string" ? truncate(details.responseBody, 200) : undefined;
+    details.requestHeaders = trimHeaderEntries(details.requestHeaders, 12);
+    details.responseHeaders = trimHeaderEntries(details.responseHeaders, 12);
+    budgeted.selectedItem.details = details;
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
+  if (budgeted.summary.length > 800) {
+    budgeted.summary = truncate(budgeted.summary, 800);
+  }
+
+  return budgeted;
+};
+
+const attachContextHash = (context: AIContext): AIContext => {
+  const fingerprint = {
+    summary: context.summary,
+    selectedItem: context.selectedItem,
+    activeRules: context.activeRules.map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: r.type,
+      match: r.match,
+      actionSummary: r.actionSummary,
+    })),
+    activeScripts: context.activeScripts,
+    activeTab: context.activeTab,
+  };
+  return {
+    ...context,
+    contextHash: hashString(JSON.stringify(fingerprint)),
+  };
+};
+
 /**
  * Builds the AI Context snapshot from current stores.
  */
@@ -97,15 +212,41 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     includeHeaders = false,
     includeBody = false,
     maxTrafficCount = 5,
+    budgetProfile = "default",
+    maxChars,
   } = options;
+  const resolvedMaxChars = maxChars ?? CONTEXT_MAX_CHARS_BY_PROFILE[budgetProfile];
 
   // 1. Get Stores
-  const { rules, selectedRule, draftRule } = useRuleStore.getState();
-  const { scripts } = useScriptStore.getState();
+  const ruleState = useRuleStore.getState();
+  const { rules, selectedRule, draftRule, version: ruleVersion } = ruleState;
+  const scriptState = useScriptStore.getState();
+  const { scripts, version: scriptVersion } = scriptState;
   const { port } = useProxyStore.getState();
   const { config } = useSettingsStore.getState();
   const { indices, selectedFlow } = useTrafficStore.getState();
   const { activeTab } = useUIStore.getState();
+  const cacheKey = JSON.stringify({
+    includeLogs,
+    includeHeaders,
+    includeBody,
+    maxTrafficCount,
+    budgetProfile,
+    resolvedMaxChars,
+    activeTab,
+    port,
+    upstream: config.upstream_proxy?.enabled ? config.upstream_proxy.url : "",
+    ruleVersion,
+    scriptVersion,
+    selectedRuleId: selectedRule?.id || null,
+    draftRuleId: draftRule?.id || (draftRule as any)?._draftId || null,
+    selectedFlowId: selectedFlow?.id || null,
+    trafficTail: indices.slice(-maxTrafficCount).map((idx) => [idx.id, idx.status]),
+  });
+  const now = Date.now();
+  if (contextCache && contextCache.key === cacheKey && contextCache.expiresAt > now) {
+    return contextCache.context;
+  }
 
   // 2. Filter Active Rules
   const activeRules = rules
@@ -148,13 +289,13 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
 
   // 6. Focus Item Details (Deep Snapshot)
   let selectedItem: AIContext["selectedItem"];
-  if (activeTab === "traffic" && selectedFlow) {
+  if (selectedFlow) {
     selectedItem = {
       type: "flow",
       id: selectedFlow.id,
       details: {
         method: selectedFlow.request.method,
-        url: selectedFlow.request.url,
+        url: truncate(selectedFlow.request.url, 300),
         statusCode: selectedFlow.response.status,
         requestHeaders: includeHeaders
           ? sanitizeHarHeaders(selectedFlow.request.headers)
@@ -187,19 +328,28 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     summary += `Upstream: ${config.upstream_proxy.url}. `;
   }
   if (selectedFlow) summary += `Focused on: ${selectedFlow.request.url}. `;
-
-  return {
-    summary,
-    activeRules,
-    activeScripts,
-    recentTraffic,
-    recentLogs,
-    selectedItem,
-    activeTab: activeTab || undefined,
-    system: {
-      proxyPort: port,
-      upstreamProxy: config.upstream_proxy?.enabled ? config.upstream_proxy.url : undefined,
-      version: "0.9.9",
+  const context = applyContextBudget(
+    {
+      summary,
+      activeRules,
+      activeScripts,
+      recentTraffic,
+      recentLogs,
+      selectedItem,
+      activeTab: activeTab || undefined,
+      system: {
+        proxyPort: port,
+        upstreamProxy: config.upstream_proxy?.enabled ? config.upstream_proxy.url : undefined,
+        version: APP_VERSION,
+      },
     },
+    resolvedMaxChars,
+  );
+  const finalized = attachContextHash(context);
+  contextCache = {
+    key: cacheKey,
+    expiresAt: now + CONTEXT_CACHE_TTL_MS,
+    context: finalized,
   };
+  return finalized;
 };

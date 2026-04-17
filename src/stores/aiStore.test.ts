@@ -72,6 +72,27 @@ describe("aiStore tool-calling protocol", () => {
     });
   });
 
+  it("chatCompletion with includeContext=false should not append system context", async () => {
+    (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce("ok");
+    useAIStore.setState({
+      context: {
+        summary: "ctx",
+        activeRules: [],
+        activeScripts: [],
+        system: { proxyPort: 9090, version: "test" },
+      },
+    });
+
+    await useAIStore.getState().chatCompletion([{ role: "user", content: "hello" }], 0, undefined, {
+      includeContext: false,
+    });
+
+    expect(invoke).toHaveBeenCalledWith("ai_chat_completion", {
+      messages: [["user", "hello"]],
+      temperature: 0,
+    });
+  });
+
   it("chatCompletionStreamWithTools should keep tool message metadata", async () => {
     (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
 

@@ -49,12 +49,14 @@ interface AIStore {
     messages: AIMessage[],
     temperature?: number,
     signal?: AbortSignal,
+    options?: { includeContext?: boolean },
   ) => Promise<string>;
   chatCompletionStream: (
     messages: AIMessage[],
     onChunk: (content: string) => void,
     temperature?: number,
     signal?: AbortSignal,
+    options?: { includeContext?: boolean },
   ) => Promise<void>;
   chatCompletionWithTools: (
     messages: AIToolMessage[],
@@ -62,6 +64,7 @@ interface AIStore {
     toolChoice?: ToolChoice,
     temperature?: number,
     signal?: AbortSignal,
+    options?: { includeContext?: boolean },
   ) => Promise<ToolCompletionResult>;
   chatCompletionStreamWithTools: (
     messages: AIToolMessage[],
@@ -70,6 +73,7 @@ interface AIStore {
     toolChoice?: ToolChoice,
     temperature?: number,
     signal?: AbortSignal,
+    options?: { includeContext?: boolean },
   ) => Promise<void>;
   resetConnectionStatus: () => void;
   addMessage: (role: "user" | "assistant" | "system", content: string) => void;
@@ -116,7 +120,7 @@ export const useAIStore = create<AIStore>((set, get) => {
 
     refreshContext: async () => {
       try {
-        const context = await buildAIContext();
+        const context = await buildAIContext({ budgetProfile: "store_snapshot" });
         set({ context });
       } catch (e) {
         Logger.error("Failed to build AI context", e);
@@ -187,14 +191,15 @@ export const useAIStore = create<AIStore>((set, get) => {
       }
     },
 
-    chatCompletion: async (messages, temperature, signal) => {
+    chatCompletion: async (messages, temperature, signal, options) => {
       const formattedMessages = messages.map((m) => [m.role, m.content]);
 
       try {
         const context = get().context;
         const finalMessages = [...formattedMessages];
+        const shouldInjectContext = options?.includeContext !== false;
 
-        if (context) {
+        if (shouldInjectContext && context) {
           const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
           if (finalMessages.length > 0 && finalMessages[0][0] === "system") {
             finalMessages[0][1] += contextPrompt;
@@ -222,12 +227,13 @@ export const useAIStore = create<AIStore>((set, get) => {
       }
     },
 
-    chatCompletionStream: async (messages, onChunk, temperature, signal) => {
+    chatCompletionStream: async (messages, onChunk, temperature, signal, options) => {
       const formattedMessages = messages.map((m) => [m.role, m.content]);
       const context = get().context;
       const finalMessages = [...formattedMessages];
+      const shouldInjectContext = options?.includeContext !== false;
 
-      if (context) {
+      if (shouldInjectContext && context) {
         const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
         if (finalMessages.length > 0 && finalMessages[0][0] === "system") {
           finalMessages[0][1] += contextPrompt;
@@ -263,11 +269,12 @@ export const useAIStore = create<AIStore>((set, get) => {
       }
     },
 
-    chatCompletionWithTools: async (messages, tools, toolChoice, temperature, signal) => {
+    chatCompletionWithTools: async (messages, tools, toolChoice, temperature, signal, options) => {
       const context = get().context;
       const finalMessages = messages.map((m) => ({ ...m }));
+      const shouldInjectContext = options?.includeContext !== false;
 
-      if (context) {
+      if (shouldInjectContext && context) {
         const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
         if (finalMessages.length > 0 && finalMessages[0].role === "system") {
           finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;
@@ -308,11 +315,13 @@ export const useAIStore = create<AIStore>((set, get) => {
       toolChoice,
       temperature,
       signal,
+      options,
     ) => {
       const context = get().context;
       const finalMessages = messages.map((m) => ({ ...m }));
+      const shouldInjectContext = options?.includeContext !== false;
 
-      if (context) {
+      if (shouldInjectContext && context) {
         const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
         if (finalMessages.length > 0 && finalMessages[0].role === "system") {
           finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;

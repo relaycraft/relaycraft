@@ -1,8 +1,17 @@
+export type AIContextBudgetProfile =
+  | "default"
+  | "command_center"
+  | "rule_assistant"
+  | "script_assistant"
+  | "store_snapshot";
+
 export interface AIContextOptions {
   includeLogs?: boolean;
   includeHeaders?: boolean;
   includeBody?: boolean;
   maxTrafficCount?: number;
+  maxChars?: number;
+  budgetProfile?: AIContextBudgetProfile;
 }
 
 export interface AIContext {
@@ -64,6 +73,11 @@ export interface AIContext {
    * Active UI state.
    */
   activeTab?: string;
+
+  /**
+   * Lightweight fingerprint for cache/reuse decisions.
+   */
+  contextHash?: string;
 }
 
 export interface AIMessage {

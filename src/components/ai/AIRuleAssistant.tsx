@@ -180,7 +180,7 @@ export function AIRuleAssistant({
       const { chatCompletionStream, chatCompletionWithTools } = useAIStore.getState();
       let fallbackDetail = "tool_empty";
       // Build fresh context including active rules
-      const context = buildAIContext();
+      const context = await buildAIContext({ budgetProfile: "rule_assistant" });
       const contextString = JSON.stringify(context, null, 2);
 
       const langInfo = getAILanguageInfo();
@@ -213,6 +213,8 @@ export function AIRuleAssistant({
           RULE_GENERATION_TOOLS,
           "auto",
           0,
+          undefined,
+          { includeContext: false },
         );
 
         const firstToolCall = toolResult.tool_calls?.[0];
@@ -309,6 +311,8 @@ export function AIRuleAssistant({
           }
         },
         0,
+        undefined,
+        { includeContext: false },
       );
 
       // AI output should be JSON or contains JSON. Extract it.

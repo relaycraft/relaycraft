@@ -135,7 +135,7 @@ fn parse_sse_event(event: &str) -> Result<Option<ChatCompletionChunk>, AIError> 
 #[allow(dead_code)]
 pub struct ChatCompletionResponse {
     pub choices: Vec<Choice>,
-    pub usage: Option<Usage>,
+    pub usage: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -156,9 +156,95 @@ pub struct ResponseMessage {
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct Usage {
-    pub prompt_tokens: u32,
-    pub completion_tokens: u32,
-    pub total_tokens: u32,
+    pub prompt_tokens: Option<serde_json::Value>,
+    pub completion_tokens: Option<serde_json::Value>,
+    pub total_tokens: Option<serde_json::Value>,
+}
+
+fn value_to_u32(value: &serde_json::Value) -> Option<u32> {
+    match value {
+        serde_json::Value::Number(num) => {
+            if let Some(v) = num.as_u64() {
+                return u32::try_from(v).ok();
+            }
+            num.as_f64().and_then(|v| {
+                if v.is_finite() && v >= 0.0 {
+                    u32::try_from(v.round() as u64).ok()
+                } else {
+                    None
+                }
+            })
+        }
+        serde_json::Value::String(s) => s.parse::<u32>().ok(),
+        _ => None,
+    }
+}
+
+fn usage_tokens_from_response(
+    raw_usage: Option<&serde_json::Value>,
+    approx_prompt_tokens: u32,
+    approx_completion_tokens: u32,
+) -> (u32, u32, u32, &'static str) {
+    let Some(raw_usage) = raw_usage else {
+        let total = approx_prompt_tokens.saturating_add(approx_completion_tokens);
+        return (
+            approx_prompt_tokens,
+            approx_completion_tokens,
+            total,
+            "estimated_chars_div_4",
+        );
+    };
+
+    let raw = serde_json::from_value::<Usage>(raw_usage.clone()).ok();
+    let prompt = raw
+        .as_ref()
+        .and_then(|u| u.prompt_tokens.as_ref())
+        .and_then(value_to_u32)
+        .or_else(|| raw_usage.get("input_tokens").and_then(value_to_u32));
+    let completion = raw
+        .as_ref()
+        .and_then(|u| u.completion_tokens.as_ref())
+        .and_then(value_to_u32)
+        .or_else(|| raw_usage.get("output_tokens").and_then(value_to_u32));
+    let total = raw
+        .as_ref()
+        .and_then(|u| u.total_tokens.as_ref())
+        .and_then(value_to_u32);
+
+    let prompt_tokens = prompt.unwrap_or(approx_prompt_tokens);
+    let completion_tokens = completion.unwrap_or(approx_completion_tokens);
+    let total_tokens = total.unwrap_or(prompt_tokens.saturating_add(completion_tokens));
+    let usage_source = if prompt.is_some() && completion.is_some() && total.is_some() {
+        "response"
+    } else {
+        "response_partial_fallback"
+    };
+
+    (prompt_tokens, completion_tokens, total_tokens, usage_source)
+}
+
+fn estimate_output_tokens(response: &ChatCompletionResponse) -> u32 {
+    let output_chars: usize = response
+        .choices
+        .iter()
+        .map(|choice| {
+            let content_chars = choice.message.content.as_ref().map(|s| s.len()).unwrap_or(0);
+            let tool_chars = choice
+                .message
+                .tool_calls
+                .as_ref()
+                .map(|calls| {
+                    calls
+                        .iter()
+                        .map(|call| call.id.len() + call.function.name.len() + call.function.arguments.len())
+                        .sum::<usize>()
+                })
+                .unwrap_or(0);
+            content_chars + tool_chars
+        })
+        .sum();
+
+    u32::try_from(output_chars / 4).unwrap_or(u32::MAX)
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -293,13 +379,30 @@ impl AIClient {
         }
 
         log::info!("AI request successful");
-        response
+        let response_body = response
             .json::<ChatCompletionResponse>()
             .await
             .map_err(|e| {
                 log::error!("AI Parse Error: {}", e);
                 AIError::ParseError(e.to_string())
-            })
+            })?;
+
+        let approx_prompt_tokens = u32::try_from(approx_input_tokens).unwrap_or(u32::MAX);
+        let approx_completion_tokens = estimate_output_tokens(&response_body);
+        let (prompt_tokens, completion_tokens, total_tokens, usage_source) = usage_tokens_from_response(
+            response_body.usage.as_ref(),
+            approx_prompt_tokens,
+            approx_completion_tokens,
+        );
+        let _ = logging::write_domain_log(
+            "audit",
+            &format!(
+                "AI Usage: endpoint={}, model={}, prompt_tokens={}, completion_tokens={}, total_tokens={}, usage_source={}",
+                endpoint, self.config.model, prompt_tokens, completion_tokens, total_tokens, usage_source
+            ),
+        );
+
+        Ok(response_body)
     }
 
     /// Generic chat completion
@@ -594,9 +697,9 @@ fn extract_tools_probe_result(response: &ChatCompletionResponse) -> Result<Strin
 #[cfg(test)]
 mod tests {
     use super::{
-        drain_sse_events, extract_tools_probe_result, parse_sse_event, ChatCompletionRequest,
-        ChatCompletionResponse, ChatMessage, Choice, FunctionCall, ResponseMessage, ToolCall,
-        ToolChoice,
+        drain_sse_events, estimate_output_tokens, extract_tools_probe_result, parse_sse_event,
+        usage_tokens_from_response, ChatCompletionRequest, ChatCompletionResponse, ChatMessage,
+        Choice, FunctionCall, ResponseMessage, ToolCall, ToolChoice,
     };
 
     #[test]
@@ -680,5 +783,41 @@ mod tests {
 
         let result = extract_tools_probe_result(&response).expect("tools probe should succeed");
         assert_eq!(result, "tool_call: ping");
+    }
+
+    #[test]
+    fn usage_prefers_response_usage_when_complete() {
+        let usage = serde_json::json!({
+            "prompt_tokens": 120,
+            "completion_tokens": 45,
+            "total_tokens": 165
+        });
+        let (prompt, completion, total, source) = usage_tokens_from_response(Some(&usage), 10, 3);
+        assert_eq!(prompt, 120);
+        assert_eq!(completion, 45);
+        assert_eq!(total, 165);
+        assert_eq!(source, "response");
+    }
+
+    #[test]
+    fn usage_fallback_estimates_when_usage_missing() {
+        let response = ChatCompletionResponse {
+            choices: vec![Choice {
+                message: ResponseMessage {
+                    role: "assistant".to_string(),
+                    content: Some("hello world".to_string()),
+                    tool_calls: None,
+                },
+                finish_reason: Some("stop".to_string()),
+            }],
+            usage: None,
+        };
+        let approx_completion = estimate_output_tokens(&response);
+        let (prompt, completion, total, source) =
+            usage_tokens_from_response(response.usage.as_ref(), 9, approx_completion);
+        assert_eq!(prompt, 9);
+        assert_eq!(completion, approx_completion);
+        assert_eq!(total, prompt + completion);
+        assert_eq!(source, "estimated_chars_div_4");
     }
 }

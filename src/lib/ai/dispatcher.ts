@@ -2,7 +2,7 @@ import { useAIStore } from "../../stores/aiStore";
 import type { CommandAction } from "../../stores/commandStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { AIMessage } from "../../types/ai";
+import type { AIContextBudgetProfile, AIContextOptions, AIMessage } from "../../types/ai";
 import { Logger } from "../logger";
 import { buildAIContext } from "./contextBuilder";
 import { classifyAIError } from "./errorClassifier";
@@ -84,13 +84,18 @@ const extractActionFromToolResult = (result: {
  * Lightweight detection of user intent to determine context depth.
  * Optimized to balance token usage and high-signal data.
  */
-function detectContextOptions(input: string, activeTab: string | undefined): any {
+function detectContextOptions(
+  input: string,
+  activeTab: string | undefined,
+  budgetProfile: AIContextBudgetProfile = "command_center",
+): AIContextOptions {
   const inputLower = input.toLowerCase();
-  const options: any = {
+  const options: AIContextOptions = {
     includeLogs: false,
     includeHeaders: false,
     includeBody: false,
     maxTrafficCount: 5,
+    budgetProfile,
   };
 
   // Log-related keywords: Only fetch expensive logs if user asks for them
@@ -225,7 +230,7 @@ export async function dispatchCommand(
 
   // 3. 构建上下文 (Scenario-Aware Context V3)
   const activeTab = useUIStore.getState().activeTab;
-  const ctxOptions = detectContextOptions(input, activeTab);
+  const ctxOptions = detectContextOptions(input, activeTab, "command_center");
   const fullContext = await buildAIContext(ctxOptions);
   const contextString = JSON.stringify({ ...fullContext, ...context }, null, 2);
 
@@ -252,6 +257,7 @@ export async function dispatchCommand(
         { type: "function", function: { name: "detect_intent" } },
         0,
         signal,
+        { includeContext: false },
       );
       action = extractActionFromToolResult(toolResult);
       if (action) {
@@ -280,7 +286,9 @@ export async function dispatchCommand(
         outcome: "fallback_json",
         detail: fallbackReason,
       });
-      fallbackResponse = await chatCompletion([intentSystemMsg, ...history, userMsg], 0, signal);
+      fallbackResponse = await chatCompletion([intentSystemMsg, ...history, userMsg], 0, signal, {
+        includeContext: false,
+      });
       action = extractJson(fallbackResponse);
     }
 
@@ -323,11 +331,15 @@ async function runTwoStageChat(
 ): Promise<CommandAction> {
   const { chatCompletionStream, history, addMessage } = useAIStore.getState();
   const activeTab = useUIStore.getState().activeTab;
-  const ctxOptions = detectContextOptions(input, activeTab);
+  const isScriptIntent = action.intent === "CREATE_SCRIPT";
+  const ctxOptions = detectContextOptions(
+    input,
+    activeTab,
+    isScriptIntent ? "script_assistant" : "command_center",
+  );
   const fullContext = await buildAIContext(ctxOptions);
   const contextString = JSON.stringify({ ...fullContext, ...context }, null, 2);
 
-  const isScriptIntent = action.intent === "CREATE_SCRIPT";
   const systemPrompt = isScriptIntent ? MITMPROXY_SYSTEM_PROMPT : CHAT_RESPONSE_SYSTEM_PROMPT;
 
   const langInfo = getAILanguageInfo();
@@ -351,6 +363,7 @@ async function runTwoStageChat(
     },
     undefined,
     signal,
+    { includeContext: false },
   );
 
   addMessage("user", input);
