@@ -8,9 +8,18 @@ import { usePluginContextMenuStore } from "../stores/pluginContextMenuStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
 import { usePluginSettingsStore } from "../stores/pluginSettingsStore";
 import { usePluginSlotStore } from "../stores/pluginSlotStore";
+import { usePluginStore } from "../stores/pluginStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useUIStore } from "../stores/uiStore";
-import type { ContextMenuItemConfig, CreateMockConfig, PluginAPI } from "../types/plugin";
+import type { AIMessage } from "../types/ai";
+import type {
+  ContextMenuItemConfig,
+  CreateMockConfig,
+  PluginAIError,
+  PluginAIErrorCode,
+  PluginAIMessageInput,
+  PluginAPI,
+} from "../types/plugin";
 import { sanitizeNamespace } from "./pluginUtils";
 
 declare global {
@@ -20,6 +29,122 @@ declare global {
     };
   }
 }
+
+const buildPluginAIError = (
+  code: PluginAIErrorCode,
+  message: string,
+  cause?: unknown,
+): PluginAIError => {
+  const error = new Error(`[PLUGIN_AI_${code.toUpperCase()}] ${message}`) as PluginAIError;
+  error.code = code;
+  error.cause = cause;
+  return error;
+};
+
+const extractErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return String(error);
+};
+
+const mapPluginAIError = (error: unknown): PluginAIError => {
+  const knownCodes: PluginAIErrorCode[] = [
+    "permission",
+    "params",
+    "provider",
+    "timeout",
+    "unknown",
+  ];
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as any).code === "string" &&
+    knownCodes.includes((error as any).code as PluginAIErrorCode)
+  ) {
+    return error as PluginAIError;
+  }
+  const message = extractErrorMessage(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes("security violation") || lower.includes("missing 'ai:chat' permission")) {
+    return buildPluginAIError(
+      "permission",
+      "AI permission denied. Add `ai:chat` to plugin manifest permissions.",
+      error,
+    );
+  }
+  if (
+    lower.includes("invalid ai messages") ||
+    lower.includes("param_validation_failure") ||
+    lower.includes("json_parse_failed") ||
+    lower.includes("schema_mismatch")
+  ) {
+    return buildPluginAIError(
+      "params",
+      "Invalid AI request parameters. Ensure messages use {role, content} or [role, content].",
+      error,
+    );
+  }
+  if (
+    lower.includes("timeout") ||
+    lower.includes("timed out") ||
+    lower.includes("deadline exceeded")
+  ) {
+    return buildPluginAIError("timeout", "AI request timeout. Please retry.", error);
+  }
+  if (
+    lower.includes("provider") ||
+    lower.includes("api key") ||
+    lower.includes("unauthorized") ||
+    lower.includes("rate limit") ||
+    lower.includes("quota") ||
+    lower.includes("billing") ||
+    lower.includes("model")
+  ) {
+    return buildPluginAIError("provider", "AI provider is unavailable or misconfigured.", error);
+  }
+  return buildPluginAIError("unknown", "AI request failed.", error);
+};
+
+const normalizePluginAIMessages = (messages: PluginAIMessageInput[]): AIMessage[] => {
+  return messages.map((message, index) => {
+    if (Array.isArray(message)) {
+      const [role, content] = message;
+      if (typeof role !== "string" || typeof content !== "string") {
+        throw buildPluginAIError(
+          "params",
+          `Invalid tuple message at index ${index}. Expected [role, content] with string values.`,
+        );
+      }
+      return { role: role as AIMessage["role"], content };
+    }
+
+    if (
+      message &&
+      typeof message === "object" &&
+      typeof message.role === "string" &&
+      typeof message.content === "string"
+    ) {
+      return { role: message.role as AIMessage["role"], content: message.content };
+    }
+
+    throw buildPluginAIError(
+      "params",
+      `Invalid message at index ${index}. Expected { role, content } or [role, content].`,
+    );
+  });
+};
+
+const ensurePluginAIChatPermission = (pluginId: string) => {
+  const plugin = usePluginStore.getState().plugins.find((p) => p.manifest.id === pluginId);
+  if (!plugin?.manifest.permissions?.includes("ai:chat")) {
+    throw buildPluginAIError(
+      "permission",
+      "AI permission denied. Add `ai:chat` to plugin manifest permissions.",
+    );
+  }
+};
 
 // Helper to create a scoped API for a specific plugin
 export const createPluginApi = (
@@ -146,7 +271,31 @@ export const createPluginApi = (
     },
     ai: {
       chat: async (messages) => {
-        return scopedInvoke<string>("ai_chat_completion", messages);
+        try {
+          ensurePluginAIChatPermission(pluginId);
+          const normalizedMessages = normalizePluginAIMessages(messages);
+          const tupleMessages = normalizedMessages.map((m) => [m.role, m.content]);
+          return await scopedInvoke<string>("ai_chat_completion", tupleMessages);
+        } catch (error) {
+          throw mapPluginAIError(error);
+        }
+      },
+      chatStream: async (messages, onChunk, options) => {
+        try {
+          ensurePluginAIChatPermission(pluginId);
+          const normalizedMessages = normalizePluginAIMessages(messages);
+          await useAIStore.getState().chatCompletionStream(
+            normalizedMessages,
+            (chunk) => {
+              if (chunk) onChunk(chunk);
+            },
+            options?.temperature,
+            undefined,
+            { includeContext: options?.includeContext ?? false },
+          );
+        } catch (error) {
+          throw mapPluginAIError(error);
+        }
       },
       isEnabled: () => {
         return useAIStore.getState().settings.enabled;

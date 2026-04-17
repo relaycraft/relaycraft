@@ -78,6 +78,21 @@ import type { AIMessage } from "./ai";
 
 export type { PluginContextMenuEntry, PluginPage, Theme, TrafficFlowSummary };
 
+export type PluginAIMessageTuple = [AIMessage["role"], string];
+export type PluginAIMessageInput = AIMessage | PluginAIMessageTuple;
+
+export interface PluginAIChatStreamOptions {
+  temperature?: number;
+  includeContext?: boolean;
+}
+
+export type PluginAIErrorCode = "permission" | "params" | "provider" | "timeout" | "unknown";
+
+export interface PluginAIError extends Error {
+  code: PluginAIErrorCode;
+  cause?: unknown;
+}
+
 // ── Plugin API extension types ────────────────────────────────────────────────
 
 export interface HttpSendRequest {
@@ -264,7 +279,12 @@ export interface PluginAPI {
     registerContextMenuItem: (config: ContextMenuItemConfig) => () => void;
   };
   ai: {
-    chat: (messages: AIMessage[]) => Promise<string>;
+    chat: (messages: PluginAIMessageInput[]) => Promise<string>;
+    chatStream: (
+      messages: PluginAIMessageInput[],
+      onChunk: (chunk: string) => void,
+      options?: PluginAIChatStreamOptions,
+    ) => Promise<void>;
     isEnabled: () => boolean;
   };
   stats: {

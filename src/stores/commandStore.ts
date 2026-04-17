@@ -12,11 +12,15 @@ export type CommandIntent =
   | "GENERATE_REQUEST"
   | "CHAT";
 
+export type CommandRoutingLayer = "direct_command" | "guided_action" | "conversation";
+
 export interface CommandAction {
   intent: CommandIntent;
   params?: any;
   confidence: number;
   explanation?: string;
+  executionMode?: "auto" | "confirm";
+  layer?: CommandRoutingLayer;
 }
 
 export interface SuggestionItem {

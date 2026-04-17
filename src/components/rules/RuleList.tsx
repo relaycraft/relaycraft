@@ -262,7 +262,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                         </div>
                       }
                     >
-                      <span className="inline-flex items-center cursor-help text-primary/60 hover:text-primary transition-colors">
+                      <span className="inline-flex items-center text-primary/60 hover:text-primary transition-colors">
                         <Sparkles className="w-3 h-3" />
                       </span>
                     </Tooltip>
@@ -282,7 +282,7 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                         </div>
                       }
                     >
-                      <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full border border-destructive/20 shadow-sm animate-pulse cursor-help pointer-events-auto">
+                      <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full border border-destructive/20 shadow-sm animate-pulse pointer-events-auto">
                         <AlertTriangle className="w-2.5 h-2.5" />
                         <span className="text-xs uppercase font-semibold leading-none">
                           {t("rules.conflict.overridden")}

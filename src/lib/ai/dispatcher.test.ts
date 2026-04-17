@@ -94,6 +94,8 @@ describe("dispatcher function calling", () => {
 
     expect(action.intent).toBe("NAVIGATE");
     expect(action.params).toEqual({ path: "/rules" });
+    expect(action.executionMode).toBe("confirm");
+    expect(action.layer).toBe("guided_action");
     expect(chatCompletionWithTools).toHaveBeenCalledOnce();
     expect(chatCompletion).not.toHaveBeenCalled();
   });
@@ -110,7 +112,35 @@ describe("dispatcher function calling", () => {
     const action = await dispatchCommand("清空抓包记录");
 
     expect(action.intent).toBe("CLEAR_TRAFFIC");
+    expect(action.executionMode).toBe("confirm");
+    expect(action.layer).toBe("guided_action");
     expect(chatCompletionWithTools).toHaveBeenCalledOnce();
     expect(chatCompletion).toHaveBeenCalledOnce();
+  });
+
+  it("treats explicit short commands as direct auto-executable actions", async () => {
+    const action = await dispatchCommand("开始代理");
+
+    expect(action.intent).toBe("TOGGLE_PROXY");
+    expect(action.params).toEqual({ action: "start" });
+    expect(action.executionMode).toBe("auto");
+    expect(action.layer).toBe("direct_command");
+    expect(chatCompletionWithTools).not.toHaveBeenCalled();
+    expect(chatCompletion).not.toHaveBeenCalled();
+  });
+
+  it("routes consultative questions to conversation flow without action tool dispatch", async () => {
+    chatCompletionStream.mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk("先确认接口路径，再给出返回体模板。");
+    });
+
+    const action = await dispatchCommand("接口返回 401 是什么原因？要怎么处理？");
+
+    expect(action.intent).toBe("CHAT");
+    expect(action.executionMode).toBe("confirm");
+    expect(action.layer).toBe("conversation");
+    expect(chatCompletionWithTools).not.toHaveBeenCalled();
+    expect(chatCompletion).not.toHaveBeenCalled();
+    expect(chatCompletionStream).toHaveBeenCalledOnce();
   });
 });

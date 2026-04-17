@@ -72,3 +72,6 @@ src-tauri/resources/addons/
 
 # Claude Code
 .claude/
+
+# Trae local skills/config
+.trae/

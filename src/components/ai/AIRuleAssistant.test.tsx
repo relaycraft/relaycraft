@@ -94,7 +94,14 @@ describe("AIRuleAssistant context injection contract", () => {
   });
 
   it("disables store context auto-injection when manually embedding context", async () => {
-    render(<AIRuleAssistant onApply={vi.fn()} onClose={vi.fn()} initialMode="ai" />);
+    render(
+      <AIRuleAssistant
+        onApply={vi.fn()}
+        onClose={vi.fn()}
+        initialMode="ai"
+        initialRule={{ id: "rule_1", name: "rule" } as any}
+      />,
+    );
 
     fireEvent.click(screen.getByText("rules.editor.ai.chip_explain"));
 

@@ -137,7 +137,7 @@ export const TrafficListItem = memo(
             >
               {isError ? (
                 <Tooltip content={t("traffic.status.failed")} side="bottom">
-                  <div className="flex items-center justify-center w-6 h-4 cursor-help">
+                  <div className="flex items-center justify-center w-6 h-4">
                     <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
                   </div>
                 </Tooltip>

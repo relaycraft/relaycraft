@@ -11,6 +11,52 @@ pub struct PluginCallArgs {
     pub args: serde_json::Value,
 }
 
+#[derive(Debug, Deserialize)]
+struct PluginAIMessageObject {
+    role: String,
+    content: String,
+}
+
+fn parse_plugin_ai_messages(args: serde_json::Value) -> Result<Vec<(String, String)>, String> {
+    let serde_json::Value::Array(items) = args else {
+        return Err(
+            "Invalid AI messages: expected [[role, content], ...] or [{ role, content }, ...]"
+                .to_string(),
+        );
+    };
+
+    if items.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let all_tuple_shape = items
+        .iter()
+        .all(|item| matches!(item, serde_json::Value::Array(arr) if arr.len() == 2));
+    if all_tuple_shape {
+        return serde_json::from_value::<Vec<(String, String)>>(serde_json::Value::Array(items))
+            .map_err(|e| format!("Invalid AI messages: {}", e));
+    }
+
+    let all_object_shape = items
+        .iter()
+        .all(|item| matches!(item, serde_json::Value::Object(map) if map.contains_key("role") && map.contains_key("content")));
+    if all_object_shape {
+        return serde_json::from_value::<Vec<PluginAIMessageObject>>(serde_json::Value::Array(items))
+            .map(|object_messages| {
+                object_messages
+                    .into_iter()
+                    .map(|m| (m.role, m.content))
+                    .collect()
+            })
+            .map_err(|e| format!("Invalid AI messages: {}", e));
+    }
+
+    Err(
+        "Invalid AI messages: mixed/unsupported message shape. Use only [[role, content], ...] or [{ role, content }, ...]"
+            .to_string(),
+    )
+}
+
 /// Commands that require audit logging (security-sensitive operations)
 const AUDITED_COMMANDS: &[&str] = &[
     "ai_chat_completion",  // AI API calls
@@ -103,9 +149,9 @@ pub async fn plugin_call(
             if !permissions.contains(&"ai:chat".to_string()) {
                 return Err("Security Violation: Missing 'ai:chat' permission".to_string());
             }
-            // Parse messages from args: Vec<(String, String)>
-            let messages: Vec<(String, String)> = serde_json::from_value(payload.args)
-                .map_err(|e| format!("Invalid AI messages: {}", e))?;
+            // Accept both tuple arrays and object arrays for compatibility:
+            // [["user","hi"], ...] OR [{ role: "user", content: "hi" }, ...]
+            let messages = parse_plugin_ai_messages(payload.args)?;
 
             let response =
                 crate::ai::commands::ai_chat_completion(messages, None, app.state()).await?;

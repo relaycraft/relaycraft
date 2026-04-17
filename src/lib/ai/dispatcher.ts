@@ -1,5 +1,6 @@
+import i18n from "../../i18n";
 import { useAIStore } from "../../stores/aiStore";
-import type { CommandAction } from "../../stores/commandStore";
+import type { CommandAction, CommandRoutingLayer } from "../../stores/commandStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { AIContextBudgetProfile, AIContextOptions, AIMessage } from "../../types/ai";
@@ -18,7 +19,8 @@ import { COMMAND_DETECTION_TOOLS } from "./tools";
 /**
  * Robustly extracts a JSON object from a potentially messy string.
  */
-const extractJson = (text: string): CommandAction | null => {
+const extractJson = (text: string | null | undefined): CommandAction | null => {
+  if (text == null || typeof text !== "string") return null;
   const jsonStr = text.trim();
   const firstBrace = jsonStr.indexOf("{");
   const lastBrace = jsonStr.lastIndexOf("}");
@@ -55,6 +57,14 @@ const VALID_INTENTS = [
   "FILTER_TRAFFIC",
 ] as const;
 
+const markActionRouting = (action: CommandAction, layer: CommandRoutingLayer): CommandAction => {
+  return {
+    ...action,
+    layer,
+    executionMode: layer === "direct_command" ? "auto" : "confirm",
+  };
+};
+
 const normalizeAction = (action: CommandAction): CommandAction => {
   const normalizedIntent = (action.intent || "CHAT").toUpperCase();
   if (!VALID_INTENTS.includes(normalizedIntent as (typeof VALID_INTENTS)[number])) {
@@ -63,10 +73,62 @@ const normalizeAction = (action: CommandAction): CommandAction => {
   return { ...action, intent: normalizedIntent as CommandAction["intent"] };
 };
 
-const extractActionFromToolResult = (result: {
-  content?: string | null;
-  tool_calls?: { function: { arguments: string; name: string } }[] | null;
-}): CommandAction | null => {
+const EXPLICIT_SHORT_COMMANDS: Record<string, CommandAction> = {
+  清空抓包: { intent: "CLEAR_TRAFFIC", confidence: 1.0, explanation: "explicit_short_command" },
+  清空流量: { intent: "CLEAR_TRAFFIC", confidence: 1.0, explanation: "explicit_short_command" },
+  开始代理: {
+    intent: "TOGGLE_PROXY",
+    params: { action: "start" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  停止代理: {
+    intent: "TOGGLE_PROXY",
+    params: { action: "stop" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  打开规则: {
+    intent: "NAVIGATE",
+    params: { path: "/rules" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  打开脚本: {
+    intent: "NAVIGATE",
+    params: { path: "/scripts" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  打开流量: {
+    intent: "NAVIGATE",
+    params: { path: "/traffic" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+};
+
+const isConsultativeQuery = (inputLower: string): boolean => {
+  return /(怎么做|如何|怎么|步骤|建议|what should|how do i|how to|\?|？)/.test(inputLower);
+};
+
+const looksActionableCommand = (inputLower: string, rawInput: string): boolean => {
+  if (rawInput.trim().startsWith("/")) return true;
+  return /(创建|新建|生成|打开|进入|切到|跳转|清空|开始|停止|过滤|筛选|mock|create|generate|open|go to|navigate|clear|start|stop|filter)/i.test(
+    inputLower,
+  );
+};
+
+const extractActionFromToolResult = (
+  result:
+    | {
+        content?: string | null;
+        tool_calls?: { function: { arguments: string; name: string } }[] | null;
+      }
+    | null
+    | undefined,
+): CommandAction | null => {
+  if (!result) return null;
   const firstToolCall = result.tool_calls?.[0];
   if (firstToolCall?.function?.arguments) {
     const parsed = extractJson(firstToolCall.function.arguments);
@@ -128,7 +190,8 @@ export async function dispatchCommand(
   signal?: AbortSignal,
 ): Promise<CommandAction> {
   const language = useSettingsStore.getState().config.language;
-  const translate = t || ((s: string) => s);
+  const translate =
+    t ?? ((key: string, options?: Record<string, unknown>) => i18n.t(key, options) as string);
   const cleanInput = input.trim();
   const cleanInputLower = cleanInput.toLowerCase();
 
@@ -138,6 +201,8 @@ export async function dispatchCommand(
       params: { message: formatAIToolMetricsReport() },
       confidence: 1.0,
       explanation: "local_ai_metrics_report",
+      layer: "conversation",
+      executionMode: "confirm",
     };
   }
 
@@ -209,7 +274,11 @@ export async function dispatchCommand(
   };
 
   if (input.startsWith("/") && STATIC_COMMANDS[cleanInputLower]) {
-    return STATIC_COMMANDS[cleanInputLower];
+    return markActionRouting(STATIC_COMMANDS[cleanInputLower], "direct_command");
+  }
+
+  if (EXPLICIT_SHORT_COMMANDS[cleanInput]) {
+    return markActionRouting(EXPLICIT_SHORT_COMMANDS[cleanInput], "direct_command");
   }
 
   // 2. AI 是否启用检查
@@ -225,7 +294,26 @@ export async function dispatchCommand(
       intent: "CHAT",
       params: { message: translate("command_center.not_enabled_warning") },
       confidence: 1.0,
+      layer: "conversation",
+      executionMode: "confirm",
     };
+  }
+
+  // Consultation-first route: answer "how-to" style questions as chat guidance.
+  if (
+    isConsultativeQuery(cleanInputLower) &&
+    !looksActionableCommand(cleanInputLower, cleanInput)
+  ) {
+    const chatAction = markActionRouting(
+      {
+        intent: "CHAT",
+        params: { message: input },
+        confidence: 0.95,
+        explanation: "consultative_query",
+      },
+      "conversation",
+    );
+    return await runTwoStageChat(input, context, chatAction, language, translate, onChunk, signal);
   }
 
   // 3. 构建上下文 (Scenario-Aware Context V3)
@@ -295,12 +383,15 @@ export async function dispatchCommand(
     if (!action) {
       action = {
         intent: "CHAT",
-        params: { message: fallbackResponse || input },
+        params: {
+          message: fallbackResponse || translate("command_center.uncertain_intent_fallback"),
+        },
         confidence: 0.5,
+        explanation: "uncertain_intent",
       };
-    } else {
-      action = normalizeAction(action);
     }
+    action = normalizeAction(action);
+    action = markActionRouting(action, action.intent === "CHAT" ? "conversation" : "guided_action");
 
     // 两段式对话生成
     if (action.intent === "CHAT") {

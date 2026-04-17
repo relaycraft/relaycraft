@@ -93,6 +93,14 @@ export function AIRuleAssistant({
   const [disableOriginal, setDisableOriginal] = useState(true);
   const [enableScript, setEnableScript] = useState(true);
 
+  const inferInitialIntent = (text: string): "explain" | "rule" => {
+    // Keep explanation prompts from showing the form skeleton.
+    if (/(解释|说明|分析|原理|原因|why|explain)/i.test(text)) {
+      return "explain";
+    }
+    return "rule";
+  };
+
   // Sync initial rule to YAML content when initialRule changes (especially for rule switching or opening)
   // biome-ignore lint/correctness/useExhaustiveDependencies: Only trigger sync when rule ID changes to avoid overwriting edits or AI results during form typing
   useEffect(() => {
@@ -171,10 +179,11 @@ export function AIRuleAssistant({
   const handleGenerate = async (overridePrompt?: string) => {
     const activePrompt = overridePrompt || prompt;
     if (!activePrompt || generating) return;
+    const initialIntent = inferInitialIntent(activePrompt);
     setGenerating(true);
     setExplanation(""); // Prepare for streaming
     setPreview(null);
-    setDetectedIntent("unknown");
+    setDetectedIntent(initialIntent);
 
     try {
       const { chatCompletionStream, chatCompletionWithTools } = useAIStore.getState();
@@ -638,24 +647,25 @@ export function AIRuleAssistant({
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => {
-                    const p = t("rules.editor.ai.chip_explain");
-                    setPrompt(p);
-                    handleGenerate(p);
-                  }}
-                  className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                >
-                  {t("rules.editor.ai.chip_explain")}
-                </button>
-
                 {initialRule?.id ? (
-                  <button
-                    onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
-                    className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                  >
-                    {t("rules.editor.ai.chip_modify")}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        const p = t("rules.editor.ai.chip_explain");
+                        setPrompt(p);
+                        handleGenerate(p);
+                      }}
+                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                    >
+                      {t("rules.editor.ai.chip_explain")}
+                    </button>
+                    <button
+                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
+                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
+                    >
+                      {t("rules.editor.ai.chip_modify")}
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button

@@ -224,10 +224,14 @@
       "clear_traffic": "Clear Traffic",
       "create_rule": "Create Rule",
       "create_script": "Create Script",
+      "filter_traffic": "Filter Traffic",
+      "generate_request": "Generate Request",
       "navigate": "Navigate",
       "open_settings": "Settings",
+      "search_traffic": "Search Traffic",
       "toggle_proxy": "Toggle Proxy"
     },
+    "ai_active": "AI is active",
     "ai_integrated": "RelayCraft AI Integrated",
     "confirm_action": "Confirm Action",
     "confirm_required": "Confirmation Required",
@@ -256,6 +260,7 @@
     "status": {
       "editing": "Editing Mode"
     },
+    "uncertain_intent_fallback": "I am not fully sure about your intent. You can use /rules or /traffic directly, or tell me your goal.",
     "suggestions": {
       "ai_composer_upload": "AI Build from Document",
       "ai_explain_rule": "Explain this rule",

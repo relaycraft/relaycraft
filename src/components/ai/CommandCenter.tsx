@@ -14,7 +14,6 @@ import {
   Radar,
   SendHorizontal,
   Settings,
-  Shield,
   Sparkles,
   Terminal,
   Trash2,
@@ -25,27 +24,18 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useSuggestionEngine } from "../../hooks/useSuggestionEngine";
+import { executeCommandAction } from "../../lib/ai/commandExecutor";
 import { dispatchCommand } from "../../lib/ai/dispatcher";
 import { classifyAIError, toUserActionableMessage } from "../../lib/ai/errorClassifier";
-import { getAILanguageInfo } from "../../lib/ai/lang";
-import { FILTER_ASSISTANT_SYSTEM_PROMPT } from "../../lib/ai/prompts";
-import { mapAIRuleToInternal } from "../../lib/ai/ruleMapper";
 import { SuggestionEngine } from "../../lib/ai/suggestionEngine";
-import { parseToolCallArgs } from "../../lib/ai/toolArgs";
-import { FILTER_GENERATION_TOOLS } from "../../lib/ai/tools/filterTools";
-import { cleanAIResult, normalizeFilterQuery } from "../../lib/ai/utils";
-import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
 import { Logger } from "../../lib/logger";
-import { getUniqueName } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { type CommandAction, useCommandStore } from "../../stores/commandStore";
-import { useComposerStore } from "../../stores/composerStore";
 import { usePluginPageStore } from "../../stores/pluginPageStore";
-import { useProxyStore } from "../../stores/proxyStore";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useScriptStore } from "../../stores/scriptStore";
 import { useTrafficStore } from "../../stores/trafficStore";
-import { type TabType, useUIStore } from "../../stores/uiStore";
+import { useUIStore } from "../../stores/uiStore";
 import { Tooltip } from "../common/Tooltip";
 import { AIMarkdown } from "./AIMarkdown";
 
@@ -54,7 +44,7 @@ export function CommandCenter() {
   const { getSuggestions } = useSuggestionEngine();
   const { isOpen, setIsOpen, input, setInput, addHistory, suggestions, setSuggestions } =
     useCommandStore();
-  const { setActiveTab, setDraftScriptPrompt, setDraftRulePrompt } = useUIStore();
+  const { setActiveTab } = useUIStore();
   const { settings: aiSettings } = useAIStore();
   const [executing, setExecuting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -95,12 +85,7 @@ export function CommandCenter() {
   const selectedRule = useRuleStore((state) => state.selectedRule);
   const draftRule = useRuleStore((state) => state.draftRule);
 
-  const setDraftRule = useRuleStore((state) => state.setDraftRule);
-  const selectRule = useRuleStore((state) => state.selectRule);
   const rules = useRuleStore((state) => state.rules);
-  const startProxy = useProxyStore((state) => state.startProxy);
-  const stopProxy = useProxyStore((state) => state.stopProxy);
-  const clearFlows = useTrafficStore((state) => state.clearFlows);
   const scripts = useScriptStore((state) => state.scripts);
 
   const activeRulesCount = rules.filter((r) => r.execution.enabled).length;
@@ -197,27 +182,19 @@ export function CommandCenter() {
         setStreamingMessage(null);
       }
 
-      const SafeIntents = [
-        "NAVIGATE",
-        "OPEN_SETTINGS",
-        "CREATE_RULE",
-        "CREATE_SCRIPT",
-        "CLEAR_TRAFFIC",
-        "FILTER_TRAFFIC",
-        "GENERATE_REQUEST",
-        "CHAT",
-      ];
-
       if (!aiSettings.enabled && result.intent === "CHAT") {
         setAction({
           intent: "CHAT",
           params: { message: t("command_center.not_enabled_warning") },
           confidence: 1.0,
         });
-      } else if (SafeIntents.includes(result.intent)) {
+      } else if (canAutoExecuteAction(result, commandToRun)) {
         await executeAction(result);
       } else {
-        setAction(result);
+        // Safety fallback: anything outside strict auto-exec gate requires confirmation.
+        setAction(
+          result.executionMode === "auto" ? { ...result, executionMode: "confirm" } : result,
+        );
       }
       addHistory(commandToRun);
       SuggestionEngine.recordUsage(
@@ -233,170 +210,37 @@ export function CommandCenter() {
     }
   };
 
-  const mapperPathToTab = (path: string): TabType | null => {
-    const p = path.toLowerCase();
-    if (p.includes("rule")) return "rules";
-    if (p.includes("script")) return "scripts";
-    if (p.includes("traffic") || p.includes("dashboard")) return "traffic";
-    if (p.includes("composer")) return "composer";
-    if (p.includes("setting")) return "settings";
-    return null;
-  };
-
   const executeAction = async (forcedAction?: CommandAction) => {
     const act = forcedAction || action;
     if (!act) return;
+    await executeCommandAction({
+      action: act,
+      setIsOpen,
+      setActiveTab,
+      setStreamingMessage,
+      setExecuting,
+    });
+  };
 
-    switch (act.intent) {
-      case "NAVIGATE":
-        if (act.params?.path) {
-          const tab = mapperPathToTab(act.params.path);
-          if (tab) setActiveTab(tab);
-        }
-        setIsOpen(false);
-        break;
-      case "CREATE_RULE": {
-        selectRule(null);
+  const canAutoExecuteAction = (result: CommandAction, originalInput: string): boolean => {
+    const autoExecutableIntents = new Set<CommandAction["intent"]>([
+      "NAVIGATE",
+      "TOGGLE_PROXY",
+      "CLEAR_TRAFFIC",
+      "OPEN_SETTINGS",
+    ]);
 
-        // Direct jump logic: user wants to generate IN the Rule Editor
-        const requirement =
-          act.params?.requirement || act.params?.description || act.params?.message || "";
+    const isWhitelistedIntent = autoExecutableIntents.has(result.intent);
+    const isDirectLayer = result.layer === "direct_command";
+    const fromExplicitSlash = originalInput.trim().startsWith("/");
+    const fromExplicitShortcut = result.explanation === "explicit_short_command";
 
-        // Initialize a blank draft so the editor opens
-        const defaultRule = mapAIRuleToInternal({ name: "Untitled Rule" });
-        setDraftRule(defaultRule);
-
-        // Pass the requirement to AI Assistant to pre-fill/auto-run
-        if (requirement) {
-          setDraftRulePrompt(requirement);
-        } else {
-          // Fallback to just opening the AI panel
-          setDraftRulePrompt("INITIAL_OPEN_ONLY");
-        }
-
-        setActiveTab("rules");
-        setIsOpen(false);
-        break;
-      }
-      case "OPEN_SETTINGS":
-        if (act.params?.category) {
-          useUIStore.getState().setSettingsTab(act.params.category as any);
-        }
-        setActiveTab("settings");
-        setIsOpen(false);
-        break;
-      case "CREATE_SCRIPT": {
-        const existingNames = useScriptStore.getState().scripts.map((s) => s.name);
-        const scriptName = act.params?.name
-          ? getUniqueName(act.params.name, existingNames)
-          : getUniqueName("Untitled Script.py", existingNames);
-
-        // Direct jump logic: user wants to generate IN the editor
-        // We ignore any potential generated code in the message and just take the intent/requirement
-        const requirement =
-          act.params?.requirement || act.params?.description || act.params?.message || "";
-
-        // Initialize a blank draft so the editor opens
-        useScriptStore
-          .getState()
-          .setDraftScript({ name: scriptName, content: DEFAULT_SCRIPT_TEMPLATE });
-
-        // Pass the requirement to AI Assistant to pre-fill/auto-run
-        if (requirement) {
-          setDraftScriptPrompt(requirement);
-        } else {
-          // Fallback to just opening the AI panel
-          setDraftScriptPrompt("INITIAL_OPEN_ONLY");
-        }
-
-        setActiveTab("scripts");
-        setIsOpen(false);
-        break;
-      }
-      case "CLEAR_TRAFFIC":
-        clearFlows();
-        setIsOpen(false);
-        break;
-      case "FILTER_TRAFFIC": {
-        const requirement =
-          act.params?.requirement || act.params?.description || act.params?.message || "";
-
-        if (requirement) {
-          setExecuting(true);
-          try {
-            const { chatCompletion, chatCompletionWithTools } = useAIStore.getState();
-            const langInfo = getAILanguageInfo();
-            const systemMsg = {
-              role: "system" as const,
-              content: FILTER_ASSISTANT_SYSTEM_PROMPT.replace(/{{LANGUAGE}}/g, langInfo.name)
-                .replace(/{{TERMINOLOGY}}/g, langInfo.terminology)
-                .replace(/{{ACTIVE_TAB}}/g, useUIStore.getState().activeTab)
-                .replace(/{{CURRENT_FILTER}}/g, useTrafficStore.getState().filterText || "None"),
-            };
-            const userMsg = { role: "user" as const, content: requirement };
-            let cleaned = "";
-            try {
-              const toolResult = await chatCompletionWithTools(
-                [systemMsg, userMsg],
-                FILTER_GENERATION_TOOLS,
-                { type: "function", function: { name: "generate_filter" } },
-                0,
-              );
-              const firstToolCall = toolResult.tool_calls?.[0];
-              const parsedArgs = parseToolCallArgs(firstToolCall, "generate_filter");
-              if (parsedArgs?.filter) {
-                cleaned = normalizeFilterQuery(parsedArgs.filter);
-              } else if (toolResult.content?.trim()) {
-                cleaned = normalizeFilterQuery(toolResult.content);
-              }
-            } catch {
-              const result = await chatCompletion([systemMsg, userMsg]);
-              cleaned = normalizeFilterQuery(result);
-            }
-
-            if (!cleaned) {
-              const result = await chatCompletion([systemMsg, userMsg]);
-              cleaned = normalizeFilterQuery(cleanAIResult(result));
-            }
-            useUIStore.getState().setDraftTrafficFilter(cleaned);
-          } catch (error) {
-            Logger.error("Filter generation failed", error);
-          } finally {
-            setExecuting(false);
-          }
-        }
-
-        setActiveTab("traffic");
-        setIsOpen(false);
-        break;
-      }
-      case "TOGGLE_PROXY":
-        if (act.params?.action === "start") await startProxy();
-        else if (act.params?.action === "stop") await stopProxy();
-        setIsOpen(false);
-        break;
-      case "GENERATE_REQUEST":
-        if (act.params) {
-          const composer = useComposerStore.getState();
-          if (act.params.method) composer.setMethod(act.params.method);
-          if (act.params.url) composer.setUrl(act.params.url);
-          if (act.params.headers) {
-            composer.setHeaders(act.params.headers.map((h: any) => ({ ...h, enabled: true })));
-          }
-          if (act.params.body) composer.setBody(act.params.body);
-          if (act.params.bodyType) composer.setBodyType(act.params.bodyType);
-        }
-        setActiveTab("composer");
-        setIsOpen(false);
-        break;
-      case "CHAT":
-        if (typeof act.params?.message === "string" && act.params.message.trim().length > 0) {
-          setStreamingMessage(act.params.message);
-        }
-        break;
-      default:
-        break;
-    }
+    return (
+      result.executionMode === "auto" &&
+      isDirectLayer &&
+      isWhitelistedIntent &&
+      (fromExplicitSlash || fromExplicitShortcut)
+    );
   };
 
   const getIntentLabel = (intent: string) => {
@@ -406,10 +250,13 @@ export function CommandCenter() {
       CREATE_SCRIPT: t("command_center.actions.create_script"),
       OPEN_SETTINGS: t("command_center.actions.open_settings"),
       CLEAR_TRAFFIC: t("command_center.actions.clear_traffic"),
+      SEARCH_TRAFFIC: t("command_center.actions.search_traffic"),
+      FILTER_TRAFFIC: t("command_center.actions.filter_traffic"),
+      GENERATE_REQUEST: t("command_center.actions.generate_request"),
       TOGGLE_PROXY: t("command_center.actions.toggle_proxy"),
       CHAT: t("command_center.actions.chat"),
     };
-    return labels[intent] || intent;
+    return labels[intent] || t("command_center.confirm_required");
   };
 
   const isEditingRule = activeTab === "rules" && (selectedRule || draftRule);
@@ -588,7 +435,7 @@ export function CommandCenter() {
                       {aiSettings.enabled && (
                         <div
                           className="flex items-center gap-1 bg-muted/30 px-1.5 py-0.5 rounded-md border border-white/5"
-                          title="AI Active"
+                          title={t("command_center.ai_active")}
                         >
                           <Sparkles className="w-2.5 h-2.5 text-muted-foreground/60" />
                         </div>
@@ -682,7 +529,7 @@ export function CommandCenter() {
                     </div>
                   )}
 
-                  {executing && !streamingMessage && !error && (
+                  {executing && !streamingMessage && !error && !action && (
                     <div className="py-8 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-300">
                       <div className="relative">
                         <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
@@ -718,14 +565,14 @@ export function CommandCenter() {
                             }`}
                           >
                             {action.intent === "NAVIGATE" && <ArrowRight className="w-5 h-5" />}
-                            {action.intent === "CREATE_RULE" && <Shield className="w-5 h-5" />}
+                            {action.intent === "CREATE_RULE" && <Layers className="w-5 h-5" />}
                             {action.intent === "CREATE_SCRIPT" && <Terminal className="w-5 h-5" />}
                             {action.intent === "OPEN_SETTINGS" && <Settings className="w-5 h-5" />}
                             {action.intent === "CLEAR_TRAFFIC" && <Trash2 className="w-5 h-5" />}
                             {action.intent === "TOGGLE_PROXY" && <Power className="w-5 h-5" />}
                           </div>
                           <div>
-                            <h3 className="text-sm font-bold text-foreground tracking-tight">
+                            <h3 className="text-xs font-semibold text-foreground tracking-tight">
                               {getIntentLabel(action.intent)}
                             </h3>
                             <p className="text-ui text-muted-foreground font-medium mt-0.5 opacity-80">
@@ -756,7 +603,7 @@ export function CommandCenter() {
                       {/* Action Button */}
                       <button
                         onClick={() => executeAction()}
-                        className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-ui font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all"
+                        className="w-full h-10 rounded-lg border border-primary/20 flex items-center justify-center gap-2 text-ui font-semibold bg-primary/90 hover:bg-primary text-primary-foreground shadow-sm active:scale-[0.99] transition-all"
                       >
                         <span>{t("command_center.confirm_action")}</span>
                         <ArrowRight className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />

@@ -224,10 +224,14 @@
       "clear_traffic": "清空流量",
       "create_rule": "创建规则",
       "create_script": "编写脚本",
+      "filter_traffic": "筛选流量",
+      "generate_request": "生成请求",
       "navigate": "页面跳转",
       "open_settings": "偏好设置",
+      "search_traffic": "搜索流量",
       "toggle_proxy": "代理开关"
     },
+    "ai_active": "AI 已开启",
     "ai_integrated": "RelayCraft AI 已集成",
     "confirm_action": "确认执行",
     "confirm_required": "操作确认",
@@ -256,6 +260,7 @@
     "status": {
       "editing": "正在修改"
     },
+    "uncertain_intent_fallback": "我不太确定你的意图。你可以直接用 /rules 或 /traffic，或告诉我你想完成的目标。",
     "suggestions": {
       "ai_composer_upload": "AI 上传文档构造",
       "ai_explain_rule": "解释当前规则",
