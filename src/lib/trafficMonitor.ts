@@ -5,12 +5,13 @@
  * full flow details on demand.
  */
 
+import { invoke } from "@tauri-apps/api/core";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import i18n from "../i18n";
 import { useRuleStore } from "../stores/ruleStore";
 import { useSessionStore } from "../stores/sessionStore";
 import { useTrafficStore } from "../stores/trafficStore";
-import type { Flow, FlowIndex, RcMatchedHit, SsePollResponse } from "../types";
+import type { Flow, FlowIndex, RcMatchedHit, SsePollResponse, WsResendRequest } from "../types";
 import { Logger } from "./logger";
 
 let pollInterval: number | null = null;
@@ -171,6 +172,44 @@ export async function fetchFlowDetail(id: string): Promise<Flow | null> {
     Logger.error("Error fetching flow detail:", error);
     return null;
   }
+}
+
+/**
+ * Inject a WebSocket frame (client → server) into an active flow.
+ * Must go through the Tauri command — see AGENTS.md §3.2 #7.
+ *
+ * Throws a localized Error on failure; the message is already i18n-ready.
+ */
+export async function wsInjectFrame(req: WsResendRequest): Promise<void> {
+  try {
+    await invoke("ws_inject_frame", { req });
+  } catch (raw) {
+    const msg = typeof raw === "string" ? raw : String(raw);
+    throw new Error(translateWsInjectError(msg));
+  }
+}
+
+const WS_INJECT_ERROR_CODES = new Set([
+  "flow_not_found",
+  "flow_closed",
+  "invalid_payload",
+  "engine_error",
+]);
+
+function translateWsInjectError(raw: string): string {
+  // The Tauri command formats errors as `${code}: ${message}`; extract the code
+  // and map it to a localized string, falling back to the engine-provided
+  // detail if the code is unknown.
+  const colonIdx = raw.indexOf(":");
+  if (colonIdx > 0) {
+    const code = raw.slice(0, colonIdx).trim();
+    const detail = raw.slice(colonIdx + 1).trim();
+    if (WS_INJECT_ERROR_CODES.has(code)) {
+      const localized = i18n.t(`traffic.websocket.resend_error.${code}`);
+      return detail ? `${localized} (${detail})` : localized;
+    }
+  }
+  return raw || i18n.t("traffic.websocket.resend_error.engine_error");
 }
 
 export async function fetchSseEvents(

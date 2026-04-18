@@ -79,7 +79,11 @@ fn extract_file_paths_from_args(args: &[String]) -> Vec<std::path::PathBuf> {
     args.iter()
         .filter_map(|arg| {
             let p = std::path::PathBuf::from(arg);
-            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+            let ext = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_lowercase();
             if (ext == "rcplugin" || ext == "rctheme") && p.exists() {
                 Some(p)
             } else {
@@ -91,7 +95,6 @@ fn extract_file_paths_from_args(args: &[String]) -> Vec<std::path::PathBuf> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
     // Load existing config or use default; detect corruption so we can notify the user.
     let config_load_result = config::load_config();
     let config_was_reset = config_load_result.is_err();
@@ -286,7 +289,12 @@ pub fn run() {
             // Auto-start MCP Server if enabled in config
             if app_config.mcp_config.enabled {
                 let mcp_state = app.state::<mcp::McpState>();
-                mcp::start(&mcp_state, app_config.mcp_config.port, app_config.proxy_port, app.handle().clone());
+                mcp::start(
+                    &mcp_state,
+                    app_config.mcp_config.port,
+                    app_config.proxy_port,
+                    app.handle().clone(),
+                );
             }
 
             // Cold start: handle file association from CLI args (Windows/Linux)
@@ -362,6 +370,7 @@ pub fn run() {
             common::utils::get_system_info,
             traffic::replay_request,
             traffic::check_proxy_connectivity,
+            traffic::ws_inject_frame,
             session::save_session,
             session::har::export_har,
             rules::load_all_rules,
@@ -427,10 +436,8 @@ pub fn run() {
             // macOS: handle file-open events (double-click .rcplugin/.rctheme, or cold start)
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Opened { urls } => {
-                let paths: Vec<std::path::PathBuf> = urls
-                    .iter()
-                    .filter_map(|u| u.to_file_path().ok())
-                    .collect();
+                let paths: Vec<std::path::PathBuf> =
+                    urls.iter().filter_map(|u| u.to_file_path().ok()).collect();
                 if !paths.is_empty() {
                     handle_file_open(app_handle, &paths);
                 }
@@ -438,8 +445,6 @@ pub fn run() {
             _ => {}
         });
 }
-
-
 
 fn apply_upstream_proxy(config: &config::AppConfig) {
     if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {

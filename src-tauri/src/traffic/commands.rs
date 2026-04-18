@@ -20,8 +20,8 @@ pub struct ReplayResponse {
     pub status: u16,
     pub headers: HashMap<String, String>,
     pub body: String,
-    pub encoding: String, // "text" or "base64"
-    pub truncated: bool,  // true if body was cut off at MAX_BODY_BYTES
+    pub encoding: String,   // "text" or "base64"
+    pub truncated: bool,    // true if body was cut off at MAX_BODY_BYTES
     pub total_bytes: usize, // actual content-length or bytes read
 }
 
@@ -134,6 +134,65 @@ pub async fn replay_request_inner(req: ReplayRequest) -> Result<ReplayResponse, 
 #[tauri::command]
 pub async fn replay_request(req: ReplayRequest) -> Result<ReplayResponse, String> {
     replay_request_inner(req).await
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WsResendRequest {
+    pub flow_id: String,
+    /// "text" or "binary". Text payload is sent as UTF-8; binary payload is
+    /// base64-encoded and decoded by the engine before sending.
+    #[serde(rename = "type")]
+    pub frame_type: String,
+    pub payload: String,
+}
+
+/// Inject a WebSocket frame (client → server) into an active flow via the
+/// mitmproxy engine's control endpoint. The frontend must always go through
+/// this command — see AGENTS.md §3.2 #7.
+#[tauri::command]
+pub async fn ws_inject_frame(req: WsResendRequest) -> Result<(), String> {
+    let config = crate::config::load_config().unwrap_or_default();
+    let target = format!("http://127.0.0.1:{}/_relay/ws/inject", config.proxy_port);
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("engine_error: {}", e))?;
+
+    let body = serde_json::json!({
+        "flowId": req.flow_id,
+        "type": req.frame_type,
+        "payload": req.payload,
+    });
+
+    let response = client
+        .post(&target)
+        .header("Content-Type", "application/json")
+        .body(body.to_string())
+        .send()
+        .await
+        .map_err(|e| format!("engine_error: {}", e))?;
+
+    let status = response.status();
+    let text = response.text().await.unwrap_or_default();
+
+    if status.is_success() {
+        return Ok(());
+    }
+
+    // Engine returns JSON {ok, code, message}. Surface the code as a prefix so
+    // the frontend can map it to a localized message; fall back to raw text.
+    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
+        let code = parsed
+            .get("code")
+            .and_then(|v| v.as_str())
+            .unwrap_or("engine_error");
+        let message = parsed.get("message").and_then(|v| v.as_str()).unwrap_or("");
+        return Err(format!("{}: {}", code, message));
+    }
+
+    Err(format!("engine_error: HTTP {} {}", status.as_u16(), text))
 }
 
 #[tauri::command]

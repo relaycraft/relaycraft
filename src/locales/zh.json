@@ -1145,7 +1145,28 @@
       "showing_last": "显示最近 {{count}} 条",
       "no_frames": "尚未捕获到 WebSocket 帧",
       "auto_scroll_on": "自动滚动开",
-      "auto_scroll_off": "自动滚动关"
+      "auto_scroll_off": "自动滚动关",
+      "resend": "重发",
+      "send": "发送",
+      "resend_failed": "帧重发失败",
+      "resend_closed_hint": "连接已关闭",
+      "resend_binary_readonly": "二进制帧仅支持原样重发",
+      "injected_badge": "已注入",
+      "preview_truncated": "消息较大，列表中仅展示前 {{size}} 个字符。可复制以获取完整内容。",
+      "resend_error": {
+        "flow_not_found": "WebSocket 流未找到",
+        "flow_closed": "连接已关闭",
+        "invalid_payload": "负载无效",
+        "engine_error": "引擎错误"
+      },
+      "auto_refresh_on": "自动刷新开",
+      "auto_refresh_off": "自动刷新关",
+      "filter_placeholder": "过滤消息...",
+      "direction_all": "全部",
+      "direction_client": "上行",
+      "direction_server": "下行",
+      "clear_filter": "清除",
+      "no_match": "没有匹配当前过滤条件的消息"
     },
     "sse": {
       "events": "SSE 事件",
@@ -1157,7 +1178,12 @@
       "auto_scroll_on": "自动滚动开",
       "auto_scroll_off": "自动滚动关",
       "waiting": "等待 SSE 事件中...",
-      "content_truncated": "内容过长，仅展示前 {{size}} 字符。"
+      "content_truncated": "内容过长，仅展示前 {{size}} 字符。",
+      "auto_refresh_on": "自动刷新开",
+      "auto_refresh_off": "自动刷新关",
+      "filter_placeholder": "过滤 SSE 数据...",
+      "clear_filter": "清除",
+      "no_match": "没有匹配当前过滤条件的 SSE 事件"
     }
   },
   "init": {

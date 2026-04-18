@@ -19,6 +19,7 @@ import uuid
 import json
 import threading
 import codecs
+import hashlib
 from collections import deque
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple, List
@@ -116,6 +117,12 @@ class TrafficMonitor:
         self._sse_default_limit = 200
         self._sse_max_limit = 1000
         self._sse_state_retention_seconds = 60.0
+
+        # WebSocket inject — registry of currently open WS flows.
+        # Populated by CoreAddon.websocket_start, cleared by websocket_end.
+        self._ws_flows_lock = threading.Lock()
+        self._ws_flows: Dict[str, http.HTTPFlow] = {}
+        self._ws_inject_max_payload_bytes = 1024 * 1024  # 1 MiB
 
     # ==================== SSE Processing ====================
 
@@ -594,27 +601,59 @@ class TrafficMonitor:
             is_websocket = hasattr(flow, 'websocket') and flow.websocket is not None
             ws_frames = None
             ws_frame_count = 0
+            ws_open = False
+
+            if is_websocket and flow.websocket:
+                # Use active registry as primary source of truth for "open":
+                # - websocket_end unregisters immediately, so closed state is reflected fast
+                # - closed_at_* flags may lag on some servers / teardown paths
+                with self._ws_flows_lock:
+                    is_registered_open = flow.id in self._ws_flows
+                ws_closed = self._is_ws_closed(flow.websocket) or self._ws_has_close_frame(flow.websocket)
+                ws_open = is_registered_open and (not ws_closed)
+                if is_registered_open and ws_closed:
+                    # Proactively clear stale registry entries when protocol close is observed.
+                    self.unregister_ws_flow(flow)
+                self._resolve_pending_injected_markers(flow, flow.websocket)
 
             if is_websocket and flow.websocket and flow.websocket.messages:
-                ws_frame_count = len(flow.websocket.messages)
-                # Only include last 500 frames in the flow
-                ws_frames = [
-                    {
-                        "id": str(uuid.uuid4()),
+                total_messages = len(flow.websocket.messages)
+                ws_frame_count = total_messages
+                slice_start = max(0, total_messages - 500)
+                injected_seqs = flow.metadata.get("_relaycraft_injected_seqs") or set()
+                if not isinstance(injected_seqs, set):
+                    try:
+                        injected_seqs = set(injected_seqs)
+                    except TypeError:
+                        injected_seqs = set()
+
+                ws_frames = []
+                for i, m in enumerate(flow.websocket.messages[-500:]):
+                    # Keep `seq` as the relative index into the returned slice to
+                    # match the current frontend contract. The absolute index is
+                    # used internally for injected-frame lookup only.
+                    abs_seq = slice_start + i
+                    # Stable frame.id — derived from flow + absolute seq. Must
+                    # NOT be a fresh UUID per call, otherwise React's keyed list
+                    # reconciliation re-mounts every row on every websocket
+                    # message arrival and freezes the UI for busy streams.
+                    frame = {
+                        "id": f"{flow.id}-{abs_seq}",
                         "flowId": flow.id,
                         "seq": i,
                         "type": m.type.name.lower() if hasattr(m.type, 'name') else str(m.type),
                         "fromClient": m.from_client,
                         "content": (
                             m.text if m.is_text
-                            else (m.content.hex() if m.content else "")
+                            else (base64.b64encode(m.content).decode("ascii") if m.content else "")
                         ),
                         "encoding": "text" if m.is_text else "base64",
                         "timestamp": m.timestamp * 1000,
                         "length": len(m.content) if m.content else 0,
                     }
-                    for i, m in enumerate(flow.websocket.messages[-500:])
-                ]
+                    if abs_seq in injected_seqs:
+                        frame["injected"] = True
+                    ws_frames.append(frame)
 
             # ========== URL Processing ==========
             url = flow.request.url
@@ -784,6 +823,7 @@ class TrafficMonitor:
                     "sseEvents": sse_events_snapshot,
                     "websocketFrameCount": ws_frame_count,
                     "websocketFrames": ws_frames,
+                    "wsOpen": ws_open,
                     "hits": hits,
                     "intercept": {
                         "intercepted": is_paused,
@@ -938,6 +978,262 @@ class TrafficMonitor:
         flow_data = self.process_flow(flow)
         if flow_data:
             self._store_flow(flow_data)
+
+    def register_ws_flow(self, flow: http.HTTPFlow) -> None:
+        """Register an active WebSocket flow so it can receive injected frames."""
+        if not flow or not getattr(flow, "id", None):
+            return
+        with self._ws_flows_lock:
+            self._ws_flows[flow.id] = flow
+
+    def unregister_ws_flow(self, flow: http.HTTPFlow) -> None:
+        """Remove a WebSocket flow from the inject registry when it closes."""
+        if not flow or not getattr(flow, "id", None):
+            return
+        with self._ws_flows_lock:
+            self._ws_flows.pop(flow.id, None)
+
+    def _is_ws_closed(self, ws: Any) -> bool:
+        """Check whether a mitmproxy WebSocketData is already closed on either side."""
+        if ws is None:
+            return True
+        return bool(
+            getattr(ws, "closed_at_client", None)
+            or getattr(ws, "closed_at_server", None)
+        )
+
+    def _ws_has_close_frame(self, ws: Any) -> bool:
+        """Best-effort close detection from captured WS CLOSE frames."""
+        messages = getattr(ws, "messages", None) or []
+        for msg in reversed(messages[-20:]):
+            msg_type = getattr(getattr(msg, "type", None), "name", None)
+            if msg_type is None:
+                msg_type = str(getattr(msg, "type", "")).lower()
+            else:
+                msg_type = str(msg_type).lower()
+            if msg_type == "close":
+                return True
+        return False
+
+    def _ensure_injected_seq_set(self, flow: http.HTTPFlow) -> set:
+        injected_seqs = flow.metadata.setdefault("_relaycraft_injected_seqs", set())
+        if not isinstance(injected_seqs, set):
+            injected_seqs = set(injected_seqs)
+            flow.metadata["_relaycraft_injected_seqs"] = injected_seqs
+        return injected_seqs
+
+    def _payload_fingerprint(self, payload_bytes: bytes) -> Dict[str, Any]:
+        return {
+            "len": len(payload_bytes),
+            "sha256": hashlib.sha256(payload_bytes).hexdigest(),
+        }
+
+    def _message_matches_fingerprint(
+        self, message: Any, is_text: bool, fingerprint: Dict[str, Any]
+    ) -> bool:
+        if bool(getattr(message, "from_client", False)) is not True:
+            return False
+        if bool(getattr(message, "is_text", False)) is not bool(is_text):
+            return False
+        content = getattr(message, "content", None)
+        if not isinstance(content, (bytes, bytearray)):
+            return False
+        if len(content) != fingerprint["len"]:
+            return False
+        return hashlib.sha256(bytes(content)).hexdigest() == fingerprint["sha256"]
+
+    def _append_pending_injected_marker(
+        self, flow: http.HTTPFlow, lower_bound: int, is_text: bool, fingerprint: Dict[str, Any]
+    ) -> None:
+        pending = flow.metadata.setdefault("_relaycraft_pending_injected", [])
+        if not isinstance(pending, list):
+            pending = []
+            flow.metadata["_relaycraft_pending_injected"] = pending
+        pending.append(
+            {
+                "lower_bound": max(0, int(lower_bound)),
+                "is_text": bool(is_text),
+                "len": int(fingerprint["len"]),
+                "sha256": str(fingerprint["sha256"]),
+                "created_at": time.time(),
+            }
+        )
+
+    def _resolve_pending_injected_markers(self, flow: http.HTTPFlow, ws: Any) -> None:
+        pending = flow.metadata.get("_relaycraft_pending_injected")
+        if not pending or not isinstance(pending, list):
+            return
+        messages = getattr(ws, "messages", None) or []
+        if not messages:
+            return
+
+        injected_seqs = self._ensure_injected_seq_set(flow)
+        now = time.time()
+        ttl_seconds = 15.0
+        unresolved: List[Dict[str, Any]] = []
+
+        resolved_count = 0
+        for marker in pending:
+            if not isinstance(marker, dict):
+                continue
+            created_at = float(marker.get("created_at", now))
+            if now - created_at > ttl_seconds:
+                continue
+            lower_bound = max(0, int(marker.get("lower_bound", 0)))
+            marker_fp = {
+                "len": int(marker.get("len", 0)),
+                "sha256": str(marker.get("sha256", "")),
+            }
+            marker_is_text = bool(marker.get("is_text", False))
+            matched = False
+            for seq in range(lower_bound, len(messages)):
+                if seq in injected_seqs:
+                    continue
+                if self._message_matches_fingerprint(messages[seq], marker_is_text, marker_fp):
+                    injected_seqs.add(seq)
+                    matched = True
+                    resolved_count += 1
+                    break
+            if not matched:
+                unresolved.append(marker)
+
+        if unresolved:
+            flow.metadata["_relaycraft_pending_injected"] = unresolved
+        else:
+            flow.metadata.pop("_relaycraft_pending_injected", None)
+        if resolved_count > 0:
+            self.logger.debug(
+                "Resolved pending WS injected markers for flow %s: +%s (remaining=%s)",
+                getattr(flow, "id", ""),
+                resolved_count,
+                len(unresolved),
+            )
+
+    def inject_ws_frame(
+        self, flow_id: str, type_: str, payload: str
+    ) -> Tuple[int, Dict[str, Any]]:
+        """Inject a WebSocket frame from client to server on an active flow.
+
+        Returns (http_status, body_dict). The body always follows the shape
+        {"ok": bool, "code"?: str, "message"?: str}.
+        """
+        if not flow_id:
+            return 404, {
+                "ok": False,
+                "code": "flow_not_found",
+                "message": "flow_id is missing",
+            }
+
+        with self._ws_flows_lock:
+            flow = self._ws_flows.get(flow_id)
+
+        if not flow or not getattr(flow, "websocket", None):
+            return 404, {
+                "ok": False,
+                "code": "flow_not_found",
+                "message": f"No active WebSocket flow for id {flow_id}",
+            }
+
+        ws = flow.websocket
+        if self._is_ws_closed(ws):
+            # Drop from registry proactively so the next call short-circuits.
+            self.unregister_ws_flow(flow)
+            return 409, {
+                "ok": False,
+                "code": "flow_closed",
+                "message": "WebSocket connection is already closed",
+            }
+
+        if type_ not in ("text", "binary"):
+            return 400, {
+                "ok": False,
+                "code": "invalid_payload",
+                "message": f"Unsupported frame type: {type_!r}",
+            }
+
+        is_text = type_ == "text"
+        try:
+            if is_text:
+                if not isinstance(payload, str):
+                    raise TypeError("text payload must be a string")
+                payload_bytes = payload.encode("utf-8")
+            else:
+                if not isinstance(payload, str):
+                    raise TypeError("binary payload must be a base64 string")
+                payload_bytes = base64.b64decode(payload, validate=True)
+        except Exception as e:
+            return 400, {
+                "ok": False,
+                "code": "invalid_payload",
+                "message": f"Invalid payload: {e}",
+            }
+
+        if len(payload_bytes) > self._ws_inject_max_payload_bytes:
+            return 400, {
+                "ok": False,
+                "code": "invalid_payload",
+                "message": (
+                    f"Payload {len(payload_bytes)} bytes exceeds 1 MiB limit"
+                ),
+            }
+
+        try:
+            # Snapshot message length before injection for best-effort seq
+            # correlation.
+            before_len = len(getattr(ws, "messages", None) or [])
+            # mitmproxy inject.websocket's direction flag is "to_client":
+            # False => client -> server, True => server -> client.
+            # Our WS resend scope is fixed to client -> server.
+            ctx.master.commands.call(
+                "inject.websocket", flow, False, payload_bytes, is_text
+            )
+            # Only mark injected seq after inject call succeeds. This avoids
+            # stale metadata when injection fails.
+            after_len = len(getattr(ws, "messages", None) or [])
+            injected_seqs = self._ensure_injected_seq_set(flow)
+            fingerprint = self._payload_fingerprint(payload_bytes)
+            matched_seq: Optional[int] = None
+            messages_after = getattr(ws, "messages", None) or []
+            if after_len > before_len and messages_after:
+                for seq in range(before_len, after_len):
+                    if seq >= len(messages_after):
+                        break
+                    if self._message_matches_fingerprint(
+                        messages_after[seq], is_text, fingerprint
+                    ):
+                        matched_seq = seq
+                        break
+            if matched_seq is not None:
+                injected_seqs.add(matched_seq)
+                self.logger.debug(
+                    "WS inject matched immediately for flow %s at seq=%s (before=%s after=%s)",
+                    flow_id,
+                    matched_seq,
+                    before_len,
+                    after_len,
+                )
+            else:
+                # Fallback for asynchronous append / concurrent frame races:
+                # defer matching to process_flow where more messages are visible.
+                self._append_pending_injected_marker(
+                    flow, lower_bound=before_len, is_text=is_text, fingerprint=fingerprint
+                )
+                pending = flow.metadata.get("_relaycraft_pending_injected") or []
+                self.logger.debug(
+                    "WS inject deferred marker for flow %s (before=%s after=%s pending=%s)",
+                    flow_id,
+                    before_len,
+                    after_len,
+                    len(pending) if isinstance(pending, list) else 0,
+                )
+            return 200, {"ok": True}
+        except Exception as e:
+            self.logger.error(f"Error injecting WebSocket frame: {e}")
+            return 500, {
+                "ok": False,
+                "code": "engine_error",
+                "message": str(e),
+            }
 
     # ==================== HTTP Handlers ====================
 
@@ -1166,6 +1462,51 @@ class TrafficMonitor:
                     500,
                     json.dumps(error_resp, ensure_ascii=False).encode("utf-8"),
                     {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                )
+
+        # WebSocket frame inject
+        elif "/_relay/ws/inject" in flow.request.path:
+            try:
+                if flow.request.method != "POST":
+                    flow.response = Response.make(
+                        405,
+                        b'{"ok": false, "code": "invalid_payload", "message": "POST required"}',
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                    )
+                    return
+
+                try:
+                    raw = flow.request.content.decode("utf-8") if flow.request.content else ""
+                    data = json.loads(raw) if raw else {}
+                except Exception as e:
+                    body = json.dumps(
+                        {"ok": False, "code": "invalid_payload", "message": f"Invalid JSON: {e}"},
+                        ensure_ascii=False,
+                    )
+                    flow.response = Response.make(
+                        400,
+                        body.encode("utf-8"),
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                    )
+                    return
+
+                flow_id = data.get("flowId") or data.get("flow_id") or ""
+                frame_type = data.get("type", "text")
+                payload = data.get("payload", "")
+
+                status, body_dict = self.inject_ws_frame(flow_id, frame_type, payload)
+                body_json = json.dumps(body_dict, ensure_ascii=False)
+                flow.response = Response.make(
+                    status,
+                    body_json.encode("utf-8"),
+                    {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+                )
+            except Exception as e:
+                error_resp = {"ok": False, "code": "engine_error", "message": str(e)}
+                flow.response = Response.make(
+                    500,
+                    json.dumps(error_resp, ensure_ascii=False).encode("utf-8"),
+                    {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
                 )
 
         # Breakpoint management

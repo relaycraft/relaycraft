@@ -41,6 +41,7 @@ export {
   type RcWebSocketFrame,
   type SseEvent,
   type SsePollResponse,
+  type WsResendRequest,
 } from "./flow";
 
 // ==================== Rules 类型 ====================

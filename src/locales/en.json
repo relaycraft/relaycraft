@@ -1145,7 +1145,28 @@
       "showing_last": "showing last {{count}}",
       "no_frames": "No WebSocket frames captured yet",
       "auto_scroll_on": "Auto Scroll On",
-      "auto_scroll_off": "Auto Scroll Off"
+      "auto_scroll_off": "Auto Scroll Off",
+      "resend": "Resend",
+      "send": "Send",
+      "resend_failed": "Failed to resend frame",
+      "resend_closed_hint": "Connection already closed",
+      "resend_binary_readonly": "Binary frames can only be resent as-is",
+      "injected_badge": "Injected",
+      "preview_truncated": "Message is large; showing only the first {{size}} characters in the list. Use copy to get the full payload.",
+      "resend_error": {
+        "flow_not_found": "WebSocket flow not found",
+        "flow_closed": "Connection already closed",
+        "invalid_payload": "Invalid payload",
+        "engine_error": "Engine error"
+      },
+      "auto_refresh_on": "Auto Refresh On",
+      "auto_refresh_off": "Auto Refresh Off",
+      "filter_placeholder": "Filter messages...",
+      "direction_all": "All",
+      "direction_client": "C->S",
+      "direction_server": "S->C",
+      "clear_filter": "Clear",
+      "no_match": "No messages match current filter"
     },
     "sse": {
       "events": "SSE Events",
@@ -1157,7 +1178,12 @@
       "auto_scroll_on": "Auto Scroll On",
       "auto_scroll_off": "Auto Scroll Off",
       "waiting": "Waiting for SSE events...",
-      "content_truncated": "Content is too long, showing only the first {{size}} characters."
+      "content_truncated": "Content is too long, showing only the first {{size}} characters.",
+      "auto_refresh_on": "Auto Refresh On",
+      "auto_refresh_off": "Auto Refresh Off",
+      "filter_placeholder": "Filter SSE data...",
+      "clear_filter": "Clear",
+      "no_match": "No SSE events match current filter"
     }
   },
   "init": {

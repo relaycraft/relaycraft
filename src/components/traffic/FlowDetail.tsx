@@ -24,7 +24,7 @@ import {
   X,
 } from "lucide-react";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
@@ -46,14 +46,16 @@ import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { Flow, SseEvent } from "../../types";
+import type { Flow, RcWebSocketFrame, SseEvent } from "../../types";
 import { harToLegacyHeaders } from "../../types";
 import { AIMarkdown } from "../ai/AIMarkdown";
 import { CopyButton } from "../common/CopyButton";
+import { Input } from "../common/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Tooltip } from "../common/Tooltip";
 import { BodyView } from "./BodyView";
 import { HeadersView } from "./HeadersView";
+import { WsResendDrawer } from "./WsResendDrawer";
 
 interface FlowDetailProps {
   flow: Flow;
@@ -63,6 +65,9 @@ interface FlowDetailProps {
 const SSE_MAX_STORED_EVENTS = 2000;
 const SSE_MAX_PREVIEW_CHARS = 2000;
 const SSE_ID_PREVIEW_CHARS = 96;
+/** WS 列表预览上限（TradingView 等站点单帧可达数百 KB，全量渲染会卡死主线程） */
+const WS_MAX_PREVIEW_CHARS = 2000;
+type WsDirectionFilter = "all" | "client" | "server";
 
 export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const { t } = useTranslation();
@@ -78,11 +83,19 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const [sseStreamOpen, setSseStreamOpen] = useState<boolean>(!!flow._rc?.sseStreamOpen);
   const [sseDroppedCount, setSseDroppedCount] = useState<number>(0);
   const [sseAutoScroll, setSseAutoScroll] = useState<boolean>(true);
+  const [sseAutoRefresh, setSseAutoRefresh] = useState<boolean>(true);
+  const [sseKeywordFilter, setSseKeywordFilter] = useState("");
   const [wsAutoScroll, setWsAutoScroll] = useState<boolean>(true);
+  const [wsAutoRefresh, setWsAutoRefresh] = useState<boolean>(true);
+  const [wsDirectionFilter, setWsDirectionFilter] = useState<WsDirectionFilter>("all");
+  const [wsKeywordFilter, setWsKeywordFilter] = useState("");
   const [expandedSseIds, setExpandedSseIds] = useState<Record<string, boolean>>({});
+  const [resendFrame, setResendFrame] = useState<RcWebSocketFrame | null>(null);
+  const lastFlowIdRef = useRef<string>("");
   const sseNextSeqRef = useRef(0);
   const sseListRef = useRef<VirtuosoHandle | null>(null);
-  const wsListRef = useRef<HTMLDivElement | null>(null);
+  const wsListRef = useRef<VirtuosoHandle | null>(null);
+  const wsRefreshInFlightRef = useRef(false);
   const resolvedUrl = resolveFlowRequestUrl(flow.request) || t("traffic.url_unavailable");
   const resolvedUrlPreview = getReadableUrlPreview(resolvedUrl);
 
@@ -112,6 +125,9 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   useEffect(() => {
     const currentFlowId = flow.id;
     if (!currentFlowId) return;
+    const flowChanged = lastFlowIdRef.current !== currentFlowId;
+    lastFlowIdRef.current = currentFlowId;
+
     const initialSseEvents = isSse && Array.isArray(flow._rc?.sseEvents) ? flow._rc.sseEvents : [];
     const initialNextSeq =
       initialSseEvents.length > 0 ? initialSseEvents[initialSseEvents.length - 1].seq + 1 : 0;
@@ -120,7 +136,15 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     setSseDroppedCount(0);
     setSseStreamOpen(!!flow._rc?.sseStreamOpen);
     setSseAutoScroll(true);
+    setSseAutoRefresh(true);
     setWsAutoScroll(true);
+    setWsAutoRefresh(true);
+    if (flowChanged) {
+      setSseKeywordFilter("");
+      setWsDirectionFilter("all");
+      setWsKeywordFilter("");
+      setResendFrame(null);
+    }
     setExpandedSseIds({});
   }, [flow.id, isSse, flow._rc?.sseEvents, flow._rc?.sseStreamOpen]);
 
@@ -131,6 +155,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
 
   useEffect(() => {
     if (!isSse) return;
+    if (!sseAutoRefresh) return;
     let cancelled = false;
     const poll = async () => {
       const data = await fetchSseEvents(flow.id, sseNextSeqRef.current, 200);
@@ -156,18 +181,53 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [flow.id, isSse]);
+  }, [flow.id, isSse, sseAutoRefresh]);
+
+  const filteredSseEvents = useMemo(() => {
+    const keyword = sseKeywordFilter.trim().toLowerCase();
+    if (!keyword) return sseEvents;
+    return sseEvents.filter((evt) => evt.data.toLowerCase().includes(keyword));
+  }, [sseEvents, sseKeywordFilter]);
+
+  const refreshCurrentFlow = useCallback(async () => {
+    if (wsRefreshInFlightRef.current) return;
+    wsRefreshInFlightRef.current = true;
+    try {
+      const { loadDetail, selectedFlow } = useTrafficStore.getState();
+      if (!selectedFlow) return;
+      const refreshedFlow = await loadDetail(selectedFlow.id, true);
+      if (refreshedFlow) {
+        useTrafficStore.setState({ selectedFlow: refreshedFlow });
+      }
+    } finally {
+      wsRefreshInFlightRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTab !== "messages") return;
     if (!flow._rc.isWebsocket) return;
-    if (!wsAutoScroll) return;
-    const frameCount = flow._rc.websocketFrames?.length ?? 0;
-    if (frameCount <= 0) return;
-    const el = wsListRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [activeTab, flow._rc.isWebsocket, flow._rc.websocketFrames?.length, wsAutoScroll]);
+    if (!wsAutoRefresh) return;
+
+    const timer = window.setInterval(() => {
+      refreshCurrentFlow().catch(() => undefined);
+    }, 500);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [activeTab, flow._rc.isWebsocket, wsAutoRefresh, refreshCurrentFlow]);
+
+  const wsFrames = flow._rc.websocketFrames ?? [];
+  const filteredWsFrames = useMemo(() => {
+    const keyword = wsKeywordFilter.trim().toLowerCase();
+    return wsFrames.filter((frame) => {
+      if (wsDirectionFilter === "client" && !frame.fromClient) return false;
+      if (wsDirectionFilter === "server" && frame.fromClient) return false;
+      if (!keyword) return true;
+      return frame.content.toLowerCase().includes(keyword);
+    });
+  }, [wsFrames, wsDirectionFilter, wsKeywordFilter]);
 
   const handleAIAnalysis = async () => {
     if (analyzing) return;
@@ -776,77 +836,177 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                             <Activity className="w-3 h-3" />
                           </button>
                         </Tooltip>
-                        <button
-                          onClick={async () => {
-                            const { loadDetail, selectedFlow } = useTrafficStore.getState();
-                            if (selectedFlow) {
-                              const refreshedFlow = await loadDetail(selectedFlow.id, true);
-                              if (refreshedFlow) {
-                                useTrafficStore.setState({ selectedFlow: refreshedFlow });
-                              }
-                            }
-                          }}
-                          className="p-1 rounded hover:bg-muted/40 transition-colors text-muted-foreground/60 hover:text-foreground"
-                          title={t("common.refresh", "Refresh")}
+                        <Tooltip
+                          content={
+                            wsAutoRefresh
+                              ? t("traffic.websocket.auto_refresh_on")
+                              : t("traffic.websocket.auto_refresh_off")
+                          }
                         >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                        </button>
+                          <button
+                            onClick={() => setWsAutoRefresh((v) => !v)}
+                            className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-colors ${
+                              wsAutoRefresh
+                                ? "border-primary/40 text-primary bg-primary/10"
+                                : "border-border/60 text-muted-foreground bg-muted/20"
+                            }`}
+                            aria-label={
+                              wsAutoRefresh
+                                ? t("traffic.websocket.auto_refresh_on")
+                                : t("traffic.websocket.auto_refresh_off")
+                            }
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
-                    <div ref={wsListRef} className="flex-1 overflow-y-auto scrollbar-thin">
-                      {flow._rc.websocketFrames && flow._rc.websocketFrames.length > 0 ? (
-                        <div className="divide-y divide-border/20">
-                          {flow._rc.websocketFrames.map((frame, index) => (
-                            <div
-                              key={frame.id || index}
-                              className="group flex items-start gap-3 px-3 py-2 hover:bg-muted/10 transition-colors"
-                            >
-                              <div className="flex-shrink-0 mt-0.5">
-                                {frame.fromClient ? (
-                                  <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
-                                ) : (
-                                  <ArrowDown className="w-3.5 h-3.5 text-green-500" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span
-                                    className={`text-tiny font-medium px-1.5 py-0.5 rounded ${
-                                      frame.type === "text"
-                                        ? "bg-blue-500/10 text-blue-600"
-                                        : frame.type === "binary"
-                                          ? "bg-purple-500/10 text-purple-600"
-                                          : frame.type === "close"
-                                            ? "bg-red-500/10 text-red-600"
-                                            : "bg-muted/20 text-muted-foreground"
-                                    }`}
-                                  >
-                                    {frame.type.toUpperCase()}
-                                  </span>
-                                  <span className="text-tiny text-muted-foreground/60">
-                                    {frame.length} bytes
-                                  </span>
-                                  <span className="text-tiny text-muted-foreground/40">
-                                    {new Date(frame.timestamp).toLocaleTimeString()}
-                                  </span>
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <CopyButton text={frame.content} />
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/30 bg-muted/10">
+                      <Input
+                        value={wsKeywordFilter}
+                        onChange={(e) => setWsKeywordFilter(e.target.value)}
+                        placeholder={t("traffic.websocket.filter_placeholder")}
+                        className="h-7 text-xs flex-1 min-w-[180px]"
+                      />
+                      <div className="flex items-center rounded-lg border border-border/50 bg-background/60 p-0.5 shrink-0">
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-tiny whitespace-nowrap transition-colors ${
+                            wsDirectionFilter === "all"
+                              ? "bg-primary/15 text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setWsDirectionFilter("all")}
+                        >
+                          {t("traffic.websocket.direction_all")}
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-tiny whitespace-nowrap transition-colors ${
+                            wsDirectionFilter === "client"
+                              ? "bg-primary/15 text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setWsDirectionFilter("client")}
+                        >
+                          {t("traffic.websocket.direction_client")}
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-tiny whitespace-nowrap transition-colors ${
+                            wsDirectionFilter === "server"
+                              ? "bg-primary/15 text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setWsDirectionFilter("server")}
+                        >
+                          {t("traffic.websocket.direction_server")}
+                        </button>
+                      </div>
+                      {(wsKeywordFilter || wsDirectionFilter !== "all") && (
+                        <button
+                          type="button"
+                          className="px-2 py-1 text-tiny rounded border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                          onClick={() => {
+                            setWsKeywordFilter("");
+                            setWsDirectionFilter("all");
+                          }}
+                        >
+                          {t("traffic.websocket.clear_filter")}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex-1 overflow-hidden min-h-0">
+                      {filteredWsFrames.length > 0 ? (
+                        <Virtuoso
+                          ref={wsListRef}
+                          data={filteredWsFrames}
+                          style={{ height: "100%" }}
+                          computeItemKey={(_, frame) => frame.id}
+                          followOutput={wsAutoScroll ? "auto" : false}
+                          increaseViewportBy={320}
+                          itemContent={(_, frame) => {
+                            const canResend =
+                              frame.fromClient &&
+                              (frame.type === "text" || frame.type === "binary");
+                            const truncated = frame.content.length > WS_MAX_PREVIEW_CHARS;
+                            const preview = truncated
+                              ? `${frame.content.slice(0, WS_MAX_PREVIEW_CHARS)}...`
+                              : frame.content;
+                            return (
+                              <div className="group flex items-start gap-3 px-3 py-2 border-b border-border/20 hover:bg-muted/10 transition-colors">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  {frame.fromClient ? (
+                                    <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
+                                  ) : (
+                                    <ArrowDown className="w-3.5 h-3.5 text-green-500" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span
+                                      className={`text-tiny font-medium px-1.5 py-0.5 rounded ${
+                                        frame.type === "text"
+                                          ? "bg-blue-500/10 text-blue-600"
+                                          : frame.type === "binary"
+                                            ? "bg-purple-500/10 text-purple-600"
+                                            : frame.type === "close"
+                                              ? "bg-red-500/10 text-red-600"
+                                              : "bg-muted/20 text-muted-foreground"
+                                      }`}
+                                    >
+                                      {frame.type.toUpperCase()}
+                                    </span>
+                                    {frame.injected && (
+                                      <span className="text-tiny font-medium px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600">
+                                        {t("traffic.websocket.injected_badge")}
+                                      </span>
+                                    )}
+                                    <span className="text-tiny text-muted-foreground/60">
+                                      {frame.length} bytes
+                                    </span>
+                                    <span className="text-tiny text-muted-foreground/40">
+                                      {new Date(frame.timestamp).toLocaleTimeString()}
+                                    </span>
+                                    <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {canResend && (
+                                        <Tooltip content={t("traffic.websocket.resend")}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setResendFrame(frame)}
+                                            className="p-1 rounded hover:bg-muted/40 transition-colors text-muted-foreground/60 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                          >
+                                            <RotateCw className="w-3 h-3" />
+                                          </button>
+                                        </Tooltip>
+                                      )}
+                                      <CopyButton text={frame.content} />
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="text-xs font-mono text-foreground/80 break-all whitespace-pre-wrap">
-                                  {frame.content}
+                                  <div className="text-xs font-mono text-foreground/80 break-all whitespace-pre-wrap">
+                                    {preview}
+                                  </div>
+                                  {truncated && (
+                                    <div className="text-tiny mt-1 text-muted-foreground/50">
+                                      {t("traffic.websocket.preview_truncated", {
+                                        size: WS_MAX_PREVIEW_CHARS,
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            );
+                          }}
+                        />
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                           <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mb-3">
                             <Wifi className="w-6 h-6 text-muted-foreground/20" />
                           </div>
                           <p className="text-xs text-muted-foreground/50 font-medium">
-                            {t("traffic.websocket.no_frames")}
+                            {wsKeywordFilter || wsDirectionFilter !== "all"
+                              ? t("traffic.websocket.no_match")
+                              : t("traffic.websocket.no_frames")}
                           </p>
                         </div>
                       )}
@@ -919,13 +1079,53 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                             <Activity className="w-3 h-3" />
                           </button>
                         </Tooltip>
+                        <Tooltip
+                          content={
+                            sseAutoRefresh
+                              ? t("traffic.sse.auto_refresh_on")
+                              : t("traffic.sse.auto_refresh_off")
+                          }
+                        >
+                          <button
+                            onClick={() => setSseAutoRefresh((v) => !v)}
+                            className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-colors ${
+                              sseAutoRefresh
+                                ? "border-primary/40 text-primary bg-primary/10"
+                                : "border-border/60 text-muted-foreground bg-muted/20"
+                            }`}
+                            aria-label={
+                              sseAutoRefresh
+                                ? t("traffic.sse.auto_refresh_on")
+                                : t("traffic.sse.auto_refresh_off")
+                            }
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/30 bg-muted/10">
+                      <Input
+                        value={sseKeywordFilter}
+                        onChange={(e) => setSseKeywordFilter(e.target.value)}
+                        placeholder={t("traffic.sse.filter_placeholder")}
+                        className="h-7 text-xs flex-1 min-w-[180px]"
+                      />
+                      {sseKeywordFilter && (
+                        <button
+                          type="button"
+                          className="px-2 py-1 text-tiny rounded border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                          onClick={() => setSseKeywordFilter("")}
+                        >
+                          {t("traffic.sse.clear_filter")}
+                        </button>
+                      )}
+                    </div>
                     <div className="flex-1 overflow-hidden">
-                      {sseEvents.length > 0 ? (
+                      {filteredSseEvents.length > 0 ? (
                         <Virtuoso
                           ref={sseListRef}
-                          data={sseEvents}
+                          data={filteredSseEvents}
                           style={{ height: "100%" }}
                           computeItemKey={(_, evt) => `${evt.flowId}-${evt.seq}`}
                           followOutput={sseAutoScroll ? "auto" : false}
@@ -1003,7 +1203,9 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                             <Wifi className="w-6 h-6 text-muted-foreground/20" />
                           </div>
                           <p className="text-xs text-muted-foreground/50 font-medium">
-                            {t("traffic.sse.waiting")}
+                            {sseKeywordFilter
+                              ? t("traffic.sse.no_match")
+                              : t("traffic.sse.waiting")}
                           </p>
                         </div>
                       )}
@@ -1015,6 +1217,12 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
           </AnimatePresence>
         </div>
       </Tabs>
+      <WsResendDrawer
+        isOpen={!!resendFrame}
+        onClose={() => setResendFrame(null)}
+        flowId={flow.id}
+        frame={resendFrame}
+      />
     </motion.div>
   );
 }

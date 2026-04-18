@@ -239,6 +239,7 @@ class CoreAddon:
         try:
             # Record connection-open timestamp for scripts that need it
             flow.metadata["_relaycraft_ws_started"] = True
+            self.traffic_monitor.register_ws_flow(flow)
         except Exception as e:
             self.logger.error(f"Error handling WebSocket start: {e}")
 
@@ -265,6 +266,11 @@ class CoreAddon:
                 self.traffic_monitor._store_flow(flow_data)
         except Exception as e:
             self.logger.error(f"Error handling WebSocket end: {e}")
+        finally:
+            try:
+                self.traffic_monitor.unregister_ws_flow(flow)
+            except Exception as e:
+                self.logger.debug(f"WS registry unregister failed: {e}")
 
     def tls_failed_client(self, tls_start: tls.TlsData) -> None:
         """

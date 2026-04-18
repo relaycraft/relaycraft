@@ -117,6 +117,19 @@ export interface RcWebSocketFrame {
   encoding?: "text" | "base64";
   timestamp: number;
   length: number;
+  /** 由 RelayCraft 自己注入的帧（客户端→服务端重发） */
+  injected?: boolean;
+}
+
+/**
+ * WebSocket 帧重发请求参数
+ * - type="text" 时 payload 直接是 UTF-8 字符串
+ * - type="binary" 时 payload 是 base64 字符串
+ */
+export interface WsResendRequest {
+  flowId: string;
+  type: "text" | "binary";
+  payload: string;
 }
 
 export interface SseEvent {
@@ -232,6 +245,8 @@ export interface RcExtension {
   sseEvents?: SseEvent[];
   websocketFrameCount: number;
   websocketFrames?: RcWebSocketFrame[];
+  /** WebSocket 连接当前是否仍然打开（来自 flow.websocket.closed_at_* 的否定） */
+  wsOpen?: boolean;
 
   // 匹配
   hits: RcMatchedHit[];
