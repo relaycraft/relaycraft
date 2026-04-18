@@ -1,4 +1,4 @@
-mitmproxy==12.2.1
+mitmproxy==12.2.2
 websockets==16.0
 jsonpath-ng==1.8.0
 h11==0.16.0
