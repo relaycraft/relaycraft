@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # secrets 上下文不能写在 job 级 if 中；用 env 注入后在 shell 里判断是否为空
       - name: Check LLM_API_KEY
@@ -43,9 +43,9 @@ jobs:
 
       - name: Setup Node.js
         if: steps.llm.outputs.has_key == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Fetch English release body
         if: steps.llm.outputs.has_key == 'true'
