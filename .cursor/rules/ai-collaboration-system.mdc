@@ -14,7 +14,7 @@ alwaysApply: true
 3. **Tailwind + cn()**：样式用 utilities，颜色用主题变量
 4. **Tauri Command 注册**：新命令加到 `lib.rs` 的 `invoke_handler`
 5. **Python Hook 安全**：顶层 try/except，异常不能传播
-6. **Conventional Commits**：`feat:` / `fix:` / `refactor:` / `chore:`
+6. **Conventional Commits**：`feat:` / `fix:` / `refactor:` / `style:` / `chore:` / `docs:` / `perf:`
 
 ## 执行任务前
 

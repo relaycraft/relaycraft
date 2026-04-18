@@ -37,7 +37,7 @@
 3. **Tailwind + cn()**：样式用 Tailwind utilities，合并用 `cn()`，颜色用主题变量
 4. **Tauri Command 注册**：新命令必须在 `src-tauri/src/lib.rs` 的 `invoke_handler` 中注册
 5. **Python Hook 安全**：引擎 Hook 必须有顶层 try/except，异常不能传播
-6. **Conventional Commits**：仅允许 `feat:` / `fix:` / `refactor:` / `chore:` / `docs:` / `perf:`（禁止 `feat ai:` 这类写法）
+6. **Conventional Commits**：仅允许 `feat:` / `fix:` / `refactor:` / `style:` / `chore:` / `docs:` / `perf:`（禁止 `feat ai:` 这类写法）。`refactor:` 用于不改变对外行为的内部结构整理；`style:` 用于纯视觉与格式（含 Biome 格式化、UI/启动页观感等），与 `refactor:` 区分使用。
 
 ### 维护义务
 
@@ -184,7 +184,7 @@ relaycraft/
 
 9. **TypeScript 严格模式**：`tsconfig.json` 已启用 `strict: true`，禁止关闭。允许 `noExplicitAny: off`，但应尽量提供类型。
 10. **Biome 强制检查**：所有 `*.ts/*.tsx` 文件在 commit 前自动经过 `biome check --write`（lint-staged），不得绕过。
-11. **Conventional Commits**：提交标题必须遵循 `type: summary`（例如 `feat: ...`），禁止 `feat ai: ...`、`fix ui: ...` 等非标准前缀，标题使用简洁英文。
+11. **Conventional Commits**：提交标题必须遵循 `type: summary`（例如 `feat: ...`），允许的类型同 §6 条速记（含 `style:` / `refactor:` 区分），禁止 `feat ai: ...`、`fix ui: ...` 等非标准前缀，标题使用简洁英文。
 12. **多文件提交细项**：当提交涉及多个模块或改动面较大时，必须补充 2-4 条英文细项（commit body），每条以 `- ` 开头并描述关键改动。
 13. **Rust 代码格式化**：提交前必须运行 `cargo fmt`，测试通过 `cargo test`。
 14. **Python PEP 8**：引擎核心代码遵循 PEP 8，使用 4 空格缩进。

@@ -79,7 +79,9 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `feat:` for new features
 - `fix:` for bug fixes
 - `docs:` for documentation changes
-- `refactor:` for code changes that neither fix a bug nor add a feature
+- `refactor:` for internal structure changes without changing outward behavior
+- `style:` for formatting and presentation only (e.g. Biome, UI polish, splash screen visuals)—use `refactor:` when the change is structural code cleanup
+- `perf:` for performance improvements
 - `chore:` for updating build tasks, package manager configs, etc.
 
 ---

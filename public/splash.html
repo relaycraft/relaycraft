@@ -4,34 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RelayCraft Loading</title>
+    <title>RelayCraft</title>
     <style>
+        /*
+         * Rounded corners (macOS / Windows / Linux transparent WebView):
+         * .splash-card keeps border-radius: 12px + overflow: hidden so opaque content
+         * clips to the same round rect; body stays transparent outside — do not remove.
+         */
         :root {
-            --bg: #050810;
-            --orb-1: rgba(79, 70, 229, 0.22);
-            --orb-2: rgba(124, 58, 237, 0.16);
-            --ring-a: rgba(99, 102, 241, 0.95);
-            --ring-b: rgba(167, 139, 250, 0.9);
-            --text: #dde4ff;
-            --muted: rgba(165, 180, 252, 0.38);
-            --accent: #6366f1;
-            --dot: rgba(255, 255, 255, 0.048);
-            --corner: rgba(99, 102, 241, 0.42);
-            --divider: rgba(99, 102, 241, 0.32);
+            --bg: #09090b;
+            --border: rgba(255, 255, 255, 0.05);
+            --text: #f4f4f5;
+            --muted: rgba(255, 255, 255, 0.38);
+            --line: rgba(255, 255, 255, 0.08);
         }
 
         .theme-light {
-            --bg: #eef0f9;
-            --orb-1: rgba(79, 70, 229, 0.10);
-            --orb-2: rgba(124, 58, 237, 0.07);
-            --ring-a: rgba(79, 70, 229, 0.9);
-            --ring-b: rgba(124, 58, 237, 0.85);
-            --text: #1e1b4b;
-            --muted: rgba(79, 70, 229, 0.45);
-            --accent: #4f46e5;
-            --dot: rgba(0, 0, 0, 0.04);
-            --corner: rgba(79, 70, 229, 0.35);
-            --divider: rgba(79, 70, 229, 0.25);
+            --bg: #fafafa;
+            --border: rgba(0, 0, 0, 0.07);
+            --text: #18181b;
+            --muted: rgba(0, 0, 0, 0.42);
+            --line: rgba(0, 0, 0, 0.08);
         }
 
         *,
@@ -57,10 +50,11 @@
             align-items: center;
             justify-content: center;
             background: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Shell ── */
         .splash-card {
             width: 100%;
             height: 100%;
@@ -72,329 +66,87 @@
             align-items: center;
             justify-content: center;
             background: var(--bg);
+            border: 1px solid var(--border);
         }
 
-        /* ── Dot grid ── */
-        .bg-grid {
-            position: absolute;
-            inset: 0;
-            background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        /* ── Two offset glow orbs ── */
-        .bg-orb-1 {
-            position: absolute;
-            width: 280px;
-            height: 280px;
-            top: -70px;
-            left: -40px;
-            background: radial-gradient(circle, var(--orb-1) 0%, transparent 68%);
-            border-radius: 50%;
-            animation: orb-drift-1 7s ease-in-out infinite;
-        }
-
-        .bg-orb-2 {
-            position: absolute;
-            width: 240px;
-            height: 240px;
-            bottom: -60px;
-            right: -30px;
-            background: radial-gradient(circle, var(--orb-2) 0%, transparent 68%);
-            border-radius: 50%;
-            animation: orb-drift-2 9s ease-in-out infinite;
-        }
-
-        @keyframes orb-drift-1 {
-            0%, 100% { transform: translate(0, 0); }
-            50%       { transform: translate(12px, 18px); }
-        }
-
-        @keyframes orb-drift-2 {
-            0%, 100% { transform: translate(0, 0); }
-            50%       { transform: translate(-10px, -14px); }
-        }
-
-        /* ── HUD corner markers ── */
-        .corner {
-            position: absolute;
-            width: 13px;
-            height: 13px;
-            opacity: 0;
-            animation: corner-in 0.5s 0.05s ease forwards;
-        }
-
-        @keyframes corner-in {
-            to { opacity: 1; }
-        }
-
-        .corner::before,
-        .corner::after {
-            content: '';
-            position: absolute;
-            background: var(--corner);
-        }
-
-        .corner::before { width: 100%; height: 1px; top: 0; left: 0; }
-        .corner::after  { width: 1px; height: 100%; top: 0; left: 0; }
-
-        .corner-tl { top: 13px; left: 13px; }
-        .corner-tr { top: 13px; right: 13px; transform: scaleX(-1); }
-        .corner-bl { bottom: 13px; left: 13px; transform: scaleY(-1); }
-        .corner-br { bottom: 13px; right: 13px; transform: scale(-1, -1); }
-
-        /* ── Content stack ── */
         .content {
             position: relative;
             z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 14px;
+            gap: 18px;
+            padding: 0 24px;
+            max-width: 280px;
         }
 
-        /* ── Logo ── */
-        .logo-wrapper {
-            position: relative;
-            width: 76px;
-            height: 76px;
-            animation: logo-in 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        .logo-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
-        @keyframes logo-in {
-            from { opacity: 0; transform: scale(0.68) translateY(8px); }
-            to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        /* Soft outer halo */
-        .logo-halo {
-            position: absolute;
-            inset: -16px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.20) 0%, transparent 70%);
-            animation: halo-pulse 3.5s ease-in-out infinite;
-        }
-
-        @keyframes halo-pulse {
-            0%, 100% { opacity: 0.55; transform: scale(1); }
-            50%       { opacity: 1;    transform: scale(1.10); }
-        }
-
-        /* Spinning arc ring */
-        .logo-ring {
-            position: absolute;
-            inset: -7px;
-            border-radius: 50%;
-            padding: 1.5px;
-            background: conic-gradient(
-                from 0deg,
-                transparent 0%,
-                var(--ring-a) 28%,
-                var(--ring-b) 52%,
-                transparent 72%
-            );
-            -webkit-mask:
-                linear-gradient(#fff 0 0) content-box,
-                linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            animation: ring-spin 2.8s linear infinite;
-        }
-
-        @keyframes ring-spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .logo-svg {
+        .logo-box svg {
+            display: block;
             width: 100%;
             height: 100%;
-            filter:
-                drop-shadow(0 0 16px rgba(99, 102, 241, 0.65))
-                drop-shadow(0 0 5px rgba(167, 139, 250, 0.45));
         }
 
-        /* ── Text group ── */
-        .text-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            animation: fade-up 0.8s 0.18s ease both;
-        }
-
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(11px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .wordmark {
+            text-align: center;
         }
 
         .app-name {
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 0.24em;
-            text-transform: uppercase;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.03em;
             color: var(--text);
         }
 
-        /* Divider with glowing endpoints */
-        .divider {
-            width: 160px;
-            height: 1px;
-            position: relative;
-            background: linear-gradient(90deg, transparent 0%, var(--divider) 50%, transparent 100%);
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
-        }
-
-        .divider::before { left: 0; }
-        .divider::after  { right: 0; }
-
         .slogan {
-            font-size: 9.5px;
-            letter-spacing: 0.20em;
-            text-transform: uppercase;
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 450;
+            letter-spacing: 0.01em;
+            line-height: 1.45;
             color: var(--muted);
         }
 
-        /* ── Loader ── */
-        .loader-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            animation: fade-up 0.8s 0.32s ease both;
+        /* Static rule — no animation (cold + minimal GPU) */
+        .loader-line {
+            width: 100%;
+            height: 1px;
+            margin-top: 10px;
+            background: var(--line);
+            border-radius: 0;
         }
 
-        .loader-bar {
-            width: 120px;
-            height: 1.5px;
-            background: rgba(255, 255, 255, 0.07);
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .loader-progress {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-                90deg,
-                transparent 0%,
-                var(--accent) 30%,
-                rgba(167, 139, 250, 0.9) 58%,
-                transparent 100%
-            );
-            animation: beam-scan 2s ease-in-out infinite;
-        }
-
-        @keyframes beam-scan {
-            0%   { transform: translateX(-100%); }
-            100% { transform: translateX(260%); }
-        }
-
-        /* Status with blinking indicator */
-        .status-wrap {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            height: 12px;
-        }
-
-        .status-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--accent);
-            flex-shrink: 0;
-            box-shadow: 0 0 4px var(--accent);
-            animation: blink 1.4s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.12; }
-        }
-
-        .status-text {
+        .status-line {
             font-size: 10px;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+            font-weight: 450;
+            letter-spacing: 0.02em;
             color: var(--muted);
+            margin-top: 8px;
         }
 
-        /* ── Footer ── */
         .footer {
             position: absolute;
-            bottom: 12px;
-            animation: fade-up 0.8s 0.45s ease both;
+            bottom: 14px;
+            left: 0;
+            right: 0;
+            text-align: center;
         }
 
         .footer-line {
             font-size: 10px;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-                Roboto, "Helvetica Neue", Arial, sans-serif;
-            letter-spacing: normal;
             font-variant-numeric: tabular-nums;
-            /* Same tier as .slogan / .status-text — use --muted only (no extra opacity) */
             color: var(--muted);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        /* ── Logo SVG internal animations ── */
-        .relay-dot-pulse {
-            animation: relay-dot-pulse 3s ease-in-out infinite;
-            transform-origin: center;
-            transform-box: fill-box;
-        }
-
-        @keyframes relay-dot-pulse {
-            0%, 100% { r: 14px; opacity: 0.9; }
-            50%       { r: 16px; opacity: 1; }
-        }
-
-        .flow-particle-1 {
-            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
-            animation: flow-move 4s linear infinite, flow-fade 4s ease-in-out infinite;
-        }
-
-        .flow-particle-2 {
-            offset-path: path("M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300");
-            animation: flow-move 4s linear infinite, flow-fade-2 4s ease-in-out infinite;
-            animation-delay: 2s;
-        }
-
-        @keyframes flow-move {
-            0%   { offset-distance: 0%;   }
-            100% { offset-distance: 100%; }
-        }
-
-        @keyframes flow-fade {
-            0%   { opacity: 0;   }
-            20%  { opacity: 0.8; }
-            80%  { opacity: 0.8; }
-            100% { opacity: 0;   }
-        }
-
-        @keyframes flow-fade-2 {
-            0%   { opacity: 0;   }
-            20%  { opacity: 0.6; }
-            80%  { opacity: 0.6; }
-            100% { opacity: 0;   }
+            opacity: 0.85;
         }
     </style>
     <script>
-        // Synchronize with App Theme from localStorage before paint
         (() => {
             try {
                 const mode = localStorage.getItem('themeMode');
@@ -404,9 +156,6 @@
             }
         })();
 
-        // Show the window only after the first frame has been painted.
-        // On Windows (WebView2): called from JS to avoid blank-window flash.
-        // On macOS: Rust already called show() in setup(), so this is a no-op.
         var _splashShown = false;
         function showWindowWhenReady() {
             if (_splashShown) return;
@@ -422,14 +171,13 @@
             });
         }
 
-        // Listen for initialization status updates
         document.addEventListener('DOMContentLoaded', () => {
             const statusEl = document.getElementById('status');
             const sloganEl = document.getElementById('slogan');
 
             const isZh = navigator.language.startsWith('zh');
-            if (statusEl) statusEl.textContent = isZh ? '正在启动' : 'INITIALIZING';
-            if (sloganEl) sloganEl.textContent = isZh ? 'AI 原生 · 网络流量调试' : 'AI-NATIVE · NETWORK DEBUGGING';
+            if (statusEl) statusEl.textContent = isZh ? '正在启动' : 'Starting';
+            if (sloganEl) sloganEl.textContent = isZh ? 'AI 原生网络流量调试' : 'AI-native traffic debugging';
 
             if (window.__TAURI__) {
                 const { listen } = window.__TAURI__.event;
@@ -447,69 +195,25 @@
 
 <body>
     <div class="splash-card">
-        <div class="bg-grid"></div>
-        <div class="bg-orb-1"></div>
-        <div class="bg-orb-2"></div>
-
-        <!-- HUD corner markers -->
-        <div class="corner corner-tl"></div>
-        <div class="corner corner-tr"></div>
-        <div class="corner corner-bl"></div>
-        <div class="corner corner-br"></div>
-
         <div class="content">
-            <div class="logo-wrapper">
-                <div class="logo-halo"></div>
-                <div class="logo-ring"></div>
-                <svg class="logo-svg" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="mainGradient" x1="0" y1="0" x2="512" y2="512"
-                            gradientUnits="userSpaceOnUse">
-                            <stop offset="0" stop-color="#4F46E5" />
-                            <stop offset="100%" stop-color="#7C3AED" />
-                        </linearGradient>
-                        <linearGradient id="flowGradient" x1="0" y1="0" x2="100%" y2="0"
-                            gradientUnits="userSpaceOnUse">
-                            <stop offset="0%" stop-color="white" stop-opacity="0" />
-                            <stop offset="50%" stop-color="white" stop-opacity="0.5" />
-                            <stop offset="100%" stop-color="white" stop-opacity="0" />
-                        </linearGradient>
-                    </defs>
-                    <g transform="translate(44.8, 44.8) scale(0.825)">
-                        <rect x="0" y="0" width="512" height="512" rx="100" fill="url(#mainGradient)" />
-                        <path d="M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300"
-                            stroke="url(#flowGradient)" stroke-width="60" stroke-linecap="round"
-                            stroke-opacity="0.15" fill="none" />
-                        <g transform="translate(111, 96)">
-                            <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95" />
-                            <rect x="80" y="30" width="50" height="260" rx="25" fill="white" fill-opacity="1" />
-                            <rect x="160" y="0" width="50" height="320" rx="25" fill="white" fill-opacity="1" />
-                            <rect x="240" y="60" width="50" height="200" rx="25" fill="white"
-                                fill-opacity="0.95" />
-                            <circle cx="265" cy="296" r="14" fill="white" class="relay-dot-pulse" />
-                        </g>
-                        <circle r="8" fill="white" opacity="0" class="flow-particle-1"
-                            style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
-                        <circle r="6" fill="white" opacity="0" class="flow-particle-2"
-                            style="offset-path: path('M-50 350 C 150 350, 150 150, 256 150 C 362 150, 362 300, 562 300');" />
+            <div class="logo-box" aria-hidden="true">
+                <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="512" height="512" rx="100" fill="#4F46E5" />
+                    <g transform="translate(111, 96)">
+                        <rect x="0" y="70" width="50" height="180" rx="25" fill="white" fill-opacity="0.95" />
+                        <rect x="80" y="30" width="50" height="260" rx="25" fill="white" />
+                        <rect x="160" y="0" width="50" height="320" rx="25" fill="white" />
+                        <rect x="240" y="60" width="50" height="200" rx="25" fill="white" fill-opacity="0.95" />
+                        <circle cx="265" cy="296" r="14" fill="white" />
                     </g>
                 </svg>
             </div>
 
-            <div class="text-group">
+            <div class="wordmark">
                 <div class="app-name">RelayCraft</div>
-                <div class="divider"></div>
-                <div id="slogan" class="slogan">AI-NATIVE · NETWORK DEBUGGING</div>
-            </div>
-
-            <div class="loader-wrap">
-                <div class="loader-bar">
-                    <div class="loader-progress"></div>
-                </div>
-                <div class="status-wrap">
-                    <div class="status-dot"></div>
-                    <div id="status" class="status-text">INITIALIZING</div>
-                </div>
+                <p id="slogan" class="slogan">AI-native traffic debugging</p>
+                <div class="loader-line" aria-hidden="true"></div>
+                <div id="status" class="status-line">Starting</div>
             </div>
         </div>
 

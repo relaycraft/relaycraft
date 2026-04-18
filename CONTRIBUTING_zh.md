@@ -79,7 +79,9 @@ RelayCraft 是一个基于现代多语言技术栈构建的跨平台应用。
 - `feat:` 新功能
 - `fix:` 修复 Bug
 - `docs:` 文档变更
-- `refactor:` 代码重构（既不是修复 bug 也不是添加功能）
+- `refactor:` 内部结构整理，不改变对外行为
+- `style:` 纯格式与视觉（如 Biome、UI/启动页观感）；代码结构整理请用 `refactor:`
+- `perf:` 性能优化
 - `chore:` 构建过程或辅助工具的变动
 
 ---
