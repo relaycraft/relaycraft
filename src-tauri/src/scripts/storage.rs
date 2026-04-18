@@ -123,7 +123,10 @@ impl ScriptStorage {
     fn validate_name(name: &str) -> Result<(), ScriptError> {
         if name.contains("..") || name.contains('/') || name.contains('\\') {
             log::warn!("[Security] Blocked path traversal in script name: {}", name);
-            return Err(ScriptError::NotFound(format!("Invalid script name: {}", name)));
+            return Err(ScriptError::NotFound(format!(
+                "Invalid script name: {}",
+                name
+            )));
         }
         Ok(())
     }

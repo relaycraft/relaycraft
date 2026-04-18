@@ -257,7 +257,10 @@ impl ProxyEngine for MitmproxyEngine {
 
             // Briefly acquire the lock to check if child crashed during startup.
             let startup_crash = {
-                let mut lock = self.inner.child.lock()
+                let mut lock = self
+                    .inner
+                    .child
+                    .lock()
                     .map_err(|_| AppError::Config("Lock poisoned".into()))?;
                 if let Some(child) = lock.as_mut() {
                     if let Ok(Some(status)) = child.try_wait() {
@@ -294,7 +297,10 @@ impl ProxyEngine for MitmproxyEngine {
 
         if !ready {
             // Timeout occurred — re-acquire lock to clean up the zombie process.
-            let mut lock = self.inner.child.lock()
+            let mut lock = self
+                .inner
+                .child
+                .lock()
                 .map_err(|_| AppError::Config("Lock poisoned".into()))?;
             if let Some(mut child) = lock.take() {
                 let _ = child.kill();
@@ -407,11 +413,7 @@ impl ProxyEngine for MitmproxyEngine {
     fn get_status(&self) -> ProxyStatus {
         // Recover from poisoned mutexes — a panic in another thread shouldn't
         // make status polling permanently unavailable.
-        let mut child_lock = self
-            .inner
-            .child
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
+        let mut child_lock = self.inner.child.lock().unwrap_or_else(|e| e.into_inner());
         let active_lock = self
             .inner
             .active_scripts
@@ -579,9 +581,7 @@ impl MitmproxyEngine {
             let project_root = if current_dir.ends_with("src-tauri") {
                 current_dir
                     .parent()
-                    .ok_or_else(|| {
-                        AppError::Config("src-tauri directory has no parent".into())
-                    })?
+                    .ok_or_else(|| AppError::Config("src-tauri directory has no parent".into()))?
                     .to_path_buf()
             } else {
                 current_dir
@@ -623,24 +623,25 @@ impl MitmproxyEngine {
                 .spawn(move || {
                     use std::io::BufRead;
                     for line in reader.lines().flatten() {
-                    // Classify log domain based on content markers
-                    let domain = if line.contains("[SCRIPT]")
-                        || line.contains("[RELAYCRAFT][SCRIPT]")
-                        || line.contains("._rc_")
-                        || line.contains("_rc_record_hit")
-                        || line.contains("_rc_log") {
-                        "script"
-                    } else if line.contains("[PLUGIN]") {
-                        "plugin"
-                    } else if line.contains("[AUDIT]") {
-                        "audit"
-                    } else if line.contains("[CRASH]") || line.contains("Traceback") {
-                        "crash"
-                    } else {
-                        "proxy"
-                    };
-                    logging::write_domain_log(domain, &line).ok();
-                }
+                        // Classify log domain based on content markers
+                        let domain = if line.contains("[SCRIPT]")
+                            || line.contains("[RELAYCRAFT][SCRIPT]")
+                            || line.contains("._rc_")
+                            || line.contains("_rc_record_hit")
+                            || line.contains("_rc_log")
+                        {
+                            "script"
+                        } else if line.contains("[PLUGIN]") {
+                            "plugin"
+                        } else if line.contains("[AUDIT]") {
+                            "audit"
+                        } else if line.contains("[CRASH]") || line.contains("Traceback") {
+                            "crash"
+                        } else {
+                            "proxy"
+                        };
+                        logging::write_domain_log(domain, &line).ok();
+                    }
                 })
                 .ok();
         }

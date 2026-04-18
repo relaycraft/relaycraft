@@ -274,13 +274,14 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
         }
     }
 
-    fn diff_ai_config(
-        old_val: &serde_json::Value,
-        new_val: &serde_json::Value,
-    ) -> Vec<String> {
+    fn diff_ai_config(old_val: &serde_json::Value, new_val: &serde_json::Value) -> Vec<String> {
         let mut diffs = Vec::new();
-        let Some(old_obj) = old_val.as_object() else { return diffs };
-        let Some(new_obj) = new_val.as_object() else { return diffs };
+        let Some(old_obj) = old_val.as_object() else {
+            return diffs;
+        };
+        let Some(new_obj) = new_val.as_object() else {
+            return diffs;
+        };
 
         let mut keys: Vec<String> = old_obj
             .keys()
@@ -335,10 +336,8 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
                             old_plugins.iter().cloned().collect();
                         let new_set: std::collections::BTreeSet<String> =
                             new_plugins.iter().cloned().collect();
-                        let added: Vec<String> =
-                            new_set.difference(&old_set).cloned().collect();
-                        let removed: Vec<String> =
-                            old_set.difference(&new_set).cloned().collect();
+                        let added: Vec<String> = new_set.difference(&old_set).cloned().collect();
+                        let removed: Vec<String> = old_set.difference(&new_set).cloned().collect();
 
                         changes.push(format!(
                             "enabled_plugins: {} -> {} (added: {}, removed: {})",

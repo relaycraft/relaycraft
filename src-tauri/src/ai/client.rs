@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::pin::Pin;
 
-type ChatChunkStream = Pin<Box<dyn futures_util::Stream<Item = Result<ChatCompletionChunk, AIError>> + Send>>;
+type ChatChunkStream =
+    Pin<Box<dyn futures_util::Stream<Item = Result<ChatCompletionChunk, AIError>> + Send>>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
@@ -125,10 +126,12 @@ fn parse_sse_event(event: &str) -> Result<Option<ChatCompletionChunk>, AIError> 
     }
 
     let payload = data_lines.join("\n");
-    serde_json::from_str::<ChatCompletionChunk>(&payload).map(Some).map_err(|e| {
-        log::debug!("Failed to parse SSE event payload: {}", payload);
-        AIError::ParseError(format!("Failed to parse SSE event: {}", e))
-    })
+    serde_json::from_str::<ChatCompletionChunk>(&payload)
+        .map(Some)
+        .map_err(|e| {
+            log::debug!("Failed to parse SSE event payload: {}", payload);
+            AIError::ParseError(format!("Failed to parse SSE event: {}", e))
+        })
 }
 
 #[derive(Debug, Deserialize)]
@@ -228,7 +231,12 @@ fn estimate_output_tokens(response: &ChatCompletionResponse) -> u32 {
         .choices
         .iter()
         .map(|choice| {
-            let content_chars = choice.message.content.as_ref().map(|s| s.len()).unwrap_or(0);
+            let content_chars = choice
+                .message
+                .content
+                .as_ref()
+                .map(|s| s.len())
+                .unwrap_or(0);
             let tool_chars = choice
                 .message
                 .tool_calls
@@ -236,7 +244,9 @@ fn estimate_output_tokens(response: &ChatCompletionResponse) -> u32 {
                 .map(|calls| {
                     calls
                         .iter()
-                        .map(|call| call.id.len() + call.function.name.len() + call.function.arguments.len())
+                        .map(|call| {
+                            call.id.len() + call.function.name.len() + call.function.arguments.len()
+                        })
                         .sum::<usize>()
                 })
                 .unwrap_or(0);
@@ -346,7 +356,9 @@ impl AIClient {
             let content_length = msg.content.as_ref().map(|v| v.len()).unwrap_or(0);
             log::debug!(
                 "  Message[{}]: role={}, content_length={}",
-                idx, msg.role, content_length
+                idx,
+                msg.role,
+                content_length
             );
         }
 
@@ -389,11 +401,12 @@ impl AIClient {
 
         let approx_prompt_tokens = u32::try_from(approx_input_tokens).unwrap_or(u32::MAX);
         let approx_completion_tokens = estimate_output_tokens(&response_body);
-        let (prompt_tokens, completion_tokens, total_tokens, usage_source) = usage_tokens_from_response(
-            response_body.usage.as_ref(),
-            approx_prompt_tokens,
-            approx_completion_tokens,
-        );
+        let (prompt_tokens, completion_tokens, total_tokens, usage_source) =
+            usage_tokens_from_response(
+                response_body.usage.as_ref(),
+                approx_prompt_tokens,
+                approx_completion_tokens,
+            );
         let _ = logging::write_domain_log(
             "audit",
             &format!(
@@ -477,7 +490,9 @@ impl AIClient {
             let content_length = msg.content.as_ref().map(|v| v.len()).unwrap_or(0);
             log::debug!(
                 "  Message[{}]: role={}, content_length={}",
-                idx, msg.role, content_length
+                idx,
+                msg.role,
+                content_length
             );
         }
 
@@ -518,7 +533,11 @@ impl AIClient {
 
         let stream = response.bytes_stream();
         let parsed_stream = futures_util::stream::try_unfold(
-            (stream, String::new(), VecDeque::<ChatCompletionChunk>::new()),
+            (
+                stream,
+                String::new(),
+                VecDeque::<ChatCompletionChunk>::new(),
+            ),
             |(mut stream, mut pending, mut queued)| async move {
                 loop {
                     if let Some(chunk) = queued.pop_front() {
@@ -672,7 +691,6 @@ impl AIClient {
 
         extract_tools_probe_result(&response)
     }
-
 }
 
 fn extract_tools_probe_result(response: &ChatCompletionResponse) -> Result<String, AIError> {

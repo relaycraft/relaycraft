@@ -1,8 +1,6 @@
-use crate::ai::{
-    crypto, AIClient, AIConfig, ChatCompletionChunk, ChatMessage, Tool, ToolChoice,
-};
 use crate::ai::profiles::{self, AIProviderProfile};
 use crate::ai::tool_args::normalize_and_validate_tool_calls;
+use crate::ai::{crypto, AIClient, AIConfig, ChatCompletionChunk, ChatMessage, Tool, ToolChoice};
 use futures_util::StreamExt;
 use serde::Serialize;
 use std::sync::Mutex;
@@ -195,7 +193,9 @@ pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, Str
 }
 
 #[tauri::command]
-pub async fn probe_ai_capabilities(state: State<'_, AIState>) -> Result<CapabilityProbeResult, String> {
+pub async fn probe_ai_capabilities(
+    state: State<'_, AIState>,
+) -> Result<CapabilityProbeResult, String> {
     let mut config = state
         .config
         .lock()
@@ -322,7 +322,8 @@ pub async fn ai_chat_completion_with_tools(
         return Err("AI returned empty choices".to_string());
     };
 
-    let normalized_tool_calls = normalize_and_validate_tool_calls(choice.message.tool_calls.as_ref())?;
+    let normalized_tool_calls =
+        normalize_and_validate_tool_calls(choice.message.tool_calls.as_ref())?;
 
     Ok(build_tool_completion_result(choice, normalized_tool_calls))
 }
@@ -376,9 +377,12 @@ pub async fn ai_chat_completion_stream(
 
 #[cfg(test)]
 mod tests {
-    use super::{build_tool_completion_result, normalize_profile_for_provider, tuple_messages_to_chat_messages};
-    use crate::ai::AIConfig;
+    use super::{
+        build_tool_completion_result, normalize_profile_for_provider,
+        tuple_messages_to_chat_messages,
+    };
     use crate::ai::client::{Choice, FunctionCall, ResponseMessage, ToolCall};
+    use crate::ai::AIConfig;
 
     #[test]
     fn build_tool_completion_result_keeps_tool_metadata() {
@@ -403,7 +407,10 @@ mod tests {
         assert_eq!(tool_calls.len(), 1);
         assert_eq!(tool_calls[0].id, "call_1");
         assert_eq!(tool_calls[0].function.name, "explain_rule");
-        assert_eq!(tool_calls[0].function.arguments, "{\"message\":\"cannot generate\"}");
+        assert_eq!(
+            tool_calls[0].function.arguments,
+            "{\"message\":\"cannot generate\"}"
+        );
     }
 
     #[test]
@@ -434,15 +441,16 @@ mod tests {
         }];
         let result = build_tool_completion_result(&choice, Some(normalized));
         let tool_calls = result.tool_calls.expect("tool_calls should exist");
-        assert_eq!(tool_calls[0].function.arguments, "{\"rule_type\":\"block_request\"}");
+        assert_eq!(
+            tool_calls[0].function.arguments,
+            "{\"rule_type\":\"block_request\"}"
+        );
     }
 
     #[test]
     fn tuple_messages_to_chat_messages_fills_content_without_tool_metadata() {
-        let converted = tuple_messages_to_chat_messages(vec![(
-            "user".to_string(),
-            "hello".to_string(),
-        )]);
+        let converted =
+            tuple_messages_to_chat_messages(vec![("user".to_string(), "hello".to_string())]);
         assert_eq!(converted.len(), 1);
         assert_eq!(converted[0].role, "user");
         assert_eq!(converted[0].content.as_deref(), Some("hello"));

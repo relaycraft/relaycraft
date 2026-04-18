@@ -41,14 +41,16 @@ fn parse_plugin_ai_messages(args: serde_json::Value) -> Result<Vec<(String, Stri
         .iter()
         .all(|item| matches!(item, serde_json::Value::Object(map) if map.contains_key("role") && map.contains_key("content")));
     if all_object_shape {
-        return serde_json::from_value::<Vec<PluginAIMessageObject>>(serde_json::Value::Array(items))
-            .map(|object_messages| {
-                object_messages
-                    .into_iter()
-                    .map(|m| (m.role, m.content))
-                    .collect()
-            })
-            .map_err(|e| format!("Invalid AI messages: {}", e));
+        return serde_json::from_value::<Vec<PluginAIMessageObject>>(serde_json::Value::Array(
+            items,
+        ))
+        .map(|object_messages| {
+            object_messages
+                .into_iter()
+                .map(|m| (m.role, m.content))
+                .collect()
+        })
+        .map_err(|e| format!("Invalid AI messages: {}", e));
     }
 
     Err(
@@ -59,8 +61,8 @@ fn parse_plugin_ai_messages(args: serde_json::Value) -> Result<Vec<(String, Stri
 
 /// Commands that require audit logging (security-sensitive operations)
 const AUDITED_COMMANDS: &[&str] = &[
-    "ai_chat_completion",  // AI API calls
-    // Add more sensitive commands here as needed
+    "ai_chat_completion", // AI API calls
+                          // Add more sensitive commands here as needed
 ];
 
 fn truncate_utf8(input: &str, max_bytes: usize) -> (String, bool) {
@@ -120,10 +122,7 @@ pub async fn plugin_call(
         let plugin_name = &plugin.manifest.name;
         let _ = logging::write_domain_log(
             "audit",
-            &format!(
-                "[PluginBridge] {} called {}",
-                plugin_name, payload.command
-            ),
+            &format!("[PluginBridge] {} called {}", plugin_name, payload.command),
         );
     }
 
@@ -160,9 +159,7 @@ pub async fn plugin_call(
         // ── http.send ────────────────────────────────────────────────────────────
         "http_send" => {
             if !permissions.contains(&"network:outbound".to_string()) {
-                return Err(
-                    "Security Violation: Missing 'network:outbound' permission".to_string(),
-                );
+                return Err("Security Violation: Missing 'network:outbound' permission".to_string());
             }
 
             #[derive(serde::Deserialize)]
@@ -191,8 +188,7 @@ pub async fn plugin_call(
             let key = payload.args["key"]
                 .as_str()
                 .ok_or("storage_get: missing 'key'")?;
-            let result =
-                crate::plugins::storage::get(&payload.plugin_id, key).await?;
+            let result = crate::plugins::storage::get(&payload.plugin_id, key).await?;
             Ok(serde_json::to_value(result).unwrap_or(serde_json::Value::Null))
         }
         "storage_set" => {
@@ -215,8 +211,7 @@ pub async fn plugin_call(
         }
         "storage_list" => {
             let prefix = payload.args["prefix"].as_str();
-            let result =
-                crate::plugins::storage::list(&payload.plugin_id, prefix).await?;
+            let result = crate::plugins::storage::list(&payload.plugin_id, prefix).await?;
             serde_json::to_value(result).map_err(|e| e.to_string())
         }
         "storage_clear" => {
@@ -227,9 +222,7 @@ pub async fn plugin_call(
         // ── rules.createMock ─────────────────────────────────────────────────────
         "rules_create_mock" => {
             if !permissions.contains(&"rules:write".to_string()) {
-                return Err(
-                    "Security Violation: Missing 'rules:write' permission".to_string(),
-                );
+                return Err("Security Violation: Missing 'rules:write' permission".to_string());
             }
 
             #[derive(serde::Deserialize)]
@@ -251,8 +244,8 @@ pub async fn plugin_call(
             let rule_id = uuid::Uuid::new_v4().to_string();
 
             // Load existing rules for conflict resolution and priority calculation.
-            let storage = crate::rules::storage::RuleStorage::from_config()
-                .map_err(|e| e.to_string())?;
+            let storage =
+                crate::rules::storage::RuleStorage::from_config().map_err(|e| e.to_string())?;
             let mut next_priority: i32 = 10;
             let plugin_source = format!("plugin:{}", payload.plugin_id);
             let new_method = args.method.as_ref().map(|m| m.to_ascii_uppercase());
@@ -271,13 +264,25 @@ pub async fn plugin_call(
                     .unwrap_or(10);
 
                 if let Some(existing_rule_id) = args.rule_id.as_deref() {
-                    if let Some(entry) = existing.rules.iter().find(|entry| entry.rule.id == existing_rule_id) {
+                    if let Some(entry) = existing
+                        .rules
+                        .iter()
+                        .find(|entry| entry.rule.id == existing_rule_id)
+                    {
                         let existing_rule = &entry.rule;
-                        if existing_rule.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(&plugin_source) {
+                        if existing_rule
+                            .metadata
+                            .as_ref()
+                            .and_then(|m| m.source.as_deref())
+                            != Some(&plugin_source)
+                        {
                             return Err("Security Violation: Cannot update mock rule owned by another source".to_string());
                         }
                         if existing_rule.r#type != crate::rules::model::RuleType::MapLocal {
-                            return Err("Only map_local mock rules can be updated via rules.createMock".to_string());
+                            return Err(
+                                "Only map_local mock rules can be updated via rules.createMock"
+                                    .to_string(),
+                            );
                         }
                         target_group_id = Some(entry.group_id.clone());
                         target_rule_id = existing_rule.id.clone();
@@ -290,15 +295,23 @@ pub async fn plugin_call(
                 // so the new rule takes effect immediately without being shadowed.
                 for entry in &existing.rules {
                     let r = &entry.rule;
-                    if args.rule_id.as_deref() == Some(r.id.as_str()) { continue; }
-                    if !r.execution.enabled { continue; }
-                    if r.r#type != crate::rules::model::RuleType::MapLocal { continue; }
-                    if r.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(&plugin_source) {
+                    if args.rule_id.as_deref() == Some(r.id.as_str()) {
+                        continue;
+                    }
+                    if !r.execution.enabled {
+                        continue;
+                    }
+                    if r.r#type != crate::rules::model::RuleType::MapLocal {
+                        continue;
+                    }
+                    if r.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(&plugin_source)
+                    {
                         continue;
                     }
                     let same_url = r.match_config.request.iter().any(|atom| {
                         atom.atom_type == "url"
-                            && atom.value.as_ref().map(|v| v.as_str()) == Some(Some(&args.url_pattern))
+                            && atom.value.as_ref().map(|v| v.as_str())
+                                == Some(Some(&args.url_pattern))
                     });
                     if !same_url {
                         continue;
@@ -460,40 +473,54 @@ pub async fn plugin_call(
                 r#type: Option<String>,
             }
 
-            let filter: RulesListFilter = serde_json::from_value(payload.args)
-                .unwrap_or_default();
+            let filter: RulesListFilter = serde_json::from_value(payload.args).unwrap_or_default();
 
             let storage = RuleStorage::from_config().map_err(|e| e.to_string())?;
             let loaded = storage.load_all().map_err(|e| e.to_string())?;
 
-            let rules: Vec<serde_json::Value> = loaded.rules.iter()
+            let rules: Vec<serde_json::Value> = loaded
+                .rules
+                .iter()
                 .filter(|entry| {
                     let r = &entry.rule;
                     if let Some(enabled) = filter.enabled {
-                        if r.execution.enabled != enabled { return false; }
+                        if r.execution.enabled != enabled {
+                            return false;
+                        }
                     }
                     if let Some(ref source) = filter.source {
-                        let rule_source = r.metadata.as_ref()
+                        let rule_source = r
+                            .metadata
+                            .as_ref()
                             .and_then(|m| m.source.as_deref())
                             .unwrap_or("user");
-                        if rule_source != source { return false; }
+                        if rule_source != source {
+                            return false;
+                        }
                     }
                     if let Some(ref type_str) = filter.r#type {
                         let rule_type = serde_json::to_value(&r.r#type)
                             .ok()
                             .and_then(|v| v.as_str().map(|s| s.to_string()))
                             .unwrap_or_default();
-                        if &rule_type != type_str { return false; }
+                        if &rule_type != type_str {
+                            return false;
+                        }
                     }
                     true
                 })
                 .map(|entry| {
                     let r = &entry.rule;
-                    let url_pattern = r.match_config.request.iter()
+                    let url_pattern = r
+                        .match_config
+                        .request
+                        .iter()
                         .find(|a| a.atom_type == "url")
                         .and_then(|a| a.value.as_ref()?.as_str().map(|s| s.to_string()))
                         .unwrap_or_default();
-                    let source = r.metadata.as_ref()
+                    let source = r
+                        .metadata
+                        .as_ref()
                         .and_then(|m| m.source.as_deref())
                         .unwrap_or("user");
                     serde_json::json!({
@@ -519,13 +546,16 @@ pub async fn plugin_call(
             }
             use crate::rules::storage::RuleStorage;
 
-            let id = payload.args["id"].as_str()
+            let id = payload.args["id"]
+                .as_str()
                 .ok_or("Invalid Args: missing 'id'")?;
 
             let storage = RuleStorage::from_config().map_err(|e| e.to_string())?;
             let loaded = storage.load_all().map_err(|e| e.to_string())?;
 
-            let entry = loaded.rules.into_iter()
+            let entry = loaded
+                .rules
+                .into_iter()
                 .find(|e| e.rule.id == id)
                 .ok_or_else(|| format!("Host Error: rule '{}' not found", id))?;
 
@@ -570,10 +600,12 @@ pub async fn plugin_call(
                 #[serde(default = "default_flow_limit")]
                 limit: usize,
             }
-            fn default_flow_limit() -> usize { 100 }
+            fn default_flow_limit() -> usize {
+                100
+            }
 
-            let args: ListFlowsArgs = serde_json::from_value(payload.args)
-                .map_err(|e| format!("Invalid Args: {e}"))?;
+            let args: ListFlowsArgs =
+                serde_json::from_value(payload.args).map_err(|e| format!("Invalid Args: {e}"))?;
             let limit = args.limit.min(1000);
 
             let engine_port = crate::config::load_config()
@@ -586,14 +618,19 @@ pub async fn plugin_call(
             }
 
             let client = reqwest::Client::new();
-            let resp = client.get(&url).send().await
+            let resp = client
+                .get(&url)
+                .send()
+                .await
                 .map_err(|e| format!("Host Error: cannot reach proxy engine — {e}"))?;
 
             if !resp.status().is_success() {
                 return Err(format!("Host Error: engine returned {}", resp.status()));
             }
 
-            let body: serde_json::Value = resp.json().await
+            let body: serde_json::Value = resp
+                .json()
+                .await
                 .map_err(|e| format!("Host Error: failed to parse engine response — {e}"))?;
 
             let indices = body["indices"].as_array().cloned().unwrap_or_default();
@@ -602,7 +639,8 @@ pub async fn plugin_call(
             let status_filter = args.status;
             let url_filter = args.url_pattern;
 
-            let filtered: Vec<&serde_json::Value> = indices.iter()
+            let filtered: Vec<&serde_json::Value> = indices
+                .iter()
                 .filter(|flow| {
                     if let Some(ref m) = method_filter {
                         if flow["method"].as_str().unwrap_or("").to_uppercase() != *m {
@@ -610,22 +648,36 @@ pub async fn plugin_call(
                         }
                     }
                     if let Some(ref h) = host_filter {
-                        if !flow["host"].as_str().unwrap_or("").to_lowercase().contains(h.as_str()) {
+                        if !flow["host"]
+                            .as_str()
+                            .unwrap_or("")
+                            .to_lowercase()
+                            .contains(h.as_str())
+                        {
                             return false;
                         }
                     }
                     if let Some(ref pattern) = url_filter {
-                        if !flow["url"].as_str().unwrap_or("").contains(pattern.as_str()) {
+                        if !flow["url"]
+                            .as_str()
+                            .unwrap_or("")
+                            .contains(pattern.as_str())
+                        {
                             return false;
                         }
                     }
                     if let Some(ref s) = status_filter {
                         let code = flow["status"].as_u64().unwrap_or(0);
                         if s.ends_with("xx") {
-                            let prefix = s.chars().next().and_then(|c| c.to_digit(10)).unwrap_or(0) as u64;
-                            if code / 100 != prefix { return false; }
+                            let prefix =
+                                s.chars().next().and_then(|c| c.to_digit(10)).unwrap_or(0) as u64;
+                            if code / 100 != prefix {
+                                return false;
+                            }
                         } else if let Ok(exact) = s.parse::<u64>() {
-                            if code != exact { return false; }
+                            if code != exact {
+                                return false;
+                            }
                         }
                     }
                     true
@@ -633,24 +685,27 @@ pub async fn plugin_call(
                 .collect();
 
             let total = filtered.len();
-            let flows: Vec<serde_json::Value> = filtered.iter()
+            let flows: Vec<serde_json::Value> = filtered
+                .iter()
                 .skip(args.offset)
                 .take(limit)
-                .map(|flow| serde_json::json!({
-                    "id": flow["id"],
-                    "method": flow["method"],
-                    "url": flow["url"],
-                    "host": flow["host"],
-                    "path": flow["path"],
-                    "status": flow["status"],
-                    "contentType": flow["contentType"],
-                    "startedAt": flow["startedDateTime"],
-                    "durationMs": flow["time"],
-                    "sizeBytes": flow["size"],
-                    "hasError": flow["hasError"],
-                    "hasRequestBody": flow["hasRequestBody"],
-                    "hasResponseBody": flow["hasResponseBody"],
-                }))
+                .map(|flow| {
+                    serde_json::json!({
+                        "id": flow["id"],
+                        "method": flow["method"],
+                        "url": flow["url"],
+                        "host": flow["host"],
+                        "path": flow["path"],
+                        "status": flow["status"],
+                        "contentType": flow["contentType"],
+                        "startedAt": flow["startedDateTime"],
+                        "durationMs": flow["time"],
+                        "sizeBytes": flow["size"],
+                        "hasError": flow["hasError"],
+                        "hasRequestBody": flow["hasRequestBody"],
+                        "hasResponseBody": flow["hasResponseBody"],
+                    })
+                })
                 .collect();
 
             let has_more = args.offset.saturating_add(flows.len()) < total;
@@ -669,7 +724,8 @@ pub async fn plugin_call(
                 return Err("Security Violation: Missing 'traffic:read' permission".to_string());
             }
 
-            let id = payload.args["id"].as_str()
+            let id = payload.args["id"]
+                .as_str()
                 .ok_or("Invalid Args: missing 'id'")?;
             let include_bodies = payload.args["includeBodies"].as_bool().unwrap_or(false);
             let max_body_bytes = payload.args["maxBodyBytes"]
@@ -684,7 +740,10 @@ pub async fn plugin_call(
 
             let url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={id}");
             let client = reqwest::Client::new();
-            let resp = client.get(&url).send().await
+            let resp = client
+                .get(&url)
+                .send()
+                .await
                 .map_err(|e| format!("Host Error: cannot reach proxy engine — {e}"))?;
 
             if resp.status().as_u16() == 404 {
@@ -694,7 +753,9 @@ pub async fn plugin_call(
                 return Err(format!("Host Error: engine returned {}", resp.status()));
             }
 
-            let flow: serde_json::Value = resp.json().await
+            let flow: serde_json::Value = resp
+                .json()
+                .await
                 .map_err(|e| format!("Host Error: failed to parse flow — {e}"))?;
 
             let req = &flow["request"];

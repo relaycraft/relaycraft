@@ -32,22 +32,37 @@ fn flow_request_to_har(req: &FlowRequest) -> HarRequest {
         method: req.method.clone(),
         url: req.url.clone(),
         httpVersion: req.http_version.clone(),
-        cookies: req.cookies.iter().map(|c| crate::session::har_model::HarCookie {
-            name: c.name.clone(),
-            value: c.value.clone(),
-        }).collect(),
-        headers: req.headers.iter().map(|h| HarHeader {
-            name: h.name.clone(),
-            value: h.value.clone(),
-        }).collect(),
-        queryString: req.query_string.iter().map(|q| crate::session::har_model::HarQueryString {
-            name: q.name.clone(),
-            value: q.value.clone(),
-        }).collect(),
-        postData: req.post_data.as_ref().map(|pd| crate::session::har_model::HarPostData {
-            mimeType: pd.mime_type.clone(),
-            text: pd.text.clone().unwrap_or_default(),
-        }),
+        cookies: req
+            .cookies
+            .iter()
+            .map(|c| crate::session::har_model::HarCookie {
+                name: c.name.clone(),
+                value: c.value.clone(),
+            })
+            .collect(),
+        headers: req
+            .headers
+            .iter()
+            .map(|h| HarHeader {
+                name: h.name.clone(),
+                value: h.value.clone(),
+            })
+            .collect(),
+        queryString: req
+            .query_string
+            .iter()
+            .map(|q| crate::session::har_model::HarQueryString {
+                name: q.name.clone(),
+                value: q.value.clone(),
+            })
+            .collect(),
+        postData: req
+            .post_data
+            .as_ref()
+            .map(|pd| crate::session::har_model::HarPostData {
+                mimeType: pd.mime_type.clone(),
+                text: pd.text.clone().unwrap_or_default(),
+            }),
         headersSize: req.headers_size as i32,
         bodySize: req.body_size as i32,
     }
@@ -58,14 +73,22 @@ fn flow_response_to_har(res: &FlowResponse) -> HarResponse {
         status: res.status,
         statusText: res.status_text.clone(),
         httpVersion: res.http_version.clone(),
-        cookies: res.cookies.iter().map(|c| crate::session::har_model::HarCookie {
-            name: c.name.clone(),
-            value: c.value.clone(),
-        }).collect(),
-        headers: res.headers.iter().map(|h| HarHeader {
-            name: h.name.clone(),
-            value: h.value.clone(),
-        }).collect(),
+        cookies: res
+            .cookies
+            .iter()
+            .map(|c| crate::session::har_model::HarCookie {
+                name: c.name.clone(),
+                value: c.value.clone(),
+            })
+            .collect(),
+        headers: res
+            .headers
+            .iter()
+            .map(|h| HarHeader {
+                name: h.name.clone(),
+                value: h.value.clone(),
+            })
+            .collect(),
         content: HarContent {
             size: res.content.size as i32,
             mimeType: res.content.mime_type.clone(),
@@ -193,8 +216,16 @@ mod tests {
                 url: "https://example.com".to_string(),
                 http_version: "HTTP/1.1".to_string(),
                 headers: vec![
-                    HarHeader { name: "Set-Cookie".to_string(), value: "a=1".to_string(), comment: None },
-                    HarHeader { name: "Set-Cookie".to_string(), value: "b=2".to_string(), comment: None },
+                    HarHeader {
+                        name: "Set-Cookie".to_string(),
+                        value: "a=1".to_string(),
+                        comment: None,
+                    },
+                    HarHeader {
+                        name: "Set-Cookie".to_string(),
+                        value: "b=2".to_string(),
+                        comment: None,
+                    },
                 ],
                 cookies: vec![],
                 query_string: vec![],
@@ -212,7 +243,10 @@ mod tests {
         let entry = flow_to_har_entry(&flow);
 
         // Both Set-Cookie headers should be preserved
-        let set_cookies: Vec<_> = entry.request.headers.iter()
+        let set_cookies: Vec<_> = entry
+            .request
+            .headers
+            .iter()
             .filter(|h| h.name == "Set-Cookie")
             .collect();
         assert_eq!(set_cookies.len(), 2);

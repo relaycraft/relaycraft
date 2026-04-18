@@ -129,7 +129,9 @@ pub async fn save_all_rules(rules_json: String, groups_json: String) -> Result<(
     }
 
     // Save groups
-    storage.save_groups(&groups).map_err(|e| e.to_tauri_error())?;
+    storage
+        .save_groups(&groups)
+        .map_err(|e| e.to_tauri_error())?;
 
     Ok(())
 }

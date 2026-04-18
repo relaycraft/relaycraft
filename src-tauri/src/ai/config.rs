@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::profiles;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -144,9 +144,9 @@ mod tests {
         let mut config = AIConfig::default();
         config.profile_id = None;
         config.custom_endpoint = Some("https://my-custom-ai.dev/v1".to_string());
-        
+
         assert_eq!(config.get_endpoint(), "https://my-custom-ai.dev/v1");
-        
+
         // Empty custom string should fallback
         config.custom_endpoint = Some("".to_string());
         assert_eq!(config.get_endpoint(), "https://api.openai.com/v1");
@@ -158,7 +158,10 @@ mod tests {
         config.provider = "zhipu".to_string();
         config.custom_endpoint = None;
         config.profile_id = Some("zhipu-cn".to_string());
-        assert_eq!(config.get_endpoint(), "https://open.bigmodel.cn/api/paas/v4");
+        assert_eq!(
+            config.get_endpoint(),
+            "https://open.bigmodel.cn/api/paas/v4"
+        );
     }
 
     #[test]
@@ -182,7 +185,10 @@ mod tests {
             ("deepseek", "https://api.deepseek.com/v1"),
             ("siliconflow", "https://api.siliconflow.cn/v1"),
             ("groq", "https://api.groq.com/openai/v1"),
-            ("aliyun", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+            (
+                "aliyun",
+                "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            ),
             ("moonshot", "https://api.moonshot.cn/v1"),
             ("minimax", "https://api.minimax.io/v1"),
             ("zhipu", "https://open.bigmodel.cn/api/paas/v4"),

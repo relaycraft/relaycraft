@@ -25,7 +25,8 @@ pub fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
             }
         }
 
-        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
+        let target_triple =
+            tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
         let binary_name = if cfg!(target_os = "windows") {
             format!("engine-{}.exe", target_triple)
         } else {
@@ -222,45 +223,53 @@ mod tests {
     #[test]
     fn test_exe_name_resolution() {
         let is_windows = cfg!(target_os = "windows");
-        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
-        
+        let target_triple =
+            tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
+
         let binary_name = if is_windows {
             format!("engine-{}.exe", target_triple)
         } else {
             format!("engine-{}", target_triple)
         };
-        
+
         if is_windows {
             assert_eq!(binary_name, format!("engine-{}.exe", target_triple));
         } else {
             assert_eq!(binary_name, format!("engine-{}", target_triple));
         }
     }
-    
+
     // Test the debug path resolution structure logic
     // We can't fully mock std::env::current_dir(), but we can test string manipulations
     #[test]
     fn test_debug_path_construction() {
         let fake_current_dir = PathBuf::from("/Users/test/Projects/relaycraft/src-tauri");
-        
+
         let project_root = if fake_current_dir.ends_with("src-tauri") {
-            fake_current_dir
-                .parent()
-                .unwrap()
-                .to_path_buf()
+            fake_current_dir.parent().unwrap().to_path_buf()
         } else {
             fake_current_dir.clone()
         };
-        
-        assert_eq!(project_root, PathBuf::from("/Users/test/Projects/relaycraft"));
-        
+
+        assert_eq!(
+            project_root,
+            PathBuf::from("/Users/test/Projects/relaycraft")
+        );
+
         // Check binary path construction
-        let target_triple = tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
+        let target_triple =
+            tauri::utils::platform::target_triple().unwrap_or_else(|_| "unknown".into());
         let binary_path = project_root
             .join("src-tauri")
             .join("binaries")
             .join(format!("engine-{}", target_triple));
-            
-        assert_eq!(binary_path, PathBuf::from(format!("/Users/test/Projects/relaycraft/src-tauri/binaries/engine-{}", target_triple)));
+
+        assert_eq!(
+            binary_path,
+            PathBuf::from(format!(
+                "/Users/test/Projects/relaycraft/src-tauri/binaries/engine-{}",
+                target_triple
+            ))
+        );
     }
 }

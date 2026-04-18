@@ -41,71 +41,71 @@ pub fn init_log_dir(path: PathBuf) {
     if let Err(e) = thread::Builder::new()
         .name("rc-log-writer".into())
         .spawn(move || {
-        let mut file_cache: HashMap<String, File> = HashMap::new();
-        let log_dir = path.join("logs");
+            let mut file_cache: HashMap<String, File> = HashMap::new();
+            let log_dir = path.join("logs");
 
-        if !log_dir.exists() {
-            let _ = std::fs::create_dir_all(&log_dir);
-        }
+            if !log_dir.exists() {
+                let _ = std::fs::create_dir_all(&log_dir);
+            }
 
-        while let Ok(entry) = rx.recv() {
-            let filename = match entry.domain.as_str() {
-                "audit" => "audit.log",
-                "script" => "script.log",
-                "plugin" => "plugin.log",
-                "crash" => "crash.log",
-                "proxy" => "engine.log",
-                _ => "custom.log",
-            };
-
-            let file_path = log_dir.join(filename);
-            let file_key = filename.to_string();
-
-            // Get or open file handle
-            let file = match file_cache.entry(file_key) {
-                std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
-                std::collections::hash_map::Entry::Vacant(e) => {
-                    let result = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open(&file_path)
-                        .or_else(|_| File::create(&file_path));
-                    match result {
-                        Ok(f) => e.insert(f),
-                        Err(err) => {
-                            eprintln!(
-                                "Failed to open log file {}: {}",
-                                file_path.display(),
-                                err
-                            );
-                            continue;
-                        }
-                    }
-                }
-            };
-
-            // Standardize prefixing
-            let domain_prefix = match entry.domain.as_str() {
-                "audit" => "[AUDIT]",
-                "script" => "[SCRIPT]",
-                "plugin" => "[PLUGIN]",
-                "crash" => "[CRASH]",
-                _ => "",
-            };
-
-            let final_message =
-                if !domain_prefix.is_empty() && !entry.message.contains(domain_prefix) {
-                    format!("{} {}", domain_prefix, entry.message)
-                } else {
-                    entry.message
+            while let Ok(entry) = rx.recv() {
+                let filename = match entry.domain.as_str() {
+                    "audit" => "audit.log",
+                    "script" => "script.log",
+                    "plugin" => "plugin.log",
+                    "crash" => "crash.log",
+                    "proxy" => "engine.log",
+                    _ => "custom.log",
                 };
 
-            if let Err(e) = writeln!(file, "[{}] {}", entry.timestamp, final_message) {
-                eprintln!("Failed to write log: {}", e);
-                // If write fails, try to reopen next time
+                let file_path = log_dir.join(filename);
+                let file_key = filename.to_string();
+
+                // Get or open file handle
+                let file = match file_cache.entry(file_key) {
+                    std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+                    std::collections::hash_map::Entry::Vacant(e) => {
+                        let result = OpenOptions::new()
+                            .create(true)
+                            .append(true)
+                            .open(&file_path)
+                            .or_else(|_| File::create(&file_path));
+                        match result {
+                            Ok(f) => e.insert(f),
+                            Err(err) => {
+                                eprintln!(
+                                    "Failed to open log file {}: {}",
+                                    file_path.display(),
+                                    err
+                                );
+                                continue;
+                            }
+                        }
+                    }
+                };
+
+                // Standardize prefixing
+                let domain_prefix = match entry.domain.as_str() {
+                    "audit" => "[AUDIT]",
+                    "script" => "[SCRIPT]",
+                    "plugin" => "[PLUGIN]",
+                    "crash" => "[CRASH]",
+                    _ => "",
+                };
+
+                let final_message =
+                    if !domain_prefix.is_empty() && !entry.message.contains(domain_prefix) {
+                        format!("{} {}", domain_prefix, entry.message)
+                    } else {
+                        entry.message
+                    };
+
+                if let Err(e) = writeln!(file, "[{}] {}", entry.timestamp, final_message) {
+                    eprintln!("Failed to write log: {}", e);
+                    // If write fails, try to reopen next time
+                }
             }
-        }
-    })
+        })
     {
         eprintln!("Failed to spawn log writer thread: {}", e);
     }
@@ -119,9 +119,7 @@ fn cleanup_old_logs(log_dir: &std::path::Path) {
     }
 
     // ONLY process these known log file types - whitelist approach for safety
-    const KNOWN_LOG_TYPES: &[&str] = &[
-        "audit", "script", "plugin", "crash", "engine", "app"
-    ];
+    const KNOWN_LOG_TYPES: &[&str] = &["audit", "script", "plugin", "crash", "engine", "app"];
 
     const MAX_FILES_PER_TYPE: usize = 5; // Keep 5 most recent files per log type
 

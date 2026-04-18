@@ -130,13 +130,8 @@ fn parse_raw_args(tool_name: &str, raw_arguments: &str) -> Result<Value, String>
         ));
     }
 
-    serde_json::from_str::<Value>(raw_arguments).map_err(|e| {
-        tagged_error(
-            tool_name,
-            ValidationLabel::JsonParseFailed,
-            e.to_string(),
-        )
-    })
+    serde_json::from_str::<Value>(raw_arguments)
+        .map_err(|e| tagged_error(tool_name, ValidationLabel::JsonParseFailed, e.to_string()))
 }
 
 fn trim_string_values(value: &mut Value) -> bool {
@@ -167,7 +162,10 @@ fn trim_string_values(value: &mut Value) -> bool {
     }
 }
 
-fn as_object_mut<'a>(tool_name: &str, value: &'a mut Value) -> Result<&'a mut Map<String, Value>, String> {
+fn as_object_mut<'a>(
+    tool_name: &str,
+    value: &'a mut Value,
+) -> Result<&'a mut Map<String, Value>, String> {
     value.as_object_mut().ok_or_else(|| {
         tagged_error(
             tool_name,
@@ -246,7 +244,10 @@ fn classify_deser_error(err: &serde_json::Error) -> ValidationLabel {
     }
 }
 
-fn parse_args<T: for<'de> Deserialize<'de>>(tool_name: &str, normalized_args: Value) -> Result<T, String> {
+fn parse_args<T: for<'de> Deserialize<'de>>(
+    tool_name: &str,
+    normalized_args: Value,
+) -> Result<T, String> {
     serde_json::from_value::<T>(normalized_args).map_err(|e| {
         let label = classify_deser_error(&e);
         tagged_error(tool_name, label, e.to_string())
@@ -384,9 +385,9 @@ mod tests {
 
         let result = validate_tool_calls(Some(&tool_calls));
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .contains("param_validation_failure:empty_string: invalid tool args for generate_regex"));
+        assert!(result.unwrap_err().contains(
+            "param_validation_failure:empty_string: invalid tool args for generate_regex"
+        ));
     }
 
     #[test]

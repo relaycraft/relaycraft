@@ -19,12 +19,12 @@
 //!   - toggle_rule       — enable or disable a rule
 //!   - replay_request    — replay a captured request through the proxy
 
-use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
+use axum::{extract::State, http::HeaderMap, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::sync::{
-    Arc, Mutex,
     atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
 };
 use tauri::Emitter;
 use tower_http::cors::{Any, CorsLayer};
@@ -137,7 +137,12 @@ struct RpcError {
 
 impl RpcResponse {
     fn ok(id: Value, result: Value) -> Self {
-        Self { jsonrpc: "2.0", id, result: Some(result), error: None }
+        Self {
+            jsonrpc: "2.0",
+            id,
+            result: Some(result),
+            error: None,
+        }
     }
 
     fn err(id: Value, code: i32, message: impl Into<String>) -> Self {
@@ -145,7 +150,10 @@ impl RpcResponse {
             jsonrpc: "2.0",
             id,
             result: None,
-            error: Some(RpcError { code, message: message.into() }),
+            error: Some(RpcError {
+                code,
+                message: message.into(),
+            }),
         }
     }
 }
@@ -183,9 +191,19 @@ async fn handle_mcp(
 }
 
 /// Write tools that require a valid Bearer token.
-const WRITE_TOOLS: &[&str] = &["create_rule", "delete_rule", "toggle_rule", "replay_request"];
+const WRITE_TOOLS: &[&str] = &[
+    "create_rule",
+    "delete_rule",
+    "toggle_rule",
+    "replay_request",
+];
 
-async fn dispatch(state: &ServerState, method: &str, params: &Value, auth: &str) -> Result<Value, String> {
+async fn dispatch(
+    state: &ServerState,
+    method: &str,
+    params: &Value,
+    auth: &str,
+) -> Result<Value, String> {
     match method {
         "initialize" => Ok(handle_initialize()),
         "notifications/initialized" | "ping" => Ok(json!({})),
@@ -432,7 +450,11 @@ fn handle_tools_list() -> Value {
 
 // ─── tools/call ─────────────────────────────────────────────────────────────
 
-async fn handle_tools_call(state: &ServerState, params: &Value, auth: &str) -> Result<Value, String> {
+async fn handle_tools_call(
+    state: &ServerState,
+    params: &Value,
+    auth: &str,
+) -> Result<Value, String> {
     let name = params["name"].as_str().ok_or("Missing tool name")?;
     let args = &params["arguments"];
 
@@ -488,7 +510,10 @@ async fn tool_list_sessions(state: &ServerState, engine_port: u16) -> Result<Val
         )));
     }
 
-    let sessions: Value = resp.json().await.map_err(|e| format!("Failed to parse sessions: {e}"))?;
+    let sessions: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse sessions: {e}"))?;
 
     // Normalize: engine may return a list or an object with a sessions key
     let list = if sessions.is_array() {
@@ -508,7 +533,11 @@ async fn tool_list_sessions(state: &ServerState, engine_port: u16) -> Result<Val
 
 // ─── Tool: list_flows ────────────────────────────────────────────────────────
 
-async fn tool_list_flows(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
+async fn tool_list_flows(
+    state: &ServerState,
+    engine_port: u16,
+    args: &Value,
+) -> Result<Value, String> {
     let session_id = args["session_id"].as_str();
     let limit = args["limit"].as_u64().unwrap_or(50).min(200) as usize;
     let method_filter = args["method"].as_str().map(|s| s.to_uppercase());
@@ -534,7 +563,10 @@ async fn tool_list_flows(state: &ServerState, engine_port: u16, args: &Value) ->
         )));
     }
 
-    let body: Value = resp.json().await.map_err(|e| format!("Failed to parse flows: {e}"))?;
+    let body: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse flows: {e}"))?;
     let indices = body["indices"].as_array().cloned().unwrap_or_default();
 
     // Apply filters
@@ -563,7 +595,12 @@ async fn tool_list_flows(state: &ServerState, engine_port: u16, args: &Value) ->
             }
             // domain filter
             if let Some(ref d) = domain_filter {
-                if !flow["host"].as_str().unwrap_or("").to_lowercase().contains(d.as_str()) {
+                if !flow["host"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_lowercase()
+                    .contains(d.as_str())
+                {
                     return false;
                 }
             }
@@ -576,7 +613,12 @@ async fn tool_list_flows(state: &ServerState, engine_port: u16, args: &Value) ->
             }
             // content_type filter
             if let Some(ref ct) = content_type_filter {
-                if !flow["contentType"].as_str().unwrap_or("").to_lowercase().contains(ct.as_str()) {
+                if !flow["contentType"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_lowercase()
+                    .contains(ct.as_str())
+                {
                     return false;
                 }
             }
@@ -635,16 +677,23 @@ async fn tool_list_flows(state: &ServerState, engine_port: u16, args: &Value) ->
 
 const MAX_BODY_BYTES: usize = 100 * 1024; // 100 KB
 
-async fn tool_get_flow(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
+async fn tool_get_flow(
+    state: &ServerState,
+    engine_port: u16,
+    args: &Value,
+) -> Result<Value, String> {
     let id = args["id"].as_str().ok_or("Missing required argument: id")?;
 
     let url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={id}");
-    let resp = state.client.get(&url).send().await.map_err(|e| {
-        format!("Cannot reach RelayCraft engine at port {engine_port}. Error: {e}")
-    })?;
+    let resp =
+        state.client.get(&url).send().await.map_err(|e| {
+            format!("Cannot reach RelayCraft engine at port {engine_port}. Error: {e}")
+        })?;
 
     if resp.status().as_u16() == 404 {
-        return Ok(error_result(format!("Flow '{id}' not found. It may have been evicted from the engine buffer.")));
+        return Ok(error_result(format!(
+            "Flow '{id}' not found. It may have been evicted from the engine buffer."
+        )));
     }
 
     if !resp.status().is_success() {
@@ -655,7 +704,10 @@ async fn tool_get_flow(state: &ServerState, engine_port: u16, args: &Value) -> R
         )));
     }
 
-    let mut flow: Value = resp.json().await.map_err(|e| format!("Failed to parse flow: {e}"))?;
+    let mut flow: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse flow: {e}"))?;
 
     // Truncate oversized response body to stay AI-context-friendly
     let mut body_truncated = false;
@@ -729,13 +781,21 @@ async fn tool_get_flow(state: &ServerState, engine_port: u16, args: &Value) -> R
         }
     }
 
-    Ok(text_result(serde_json::to_string_pretty(&output).unwrap_or_default()))
+    Ok(text_result(
+        serde_json::to_string_pretty(&output).unwrap_or_default(),
+    ))
 }
 
 // ─── Tool: search_flows ──────────────────────────────────────────────────────
 
-async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
-    let query = args["query"].as_str().ok_or("Missing required argument: query")?;
+async fn tool_search_flows(
+    state: &ServerState,
+    engine_port: u16,
+    args: &Value,
+) -> Result<Value, String> {
+    let query = args["query"]
+        .as_str()
+        .ok_or("Missing required argument: query")?;
     let session_id = args["session_id"].as_str();
     let limit = args["limit"].as_u64().unwrap_or(20).min(50) as usize;
     let search_in = args["search_in"].as_str().unwrap_or("url");
@@ -745,9 +805,9 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
     if search_in != "url" {
         let search_type = match search_in {
             "response_body" => "response",
-            "request_body"  => "request",
-            "header"        => "header",
-            other           => return Ok(error_result(format!("Unknown search_in value: '{other}'"))),
+            "request_body" => "request",
+            "header" => "header",
+            other => return Ok(error_result(format!("Unknown search_in value: '{other}'"))),
         };
 
         let search_url = format!("http://127.0.0.1:{engine_port}/_relay/search");
@@ -757,13 +817,25 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
             "session_id": session_id,
             "case_sensitive": case_sensitive,
         });
-        let resp = state.client.post(&search_url).json(&payload).send().await
+        let resp = state
+            .client
+            .post(&search_url)
+            .json(&payload)
+            .send()
+            .await
             .map_err(|e| format!("Cannot reach RelayCraft engine: {e}"))?;
         if !resp.status().is_success() {
-            return Ok(error_result(format!("Engine returned status {}", resp.status())));
+            return Ok(error_result(format!(
+                "Engine returned status {}",
+                resp.status()
+            )));
         }
-        let result: Value = resp.json().await.map_err(|e| format!("Failed to parse search result: {e}"))?;
-        let matched_ids: Vec<&str> = result["matches"].as_array()
+        let result: Value = resp
+            .json()
+            .await
+            .map_err(|e| format!("Failed to parse search result: {e}"))?;
+        let matched_ids: Vec<&str> = result["matches"]
+            .as_array()
             .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
             .unwrap_or_default();
         let scanned = result["scanned"].as_u64().unwrap_or(0);
@@ -779,25 +851,35 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
         if let Some(sid) = session_id {
             poll_url.push_str(&format!("&session_id={sid}"));
         }
-        let poll_resp = state.client.get(&poll_url).send().await
+        let poll_resp = state
+            .client
+            .get(&poll_url)
+            .send()
+            .await
             .map_err(|e| format!("Cannot reach engine: {e}"))?;
-        let poll_body: Value = poll_resp.json().await.map_err(|e| format!("Failed to parse flows: {e}"))?;
+        let poll_body: Value = poll_resp
+            .json()
+            .await
+            .map_err(|e| format!("Failed to parse flows: {e}"))?;
         let indices = poll_body["indices"].as_array().cloned().unwrap_or_default();
 
         let total_matched = matched_ids.len();
-        let matches: Vec<Value> = indices.iter()
+        let matches: Vec<Value> = indices
+            .iter()
             .filter(|f| matched_ids.contains(&f["id"].as_str().unwrap_or("")))
             .take(limit)
-            .map(|flow| json!({
-                "id": flow["id"],
-                "method": flow["method"],
-                "url": flow["url"],
-                "status": flow["status"],
-                "contentType": flow["contentType"],
-                "startedAt": flow["startedDateTime"],
-                "durationMs": flow["time"],
-                "hasError": flow["hasError"]
-            }))
+            .map(|flow| {
+                json!({
+                    "id": flow["id"],
+                    "method": flow["method"],
+                    "url": flow["url"],
+                    "status": flow["status"],
+                    "contentType": flow["contentType"],
+                    "startedAt": flow["startedDateTime"],
+                    "durationMs": flow["time"],
+                    "hasError": flow["hasError"]
+                })
+            })
             .collect();
 
         let showing = matches.len();
@@ -813,7 +895,11 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
     }
 
     // URL search (default)
-    let query_lower = if case_sensitive { query.to_string() } else { query.to_lowercase() };
+    let query_lower = if case_sensitive {
+        query.to_string()
+    } else {
+        query.to_lowercase()
+    };
     let mut poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
     if let Some(sid) = session_id {
         poll_url.push_str(&format!("&session_id={sid}"));
@@ -831,13 +917,22 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
         )));
     }
 
-    let body: Value = resp.json().await.map_err(|e| format!("Failed to parse flows: {e}"))?;
+    let body: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse flows: {e}"))?;
     let indices = body["indices"].as_array().cloned().unwrap_or_default();
 
     let matches: Vec<Value> = indices
         .iter()
         .filter(|flow| {
-            let normalize = |s: &str| if case_sensitive { s.to_string() } else { s.to_lowercase() };
+            let normalize = |s: &str| {
+                if case_sensitive {
+                    s.to_string()
+                } else {
+                    s.to_lowercase()
+                }
+            };
             let url_str = normalize(flow["url"].as_str().unwrap_or(""));
             let host = normalize(flow["host"].as_str().unwrap_or(""));
             let path = normalize(flow["path"].as_str().unwrap_or(""));
@@ -861,7 +956,10 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
         .collect();
 
     let text = if matches.is_empty() {
-        format!("No flows found matching '{query}' in {} total flow(s).", indices.len())
+        format!(
+            "No flows found matching '{query}' in {} total flow(s).",
+            indices.len()
+        )
     } else {
         format!(
             "Found {} match(es) for '{}' in {} total flow(s):\n\n{}",
@@ -877,7 +975,11 @@ async fn tool_search_flows(state: &ServerState, engine_port: u16, args: &Value) 
 
 // ─── Tool: get_session_stats ──────────────────────────────────────────────────
 
-async fn tool_get_session_stats(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
+async fn tool_get_session_stats(
+    state: &ServerState,
+    engine_port: u16,
+    args: &Value,
+) -> Result<Value, String> {
     let session_id = args["session_id"].as_str();
 
     let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
@@ -890,10 +992,16 @@ async fn tool_get_session_stats(state: &ServerState, engine_port: u16, args: &Va
     })?;
 
     if !resp.status().is_success() {
-        return Ok(error_result(format!("Engine returned status {}", resp.status())));
+        return Ok(error_result(format!(
+            "Engine returned status {}",
+            resp.status()
+        )));
     }
 
-    let body: Value = resp.json().await.map_err(|e| format!("Failed to parse flows: {e}"))?;
+    let body: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse flows: {e}"))?;
     let indices = body["indices"].as_array().cloned().unwrap_or_default();
 
     let total = indices.len();
@@ -901,29 +1009,42 @@ async fn tool_get_session_stats(state: &ServerState, engine_port: u16, args: &Va
         return Ok(text_result("No flows recorded in this session yet."));
     }
 
-    let error_count = indices.iter().filter(|f| f["hasError"].as_bool().unwrap_or(false)).count();
+    let error_count = indices
+        .iter()
+        .filter(|f| f["hasError"].as_bool().unwrap_or(false))
+        .count();
     let error_rate = error_count as f64 / total as f64;
 
     // Status distribution
     let mut dist: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
     for flow in &indices {
         let code = flow["status"].as_u64().unwrap_or(0);
-        let bucket = if code == 0 { "other".to_string() } else { format!("{}xx", code / 100) };
+        let bucket = if code == 0 {
+            "other".to_string()
+        } else {
+            format!("{}xx", code / 100)
+        };
         *dist.entry(bucket).or_insert(0) += 1;
     }
 
     // Top domains (by count)
-    let mut domain_counts: std::collections::HashMap<String, (usize, usize)> = std::collections::HashMap::new();
+    let mut domain_counts: std::collections::HashMap<String, (usize, usize)> =
+        std::collections::HashMap::new();
     for flow in &indices {
         let host = flow["host"].as_str().unwrap_or("unknown").to_string();
         let entry = domain_counts.entry(host).or_insert((0, 0));
         entry.0 += 1;
-        if flow["hasError"].as_bool().unwrap_or(false) { entry.1 += 1; }
+        if flow["hasError"].as_bool().unwrap_or(false) {
+            entry.1 += 1;
+        }
     }
-    let mut top_domains: Vec<Value> = domain_counts.iter()
-        .map(|(domain, (count, errors))| json!({
-            "domain": domain, "count": count, "errorCount": errors
-        }))
+    let mut top_domains: Vec<Value> = domain_counts
+        .iter()
+        .map(|(domain, (count, errors))| {
+            json!({
+                "domain": domain, "count": count, "errorCount": errors
+            })
+        })
         .collect();
     top_domains.sort_by(|a, b| b["count"].as_u64().cmp(&a["count"].as_u64()));
     top_domains.truncate(5);
@@ -931,11 +1052,15 @@ async fn tool_get_session_stats(state: &ServerState, engine_port: u16, args: &Va
     // Slowest flows
     let mut sorted = indices.clone();
     sorted.sort_by(|a, b| {
-        b["time"].as_f64().unwrap_or(0.0)
+        b["time"]
+            .as_f64()
+            .unwrap_or(0.0)
             .partial_cmp(&a["time"].as_f64().unwrap_or(0.0))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
-    let slowest: Vec<Value> = sorted.iter().take(3)
+    let slowest: Vec<Value> = sorted
+        .iter()
+        .take(3)
         .map(|f| json!({ "id": f["id"], "url": f["url"], "durationMs": f["time"] }))
         .collect();
 
@@ -958,27 +1083,44 @@ async fn tool_get_session_stats(state: &ServerState, engine_port: u16, args: &Va
 
 // ─── Tool: replay_request ────────────────────────────────────────────────────
 
-async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value) -> Result<Value, String> {
-    let flow_id = args["flow_id"].as_str().ok_or("Missing required argument: flow_id")?;
+async fn tool_replay_request(
+    state: &ServerState,
+    engine_port: u16,
+    args: &Value,
+) -> Result<Value, String> {
+    let flow_id = args["flow_id"]
+        .as_str()
+        .ok_or("Missing required argument: flow_id")?;
     let mods = &args["modifications"];
 
     // 1. Fetch the original flow
     let detail_url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={flow_id}");
-    let resp = state.client.get(&detail_url).send().await.map_err(|e| {
-        format!("Cannot reach engine at port {engine_port}: {e}")
-    })?;
+    let resp = state
+        .client
+        .get(&detail_url)
+        .send()
+        .await
+        .map_err(|e| format!("Cannot reach engine at port {engine_port}: {e}"))?;
     if resp.status().as_u16() == 404 {
         return Ok(error_result(format!("Flow '{flow_id}' not found.")));
     }
     if !resp.status().is_success() {
-        return Ok(error_result(format!("Engine returned status {}", resp.status())));
+        return Ok(error_result(format!(
+            "Engine returned status {}",
+            resp.status()
+        )));
     }
-    let flow: Value = resp.json().await.map_err(|e| format!("Failed to parse flow: {e}"))?;
+    let flow: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse flow: {e}"))?;
 
     // 2. Extract request fields, apply modifications
-    let method_str = mods["method"].as_str()
+    let method_str = mods["method"]
+        .as_str()
         .unwrap_or_else(|| flow["request"]["method"].as_str().unwrap_or("GET"));
-    let url = mods["url"].as_str()
+    let url = mods["url"]
+        .as_str()
         .unwrap_or_else(|| flow["request"]["url"].as_str().unwrap_or(""));
     if url.is_empty() {
         return Ok(error_result("Flow has no URL — cannot replay."));
@@ -986,11 +1128,15 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
     let body = if !mods["body"].is_null() {
         mods["body"].as_str().map(|s| s.to_string())
     } else {
-        flow["request"]["postData"]["text"].as_str().map(|s| s.to_string())
+        flow["request"]["postData"]["text"]
+            .as_str()
+            .map(|s| s.to_string())
     };
 
     // Build headers: start from original, apply overrides
-    let proxy_port = crate::config::load_config().map(|c| c.proxy_port).unwrap_or(9090);
+    let proxy_port = crate::config::load_config()
+        .map(|c| c.proxy_port)
+        .unwrap_or(9090);
     let proxy_url = format!("http://127.0.0.1:{proxy_port}");
 
     // 3. Build a client that routes through the proxy (so the request is captured)
@@ -1011,7 +1157,9 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
             let name = h["name"].as_str().unwrap_or("");
             let value = h["value"].as_str().unwrap_or("");
             // Skip headers that interfere with the proxy
-            if name.eq_ignore_ascii_case("content-length") { continue; }
+            if name.eq_ignore_ascii_case("content-length") {
+                continue;
+            }
             req_builder = req_builder.header(name, value);
         }
     }
@@ -1029,9 +1177,10 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
 
     // 4. Send
     let start = std::time::Instant::now();
-    let response = req_builder.send().await.map_err(|e| {
-        format!("Replay request failed: {e}. Ensure the proxy engine is running.")
-    })?;
+    let response = req_builder
+        .send()
+        .await
+        .map_err(|e| format!("Replay request failed: {e}. Ensure the proxy engine is running."))?;
     let duration_ms = start.elapsed().as_millis();
     let status = response.status().as_u16();
     let _body_text = response.text().await.unwrap_or_default();
@@ -1046,18 +1195,24 @@ async fn tool_replay_request(state: &ServerState, engine_port: u16, args: &Value
 async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, String> {
     use crate::rules::{model::Rule, storage::RuleStorage};
 
-    let rule_type = args["type"].as_str().ok_or("Missing required argument: type")?;
-    let name = args["name"].as_str().ok_or("Missing required argument: name")?;
-    let url_pattern = args["url_pattern"].as_str().ok_or("Missing required argument: url_pattern")?;
+    let rule_type = args["type"]
+        .as_str()
+        .ok_or("Missing required argument: type")?;
+    let name = args["name"]
+        .as_str()
+        .ok_or("Missing required argument: name")?;
+    let url_pattern = args["url_pattern"]
+        .as_str()
+        .ok_or("Missing required argument: url_pattern")?;
     let method = args["method"].as_str();
     let intent = args["intent"].as_str().unwrap_or("");
 
     // Build match atoms
-    let mut request_matchers = vec![
-        json!({"type": "url", "matchType": "contains", "value": url_pattern})
-    ];
+    let mut request_matchers =
+        vec![json!({"type": "url", "matchType": "contains", "value": url_pattern})];
     if let Some(m) = method {
-        request_matchers.push(json!({"type": "method", "matchType": "exact", "value": [m.to_uppercase()]}));
+        request_matchers
+            .push(json!({"type": "method", "matchType": "exact", "value": [m.to_uppercase()]}));
     }
 
     // Build the action array from simplified params
@@ -1151,8 +1306,8 @@ async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, St
         }
     });
 
-    let rule: Rule = serde_json::from_value(rule_value)
-        .map_err(|e| format!("Failed to build rule: {e}"))?;
+    let rule: Rule =
+        serde_json::from_value(rule_value).map_err(|e| format!("Failed to build rule: {e}"))?;
 
     RuleStorage::from_config()
         .map_err(|e| format!("Cannot access rules storage: {e}"))?
@@ -1161,7 +1316,12 @@ async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, St
 
     let _ = state.app.emit("rules-changed", ());
 
-    log::info!("MCP: created rule '{}' (id: {}, type: {})", name, rule_id, rule_type);
+    log::info!(
+        "MCP: created rule '{}' (id: {}, type: {})",
+        name,
+        rule_id,
+        rule_type
+    );
 
     Ok(text_result(format!(
         "Rule '{name}' created (type: {rule_type}, id: {rule_id}).\nThe rule is now active and visible in the RelayCraft Rules panel."
@@ -1173,33 +1333,45 @@ async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, St
 async fn tool_list_rules(_state: &ServerState) -> Result<Value, String> {
     use crate::rules::storage::RuleStorage;
 
-    let storage = RuleStorage::from_config()
-        .map_err(|e| format!("Cannot access rules storage: {e}"))?;
-    let loaded = storage.load_all()
+    let storage =
+        RuleStorage::from_config().map_err(|e| format!("Cannot access rules storage: {e}"))?;
+    let loaded = storage
+        .load_all()
         .map_err(|e| format!("Failed to load rules: {e}"))?;
 
-    let rules: Vec<Value> = loaded.rules.iter().map(|entry| {
-        let rule = &entry.rule;
-        // Extract the first URL match pattern for display
-        let url_pattern = rule.match_config.request.iter()
-            .find(|a| a.atom_type == "url")
-            .and_then(|a| a.value.as_ref()?.as_str().map(|s| s.to_string()))
-            .unwrap_or_default();
-        let source = rule.metadata.as_ref()
-            .and_then(|m| m.source.as_deref())
-            .unwrap_or("user");
-        json!({
-            "id": rule.id,
-            "name": rule.name,
-            "type": rule.r#type,
-            "url_pattern": url_pattern,
-            "enabled": rule.execution.enabled,
-            "source": source,
-            "group": entry.group_id
+    let rules: Vec<Value> = loaded
+        .rules
+        .iter()
+        .map(|entry| {
+            let rule = &entry.rule;
+            // Extract the first URL match pattern for display
+            let url_pattern = rule
+                .match_config
+                .request
+                .iter()
+                .find(|a| a.atom_type == "url")
+                .and_then(|a| a.value.as_ref()?.as_str().map(|s| s.to_string()))
+                .unwrap_or_default();
+            let source = rule
+                .metadata
+                .as_ref()
+                .and_then(|m| m.source.as_deref())
+                .unwrap_or("user");
+            json!({
+                "id": rule.id,
+                "name": rule.name,
+                "type": rule.r#type,
+                "url_pattern": url_pattern,
+                "enabled": rule.execution.enabled,
+                "source": source,
+                "group": entry.group_id
+            })
         })
-    }).collect();
+        .collect();
 
-    Ok(text_result(serde_json::to_string_pretty(&rules).unwrap_or_default()))
+    Ok(text_result(
+        serde_json::to_string_pretty(&rules).unwrap_or_default(),
+    ))
 }
 
 // ─── Tool: delete_rule ───────────────────────────────────────────────────────
@@ -1207,28 +1379,43 @@ async fn tool_list_rules(_state: &ServerState) -> Result<Value, String> {
 async fn tool_delete_rule(state: &ServerState, args: &Value) -> Result<Value, String> {
     use crate::rules::storage::RuleStorage;
 
-    let rule_id = args["rule_id"].as_str().ok_or("Missing required argument: rule_id")?;
+    let rule_id = args["rule_id"]
+        .as_str()
+        .ok_or("Missing required argument: rule_id")?;
 
-    let storage = RuleStorage::from_config()
-        .map_err(|e| format!("Cannot access rules storage: {e}"))?;
+    let storage =
+        RuleStorage::from_config().map_err(|e| format!("Cannot access rules storage: {e}"))?;
 
     // Load first so we can return the rule's name/source in the response
-    let loaded = storage.load_all()
+    let loaded = storage
+        .load_all()
         .map_err(|e| format!("Failed to load rules: {e}"))?;
-    let entry = loaded.rules.iter().find(|e| e.rule.id == rule_id)
+    let entry = loaded
+        .rules
+        .iter()
+        .find(|e| e.rule.id == rule_id)
         .ok_or_else(|| format!("Rule not found: {rule_id}"))?;
     let rule_name = entry.rule.name.clone();
-    let source = entry.rule.metadata.as_ref()
+    let source = entry
+        .rule
+        .metadata
+        .as_ref()
         .and_then(|m| m.source.as_deref())
         .unwrap_or("user")
         .to_string();
 
-    storage.delete(rule_id)
+    storage
+        .delete(rule_id)
         .map_err(|e| format!("Failed to delete rule: {e}"))?;
 
     let _ = state.app.emit("rules-changed", ());
 
-    log::info!("MCP: deleted rule '{}' (id: {}, source: {})", rule_name, rule_id, source);
+    log::info!(
+        "MCP: deleted rule '{}' (id: {}, source: {})",
+        rule_name,
+        rule_id,
+        source
+    );
 
     Ok(text_result(format!(
         "Deleted rule '{rule_name}' (id: {rule_id}, source: {source})."
@@ -1240,20 +1427,29 @@ async fn tool_delete_rule(state: &ServerState, args: &Value) -> Result<Value, St
 async fn tool_toggle_rule(state: &ServerState, args: &Value) -> Result<Value, String> {
     use crate::rules::storage::RuleStorage;
 
-    let rule_id = args["rule_id"].as_str().ok_or("Missing required argument: rule_id")?;
-    let enabled = args["enabled"].as_bool().ok_or("Missing required argument: enabled")?;
+    let rule_id = args["rule_id"]
+        .as_str()
+        .ok_or("Missing required argument: rule_id")?;
+    let enabled = args["enabled"]
+        .as_bool()
+        .ok_or("Missing required argument: enabled")?;
 
-    let storage = RuleStorage::from_config()
-        .map_err(|e| format!("Cannot access rules storage: {e}"))?;
-    let loaded = storage.load_all()
+    let storage =
+        RuleStorage::from_config().map_err(|e| format!("Cannot access rules storage: {e}"))?;
+    let loaded = storage
+        .load_all()
         .map_err(|e| format!("Failed to load rules: {e}"))?;
-    let entry = loaded.rules.iter().find(|e| e.rule.id == rule_id)
+    let entry = loaded
+        .rules
+        .iter()
+        .find(|e| e.rule.id == rule_id)
         .ok_or_else(|| format!("Rule not found: {rule_id}"))?;
 
     let mut rule = entry.rule.clone();
     rule.execution.enabled = enabled;
 
-    storage.save(&rule, Some(&entry.group_id))
+    storage
+        .save(&rule, Some(&entry.group_id))
         .map_err(|e| format!("Failed to save rule: {e}"))?;
 
     let _ = state.app.emit("rules-changed", ());
@@ -1261,7 +1457,10 @@ async fn tool_toggle_rule(state: &ServerState, args: &Value) -> Result<Value, St
     let status = if enabled { "enabled" } else { "disabled" };
     log::info!("MCP: {} rule '{}' (id: {})", status, rule.name, rule_id);
 
-    Ok(text_result(format!("Rule '{}' is now {status}.", rule.name)))
+    Ok(text_result(format!(
+        "Rule '{}' is now {status}.",
+        rule.name
+    )))
 }
 
 // ─── Server lifecycle ────────────────────────────────────────────────────────

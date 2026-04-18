@@ -48,7 +48,10 @@ pub async fn read_plugin_file(
     // Sub-paths like "locales/en.json" are valid for plugins, so only ".." is blocked here.
     // The canonical path check below is the definitive guard.
     if file_name.contains("..") {
-        log::warn!("[Security] Blocked path traversal in read_plugin_file: {}", file_name);
+        log::warn!(
+            "[Security] Blocked path traversal in read_plugin_file: {}",
+            file_name
+        );
         return Err("Security Violation: Invalid filename".to_string());
     }
 

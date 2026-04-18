@@ -71,19 +71,14 @@ pub async fn set_proxy_active(
     state: tauri::State<'_, ProxyState>,
     active: bool,
 ) -> Result<(), String> {
-    state
-        .engine
-        .set_active(active)
-        .map_err(|e| e.to_string())?;
+    state.engine.set_active(active).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 /// Prepare updater installation by aggressively releasing engine file locks.
 /// On Windows, this force-kills known engine executables as a fallback.
 #[tauri::command]
-pub async fn prepare_update_install(
-    state: tauri::State<'_, ProxyState>,
-) -> Result<(), String> {
+pub async fn prepare_update_install(state: tauri::State<'_, ProxyState>) -> Result<(), String> {
     let _ = state.engine.terminate();
 
     #[cfg(target_os = "windows")]

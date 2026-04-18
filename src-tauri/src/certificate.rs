@@ -611,7 +611,10 @@ pub fn get_detailed_cert_info() -> Result<DetailedCertInfo, String> {
                         ..Default::default()
                     });
                 }
-                Err(format!("Failed to parse certificate info: {} (Output: {})", e, out_str))
+                Err(format!(
+                    "Failed to parse certificate info: {} (Output: {})",
+                    e, out_str
+                ))
             }
         }
     }
