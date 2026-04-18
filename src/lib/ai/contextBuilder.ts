@@ -145,6 +145,12 @@ const applyContextBudget = (context: AIContext, maxChars: number): AIContext => 
   }
   if (estimateContextChars(budgeted) <= maxChars) return budgeted;
 
+  // Keep global aggregates as long as possible; trim low-priority ranking depth first.
+  if (budgeted.trafficOverview && budgeted.trafficOverview.topDomains.length > 3) {
+    budgeted.trafficOverview.topDomains = budgeted.trafficOverview.topDomains.slice(0, 3);
+  }
+  if (estimateContextChars(budgeted) <= maxChars) return budgeted;
+
   budgeted.recentTraffic = [];
   if (estimateContextChars(budgeted) <= maxChars) return budgeted;
 
@@ -241,6 +247,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     selectedRuleId: selectedRule?.id || null,
     draftRuleId: draftRule?.id || (draftRule as any)?._draftId || null,
     selectedFlowId: selectedFlow?.id || null,
+    trafficCount: indices.length,
     trafficTail: indices.slice(-maxTrafficCount).map((idx) => [idx.id, idx.status]),
   });
   const now = Date.now();
@@ -275,6 +282,36 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
       status: idx.status,
     }))
     .reverse();
+
+  // 4.1 Build global traffic overview from full indices (not sample-based)
+  const totalRequests = indices.length;
+  const errorCount = indices.filter((idx) => idx.hasError).length;
+  const statusDistribution: Record<string, number> = {};
+  const domainCounts: Record<string, { count: number; errorCount: number }> = {};
+
+  for (const idx of indices) {
+    const code = idx.status ?? 0;
+    const bucket = code > 0 ? `${Math.floor(code / 100)}xx` : "other";
+    statusDistribution[bucket] = (statusDistribution[bucket] ?? 0) + 1;
+
+    const domain = (idx.host || "unknown").trim() || "unknown";
+    if (!domainCounts[domain]) {
+      domainCounts[domain] = { count: 0, errorCount: 0 };
+    }
+    domainCounts[domain].count += 1;
+    if (idx.hasError) {
+      domainCounts[domain].errorCount += 1;
+    }
+  }
+
+  const topDomains = Object.entries(domainCounts)
+    .map(([domain, metrics]) => ({
+      domain,
+      count: metrics.count,
+      errorCount: metrics.errorCount,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
 
   // 5. Fetch Real Logs if requested
   let recentLogs: string[] = [];
@@ -324,6 +361,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
 
   // 7. Generate Narrative Summary
   let summary = `System on port ${port}. Tab: ${activeTab}. `;
+  summary += `Captured requests: ${indices.length}. `;
   if (config.upstream_proxy?.enabled) {
     summary += `Upstream: ${config.upstream_proxy.url}. `;
   }
@@ -334,6 +372,14 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
       activeRules,
       activeScripts,
       recentTraffic,
+      trafficOverview: {
+        totalRequests,
+        errorCount,
+        errorRate: totalRequests > 0 ? errorCount / totalRequests : 0,
+        statusDistribution,
+        topDomains,
+        recentTrafficSampleSize: maxTrafficCount,
+      },
       recentLogs,
       selectedItem,
       activeTab: activeTab || undefined,

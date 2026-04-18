@@ -4,15 +4,19 @@ const chatCompletionWithTools = vi.fn();
 const chatCompletion = vi.fn();
 const chatCompletionStream = vi.fn();
 const addMessage = vi.fn();
+const mockAIState = {
+  settings: { enabled: true, maxHistoryMessages: 2 },
+  history: [] as Array<{ role: "user" | "assistant" | "system"; content: string }>,
+};
 
 vi.mock("../../stores/aiStore", () => ({
   useAIStore: {
     getState: () => ({
-      settings: { enabled: true },
+      settings: mockAIState.settings,
       chatCompletionWithTools,
       chatCompletion,
       chatCompletionStream,
-      history: [],
+      history: mockAIState.history,
       addMessage,
     }),
   },
@@ -60,6 +64,8 @@ import { dispatchCommand } from "./dispatcher";
 describe("dispatcher function calling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAIState.settings = { enabled: true, maxHistoryMessages: 2 };
+    mockAIState.history = [];
   });
 
   it("returns local ai metrics report for /ai-metrics command", async () => {
@@ -142,5 +148,98 @@ describe("dispatcher function calling", () => {
     expect(chatCompletionWithTools).not.toHaveBeenCalled();
     expect(chatCompletion).not.toHaveBeenCalled();
     expect(chatCompletionStream).toHaveBeenCalledOnce();
+  });
+
+  it("treats unrelated input as standalone and avoids carrying prior turns", async () => {
+    mockAIState.history = [
+      { role: "user", content: "帮我分析上一个 502 请求" },
+      { role: "assistant", content: "可能是上游网关超时。" },
+    ];
+    chatCompletionStream.mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk("这是一个新问题，我按当前上下文独立回答。");
+    });
+
+    await dispatchCommand("今天星期几？");
+
+    const streamMessages = chatCompletionStream.mock.calls[0][0] as Array<{
+      role: string;
+      content: string;
+    }>;
+    expect(streamMessages.some((m) => m.content.includes("new standalone topic"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("[Conversation Summary]"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("帮我分析上一个 502 请求"))).toBe(false);
+  });
+
+  it("keeps exactly N recent turns and compresses overflow into summary", async () => {
+    mockAIState.settings = { enabled: true, maxHistoryMessages: 2 };
+    mockAIState.history = [
+      { role: "user", content: "第1轮用户问题" },
+      { role: "assistant", content: "第1轮助手回答" },
+      { role: "user", content: "第2轮用户问题" },
+      { role: "assistant", content: "第2轮助手回答" },
+      { role: "user", content: "第3轮用户问题" },
+      { role: "assistant", content: "第3轮助手回答" },
+    ];
+    chatCompletionWithTools.mockResolvedValueOnce({
+      content: JSON.stringify({ intent: "CHAT", confidence: 0.9 }),
+      tool_calls: null,
+    });
+    chatCompletionStream.mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk("已按限制轮次回答。");
+    });
+
+    await dispatchCommand("继续看第3轮这个问题");
+
+    const streamMessages = chatCompletionStream.mock.calls[0][0] as Array<{
+      role: string;
+      content: string;
+    }>;
+    expect(streamMessages.some((m) => m.content.includes("Earlier conversation summary"))).toBe(
+      true,
+    );
+    expect(streamMessages.some((m) => m.content.includes("第1轮用户问题"))).toBe(true);
+    expect(streamMessages.some((m) => m.content.includes("第2轮用户问题"))).toBe(true);
+    expect(streamMessages.some((m) => m.content.includes("第3轮用户问题"))).toBe(true);
+  });
+
+  it("does not carry history when overlap is only generic words", async () => {
+    mockAIState.history = [
+      { role: "user", content: "帮我分析这个请求为什么 401" },
+      { role: "assistant", content: "可能是鉴权 token 缺失。" },
+    ];
+    chatCompletionStream.mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk("按独立问题处理。");
+    });
+
+    await dispatchCommand("这个问题怎么处理");
+
+    const streamMessages = chatCompletionStream.mock.calls[0][0] as Array<{
+      role: string;
+      content: string;
+    }>;
+    expect(streamMessages.some((m) => m.content.includes("new standalone topic"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("[Conversation Summary]"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("帮我分析这个请求为什么 401"))).toBe(
+      false,
+    );
+  });
+
+  it("carries context for short Chinese high-signal keywords without whitelist", async () => {
+    mockAIState.history = [
+      { role: "user", content: "登录鉴权超时是什么原因" },
+      { role: "assistant", content: "可能是 token 失效或网关超时。" },
+    ];
+    chatCompletionStream.mockImplementationOnce(async (_messages, onChunk) => {
+      onChunk("继续基于上一轮上下文分析。");
+    });
+
+    await dispatchCommand("鉴权超时怎么处理");
+
+    const streamMessages = chatCompletionStream.mock.calls[0][0] as Array<{
+      role: string;
+      content: string;
+    }>;
+    expect(streamMessages.some((m) => m.content.includes("new standalone topic"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("登录鉴权超时是什么原因"))).toBe(true);
   });
 });

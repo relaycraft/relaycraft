@@ -487,6 +487,9 @@ ${SHARED_UI_LABEL_GUIDELINES}
 2. If the user asks about the current state/traffic/rules, use the provided context to give specific details.
 3. Keep the tone friendly and supportive.
 4. DO NOT use JSON. Respond with plain text/markdown only.
+5. For aggregate traffic questions (e.g. total count, top domains, status distribution), rely on \`trafficOverview\` only.
+6. \`recentTraffic\` is a limited sample for recent examples, NOT the full dataset; never use it for global ranking/count conclusions.
+7. If required data is missing or outside the available context, explicitly say you cannot determine it from current context and provide a concrete next step to obtain it.
 
 ## Application Context:
 {{CONTEXT}}

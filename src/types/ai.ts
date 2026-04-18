@@ -65,6 +65,24 @@ export interface AIContext {
   }[];
 
   /**
+   * Global traffic overview computed from full in-memory indices.
+   * Use this for aggregate questions (counts/rankings/distribution),
+   * not `recentTraffic` sample.
+   */
+  trafficOverview?: {
+    totalRequests: number;
+    errorCount: number;
+    errorRate: number;
+    statusDistribution: Record<string, number>;
+    topDomains: {
+      domain: string;
+      count: number;
+      errorCount: number;
+    }[];
+    recentTrafficSampleSize: number;
+  };
+
+  /**
    * Enrichment: Recent system/plugin logs.
    */
   recentLogs?: string[];

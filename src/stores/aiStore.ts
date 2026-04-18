@@ -366,8 +366,11 @@ export const useAIStore = create<AIStore>((set, get) => {
     addMessage: (role, content) => {
       const { history, settings } = get();
       const newHistory = [...history, { role, content }];
-      const limit = settings.maxHistoryMessages * 2;
-      set({ history: newHistory.slice(-limit) });
+      // Keep extra headroom so dispatcher can compress overflow turns into a summary.
+      // Effective turns sent to model are still bounded by `maxHistoryMessages`.
+      const turnHeadroom = Math.max(settings.maxHistoryMessages * 2, 20);
+      const storedMessageLimit = turnHeadroom * 2;
+      set({ history: newHistory.slice(-storedMessageLimit) });
     },
 
     clearHistory: () => {
