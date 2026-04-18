@@ -61,6 +61,8 @@ export type PluginPermission =
   | "rules:write" // Create / modify proxy rules
   | "rules:read" // Read proxy rules
   | "traffic:read" // Read captured traffic flows
+  | "storage:read" // Read plugin storage entries
+  | "storage:write" // Modify plugin storage entries
   | string; // Future proofing
 
 export interface PluginInfo {

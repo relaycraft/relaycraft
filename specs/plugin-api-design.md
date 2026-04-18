@@ -135,7 +135,8 @@
 | `rules` | `createMock` | `rules:write` | 已实现 |
 | `rules` | `list/get` | `rules:read` | 已实现 |
 | `traffic` | `listFlows/getFlow` | `traffic:read` | 已实现 |
-| `storage` | `*` | 无 | 插件隔离命名空间，已实现 |
+| `storage` | `get/list` | `storage:read` | 已实现 |
+| `storage` | `set/delete/clear` | `storage:write` | 已实现 |
 
 ## 1.x 能力分期 (Aligned with Current Product Decisions)
 

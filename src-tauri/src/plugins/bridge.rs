@@ -65,6 +65,16 @@ const AUDITED_COMMANDS: &[&str] = &[
                           // Add more sensitive commands here as needed
 ];
 
+/// Temporary compatibility allowlist for plugins that still rely on storage APIs
+/// but have not declared storage permissions yet.
+/// TODO: Remove this allowlist after plugin manifests are migrated.
+const STORAGE_PERMISSION_ALLOWLIST: &[&str] = &["com.relaycraft.api-manager"];
+
+fn has_storage_permission(plugin_id: &str, permissions: &[String], required: &str) -> bool {
+    permissions.iter().any(|permission| permission == required)
+        || STORAGE_PERMISSION_ALLOWLIST.contains(&plugin_id)
+}
+
 fn truncate_utf8(input: &str, max_bytes: usize) -> (String, bool) {
     if input.len() <= max_bytes {
         return (input.to_string(), false);
@@ -185,6 +195,9 @@ pub async fn plugin_call(
 
         // ── storage ──────────────────────────────────────────────────────────────
         "storage_get" => {
+            if !has_storage_permission(&payload.plugin_id, permissions, "storage:read") {
+                return Err("Security Violation: Missing 'storage:read' permission".to_string());
+            }
             let key = payload.args["key"]
                 .as_str()
                 .ok_or("storage_get: missing 'key'")?;
@@ -192,6 +205,9 @@ pub async fn plugin_call(
             Ok(serde_json::to_value(result).unwrap_or(serde_json::Value::Null))
         }
         "storage_set" => {
+            if !has_storage_permission(&payload.plugin_id, permissions, "storage:write") {
+                return Err("Security Violation: Missing 'storage:write' permission".to_string());
+            }
             let key = payload.args["key"]
                 .as_str()
                 .ok_or("storage_set: missing 'key'")?;
@@ -203,6 +219,9 @@ pub async fn plugin_call(
             Ok(serde_json::Value::Null)
         }
         "storage_delete" => {
+            if !has_storage_permission(&payload.plugin_id, permissions, "storage:write") {
+                return Err("Security Violation: Missing 'storage:write' permission".to_string());
+            }
             let key = payload.args["key"]
                 .as_str()
                 .ok_or("storage_delete: missing 'key'")?;
@@ -210,11 +229,17 @@ pub async fn plugin_call(
             Ok(serde_json::Value::Null)
         }
         "storage_list" => {
+            if !has_storage_permission(&payload.plugin_id, permissions, "storage:read") {
+                return Err("Security Violation: Missing 'storage:read' permission".to_string());
+            }
             let prefix = payload.args["prefix"].as_str();
             let result = crate::plugins::storage::list(&payload.plugin_id, prefix).await?;
             serde_json::to_value(result).map_err(|e| e.to_string())
         }
         "storage_clear" => {
+            if !has_storage_permission(&payload.plugin_id, permissions, "storage:write") {
+                return Err("Security Violation: Missing 'storage:write' permission".to_string());
+            }
             crate::plugins::storage::clear(&payload.plugin_id).await?;
             Ok(serde_json::Value::Null)
         }
