@@ -395,6 +395,7 @@
     "raw": "原文",
     "raw_json": "JSON 源码",
     "request_failed": "请求发送失败",
+    "sse_not_supported": "构造器暂不支持 SSE 长连接请求，请在流量详情的 SSE 面板中查看。",
     "reset": "重置表单",
     "response": "响应内容",
     "send": "发送",
@@ -1109,6 +1110,8 @@
     "proxy_stopped": "监听未启动",
     "replay_failed": "重发失败",
     "replay_success": "请求已重发",
+    "stream_replay_unsupported": "SSE / WebSocket 请求暂不支持重新发送",
+    "stream_edit_unsupported": "SSE / WebSocket 请求暂不支持在构造器中编辑",
     "url_unavailable": "(URL 不可用)",
     "security": {
       "fix_now": "立即安装",
@@ -1140,7 +1143,21 @@
       "frames": "WebSocket 帧",
       "messages_count": "{{count}} 条消息",
       "showing_last": "显示最近 {{count}} 条",
-      "no_frames": "尚未捕获到 WebSocket 帧"
+      "no_frames": "尚未捕获到 WebSocket 帧",
+      "auto_scroll_on": "自动滚动开",
+      "auto_scroll_off": "自动滚动关"
+    },
+    "sse": {
+      "events": "SSE 事件",
+      "events_count": "{{count}} 条事件",
+      "showing_last": "显示最近 {{count}} 条",
+      "open": "进行中",
+      "closed": "已关闭",
+      "dropped": "丢弃 {{count}} 条",
+      "auto_scroll_on": "自动滚动开",
+      "auto_scroll_off": "自动滚动关",
+      "waiting": "等待 SSE 事件中...",
+      "content_truncated": "内容过长，仅展示前 {{size}} 字符。"
     }
   },
   "init": {

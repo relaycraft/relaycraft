@@ -17,6 +17,9 @@ import time
 import base64
 import uuid
 import json
+import threading
+import codecs
+from collections import deque
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple, List
 
@@ -105,6 +108,286 @@ class TrafficMonitor:
 
         # Note: seq is no longer tracked in backend
         # Frontend calculates display seq from array index (seq = index + 1)
+        self._sse_lock = threading.Lock()
+        self._sse_states: Dict[str, Dict[str, Any]] = {}
+        self._sse_max_events_per_flow = 2000
+        self._sse_snapshot_persist_limit = 500
+        self._sse_max_buffer_bytes = 1024 * 1024  # 1 MiB guard rail
+        self._sse_default_limit = 200
+        self._sse_max_limit = 1000
+        self._sse_state_retention_seconds = 60.0
+
+    # ==================== SSE Processing ====================
+
+    def _is_sse_content_type(self, content_type: str) -> bool:
+        return "text/event-stream" in (content_type or "").lower()
+
+    def _is_client_disconnect_error(self, err_msg: str) -> bool:
+        if not err_msg:
+            return False
+        err_lower = err_msg.lower()
+        disconnect_markers = (
+            "client disconnected",
+            "client disconnect",
+            "connection reset by peer",
+            "broken pipe",
+            "connection closed",
+            "stream closed",
+            "peer closed connection",
+            "eof",
+            "cancelled",
+            "canceled",
+        )
+        return any(marker in err_lower for marker in disconnect_markers)
+
+    def _get_response_content_type(self, flow: http.HTTPFlow) -> str:
+        if not flow or not flow.response:
+            return ""
+        for k, v in flow.response.headers.items():
+            if k.lower() == "content-type":
+                return v or ""
+        return ""
+
+    def _ensure_sse_state(self, flow_id: str) -> Dict[str, Any]:
+        state = self._sse_states.get(flow_id)
+        if state is None:
+            state = {
+                "flow_id": flow_id,
+                "buffer": "",
+                "events": deque(maxlen=self._sse_max_events_per_flow),
+                "next_seq": 0,
+                "stream_open": True,
+                "dropped_count": 0,
+                "finalized": False,
+                "decoder": codecs.getincrementaldecoder("utf-8")(errors="replace"),
+                "last_touched": time.time(),
+            }
+            self._sse_states[flow_id] = state
+        else:
+            state["last_touched"] = time.time()
+        return state
+
+    def _cleanup_inactive_sse_states_locked(self, now_ts: Optional[float] = None) -> None:
+        now = now_ts if now_ts is not None else time.time()
+        stale_ids: List[str] = []
+        for flow_id, state in self._sse_states.items():
+            if state.get("stream_open", False):
+                continue
+            last_touched = float(state.get("last_touched", now))
+            if now - last_touched >= self._sse_state_retention_seconds:
+                stale_ids.append(flow_id)
+        for flow_id in stale_ids:
+            self._sse_states.pop(flow_id, None)
+
+    def bind_sse_stream_if_needed(self, flow: http.HTTPFlow) -> None:
+        """Attach mitmproxy stream callback for SSE flows."""
+        if not flow or not flow.response:
+            return
+
+        content_type = self._get_response_content_type(flow)
+        if not self._is_sse_content_type(content_type):
+            return
+
+        flow.metadata["_relaycraft_is_sse"] = True
+        flow.metadata["_relaycraft_msg_ts"] = time.time()
+
+        with self._sse_lock:
+            self._cleanup_inactive_sse_states_locked()
+            state = self._ensure_sse_state(flow.id)
+            state["stream_open"] = True
+            state["finalized"] = False
+            state["last_touched"] = time.time()
+
+        # Ensure frontend can identify this flow as SSE before connection closes.
+        flow_data = self.process_flow(flow)
+        if flow_data:
+            self._store_flow(flow_data)
+
+        def _stream_handler(chunk: bytes) -> bytes:
+            try:
+                self.handle_sse_chunk(flow.id, chunk)
+            except Exception as e:
+                self.logger.debug(f"SSE chunk handler error: {e}")
+            return chunk
+
+        flow.response.stream = _stream_handler
+
+    def handle_sse_chunk(self, flow_id: str, chunk: bytes) -> None:
+        if not flow_id or chunk is None:
+            return
+
+        persisted_events: List[Dict[str, Any]] = []
+        with self._sse_lock:
+            state = self._ensure_sse_state(flow_id)
+            decoder = state.get("decoder")
+            if decoder is None:
+                decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+                state["decoder"] = decoder
+
+            text = decoder.decode(chunk)
+            text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+            state["buffer"] += text
+            state["stream_open"] = True
+            state["finalized"] = False
+            state["last_touched"] = time.time()
+
+            # Guard rail: malformed streams without frame delimiter can cause unbounded growth.
+            if len(state["buffer"].encode("utf-8")) > self._sse_max_buffer_bytes:
+                overflow_raw = state["buffer"]
+                state["buffer"] = ""
+                state["dropped_count"] += 1
+                parsed = self._parse_sse_frame_locked(state, overflow_raw)
+                if parsed:
+                    persisted_events.append(parsed)
+
+            parts = state["buffer"].split("\n\n")
+            state["buffer"] = parts.pop() if parts else ""
+
+            for raw_event in parts:
+                parsed = self._parse_sse_frame_locked(state, raw_event)
+                if parsed:
+                    persisted_events.append(parsed)
+
+        self._persist_sse_events(flow_id, persisted_events)
+
+    def _parse_sse_frame_locked(self, state: Dict[str, Any], raw_event: str) -> Optional[Dict[str, Any]]:
+        lines = raw_event.split("\n")
+        data_lines: List[str] = []
+        event_name: Optional[str] = None
+        event_id: Optional[str] = None
+        retry: Optional[int] = None
+
+        for line in lines:
+            if not line:
+                continue
+            if line.startswith(":"):
+                continue
+
+            if ":" in line:
+                field, value = line.split(":", 1)
+                if value.startswith(" "):
+                    value = value[1:]
+            else:
+                field, value = line, ""
+
+            if field == "data":
+                data_lines.append(value)
+            elif field == "event":
+                event_name = value
+            elif field == "id":
+                event_id = value
+            elif field == "retry":
+                try:
+                    retry = int(value)
+                except (TypeError, ValueError):
+                    retry = None
+
+        if not data_lines and event_name is None and event_id is None and retry is None:
+            return None
+
+        event = {
+            "flowId": state["flow_id"],
+            "seq": state["next_seq"],
+            "ts": int(time.time() * 1000),
+            "event": event_name,
+            "id": event_id,
+            "retry": retry,
+            "data": "\n".join(data_lines),
+            "rawSize": len(raw_event.encode("utf-8")),
+        }
+
+        state["next_seq"] += 1
+        events: deque = state["events"]
+        was_full = len(events) == events.maxlen
+        events.append(event)
+        if was_full:
+            state["dropped_count"] += 1
+        return event
+
+    def get_sse_events(self, flow_id: str, since_seq: int = 0, limit: int = 0) -> Dict[str, Any]:
+        limit_value = limit or self._sse_default_limit
+        limit_value = max(1, min(limit_value, self._sse_max_limit))
+        since = max(0, since_seq)
+
+        with self._sse_lock:
+            self._cleanup_inactive_sse_states_locked()
+            state = self._sse_states.get(flow_id)
+            if state is None:
+                payload = self.db.get_sse_events(flow_id, since_seq=since, limit=limit_value)
+                return {
+                    "flowId": flow_id,
+                    "events": payload.get("events", []),
+                    "nextSeq": int(payload.get("nextSeq", since)),
+                    "streamOpen": False,
+                    "droppedCount": 0,
+                }
+
+            events = [e for e in list(state["events"]) if e.get("seq", -1) >= since]
+            events = events[:limit_value]
+            next_seq = state["next_seq"]
+            if events:
+                next_seq = events[-1]["seq"] + 1
+
+            return {
+                "flowId": flow_id,
+                "events": events,
+                "nextSeq": next_seq,
+                "streamOpen": bool(state.get("stream_open", False)),
+                "droppedCount": int(state.get("dropped_count", 0)),
+            }
+
+    def _persist_sse_events(self, flow_id: str, events: List[Dict[str, Any]]) -> None:
+        if not flow_id or not events:
+            return
+        db = getattr(self, "db", None)
+        if db is None or not hasattr(db, "store_sse_events"):
+            return
+        try:
+            db.store_sse_events(flow_id, events)
+        except Exception as e:
+            self.logger.debug(f"SSE events persistence failed: {e}")
+
+    def finalize_sse_flow(self, flow: http.HTTPFlow, stream_open: bool = False) -> None:
+        if not flow or not flow.id:
+            return
+        if not flow.metadata.get("_relaycraft_is_sse"):
+            return
+
+        persisted_events: List[Dict[str, Any]] = []
+        with self._sse_lock:
+            state = self._ensure_sse_state(flow.id)
+            state["stream_open"] = bool(stream_open)
+            state["last_touched"] = time.time()
+            already_finalized = bool(state.get("finalized", False))
+            # Try to parse a trailing frame without delimiter on stream end.
+            tail = state.get("buffer", "")
+            tail_flushed = False
+            if not stream_open:
+                if not already_finalized:
+                    decoder = state.get("decoder")
+                    if decoder is not None:
+                        flushed = decoder.decode(b"", final=True)
+                        if flushed:
+                            tail = f"{tail}{flushed}"
+                state["buffer"] = ""
+                if tail:
+                    parsed = self._parse_sse_frame_locked(state, tail)
+                    if parsed:
+                        persisted_events.append(parsed)
+                    tail_flushed = True
+                state["finalized"] = True
+            else:
+                state["finalized"] = False
+            should_store = (not already_finalized) or tail_flushed
+            self._cleanup_inactive_sse_states_locked()
+
+        self._persist_sse_events(flow.id, persisted_events)
+        if should_store:
+            flow.metadata["_relaycraft_msg_ts"] = time.time()
+            flow_data = self.process_flow(flow)
+            if flow_data:
+                self._store_flow(flow_data)
 
     # ==================== Content Processing ====================
 
@@ -353,13 +636,40 @@ class TrafficMonitor:
                     is_paused = True
                     paused_at = self.debug_mgr.intercepted_flows[flow.id]["phase"]
 
+            # ========== Content Type ==========
+            content_type = None
+            for h in flow.response.headers.fields if flow.response else []:
+                if h[0].lower() == b'content-type':
+                    content_type = self._safe_decode(h[1])
+                    break
+            is_sse = bool(flow.metadata.get("_relaycraft_is_sse")) or self._is_sse_content_type(
+                content_type or ""
+            )
+            if is_sse:
+                flow.metadata["_relaycraft_is_sse"] = True
+            sse_event_count = 0
+            sse_stream_open = False
+            if is_sse:
+                with self._sse_lock:
+                    state = self._ensure_sse_state(flow.id)
+                    sse_event_count = state["next_seq"]
+                    sse_stream_open = bool(state.get("stream_open", False))
+                    events_deque: deque = state.get("events", deque())
+                    sse_events_snapshot = list(events_deque)[-self._sse_snapshot_persist_limit:]
+            else:
+                sse_events_snapshot = []
+
             # ========== Error Handling ==========
             error_detail = None
+            sse_client_disconnect = False
             if flow.error:
-                error_detail = {
-                    "message": str(flow.error),
-                    "type": "connection",
-                }
+                err_msg = str(flow.error)
+                sse_client_disconnect = is_sse and self._is_client_disconnect_error(err_msg)
+                if not sse_client_disconnect:
+                    error_detail = {
+                        "message": err_msg,
+                        "type": "connection",
+                    }
 
             # ========== IPs ==========
             client_ip = (
@@ -373,13 +683,6 @@ class TrafficMonitor:
                 else None
             )
 
-            # ========== Content Type ==========
-            content_type = None
-            for h in flow.response.headers.fields if flow.response else []:
-                if h[0].lower() == b'content-type':
-                    content_type = self._safe_decode(h[1])
-                    break
-
             # ========== Status Code ==========
             if is_websocket and not is_aborted:
                 status_code = 101
@@ -387,6 +690,9 @@ class TrafficMonitor:
                 status_code = 0
             elif flow.response:
                 status_code = flow.response.status_code
+            elif sse_client_disconnect:
+                # User-initiated close of SSE stream should not be shown as request failure.
+                status_code = 200
             else:
                 status_code = 0
 
@@ -472,6 +778,10 @@ class TrafficMonitor:
                     "serverIp": server_ip,
                     "error": error_detail,
                     "isWebsocket": is_websocket,
+                    "isSse": is_sse,
+                    "sseEventCount": sse_event_count,
+                    "sseStreamOpen": sse_stream_open,
+                    "sseEvents": sse_events_snapshot,
                     "websocketFrameCount": ws_frame_count,
                     "websocketFrames": ws_frames,
                     "hits": hits,
@@ -694,6 +1004,7 @@ class TrafficMonitor:
                         "hasRequestBody": bool(idx.get("has_request_body")),
                         "hasResponseBody": bool(idx.get("has_response_body")),
                         "isWebsocket": bool(idx.get("is_websocket")),
+                        "isSse": bool(idx.get("is_sse")),
                         "websocketFrameCount": idx.get("websocket_frame_count", 0),
                         "isIntercepted": bool(idx.get("is_intercepted")),
                         "hits": idx.get("hits", []),
@@ -818,6 +1129,44 @@ class TrafficMonitor:
                             "Access-Control-Allow-Origin": "*"
                         }
                     )
+
+        # SSE incremental events endpoint
+        elif "/_relay/sse" in flow.request.path:
+            try:
+                query = flow.request.query
+                flow_id = query.get("flow_id", "")
+                if not flow_id:
+                    flow.response = Response.make(
+                        400,
+                        b'{"error": "Missing flow_id"}',
+                        {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                    )
+                    return
+
+                try:
+                    since_seq = int(query.get("since_seq", "0") or "0")
+                except ValueError:
+                    since_seq = 0
+
+                try:
+                    limit = int(query.get("limit", str(self._sse_default_limit)) or str(self._sse_default_limit))
+                except ValueError:
+                    limit = self._sse_default_limit
+
+                payload = self.get_sse_events(flow_id, since_seq=since_seq, limit=limit)
+                json_str = json.dumps(payload, default=safe_json_default, ensure_ascii=False)
+                flow.response = Response.make(
+                    200,
+                    json_str.encode("utf-8"),
+                    {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                )
+            except Exception as e:
+                error_resp = {"error": str(e)}
+                flow.response = Response.make(
+                    500,
+                    json.dumps(error_resp, ensure_ascii=False).encode("utf-8"),
+                    {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+                )
 
         # Breakpoint management
         elif "/_relay/breakpoints" in flow.request.path:
@@ -1800,6 +2149,7 @@ class TrafficMonitor:
                 "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                 "hasResponseBody": bool((resp.get("content") or {}).get("text")),
                 "isWebsocket": bool(rc.get("isWebsocket")),
+                "isSse": bool(rc.get("isSse")),
                 "websocketFrameCount": rc.get("websocketFrameCount") or 0,
                 "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
                 "hits": [
@@ -1872,6 +2222,7 @@ class TrafficMonitor:
                 "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                 "hasResponseBody": bool(resp_content.get("text")),
                 "isWebsocket": bool(rc.get("isWebsocket")),
+                "isSse": bool(rc.get("isSse")),
                 "websocketFrameCount": rc.get("websocketFrameCount") or 0,
                 "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
                 "hits": [

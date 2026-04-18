@@ -81,6 +81,10 @@ export function useAppShortcuts() {
       if (isCmdOrCtrl && e.key.toLowerCase() === "e") {
         if (selectedFlow) {
           e.preventDefault();
+          if (selectedFlow._rc?.isWebsocket || selectedFlow._rc?.isSse) {
+            notify.warning(t("traffic.stream_edit_unsupported"), { toastOnly: true });
+            return;
+          }
           useComposerStore.getState().setComposerFromFlow(selectedFlow);
           if (activeTab !== "composer") {
             navigate("composer");
@@ -106,6 +110,10 @@ export function useAppShortcuts() {
         if (isCmdOrCtrl && e.key === "r") {
           e.preventDefault();
           if (selectedFlow) {
+            if (selectedFlow._rc?.isWebsocket || selectedFlow._rc?.isSse) {
+              notify.warning(t("traffic.stream_replay_unsupported"), { toastOnly: true });
+              return;
+            }
             try {
               // Convert HarHeader[] to Record<string, string> for replay
               const headersRecord: Record<string, string> = {};

@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS flow_indices (
     has_request_body INTEGER DEFAULT 0,
     has_response_body INTEGER DEFAULT 0,
     is_websocket INTEGER DEFAULT 0,
+    is_sse INTEGER DEFAULT 0,
     websocket_frame_count INTEGER DEFAULT 0,
     is_intercepted INTEGER DEFAULT 0,
     hits TEXT,
@@ -126,6 +127,23 @@ CREATE TABLE IF NOT EXISTS flow_bodies (
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
 
+-- SSE events (event-level persistence for replay/history)
+CREATE TABLE IF NOT EXISTS sse_events (
+    id TEXT PRIMARY KEY,
+    flow_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    seq INTEGER NOT NULL,
+    ts INTEGER NOT NULL,
+    event TEXT,
+    event_id TEXT,
+    retry INTEGER,
+    data TEXT,
+    raw_size INTEGER DEFAULT 0,
+
+    FOREIGN KEY (flow_id) REFERENCES flow_details(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_indices_session_ts ON flow_indices(session_id, msg_ts DESC);
 CREATE INDEX IF NOT EXISTS idx_indices_session_host ON flow_indices(session_id, host);
@@ -133,6 +151,8 @@ CREATE INDEX IF NOT EXISTS idx_indices_session_status ON flow_indices(session_id
 CREATE INDEX IF NOT EXISTS idx_details_session ON flow_details(session_id);
 CREATE INDEX IF NOT EXISTS idx_details_id ON flow_details(id);
 CREATE INDEX IF NOT EXISTS idx_bodies_flow ON flow_bodies(flow_id);
+CREATE INDEX IF NOT EXISTS idx_sse_events_flow_seq ON sse_events(flow_id, seq);
+CREATE INDEX IF NOT EXISTS idx_sse_events_session_flow ON sse_events(session_id, flow_id);
 """
 
 
@@ -321,7 +341,19 @@ class FlowDatabase:
         """Initialize database schema"""
         conn = self._get_conn()
         conn.executescript(SCHEMA)
+        self._ensure_flow_indices_columns(conn)
         conn.commit()
+
+    def _ensure_flow_indices_columns(self, conn: sqlite3.Connection) -> None:
+        """Apply additive schema migrations for flow_indices."""
+        rows = conn.execute("PRAGMA table_info(flow_indices)").fetchall()
+        existing = {row[1] for row in rows}
+        if "is_sse" not in existing:
+            conn.execute("ALTER TABLE flow_indices ADD COLUMN is_sse INTEGER DEFAULT 0")
+            conn.execute(
+                "UPDATE flow_indices SET is_sse = 1 "
+                "WHERE lower(content_type) LIKE 'text/event-stream%'"
+            )
 
     def _create_new_session(self) -> str:
         """Create a new session with timestamp name for auto-isolation.
@@ -731,9 +763,9 @@ class FlowDatabase:
                 content_type, started_datetime, time, size, client_ip,
                 app_name, app_display_name,
                 has_error, has_request_body, has_response_body,
-                is_websocket, websocket_frame_count, is_intercepted,
+                is_websocket, is_sse, websocket_frame_count, is_intercepted,
                 hits, msg_ts
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             index_data['id'], index_data['session_id'],
             index_data['method'], index_data['url'],
@@ -745,7 +777,7 @@ class FlowDatabase:
             index_data.get('app_name', ''), index_data.get('app_display_name', ''),
             index_data['has_error'], index_data['has_request_body'],
             index_data['has_response_body'], index_data['is_websocket'],
-            index_data['websocket_frame_count'], index_data['is_intercepted'],
+            index_data['is_sse'], index_data['websocket_frame_count'], index_data['is_intercepted'],
             index_data['hits'], index_data['msg_ts'],
         ))
 
@@ -896,6 +928,7 @@ class FlowDatabase:
             'has_request_body': 1 if (req.get('postData') or {}).get('text') else 0,
             'has_response_body': 1 if (res.get('content') or {}).get('text') else 0,
             'is_websocket': 1 if rc.get('isWebsocket') else 0,
+            'is_sse': 1 if rc.get('isSse') else 0,
             'websocket_frame_count': to_float(rc.get('websocketFrameCount'), 0),
             'is_intercepted': 1 if (rc.get('intercept') or {}).get('intercepted') else 0,
             'hits': json.dumps(rc.get('hits', [])),
@@ -1087,6 +1120,152 @@ class FlowDatabase:
             return flow_data
         
         return self._execute_with_retry("get_detail", _query)
+
+    def store_sse_events(self, flow_id: str, events: List[Dict]) -> int:
+        """Persist SSE events for a flow. Returns number of rows written."""
+        if not flow_id or not events:
+            return 0
+
+        # Resolve session from flow first; fallback to active session for resilience.
+        def _resolve_session(conn):
+            row = conn.execute(
+                "SELECT session_id FROM flow_indices WHERE id = ? LIMIT 1",
+                (flow_id,),
+            ).fetchone()
+            if row and row["session_id"]:
+                return row["session_id"]
+            return self._get_session_id(None)
+
+        rows: List[Tuple] = []
+        written = 0
+        with self._lock:
+            conn = self._get_conn()
+            try:
+                session_id = _resolve_session(conn)
+                if not session_id:
+                    return 0
+
+                for evt in events:
+                    seq = evt.get("seq")
+                    if seq is None:
+                        continue
+                    evt_id = f"{flow_id}:{int(seq)}"
+                    rows.append((
+                        evt_id,
+                        flow_id,
+                        session_id,
+                        int(seq),
+                        int(evt.get("ts", int(time.time() * 1000))),
+                        evt.get("event"),
+                        evt.get("id"),
+                        evt.get("retry"),
+                        evt.get("data", ""),
+                        int(evt.get("rawSize", 0)),
+                    ))
+
+                if not rows:
+                    return 0
+
+                conn.executemany(
+                    """
+                    INSERT OR REPLACE INTO sse_events
+                    (id, flow_id, session_id, seq, ts, event, event_id, retry, data, raw_size)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    rows,
+                )
+                conn.commit()
+                written = len(rows)
+            except Exception:
+                conn.rollback()
+                raise
+
+        return written
+
+    def get_sse_events(self, flow_id: str, since_seq: int = 0, limit: int = 200) -> Dict[str, Any]:
+        """Read persisted SSE events for a flow."""
+        if not flow_id:
+            return {"events": [], "nextSeq": max(0, since_seq)}
+
+        since = max(0, int(since_seq or 0))
+        limit_value = max(1, int(limit or 200))
+
+        def _query(conn):
+            rows = conn.execute(
+                """
+                SELECT seq, ts, event, event_id, retry, data, raw_size
+                FROM sse_events
+                WHERE flow_id = ? AND seq >= ?
+                ORDER BY seq ASC
+                LIMIT ?
+                """,
+                (flow_id, since, limit_value),
+            ).fetchall()
+
+            events = []
+            for row in rows:
+                events.append({
+                    "flowId": flow_id,
+                    "seq": int(row["seq"]),
+                    "ts": int(row["ts"]),
+                    "event": row["event"],
+                    "id": row["event_id"],
+                    "retry": row["retry"],
+                    "data": row["data"] or "",
+                    "rawSize": int(row["raw_size"] or 0),
+                })
+
+            if events:
+                next_seq = int(events[-1]["seq"]) + 1
+                return {"events": events, "nextSeq": next_seq}
+
+            # Fallback path: legacy/partial writes can leave sse_events empty.
+            # Recover from flow_details snapshot (_rc.sseEvents) for history replay.
+            detail_row = conn.execute(
+                "SELECT data FROM flow_details WHERE id = ? LIMIT 1",
+                (flow_id,),
+            ).fetchone()
+            if detail_row and detail_row["data"]:
+                try:
+                    detail_data = json.loads(detail_row["data"])
+                    snapshot = (
+                        ((detail_data.get("_rc") or {}).get("sseEvents"))
+                        or []
+                    )
+                    filtered = []
+                    for evt in snapshot:
+                        seq = evt.get("seq")
+                        if seq is None:
+                            continue
+                        if int(seq) < since:
+                            continue
+                        filtered.append({
+                            "flowId": flow_id,
+                            "seq": int(seq),
+                            "ts": int(evt.get("ts", int(time.time() * 1000))),
+                            "event": evt.get("event"),
+                            "id": evt.get("id"),
+                            "retry": evt.get("retry"),
+                            "data": evt.get("data", "") or "",
+                            "rawSize": int(evt.get("rawSize", 0)),
+                        })
+                    filtered = filtered[:limit_value]
+                    if filtered:
+                        return {"events": filtered, "nextSeq": int(filtered[-1]["seq"]) + 1}
+                except Exception:
+                    pass
+
+            # No event rows/snapshot found: return cursor based on max seq if any.
+            max_row = conn.execute(
+                "SELECT MAX(seq) AS max_seq FROM sse_events WHERE flow_id = ?",
+                (flow_id,),
+            ).fetchone()
+            max_seq = max_row["max_seq"] if max_row else None
+            next_seq = int(max_seq) + 1 if max_seq is not None else since
+
+            return {"events": events, "nextSeq": next_seq}
+
+        return self._execute_with_retry("get_sse_events", _query)
 
     def _load_body(self, conn, flow_id: str, session_id: str, ref: str, body_type: str,
                    compressed_bodies: Dict = None) -> Optional[str]:

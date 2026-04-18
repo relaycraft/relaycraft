@@ -143,7 +143,7 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     if (!forceRefresh && detailCache.has(id)) {
       const cachedFlow = detailCache.get(id)!;
       // Don't cache WebSocket flows - they need to be refreshed to show new frames
-      if (!cachedFlow._rc?.isWebsocket) {
+      if (!(cachedFlow._rc?.isWebsocket || cachedFlow._rc?.isSse)) {
         // Update LRU order
         set({
           cacheOrder: [...cacheOrder.filter((x) => x !== id), id],
@@ -157,8 +157,8 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     try {
       const flow = await fetchFlowDetail(id);
       if (flow) {
-        // Don't cache WebSocket flows - they are dynamic and need fresh data
-        if (flow._rc?.isWebsocket) {
+        // Don't cache dynamic streaming flows - they need fresh data
+        if (flow._rc?.isWebsocket || flow._rc?.isSse) {
           return flow;
         }
 

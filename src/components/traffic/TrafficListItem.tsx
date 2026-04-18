@@ -153,6 +153,16 @@ export const TrafficListItem = memo(
             >
               {formatProtocol(httpVersion)}
             </span>
+            {index.isSse && (
+              <>
+                <span>•</span>
+                <Tooltip content={t("traffic.sse.events")} side="bottom">
+                  <span className="px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider bg-violet-500/10 text-violet-600 dark:text-violet-300 border-violet-500/20">
+                    SSE
+                  </span>
+                </Tooltip>
+              </>
+            )}
             <span>•</span>
             {index.time ? (
               <span

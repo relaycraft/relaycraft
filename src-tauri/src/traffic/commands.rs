@@ -85,6 +85,10 @@ pub async fn replay_request_inner(req: ReplayRequest) -> Result<ReplayResponse, 
         .map(|s| s.to_lowercase())
         .unwrap_or_default();
 
+    if content_type.starts_with("text/event-stream") {
+        return Err("SSE stream responses are not supported by replay_request".to_string());
+    }
+
     let is_binary = content_type.starts_with("image/")
         || content_type.starts_with("application/octet-stream")
         || content_type.starts_with("video/")

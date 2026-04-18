@@ -42,6 +42,12 @@ export function useTrafficContextMenu() {
   const [menuTargetFlow, setMenuTargetFlow] = useState<Flow | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [pausedIndices, setPausedIndices] = useState<FlowIndex[] | null>(null);
+  const isStreamingFlow = !!(
+    menuTargetIndex?.isWebsocket ||
+    menuTargetIndex?.isSse ||
+    menuTargetFlow?._rc?.isWebsocket ||
+    menuTargetFlow?._rc?.isSse
+  );
 
   const pluginMenuItems = usePluginContextMenuStore((s) => s.items);
 
@@ -187,7 +193,7 @@ export function useTrafficContextMenu() {
             }
           },
         },
-        ...(menuTargetIndex.isWebsocket
+        ...(isStreamingFlow
           ? []
           : [
               { separator: true, label: "" },

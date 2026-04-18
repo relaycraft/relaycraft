@@ -395,6 +395,7 @@
     "raw": "RAW",
     "raw_json": "Raw JSON",
     "request_failed": "Request Failed",
+    "sse_not_supported": "SSE long-lived streams are not supported in Composer. Please inspect them in the SSE panel.",
     "reset": "Reset Form",
     "response": "Response",
     "send": "Send",
@@ -1109,6 +1110,8 @@
     "proxy_stopped": "Capture Stopped",
     "replay_failed": "Replay failed",
     "replay_success": "Request replayed",
+    "stream_replay_unsupported": "Replay is not supported for SSE/WebSocket requests",
+    "stream_edit_unsupported": "Edit in Composer is not supported for SSE/WebSocket requests",
     "url_unavailable": "(URL unavailable)",
     "source": {
       "local": "Local",
@@ -1140,7 +1143,21 @@
       "frames": "WebSocket Frames",
       "messages_count": "{{count}} messages",
       "showing_last": "showing last {{count}}",
-      "no_frames": "No WebSocket frames captured yet"
+      "no_frames": "No WebSocket frames captured yet",
+      "auto_scroll_on": "Auto Scroll On",
+      "auto_scroll_off": "Auto Scroll Off"
+    },
+    "sse": {
+      "events": "SSE Events",
+      "events_count": "{{count}} events",
+      "showing_last": "showing last {{count}}",
+      "open": "OPEN",
+      "closed": "CLOSED",
+      "dropped": "dropped {{count}}",
+      "auto_scroll_on": "Auto Scroll On",
+      "auto_scroll_off": "Auto Scroll Off",
+      "waiting": "Waiting for SSE events...",
+      "content_truncated": "Content is too long, showing only the first {{size}} characters."
     }
   },
   "init": {

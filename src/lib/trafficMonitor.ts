@@ -10,7 +10,7 @@ import i18n from "../i18n";
 import { useRuleStore } from "../stores/ruleStore";
 import { useSessionStore } from "../stores/sessionStore";
 import { useTrafficStore } from "../stores/trafficStore";
-import type { Flow, FlowIndex, RcMatchedHit } from "../types";
+import type { Flow, FlowIndex, RcMatchedHit, SsePollResponse } from "../types";
 import { Logger } from "./logger";
 
 let pollInterval: number | null = null;
@@ -173,6 +173,31 @@ export async function fetchFlowDetail(id: string): Promise<Flow | null> {
   }
 }
 
+export async function fetchSseEvents(
+  flowId: string,
+  sinceSeq: number,
+  limit: number = 200,
+): Promise<SsePollResponse | null> {
+  try {
+    const url = new URL(`http://127.0.0.1:${currentPort}/_relay/sse`);
+    url.searchParams.set("flow_id", flowId);
+    url.searchParams.set("since_seq", String(Math.max(0, sinceSeq)));
+    url.searchParams.set("limit", String(limit));
+
+    const response = await tauriFetch(url.toString(), {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return response.json();
+  } catch (error) {
+    Logger.error("Error fetching SSE events:", error);
+    return null;
+  }
+}
+
 /**
  * Process flow hits
  */
@@ -257,6 +282,7 @@ async function pollTraffic() {
             hasRequestBody: idx.hasRequestBody,
             hasResponseBody: idx.hasResponseBody,
             isWebsocket: idx.isWebsocket,
+            isSse: idx.isSse === true,
             websocketFrameCount: idx.websocketFrameCount || 0,
             isIntercepted: idx.isIntercepted,
             // Include hit metadata for list display

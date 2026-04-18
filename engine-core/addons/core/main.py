@@ -122,6 +122,12 @@ class CoreAddon:
             self.traffic_monitor.handle_response(flow)
         except Exception as e:
             self.logger.error(f"Critical error capturing traffic: {e}")
+        finally:
+            # Finalize SSE stream state after response lifecycle.
+            try:
+                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+            except Exception as e:
+                self.logger.debug(f"SSE finalize on response failed: {e}")
 
         # 4. Access Logging
         if not self.is_internal_request(flow):
@@ -159,6 +165,20 @@ class CoreAddon:
         except Exception:
             return False
 
+    def _is_sse_flow(self, flow: http.HTTPFlow) -> bool:
+        """Best-effort SSE flow detection for error classification."""
+        if not flow:
+            return False
+        try:
+            if flow.metadata.get("_relaycraft_is_sse"):
+                return True
+            if flow.response and flow.response.headers:
+                content_type = flow.response.headers.get("content-type", "")
+                return "text/event-stream" in (content_type or "").lower()
+        except Exception:
+            return False
+        return False
+
     async def error(self, flow: http.HTTPFlow) -> None:
         """Handle errors (e.g. connection failures)"""
         if self.is_internal_request(flow):
@@ -171,6 +191,15 @@ class CoreAddon:
             err_lower = err_msg.lower()
             if "client" in err_lower and ("disconnect" in err_lower or "tls" in err_lower or "handshake" in err_lower or "closed" in err_lower):
                 return
+
+        # For SSE long-lived streams, user/client initiated disconnect should not be
+        # surfaced as a failed request in the UI.
+        if self._is_sse_flow(flow) and self.traffic_monitor._is_client_disconnect_error(err_msg):
+            try:
+                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+            except Exception as e:
+                self.logger.debug(f"SSE finalize on client disconnect failed: {e}")
+            return
 
         self.logger.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
 
@@ -187,6 +216,20 @@ class CoreAddon:
                 self.traffic_monitor._store_flow(flow_data)
         except Exception as e:
             self.logger.error(f"Error capturing error flow: {e}")
+        finally:
+            try:
+                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+            except Exception as e:
+                self.logger.debug(f"SSE finalize on error failed: {e}")
+
+    def responseheaders(self, flow: http.HTTPFlow) -> None:
+        """Attach SSE stream handler as early as response headers are available."""
+        if self.is_internal_request(flow):
+            return
+        try:
+            self.traffic_monitor.bind_sse_stream_if_needed(flow)
+        except Exception as e:
+            self.logger.error(f"Error binding SSE stream handler: {e}")
 
     def websocket_start(self, flow: http.HTTPFlow) -> None:
         """Called when a WebSocket connection is established (after handshake)."""

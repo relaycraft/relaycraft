@@ -39,6 +39,8 @@ export {
   type RcMatchedHit,
   type RcParsedUrl,
   type RcWebSocketFrame,
+  type SseEvent,
+  type SsePollResponse,
 } from "./flow";
 
 // ==================== Rules 类型 ====================

@@ -1,10 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Activity,
   AlertTriangle,
   ArrowDown,
   ArrowUp,
   Ban,
+  ChevronDown,
+  ChevronUp,
   CirclePause,
   FileCode,
   FileSignature,
@@ -21,13 +24,16 @@ import {
   X,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { VirtuosoHandle } from "react-virtuoso";
+import { Virtuoso } from "react-virtuoso";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
 import { getReadableUrlPreview, resolveFlowRequestUrl } from "../../lib/flowUrl";
+import { fetchSseEvents } from "../../lib/trafficMonitor";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -40,7 +46,7 @@ import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
-import type { Flow } from "../../types";
+import type { Flow, SseEvent } from "../../types";
 import { harToLegacyHeaders } from "../../types";
 import { AIMarkdown } from "../ai/AIMarkdown";
 import { CopyButton } from "../common/CopyButton";
@@ -54,6 +60,10 @@ interface FlowDetailProps {
   onClose: () => void;
 }
 
+const SSE_MAX_STORED_EVENTS = 2000;
+const SSE_MAX_PREVIEW_CHARS = 2000;
+const SSE_ID_PREVIEW_CHARS = 96;
+
 export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const { t } = useTranslation();
   const isMac = useUIStore((state) => state.isMac);
@@ -63,6 +73,16 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [replaying, setReplaying] = useState(false);
+  const isSse = !!flow._rc?.isSse;
+  const [sseEvents, setSseEvents] = useState<SseEvent[]>([]);
+  const [sseStreamOpen, setSseStreamOpen] = useState<boolean>(!!flow._rc?.sseStreamOpen);
+  const [sseDroppedCount, setSseDroppedCount] = useState<number>(0);
+  const [sseAutoScroll, setSseAutoScroll] = useState<boolean>(true);
+  const [wsAutoScroll, setWsAutoScroll] = useState<boolean>(true);
+  const [expandedSseIds, setExpandedSseIds] = useState<Record<string, boolean>>({});
+  const sseNextSeqRef = useRef(0);
+  const sseListRef = useRef<VirtuosoHandle | null>(null);
+  const wsListRef = useRef<HTMLDivElement | null>(null);
   const resolvedUrl = resolveFlowRequestUrl(flow.request) || t("traffic.url_unavailable");
   const resolvedUrlPreview = getReadableUrlPreview(resolvedUrl);
 
@@ -88,6 +108,66 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  useEffect(() => {
+    const currentFlowId = flow.id;
+    if (!currentFlowId) return;
+    const initialSseEvents = isSse && Array.isArray(flow._rc?.sseEvents) ? flow._rc.sseEvents : [];
+    const initialNextSeq =
+      initialSseEvents.length > 0 ? initialSseEvents[initialSseEvents.length - 1].seq + 1 : 0;
+    sseNextSeqRef.current = initialNextSeq;
+    setSseEvents(initialSseEvents);
+    setSseDroppedCount(0);
+    setSseStreamOpen(!!flow._rc?.sseStreamOpen);
+    setSseAutoScroll(true);
+    setWsAutoScroll(true);
+    setExpandedSseIds({});
+  }, [flow.id, isSse, flow._rc?.sseEvents, flow._rc?.sseStreamOpen]);
+
+  useEffect(() => {
+    if (!isSse) return;
+    setSseStreamOpen(!!flow._rc?.sseStreamOpen);
+  }, [flow._rc?.sseStreamOpen, isSse]);
+
+  useEffect(() => {
+    if (!isSse) return;
+    let cancelled = false;
+    const poll = async () => {
+      const data = await fetchSseEvents(flow.id, sseNextSeqRef.current, 200);
+      if (!data || cancelled) return;
+
+      sseNextSeqRef.current = data.nextSeq;
+      setSseStreamOpen(!!data.streamOpen);
+      setSseDroppedCount(data.droppedCount || 0);
+      if (data.events && data.events.length > 0) {
+        setSseEvents((prev) => [...prev, ...data.events].slice(-SSE_MAX_STORED_EVENTS));
+      }
+    };
+
+    poll().catch(() => {
+      return undefined;
+    });
+    const timer = window.setInterval(() => {
+      poll().catch(() => {
+        return undefined;
+      });
+    }, 500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [flow.id, isSse]);
+
+  useEffect(() => {
+    if (activeTab !== "messages") return;
+    if (!flow._rc.isWebsocket) return;
+    if (!wsAutoScroll) return;
+    const frameCount = flow._rc.websocketFrames?.length ?? 0;
+    if (frameCount <= 0) return;
+    const el = wsListRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [activeTab, flow._rc.isWebsocket, flow._rc.websocketFrames?.length, wsAutoScroll]);
 
   const handleAIAnalysis = async () => {
     if (analyzing) return;
@@ -243,7 +323,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 </button>
               </Tooltip>
             )}
-            {!flow._rc.isWebsocket && (
+            {!(flow._rc.isWebsocket || isSse) && (
               <>
                 <Tooltip
                   content={
@@ -539,6 +619,14 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             >
               {t("flow.tabs.response")}
             </TabsTrigger>
+            {isSse && (
+              <TabsTrigger
+                value="sse"
+                className="py-1 px-5 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              >
+                SSE
+              </TabsTrigger>
+            )}
             {flow._rc.isWebsocket && (
               <TabsTrigger
                 value="messages"
@@ -659,12 +747,35 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         </span>
                         {(flow._rc.websocketFrames?.length ?? 0) <
                           (flow._rc.websocketFrameCount ?? 0) && (
-                          <span className="text-tiny px-1.5 py-0.5 rounded bg-warning/10 text-warning-foreground/70">
+                          <span className="text-tiny px-1.5 py-0.5 rounded border border-amber-500/40 bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">
                             {t("traffic.websocket.showing_last", {
                               count: flow._rc.websocketFrames?.length ?? 0,
                             })}
                           </span>
                         )}
+                        <Tooltip
+                          content={
+                            wsAutoScroll
+                              ? t("traffic.websocket.auto_scroll_on")
+                              : t("traffic.websocket.auto_scroll_off")
+                          }
+                        >
+                          <button
+                            onClick={() => setWsAutoScroll((v) => !v)}
+                            className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-colors ${
+                              wsAutoScroll
+                                ? "border-primary/40 text-primary bg-primary/10"
+                                : "border-border/60 text-muted-foreground bg-muted/20"
+                            }`}
+                            aria-label={
+                              wsAutoScroll
+                                ? t("traffic.websocket.auto_scroll_on")
+                                : t("traffic.websocket.auto_scroll_off")
+                            }
+                          >
+                            <Activity className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
                         <button
                           onClick={async () => {
                             const { loadDetail, selectedFlow } = useTrafficStore.getState();
@@ -682,7 +793,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         </button>
                       </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                    <div ref={wsListRef} className="flex-1 overflow-y-auto scrollbar-thin">
                       {flow._rc.websocketFrames && flow._rc.websocketFrames.length > 0 ? (
                         <div className="divide-y divide-border/20">
                           {flow._rc.websocketFrames.map((frame, index) => (
@@ -736,6 +847,163 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                           </div>
                           <p className="text-xs text-muted-foreground/50 font-medium">
                             {t("traffic.websocket.no_frames")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </TabsContent>
+            )}
+
+            {activeTab === "sse" && isSse && (
+              <TabsContent
+                value="sse"
+                key="sse"
+                forceMount
+                className="mt-0 flex-1 flex flex-col overflow-hidden p-2"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.99 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.99 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex-1 flex flex-col min-h-0"
+                >
+                  <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-lg border border-border/40 overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <Tooltip
+                          content={sseStreamOpen ? t("traffic.sse.open") : t("traffic.sse.closed")}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              sseStreamOpen ? "bg-emerald-500" : "bg-muted-foreground/50"
+                            }`}
+                            title={sseStreamOpen ? t("traffic.sse.open") : t("traffic.sse.closed")}
+                          />
+                        </Tooltip>
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.15em]">
+                          {t("traffic.sse.events")}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground/60">
+                          {t("traffic.sse.events_count", { count: sseEvents.length })}
+                        </span>
+                        {sseDroppedCount > 0 && (
+                          <span className="text-tiny px-1.5 py-0.5 rounded border border-amber-500/40 bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">
+                            {t("traffic.sse.dropped", { count: sseDroppedCount })}
+                          </span>
+                        )}
+                        <Tooltip
+                          content={
+                            sseAutoScroll
+                              ? t("traffic.sse.auto_scroll_on")
+                              : t("traffic.sse.auto_scroll_off")
+                          }
+                        >
+                          <button
+                            onClick={() => setSseAutoScroll((v) => !v)}
+                            className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-colors ${
+                              sseAutoScroll
+                                ? "border-primary/40 text-primary bg-primary/10"
+                                : "border-border/60 text-muted-foreground bg-muted/20"
+                            }`}
+                            aria-label={
+                              sseAutoScroll
+                                ? t("traffic.sse.auto_scroll_on")
+                                : t("traffic.sse.auto_scroll_off")
+                            }
+                          >
+                            <Activity className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      {sseEvents.length > 0 ? (
+                        <Virtuoso
+                          ref={sseListRef}
+                          data={sseEvents}
+                          style={{ height: "100%" }}
+                          computeItemKey={(_, evt) => `${evt.flowId}-${evt.seq}`}
+                          followOutput={sseAutoScroll ? "auto" : false}
+                          increaseViewportBy={320}
+                          itemContent={(_, evt) => (
+                            <div className="group flex items-start gap-3 px-3 py-2 border-b border-border/20 hover:bg-muted/10 transition-colors">
+                              <div className="text-tiny mt-0.5 text-muted-foreground/60 font-mono">
+                                #{evt.seq}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {evt.event && (
+                                    <span className="text-tiny font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600">
+                                      {evt.event}
+                                    </span>
+                                  )}
+                                  <span className="text-tiny text-muted-foreground/40">
+                                    {new Date(evt.ts).toLocaleTimeString()}
+                                  </span>
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <CopyButton text={evt.data} />
+                                  </div>
+                                </div>
+                                {evt.id && (
+                                  <button
+                                    onClick={() =>
+                                      setExpandedSseIds((prev) => ({
+                                        ...prev,
+                                        [`${evt.flowId}-${evt.seq}-id`]:
+                                          !prev[`${evt.flowId}-${evt.seq}-id`],
+                                      }))
+                                    }
+                                    className="mb-1 text-tiny font-medium px-1.5 py-0.5 rounded border border-purple-500/40 bg-purple-500/15 text-purple-700 dark:text-purple-300 w-full inline-flex items-start gap-1 hover:bg-purple-500/25 transition-colors"
+                                    title={evt.id}
+                                  >
+                                    {expandedSseIds[`${evt.flowId}-${evt.seq}-id`] ? (
+                                      <ChevronUp className="w-3 h-3 flex-shrink-0 mt-[2px]" />
+                                    ) : (
+                                      <ChevronDown className="w-3 h-3 flex-shrink-0 mt-[2px]" />
+                                    )}
+                                    <span
+                                      className={
+                                        expandedSseIds[`${evt.flowId}-${evt.seq}-id`]
+                                          ? "whitespace-pre-wrap break-all text-left"
+                                          : "truncate text-left"
+                                      }
+                                    >
+                                      {expandedSseIds[`${evt.flowId}-${evt.seq}-id`]
+                                        ? evt.id
+                                        : evt.id.length > SSE_ID_PREVIEW_CHARS
+                                          ? `${evt.id.slice(0, SSE_ID_PREVIEW_CHARS)}...`
+                                          : evt.id}
+                                    </span>
+                                  </button>
+                                )}
+                                <div className="text-xs font-mono text-foreground/80 break-all whitespace-pre-wrap">
+                                  {evt.data.length > SSE_MAX_PREVIEW_CHARS
+                                    ? `${evt.data.slice(0, SSE_MAX_PREVIEW_CHARS)}...`
+                                    : evt.data}
+                                </div>
+                                {evt.data.length > SSE_MAX_PREVIEW_CHARS && (
+                                  <div className="text-tiny mt-1 text-muted-foreground/50">
+                                    {t("traffic.sse.content_truncated", {
+                                      size: SSE_MAX_PREVIEW_CHARS,
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        />
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                          <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mb-3">
+                            <Wifi className="w-6 h-6 text-muted-foreground/20" />
+                          </div>
+                          <p className="text-xs text-muted-foreground/50 font-medium">
+                            {t("traffic.sse.waiting")}
                           </p>
                         </div>
                       )}

@@ -121,6 +121,8 @@ export function ComposerView() {
         localizedMessage = t("composer.error_sending_request", {
           url: sendingMatch[1],
         });
+      } else if (errorMsg.toLowerCase().includes("sse stream responses are not supported")) {
+        localizedMessage = t("composer.sse_not_supported");
       } else if (errorMsg.toLowerCase().includes("builder error")) {
         localizedMessage = t("composer.generic_builder_error");
       }

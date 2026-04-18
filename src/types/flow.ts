@@ -119,6 +119,25 @@ export interface RcWebSocketFrame {
   length: number;
 }
 
+export interface SseEvent {
+  flowId: string;
+  seq: number;
+  ts: number;
+  event?: string | null;
+  id?: string | null;
+  retry?: number | null;
+  data: string;
+  rawSize: number;
+}
+
+export interface SsePollResponse {
+  flowId: string;
+  events: SseEvent[];
+  nextSeq: number;
+  streamOpen: boolean;
+  droppedCount: number;
+}
+
 /**
  * RelayCraft 扩展 - 拦截状态
  */
@@ -207,6 +226,10 @@ export interface RcExtension {
 
   // WebSocket
   isWebsocket: boolean;
+  isSse?: boolean;
+  sseEventCount?: number;
+  sseStreamOpen?: boolean;
+  sseEvents?: SseEvent[];
   websocketFrameCount: number;
   websocketFrames?: RcWebSocketFrame[];
 
@@ -283,6 +306,7 @@ export interface FlowIndex {
   hasRequestBody: boolean;
   hasResponseBody: boolean;
   isWebsocket: boolean;
+  isSse?: boolean;
   websocketFrameCount: number;
   isIntercepted: boolean; // 是否被断点拦截
 
