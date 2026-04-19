@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/relaycraft/relaycraft/compare/v1.0.2...v1.1.0) (2026-04-19)
+
+
+### Features
+
+* complete tool-calling pipeline and stabilize assistant generation ([2615b8b](https://github.com/relaycraft/relaycraft/commit/2615b8ba14f8e7648c2445378b49b69f7fb7e14c))
+* complete websocket edit and resend capability ([390ded7](https://github.com/relaycraft/relaycraft/commit/390ded7a6e653bc98aa9fb80ff14b4d8a6abac3d))
+* consolidate command center and AI platform upgrades with safer execution routing ([ec08a3c](https://github.com/relaycraft/relaycraft/commit/ec08a3ca0480cba900a2803379ab3c471a7f7e5d))
+* implement robust SSE event display and history replay capabilities ([e37b1a6](https://github.com/relaycraft/relaycraft/commit/e37b1a67ce659bc1e465dd12eda97eae6372db45))
+* optimize ai provider architecture and switching behavior ([f389c74](https://github.com/relaycraft/relaycraft/commit/f389c747aedbe10015ba96098e702ba56fbaf9f5))
+
+
+### Bug Fixes
+
+* enforce storage permission checks with temporary storage allowlist ([52e1319](https://github.com/relaycraft/relaycraft/commit/52e1319ece4f39607b7f196a51178193dd7b815c))
+* make command center answers safer with full traffic stats and conservative context carry ([17a00a1](https://github.com/relaycraft/relaycraft/commit/17a00a17f83bf2a30544d65d691d4c33ac074946))
+* prevent duplicate ai context injection and harden ai usage fallback ([6499f3d](https://github.com/relaycraft/relaycraft/commit/6499f3d191c7992d9d1ef3f9474b8d8d4a90ca06))
+* reduce GPU and compositing cost in the desktop shell ([40d9921](https://github.com/relaycraft/relaycraft/commit/40d992177db8ec73b7b134c28e3f023e09c9b855)), closes [#41](https://github.com/relaycraft/relaycraft/issues/41)
+
 ### [1.0.2](https://github.com/relaycraft/relaycraft/compare/v1.0.1...v1.0.2) (2026-04-14)
 
 
