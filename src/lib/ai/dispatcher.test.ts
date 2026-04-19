@@ -150,7 +150,7 @@ describe("dispatcher function calling", () => {
     expect(chatCompletionStream).toHaveBeenCalledOnce();
   });
 
-  it("treats unrelated input as standalone and avoids carrying prior turns", async () => {
+  it("carries only the most recent turn for unrelated input, without older turns", async () => {
     mockAIState.history = [
       { role: "user", content: "帮我分析上一个 502 请求" },
       { role: "assistant", content: "可能是上游网关超时。" },
@@ -165,9 +165,8 @@ describe("dispatcher function calling", () => {
       role: string;
       content: string;
     }>;
-    expect(streamMessages.some((m) => m.content.includes("new standalone topic"))).toBe(false);
     expect(streamMessages.some((m) => m.content.includes("[Conversation Summary]"))).toBe(false);
-    expect(streamMessages.some((m) => m.content.includes("帮我分析上一个 502 请求"))).toBe(false);
+    expect(streamMessages.some((m) => m.content.includes("帮我分析上一个 502 请求"))).toBe(true);
   });
 
   it("keeps exactly N recent turns and compresses overflow into summary", async () => {
@@ -202,7 +201,7 @@ describe("dispatcher function calling", () => {
     expect(streamMessages.some((m) => m.content.includes("第3轮用户问题"))).toBe(true);
   });
 
-  it("does not carry history when overlap is only generic words", async () => {
+  it("carries only the most recent turn when overlap is only generic words", async () => {
     mockAIState.history = [
       { role: "user", content: "帮我分析这个请求为什么 401" },
       { role: "assistant", content: "可能是鉴权 token 缺失。" },
@@ -217,11 +216,8 @@ describe("dispatcher function calling", () => {
       role: string;
       content: string;
     }>;
-    expect(streamMessages.some((m) => m.content.includes("new standalone topic"))).toBe(false);
     expect(streamMessages.some((m) => m.content.includes("[Conversation Summary]"))).toBe(false);
-    expect(streamMessages.some((m) => m.content.includes("帮我分析这个请求为什么 401"))).toBe(
-      false,
-    );
+    expect(streamMessages.some((m) => m.content.includes("帮我分析这个请求为什么 401"))).toBe(true);
   });
 
   it("carries context for short Chinese high-signal keywords without whitelist", async () => {

@@ -202,6 +202,8 @@ pub async fn probe_ai_capabilities(
         .map_err(|e| format!("Config lock poisoned: {}", e))?
         .clone();
 
+    normalize_profile_for_provider(&mut config);
+
     if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
         config.api_key = key;
     }

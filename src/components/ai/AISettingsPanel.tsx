@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AI_PROVIDERS, getProviderById } from "../../lib/ai/providers";
+import { AI_PROVIDERS } from "../../lib/ai/providers";
 import { useAIStore } from "../../stores/aiStore";
 import { Tooltip } from "../common/Tooltip";
 import {
@@ -123,8 +123,7 @@ export function AISettingsPanel() {
   const activeProfile =
     providerProfiles.find((profile) => profile.id === localSettings.profileId) ||
     providerProfiles[0];
-  const selectedProvider = getProviderById(localSettings.provider);
-  const preferredDefaultModel = activeProfile?.defaultModel || selectedProvider?.defaultModel || "";
+  const preferredDefaultModel = activeProfile?.defaultModel || "";
 
   const handleTestConnection = async () => {
     try {
@@ -181,7 +180,6 @@ export function AISettingsPanel() {
               value={localSettings.provider}
               onChange={(val) => {
                 const providerId = val;
-                const provider = getProviderById(providerId);
                 const nextProfile = visibleProfiles.find(
                   (profile) => profile.providerId === providerId,
                 );
@@ -206,7 +204,7 @@ export function AISettingsPanel() {
                     adapterMode: nextProfile?.adapterMode,
                     apiKey: "",
                     customEndpoint: undefined,
-                    model: nextProfile?.defaultModel || provider?.defaultModel || prev.model,
+                    model: nextProfile?.defaultModel || prev.model,
                   };
                 });
 
@@ -270,8 +268,7 @@ export function AISettingsPanel() {
           {/* Only show Endpoint for Custom provider OR if it differs from default */}
           {(localSettings.provider === "custom" ||
             (localSettings.customEndpoint &&
-              localSettings.customEndpoint !==
-                getProviderById(localSettings.provider)?.defaultEndpoint)) && (
+              localSettings.customEndpoint !== activeProfile?.baseUrl)) && (
             <SettingsRow title={t("ai.endpoint")} description={t("ai.endpoint_desc")}>
               <SettingsInput
                 className="w-full min-w-[320px]"

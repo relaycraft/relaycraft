@@ -76,7 +76,19 @@ const normalizeAction = (action: CommandAction): CommandAction => {
 const EXPLICIT_SHORT_COMMANDS: Record<string, CommandAction> = {
   清空抓包: { intent: "CLEAR_TRAFFIC", confidence: 1.0, explanation: "explicit_short_command" },
   清空流量: { intent: "CLEAR_TRAFFIC", confidence: 1.0, explanation: "explicit_short_command" },
+  "clear traffic": {
+    intent: "CLEAR_TRAFFIC",
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  "clear all": { intent: "CLEAR_TRAFFIC", confidence: 1.0, explanation: "explicit_short_command" },
   开始代理: {
+    intent: "TOGGLE_PROXY",
+    params: { action: "start" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  "start proxy": {
     intent: "TOGGLE_PROXY",
     params: { action: "start" },
     confidence: 1.0,
@@ -88,7 +100,19 @@ const EXPLICIT_SHORT_COMMANDS: Record<string, CommandAction> = {
     confidence: 1.0,
     explanation: "explicit_short_command",
   },
+  "stop proxy": {
+    intent: "TOGGLE_PROXY",
+    params: { action: "stop" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
   打开规则: {
+    intent: "NAVIGATE",
+    params: { path: "/rules" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  "open rules": {
     intent: "NAVIGATE",
     params: { path: "/rules" },
     confidence: 1.0,
@@ -100,7 +124,19 @@ const EXPLICIT_SHORT_COMMANDS: Record<string, CommandAction> = {
     confidence: 1.0,
     explanation: "explicit_short_command",
   },
+  "open scripts": {
+    intent: "NAVIGATE",
+    params: { path: "/scripts" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
   打开流量: {
+    intent: "NAVIGATE",
+    params: { path: "/traffic" },
+    confidence: 1.0,
+    explanation: "explicit_short_command",
+  },
+  "open traffic": {
     intent: "NAVIGATE",
     params: { path: "/traffic" },
     confidence: 1.0,
@@ -272,6 +308,8 @@ const buildDroppedTurnsSummary = (droppedTurns: AIMessage[][]): string => {
   return summary;
 };
 
+const MIN_ALWAYS_CARRY_TURNS = 1;
+
 const prepareHistoryForRequest = (
   history: AIMessage[],
   input: string,
@@ -281,13 +319,18 @@ const prepareHistoryForRequest = (
   const turns = buildTurnsFromHistory(history);
   if (!turns.length) return [];
 
-  const carryRecentTurns = shouldCarryRecentTurns(input, turns);
-  if (!carryRecentTurns) {
-    return [];
+  const alwaysCarry = turns.slice(-Math.min(MIN_ALWAYS_CARRY_TURNS, maxTurns));
+  const olderTurns = turns.slice(0, Math.max(0, turns.length - MIN_ALWAYS_CARRY_TURNS));
+
+  const carryOlderTurns = olderTurns.length > 0 && shouldCarryRecentTurns(input, olderTurns);
+
+  if (!carryOlderTurns) {
+    return flattenTurns(alwaysCarry);
   }
 
-  const boundedTurns = turns.slice(-maxTurns);
-  const droppedTurns = turns.slice(0, Math.max(0, turns.length - maxTurns));
+  const olderBudget = Math.max(0, maxTurns - alwaysCarry.length);
+  const boundedOlder = olderTurns.slice(-olderBudget);
+  const droppedTurns = olderTurns.slice(0, Math.max(0, olderTurns.length - olderBudget));
   const prepared: AIMessage[] = [];
 
   if (droppedTurns.length > 0) {
@@ -296,7 +339,8 @@ const prepareHistoryForRequest = (
       content: `[Conversation Summary]\n${buildDroppedTurnsSummary(droppedTurns)}`,
     });
   }
-  prepared.push(...flattenTurns(boundedTurns));
+  prepared.push(...flattenTurns(boundedOlder));
+  prepared.push(...flattenTurns(alwaysCarry));
   return prepared;
 };
 
@@ -340,19 +384,12 @@ function detectContextOptions(
   return options;
 }
 
-export async function dispatchCommand(
+function matchLocalCommand(
   input: string,
-  context?: any,
-  t?: (key: string, options?: any) => string,
-  onChunk?: (content: string) => void,
-  signal?: AbortSignal,
-): Promise<CommandAction> {
-  const language = useSettingsStore.getState().config.language;
-  const translate =
-    t ?? ((key: string, options?: Record<string, unknown>) => i18n.t(key, options) as string);
-  const cleanInput = input.trim();
-  const cleanInputLower = cleanInput.toLowerCase();
-
+  cleanInput: string,
+  cleanInputLower: string,
+  translate: (key: string, options?: any) => string,
+): CommandAction | null {
   if (cleanInputLower === "/ai-metrics") {
     return {
       intent: "CHAT",
@@ -364,7 +401,6 @@ export async function dispatchCommand(
     };
   }
 
-  // 1. 本地指令匹配 (Slash Commands & Shortcuts)
   const STATIC_COMMANDS: Record<string, CommandAction> = {
     "/clear": {
       intent: "CLEAR_TRAFFIC",
@@ -439,14 +475,30 @@ export async function dispatchCommand(
     return markActionRouting(EXPLICIT_SHORT_COMMANDS[cleanInput], "direct_command");
   }
 
-  // 2. AI 是否启用检查
-  const {
-    settings: aiSettings,
-    chatCompletion,
-    chatCompletionWithTools,
-    history,
-    addMessage,
-  } = useAIStore.getState();
+  if (EXPLICIT_SHORT_COMMANDS[cleanInputLower]) {
+    return markActionRouting(EXPLICIT_SHORT_COMMANDS[cleanInputLower], "direct_command");
+  }
+
+  return null;
+}
+
+export async function dispatchCommand(
+  input: string,
+  context?: any,
+  t?: (key: string, options?: any) => string,
+  onChunk?: (content: string) => void,
+  signal?: AbortSignal,
+): Promise<CommandAction> {
+  const language = useSettingsStore.getState().config.language;
+  const translate =
+    t ?? ((key: string, options?: Record<string, unknown>) => i18n.t(key, options) as string);
+  const cleanInput = input.trim();
+  const cleanInputLower = cleanInput.toLowerCase();
+
+  const localMatch = matchLocalCommand(input, cleanInput, cleanInputLower, translate);
+  if (localMatch) return localMatch;
+
+  const { settings: aiSettings, history } = useAIStore.getState();
   if (!aiSettings.enabled) {
     return {
       intent: "CHAT",
@@ -457,7 +509,6 @@ export async function dispatchCommand(
     };
   }
 
-  // Consultation-first route: answer "how-to" style questions as chat guidance.
   if (
     isConsultativeQuery(cleanInputLower) &&
     !looksActionableCommand(cleanInputLower, cleanInput)
@@ -474,7 +525,6 @@ export async function dispatchCommand(
     return await runTwoStageChat(input, context, chatAction, language, translate, onChunk, signal);
   }
 
-  // 3. 构建上下文 (Scenario-Aware Context V3)
   const activeTab = useUIStore.getState().activeTab;
   const ctxOptions = detectContextOptions(input, activeTab, "command_center");
   const fullContext = await buildAIContext(ctxOptions);
@@ -494,91 +544,114 @@ export async function dispatchCommand(
   const userMsg: AIMessage = { role: "user" as const, content: input };
 
   try {
-    let action: CommandAction | null = null;
-    let fallbackResponse = "";
-    let fallbackReason = "tool_empty";
-
-    try {
-      const toolResult = await chatCompletionWithTools(
-        [intentSystemMsg, ...preparedHistory, userMsg],
-        COMMAND_DETECTION_TOOLS,
-        { type: "function", function: { name: "detect_intent" } },
-        0,
-        signal,
-        { includeContext: false },
-      );
-      action = extractActionFromToolResult(toolResult);
-      if (action) {
-        trackAIToolPath({ feature: "command_dispatch", outcome: "tool_success" });
-      } else {
-        trackAIToolPath({
-          feature: "command_dispatch",
-          outcome: "tool_empty",
-          detail: "tool_result_not_parsable",
-        });
-      }
-    } catch (toolError) {
-      const errorInfo = classifyAIError(toolError);
-      Logger.warn("Intent tool-call failed, fallback to JSON mode", toolError);
-      trackAIToolPath({
-        feature: "command_dispatch",
-        outcome: "tool_error",
-        detail: `${errorInfo.kind}:${errorInfo.detail}`,
-      });
-      fallbackReason = errorInfo.kind;
-    }
-
-    if (!action) {
-      trackAIToolPath({
-        feature: "command_dispatch",
-        outcome: "fallback_json",
-        detail: fallbackReason,
-      });
-      fallbackResponse = await chatCompletion(
-        [intentSystemMsg, ...preparedHistory, userMsg],
-        0,
-        signal,
-        {
-          includeContext: false,
-        },
-      );
-      action = extractJson(fallbackResponse);
-    }
-
-    if (!action) {
-      action = {
-        intent: "CHAT",
-        params: {
-          message: fallbackResponse || translate("command_center.uncertain_intent_fallback"),
-        },
-        confidence: 0.5,
-        explanation: "uncertain_intent",
-      };
-    }
-    action = normalizeAction(action);
-    action = markActionRouting(action, action.intent === "CHAT" ? "conversation" : "guided_action");
-
-    // 两段式对话生成
-    if (action.intent === "CHAT") {
-      return await runTwoStageChat(
-        input,
-        context,
-        action,
-        language,
-        translate,
-        onChunk,
-        signal,
-        preparedHistory,
-      );
-    }
-
-    addMessage("user", input);
-    return action;
+    return await dispatchToAI(
+      input,
+      context,
+      language,
+      translate,
+      onChunk,
+      signal,
+      intentSystemMsg,
+      userMsg,
+      preparedHistory,
+    );
   } catch (error) {
     const errorInfo = classifyAIError(error);
     Logger.error("AI Recognition Failed", error);
-    throw new Error(`${errorInfo.kind}: ${errorInfo.detail}`); // Propagate classified error to UI
+    throw new Error(`${errorInfo.kind}: ${errorInfo.detail}`);
   }
+}
+
+async function dispatchToAI(
+  input: string,
+  context: any,
+  _language: string,
+  translate: (key: string) => string,
+  onChunk: ((content: string) => void) | undefined,
+  signal: AbortSignal | undefined,
+  intentSystemMsg: AIMessage,
+  userMsg: AIMessage,
+  preparedHistory: AIMessage[],
+): Promise<CommandAction> {
+  const { chatCompletion, chatCompletionWithTools, addMessage } = useAIStore.getState();
+
+  let action: CommandAction | null = null;
+  let fallbackResponse = "";
+  let fallbackReason = "tool_empty";
+
+  try {
+    const toolResult = await chatCompletionWithTools(
+      [intentSystemMsg, ...preparedHistory, userMsg],
+      COMMAND_DETECTION_TOOLS,
+      { type: "function", function: { name: "detect_intent" } },
+      0,
+      signal,
+      { includeContext: false },
+    );
+    action = extractActionFromToolResult(toolResult);
+    if (action) {
+      trackAIToolPath({ feature: "command_dispatch", outcome: "tool_success" });
+    } else {
+      trackAIToolPath({
+        feature: "command_dispatch",
+        outcome: "tool_empty",
+        detail: "tool_result_not_parsable",
+      });
+    }
+  } catch (toolError) {
+    const errorInfo = classifyAIError(toolError);
+    Logger.warn("Intent tool-call failed, fallback to JSON mode", toolError);
+    trackAIToolPath({
+      feature: "command_dispatch",
+      outcome: "tool_error",
+      detail: `${errorInfo.kind}:${errorInfo.detail}`,
+    });
+    fallbackReason = errorInfo.kind;
+  }
+
+  if (!action) {
+    trackAIToolPath({
+      feature: "command_dispatch",
+      outcome: "fallback_json",
+      detail: fallbackReason,
+    });
+    fallbackResponse = await chatCompletion(
+      [intentSystemMsg, ...preparedHistory, userMsg],
+      0,
+      signal,
+      { includeContext: false },
+    );
+    action = extractJson(fallbackResponse);
+  }
+
+  if (!action) {
+    action = {
+      intent: "CHAT",
+      params: {
+        message: fallbackResponse || translate("command_center.uncertain_intent_fallback"),
+      },
+      confidence: 0.5,
+      explanation: "uncertain_intent",
+    };
+  }
+  action = normalizeAction(action);
+  action = markActionRouting(action, action.intent === "CHAT" ? "conversation" : "guided_action");
+
+  if (action.intent === "CHAT") {
+    return await runTwoStageChat(
+      input,
+      context,
+      action,
+      _language,
+      translate,
+      onChunk,
+      signal,
+      preparedHistory,
+    );
+  }
+
+  addMessage("user", input);
+  return action;
 }
 
 /**

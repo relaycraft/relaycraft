@@ -16,6 +16,38 @@ import type {
   ToolCompletionResult,
 } from "../types/ai";
 
+function injectContextIntoTupleMessages(
+  messages: [string, string][],
+  context: AIContext | null,
+  includeContext?: boolean,
+): [string, string][] {
+  if (includeContext === false || !context) return messages;
+  const result = [...messages];
+  const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
+  if (result.length > 0 && result[0][0] === "system") {
+    result[0] = [result[0][0], result[0][1] + contextPrompt];
+  } else {
+    result.unshift(["system", `Current System Context: ${contextPrompt}`]);
+  }
+  return result;
+}
+
+function injectContextIntoToolMessages(
+  messages: AIToolMessage[],
+  context: AIContext | null,
+  includeContext?: boolean,
+): AIToolMessage[] {
+  if (includeContext === false || !context) return messages;
+  const result = messages.map((m) => ({ ...m }));
+  const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
+  if (result.length > 0 && result[0].role === "system") {
+    result[0].content = `${result[0].content || ""}${contextPrompt}`;
+  } else {
+    result.unshift({ role: "system", content: `Current System Context: ${contextPrompt}` });
+  }
+  return result;
+}
+
 export function sanitizeLoadedSettings(settings: AISettings): AISettings {
   if (getProviderById(settings.provider)) {
     return settings;
@@ -192,21 +224,12 @@ export const useAIStore = create<AIStore>((set, get) => {
     },
 
     chatCompletion: async (messages, temperature, signal, options) => {
-      const formattedMessages = messages.map((m) => [m.role, m.content]);
-
       try {
-        const context = get().context;
-        const finalMessages = [...formattedMessages];
-        const shouldInjectContext = options?.includeContext !== false;
-
-        if (shouldInjectContext && context) {
-          const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
-          if (finalMessages.length > 0 && finalMessages[0][0] === "system") {
-            finalMessages[0][1] += contextPrompt;
-          } else {
-            finalMessages.unshift(["system", `Current System Context: ${contextPrompt}`]);
-          }
-        }
+        const finalMessages = injectContextIntoTupleMessages(
+          messages.map((m) => [m.role, m.content]),
+          get().context,
+          options?.includeContext,
+        );
 
         if (signal?.aborted) throw new Error("Aborted");
 
@@ -228,19 +251,11 @@ export const useAIStore = create<AIStore>((set, get) => {
     },
 
     chatCompletionStream: async (messages, onChunk, temperature, signal, options) => {
-      const formattedMessages = messages.map((m) => [m.role, m.content]);
-      const context = get().context;
-      const finalMessages = [...formattedMessages];
-      const shouldInjectContext = options?.includeContext !== false;
-
-      if (shouldInjectContext && context) {
-        const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
-        if (finalMessages.length > 0 && finalMessages[0][0] === "system") {
-          finalMessages[0][1] += contextPrompt;
-        } else {
-          finalMessages.unshift(["system", `Current System Context: ${contextPrompt}`]);
-        }
-      }
+      const finalMessages = injectContextIntoTupleMessages(
+        messages.map((m) => [m.role, m.content]),
+        get().context,
+        options?.includeContext,
+      );
 
       if (signal?.aborted) return;
 
@@ -270,21 +285,11 @@ export const useAIStore = create<AIStore>((set, get) => {
     },
 
     chatCompletionWithTools: async (messages, tools, toolChoice, temperature, signal, options) => {
-      const context = get().context;
-      const finalMessages = messages.map((m) => ({ ...m }));
-      const shouldInjectContext = options?.includeContext !== false;
-
-      if (shouldInjectContext && context) {
-        const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
-        if (finalMessages.length > 0 && finalMessages[0].role === "system") {
-          finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;
-        } else {
-          finalMessages.unshift({
-            role: "system",
-            content: `Current System Context: ${contextPrompt}`,
-          });
-        }
-      }
+      const finalMessages = injectContextIntoToolMessages(
+        messages.map((m) => ({ ...m })),
+        get().context,
+        options?.includeContext,
+      );
 
       if (signal?.aborted) throw new Error("Aborted");
 
@@ -317,21 +322,11 @@ export const useAIStore = create<AIStore>((set, get) => {
       signal,
       options,
     ) => {
-      const context = get().context;
-      const finalMessages = messages.map((m) => ({ ...m }));
-      const shouldInjectContext = options?.includeContext !== false;
-
-      if (shouldInjectContext && context) {
-        const contextPrompt = `\n\n[System Context]:\n${JSON.stringify(context, null, 2)}`;
-        if (finalMessages.length > 0 && finalMessages[0].role === "system") {
-          finalMessages[0].content = `${finalMessages[0].content || ""}${contextPrompt}`;
-        } else {
-          finalMessages.unshift({
-            role: "system",
-            content: `Current System Context: ${contextPrompt}`,
-          });
-        }
-      }
+      const finalMessages = injectContextIntoToolMessages(
+        messages.map((m) => ({ ...m })),
+        get().context,
+        options?.includeContext,
+      );
 
       if (signal?.aborted) return;
 

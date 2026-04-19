@@ -284,7 +284,7 @@ export const createPluginApi = (
         try {
           ensurePluginAIChatPermission(pluginId);
           const normalizedMessages = normalizePluginAIMessages(messages);
-          await useAIStore.getState().chatCompletionStream(
+          return await useAIStore.getState().chatCompletionStream(
             normalizedMessages,
             (chunk) => {
               if (chunk) onChunk(chunk);

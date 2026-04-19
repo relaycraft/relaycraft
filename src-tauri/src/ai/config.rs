@@ -14,7 +14,10 @@ pub struct AIConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_id: Option<String>,
 
-    /// Adapter mode (e.g. openai_compatible)
+    /// Adapter mode (e.g. openai_compatible).
+    /// Reserved for future provider-specific protocol adaptation.
+    /// Currently all providers use OpenAI-compatible format; this field
+    /// exists to support non-OpenAI adapter modes without schema migration.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub adapter_mode: Option<String>,
 
@@ -80,7 +83,6 @@ impl Default for AIConfig {
 impl AIConfig {
     /// Get the API endpoint based on provider
     pub fn get_endpoint(&self) -> String {
-        // If custom endpoint is set, use it
         if let Some(endpoint) = &self.custom_endpoint {
             if !endpoint.is_empty() {
                 return endpoint.clone();
@@ -93,7 +95,7 @@ impl AIConfig {
                     return profile.base_url;
                 }
                 log::warn!(
-                    "AI profile/provider mismatch in endpoint resolution: provider={}, profile_id={}, profile_provider={}. Falling back to provider endpoint.",
+                    "AI profile/provider mismatch in endpoint resolution: provider={}, profile_id={}, profile_provider={}. Falling back to provider default profile.",
                     self.provider,
                     profile_id,
                     profile.provider_id
@@ -101,19 +103,8 @@ impl AIConfig {
             }
         }
 
-        // Fallback defaults based on provider (for legacy/convenience)
-        match self.provider.as_str() {
-            "openai" => "https://api.openai.com/v1".to_string(),
-            "openrouter" => "https://openrouter.ai/api/v1".to_string(),
-            "deepseek" => "https://api.deepseek.com/v1".to_string(),
-            "siliconflow" => "https://api.siliconflow.cn/v1".to_string(),
-            "groq" => "https://api.groq.com/openai/v1".to_string(),
-            "aliyun" => "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
-            "moonshot" => "https://api.moonshot.cn/v1".to_string(),
-            "minimax" => "https://api.minimax.io/v1".to_string(),
-            "zhipu" => "https://open.bigmodel.cn/api/paas/v4".to_string(),
-            _ => "https://api.openai.com/v1".to_string(), // Final fallback
-        }
+        profiles::default_endpoint_for_provider(&self.provider)
+            .unwrap_or_else(|| "https://api.openai.com/v1".to_string())
     }
 
     /// Validate configuration
@@ -190,7 +181,7 @@ mod tests {
                 "https://dashscope.aliyuncs.com/compatible-mode/v1",
             ),
             ("moonshot", "https://api.moonshot.cn/v1"),
-            ("minimax", "https://api.minimax.io/v1"),
+            ("minimax", "https://api.minimaxi.com/v1"),
             ("zhipu", "https://open.bigmodel.cn/api/paas/v4"),
             ("unknown_provider", "https://api.openai.com/v1"), // fallback
         ];

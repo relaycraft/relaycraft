@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,7 +22,7 @@ pub struct AIProviderProfile {
     pub capabilities: ProfileCapabilities,
 }
 
-pub fn default_profiles() -> Vec<AIProviderProfile> {
+static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
     vec![
         AIProviderProfile {
             id: "openai-default".to_string(),
@@ -206,12 +207,17 @@ pub fn default_profiles() -> Vec<AIProviderProfile> {
             },
         },
     ]
+});
+
+pub fn default_profiles() -> Vec<AIProviderProfile> {
+    PROFILES.clone()
 }
 
 pub fn get_profile(profile_id: &str) -> Option<AIProviderProfile> {
-    default_profiles()
-        .into_iter()
+    PROFILES
+        .iter()
         .find(|profile| profile.id == profile_id)
+        .cloned()
 }
 
 pub fn profile_belongs_to_provider(profile_id: &str, provider_id: &str) -> bool {
@@ -220,16 +226,22 @@ pub fn profile_belongs_to_provider(profile_id: &str, provider_id: &str) -> bool 
         .unwrap_or(false)
 }
 
-pub fn default_profile_for_provider(provider_id: &str) -> Option<AIProviderProfile> {
-    let profiles = default_profiles();
+pub fn default_endpoint_for_provider(provider_id: &str) -> Option<String> {
+    default_profile_for_provider(provider_id).map(|profile| profile.base_url)
+}
 
-    profiles
-        .iter()
-        .find(|profile| profile.provider_id == provider_id && profile.id.ends_with("-default"))
-        .cloned()
-        .or_else(|| {
-            profiles
-                .into_iter()
-                .find(|profile| profile.provider_id == provider_id)
-        })
+pub fn default_profile_for_provider(provider_id: &str) -> Option<AIProviderProfile> {
+    let mut fallback: Option<AIProviderProfile> = None;
+    for profile in PROFILES.iter() {
+        if profile.provider_id != provider_id {
+            continue;
+        }
+        if profile.id.ends_with("-default") {
+            return Some(profile.clone());
+        }
+        if fallback.is_none() {
+            fallback = Some(profile.clone());
+        }
+    }
+    fallback
 }
