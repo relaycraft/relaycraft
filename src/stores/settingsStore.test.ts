@@ -38,6 +38,7 @@ const mockConfig: AppConfig = {
   auto_start_proxy: false,
   display_density: "comfortable",
   enable_vibrancy: true,
+  disable_gpu_acceleration: false,
   mcp_config: { enabled: false, port: 7090 },
 };
 
@@ -87,6 +88,12 @@ describe("settingsStore", () => {
 
     await store.updateDisplayDensity("compact");
     expect(useSettingsStore.getState().config.display_density).toBe("compact");
+
+    await store.updateDisableGpuAcceleration(true);
+    expect(useSettingsStore.getState().config.disable_gpu_acceleration).toBe(true);
+    expect(invoke).toHaveBeenCalledWith("save_config", {
+      config: expect.objectContaining({ disable_gpu_acceleration: true }),
+    });
   });
 
   it("should test upstream connectivity successfully", async () => {

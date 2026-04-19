@@ -120,6 +120,24 @@ pub fn run() {
     std::env::set_var("no_proxy", &new_no_proxy);
     log::info!("Applied global loopback bypass: NO_PROXY={}", new_no_proxy);
 
+    #[cfg(target_os = "windows")]
+    {
+        if app_config.disable_gpu_acceleration {
+            let existing = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
+            let merged = if existing.contains("--disable-gpu") {
+                existing
+            } else if existing.trim().is_empty() {
+                "--disable-gpu".to_string()
+            } else {
+                format!("{} --disable-gpu", existing)
+            };
+            std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", merged);
+            log::warn!(
+                "WebView2 GPU acceleration disabled by config; using software rendering (--disable-gpu)"
+            );
+        }
+    }
+
     // Apply upstream proxy
     apply_upstream_proxy(&app_config);
 

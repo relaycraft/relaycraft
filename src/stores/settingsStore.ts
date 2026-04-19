@@ -22,6 +22,7 @@ export interface AppConfig {
   auto_start_proxy: boolean;
   display_density: "compact" | "comfortable" | "relaxed";
   enable_vibrancy: boolean;
+  disable_gpu_acceleration: boolean;
   ai_config?: any;
   // Optional so that configs written by older versions (which lack this field)
   // deserialise without error. Rust's #[serde(default)] ensures the backend
@@ -57,6 +58,7 @@ interface SettingsStore {
   updateAutoStartProxy: (value: boolean) => Promise<void>;
   updateDisplayDensity: (value: "compact" | "comfortable" | "relaxed") => Promise<void>;
   updateEnableVibrancy: (value: boolean) => Promise<void>;
+  updateDisableGpuAcceleration: (value: boolean) => Promise<void>;
   testUpstreamConnectivity: () => Promise<void>;
   resetUpstreamStatus: () => void;
   updateMcpConfig: (mcpConfig: { enabled: boolean; port: number }) => Promise<void>;
@@ -82,6 +84,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     auto_start_proxy: false,
     display_density: "comfortable",
     enable_vibrancy: typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent),
+    disable_gpu_acceleration: false,
     mcp_config: {
       enabled: false,
       port: 7090,
@@ -187,6 +190,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         m.useThemeStore.getState().applyVibrancy();
       })
       .catch(console.error);
+  },
+
+  updateDisableGpuAcceleration: async (value: boolean) => {
+    const { config, saveConfig } = get();
+    await saveConfig({ ...config, disable_gpu_acceleration: value });
   },
 
   testUpstreamConnectivity: async () => {

@@ -957,7 +957,11 @@
     "advanced": {
       "title": "Advanced",
       "directories": "System Data Directories",
-      "troubleshooting": "Troubleshooting"
+      "troubleshooting": "Troubleshooting",
+      "disable_gpu": "Compatibility Mode (Disable GPU)",
+      "disable_gpu_desc": "Force software rendering for WebView2 on Windows for compatibility troubleshooting.",
+      "disable_gpu_restart_title": "Restart Required",
+      "disable_gpu_restart_desc": "Changes to GPU rendering will take effect after restarting the app."
     },
     "appearance": {
       "active": "Active",

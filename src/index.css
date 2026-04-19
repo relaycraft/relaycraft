@@ -250,8 +250,6 @@ button:disabled {
   border-color: var(--color-border);
 }
 
-
-
 /* Typography Hierarchy */
 h1,
 h2,
@@ -363,11 +361,11 @@ html.lang-zh .font-bold {
 
 .vibrancy-blob {
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 460px;
+  height: 460px;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
+  filter: blur(72px);
+  opacity: 0.11;
   mix-blend-mode: screen;
   pointer-events: none;
   transition: all 1s ease-in-out;
@@ -408,6 +406,17 @@ html.lang-zh .font-bold {
 
 .animate-vibrancy-drift {
   animation: drift 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-vibrancy="on"] .animate-vibrancy-drift {
+    animation: none;
+  }
+
+  [data-vibrancy="on"] .vibrancy-blob {
+    filter: blur(52px);
+    opacity: 0.07;
+  }
 }
 
 /* GPU-accelerated animations for EmptyState component */
@@ -516,8 +525,6 @@ pre,
 ::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--color-foreground), transparent 60%);
 }
-
-
 
 /* Utility to completely hide */
 .no-scrollbar::-webkit-scrollbar {

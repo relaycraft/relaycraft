@@ -57,6 +57,8 @@ pub struct AppConfig {
     pub cert_warning_ignored: bool,
     #[serde(default = "default_vibrancy")]
     pub enable_vibrancy: bool,
+    #[serde(default = "default_disable_gpu_acceleration")]
+    pub disable_gpu_acceleration: bool,
     #[serde(default)]
     pub mcp_config: McpConfig,
 }
@@ -81,6 +83,10 @@ fn default_vibrancy() -> bool {
     cfg!(target_os = "macos")
 }
 
+fn default_disable_gpu_acceleration() -> bool {
+    false
+}
+
 fn default_density() -> String {
     "comfortable".to_string()
 }
@@ -103,6 +109,7 @@ impl Default for AppConfig {
             theme_registry_url: default_theme_registry_url(),
             cert_warning_ignored: false,
             enable_vibrancy: default_vibrancy(),
+            disable_gpu_acceleration: default_disable_gpu_acceleration(),
             mcp_config: McpConfig::default(),
         }
     }
@@ -465,6 +472,7 @@ mod tests {
         assert_eq!(config.language, "zh");
         assert!(config.confirm_exit);
         assert_eq!(config.enable_vibrancy, cfg!(target_os = "macos"));
+        assert!(!config.disable_gpu_acceleration);
     }
 
     #[test]

@@ -957,7 +957,11 @@
     "advanced": {
       "title": "高级与诊断",
       "directories": "系统数据目录",
-      "troubleshooting": "故障排查"
+      "troubleshooting": "故障排查",
+      "disable_gpu": "兼容模式（禁用 GPU）",
+      "disable_gpu_desc": "在 Windows 上为 WebView2 强制使用软件渲染，用于兼容性排查。",
+      "disable_gpu_restart_title": "需要重启应用",
+      "disable_gpu_restart_desc": "GPU 渲染设置的更改需要重启应用后才能生效"
     },
     "appearance": {
       "active": "当前使用",

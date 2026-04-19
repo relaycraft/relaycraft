@@ -35,6 +35,7 @@ import { useRuleStore } from "./stores/ruleStore";
 import { useScriptStore } from "./stores/scriptStore";
 // Stores
 import { useSessionStore } from "./stores/sessionStore";
+import { useSettingsStore } from "./stores/settingsStore";
 import { useTrafficStore } from "./stores/trafficStore";
 import { useUIStore } from "./stores/uiStore";
 
@@ -163,6 +164,7 @@ const TrafficActionButtons = () => {
 function App() {
   const { t } = useTranslation();
   const isMacOS = useUIStore((state) => state.isMac);
+  const enableVibrancy = useSettingsStore((state) => state.config.enable_vibrancy);
   const [showExitModal, setShowExitModal] = useState(false);
 
   // Initialize App
@@ -242,7 +244,7 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-transparent text-foreground overflow-hidden font-sans">
-      <VibrancyBackground />
+      {enableVibrancy && <VibrancyBackground />}
       <Toaster
         position="bottom-right"
         closeButton

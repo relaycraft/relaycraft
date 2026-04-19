@@ -16,7 +16,10 @@ export const AppearanceSettings: React.FC = () => {
     useThemeStore();
   const { installPluginLocal } = usePluginStore();
   const { setMarketOpen } = useUIStore();
-  const { config, updateDisplayDensity, updateEnableVibrancy } = useSettingsStore();
+  const displayDensity = useSettingsStore((s) => s.config.display_density);
+  const enableVibrancy = useSettingsStore((s) => s.config.enable_vibrancy);
+  const updateDisplayDensity = useSettingsStore((s) => s.updateDisplayDensity);
+  const updateEnableVibrancy = useSettingsStore((s) => s.updateEnableVibrancy);
 
   useEffect(() => {
     fetchThemes();
@@ -160,10 +163,10 @@ export const AppearanceSettings: React.FC = () => {
           {["compact", "comfortable", "relaxed"].map((d) => (
             <Button
               key={d}
-              variant={config.display_density === d ? "default" : "ghost"}
+              variant={displayDensity === d ? "default" : "ghost"}
               size="sm"
               className={`flex-1 text-xs font-medium h-9 transition-all duration-200 ${
-                config.display_density === d
+                displayDensity === d
                   ? "shadow-md border border-primary/20"
                   : "bg-muted/10 border border-transparent hover:bg-primary/10 hover:border-primary/20 hover:text-primary"
               }`}
@@ -175,16 +178,13 @@ export const AppearanceSettings: React.FC = () => {
         </div>
       </SettingsSection>
 
-      <SettingsSection title={t("settings.appearance.effects", "Window Effects")}>
+      <SettingsSection title={t("settings.appearance.effects")}>
         <SettingsRow
-          title={t("settings.appearance.vibrancy", "Enable Window Vibrancy")}
-          description={t(
-            "settings.appearance.vibrancy_desc",
-            "Enable native window translucency (Acrylic/Mica/Blur). High performance impact. Requires compatible themes.",
-          )}
+          title={t("settings.appearance.vibrancy")}
+          description={t("settings.appearance.vibrancy_desc")}
         >
           <SettingsToggle
-            checked={config.enable_vibrancy}
+            checked={enableVibrancy}
             onCheckedChange={(val) => updateEnableVibrancy(val)}
           />
         </SettingsRow>
