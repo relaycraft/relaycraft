@@ -1,0 +1,24 @@
+---
+description: Auto-apply commit message and changelog workflow
+alwaysApply: true
+---
+
+# Commit Message / Changelog Workflow
+
+当用户提到以下意图时，优先使用 `skills/commit-message-changelog.md`：
+
+- 写提交信息、优化 commit message
+- 生成 release note、整理 changelog 文案
+- 评审提交信息质量
+
+执行要求：
+
+1. 先按 skill 收集输入：`Scope`、`Changed files`、`Why`、`User impact`、`Risk/Migration`。
+2. 输出必须是结构化结果：`type(scope): subject` + body bullets（多文件提交按仓库规则补足 2-4 条）。
+3. 同时给出 1 行可直接复用的 `Release note`。
+4. 优先写用户影响与行为变化，避免在 subject 混入多个意图。
+5. 如果信息缺失，先给 2-3 个候选 subject，并说明缺失的输入槽位（scope/why/impact/risk）。
+
+类型白名单：
+
+- `feat` / `fix` / `refactor` / `style` / `chore` / `docs` / `perf`

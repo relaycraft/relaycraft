@@ -84,6 +84,20 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `perf:` for performance improvements
 - `chore:` for updating build tasks, package manager configs, etc.
 
+Additional enforced rules (via Husky + commitlint):
+- Allowed types are exactly: `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `perf`.
+- Subject format must be `type(scope): short summary` (scope optional).
+- Subject max length is 72 characters (header max 88).
+- For multi-file commits (4+ staged files), commit body is required with **2-4 bullet lines**, each starting with `- `.
+
+Recommended commit template:
+```text
+feat(scope): short summary
+
+- why this change was needed
+- what user-visible behavior changed
+```
+
 ---
 
 ## Pull Request Process

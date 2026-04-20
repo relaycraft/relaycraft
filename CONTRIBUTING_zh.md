@@ -84,6 +84,20 @@ RelayCraft 是一个基于现代多语言技术栈构建的跨平台应用。
 - `perf:` 性能优化
 - `chore:` 构建过程或辅助工具的变动
 
+额外强约束（由 Husky + commitlint 自动校验）：
+- 允许的类型仅限：`feat`、`fix`、`refactor`、`style`、`chore`、`docs`、`perf`。
+- 标题格式必须为 `type(scope): short summary`（`scope` 可选）。
+- `subject` 最长 72 个字符（整行 `header` 最长 88）。
+- 多文件提交（暂存文件数 >= 4）必须带 commit body，且 body 必须有 **2-4 条**以 `- ` 开头的要点。
+
+推荐模板：
+```text
+feat(scope): short summary
+
+- why this change was needed
+- what user-visible behavior changed
+```
+
 ---
 
 ## Pull Request 流程

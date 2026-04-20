@@ -1,0 +1,2 @@
+pnpm exec commitlint --edit "$1"
+node scripts/validate-commit-msg.mjs "$1"

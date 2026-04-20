@@ -32,6 +32,8 @@
     "gen:licenses": "node scripts/generate-licenses.cjs",
     "release": "standard-version",
     "translate-release:local": "node .github/scripts/translate_release.mjs",
+    "commitlint": "commitlint --from=HEAD~1 --to=HEAD",
+    "commitlint:edit": "commitlint --edit",
     "prepare": "husky"
   },
   "dependencies": {
@@ -79,6 +81,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tauri-apps/cli": "^2.10.1",

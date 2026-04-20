@@ -26,6 +26,7 @@
 | 修改引擎核心 / mitmproxy 脚本 | `skills/engine-addon.md` |
 | 涉及 i18n 文本 | `skills/i18n-workflow.md` |
 | 涉及错误处理 | `skills/error-handling.md` |
+| 需要生成高质量提交信息/发布文案 | `skills/commit-message-changelog.md` |
 | 架构级变更、不确定规范 | 本文件相关章节 |
 | 开始一个大功能 | 对应 `specs/*.md` + 引用的 skills |
 | 2.0 引擎 / relay-core / Deno 插件 | 本文件 §2.3 |
@@ -330,6 +331,7 @@ cargo fmt                     # Rust 格式化
 ### 5.3 Git 工作流
 
 - **pre-commit hook**：`lint-staged` 对 `*.ts/*.tsx` 文件执行 `biome check --write`。
+- **commit-msg hook**：`commitlint` 强制校验 Conventional Commit（类型白名单、长度限制）；当暂存文件数 ≥ 4 时，必须提供 2-4 条 `- ` 开头的英文 commit body 细项。
 - **分支策略**：从 `main` 创建功能分支，PR 合并回 `main`。
 - **PR 模板**：`.github/PULL_REQUEST_TEMPLATE.md`。
 
@@ -414,6 +416,7 @@ cargo fmt                     # Rust 格式化
 | **测试** | `skills/testing-patterns.md` | Vitest 前端测试 + Rust cargo test + Python pytest 模板 |
 | **错误处理** | `skills/error-handling.md` | 三层统一的错误处理模式（前端 notify + Rust Result + Python try/except） |
 | **AI 集成** | `skills/ai-integration.md` | AI Provider 模式、Prompt 工程、流式响应处理 |
+| **提交与发布文案** | `skills/commit-message-changelog.md` | 使用结构化提示词生成高质量 commit message，并与 changelog/release note 对齐 |
 
 ### 技能包编写规范
 
