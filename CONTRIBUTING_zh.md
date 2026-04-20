@@ -100,6 +100,22 @@ feat(scope): short summary
 
 ---
 
+## AI 协作文档（轻量体系）
+
+我们采用轻量 AI 文档模型：
+
+- `AGENTS.md`：仅保留硬约束与流程。
+- `skills/`：可复用 SOP 模板。
+- `.ai/`：本地私有笔记（gitignored），用于敏感草案与个人 AI 上下文。
+- `.cursor/`：本地 IDE 助手规则（gitignored）。
+
+规范入口：
+
+- `skills/README.md`：Skill 精简与维护策略。
+- `.ai/` 与 `.cursor/` 下的本地文件不作为仓库正确性与 PR 验收前提。
+
+---
+
 ## Pull Request 流程
 
 1. Fork 本仓库并从 `main` 分支创建你的开发分支。

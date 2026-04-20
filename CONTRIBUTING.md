@@ -100,6 +100,22 @@ feat(scope): short summary
 
 ---
 
+## AI Collaboration Docs (Lightweight)
+
+We use a lightweight AI documentation model:
+
+- `AGENTS.md`: hard rules and process only.
+- `skills/`: reusable SOP templates.
+- `.ai/`: local-private notes (gitignored), for sensitive drafts and personal AI context.
+- `.cursor/`: local IDE assistant rules (gitignored).
+
+Governance:
+
+- Read `skills/README.md` for skill pruning and maintenance.
+- Local files under `.ai/` and `.cursor/` are not required for repository correctness or PR acceptance.
+
+---
+
 ## Pull Request Process
 
 1. Fork the repository and create your branch from `main`.

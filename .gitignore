@@ -26,6 +26,8 @@ dist-ssr
 # Kilo Code (local worktrees / tooling; not part of the repo)
 .kilo/
 .ai/
+.cursor/
+/specs/
 
 .idea
 .DS_Store
