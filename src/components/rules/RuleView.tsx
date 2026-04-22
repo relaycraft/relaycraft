@@ -116,7 +116,7 @@ export function RuleView() {
     });
   });
 
-  const conflicts = getRuleConflicts(rules, groups);
+  const conflicts = getRuleConflicts(rules, groups, ruleGroups);
 
   return (
     <div className="h-full flex overflow-hidden">

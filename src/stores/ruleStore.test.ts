@@ -138,6 +138,86 @@ describe("ruleStore and algorithm logic", () => {
   });
 
   describe("Superset and Conflict Algorithm", () => {
+    it("should use store ruleGroups mapping when filtering disabled groups", () => {
+      const disabledTerminator = createRule("r-disabled", "Disabled", 1, { request: [] }, [
+        { type: "block_request" },
+      ]);
+      const activeRule = createRule("r-active", "Active", 2, { request: [] }, [
+        { type: "map_local", target: "request", value: "x" },
+      ]);
+
+      useRuleStore.setState({
+        rules: [disabledTerminator, activeRule],
+        groups: [createGroup("Disabled", 1, false), createGroup("Active", 2, true)],
+        ruleGroups: { "r-disabled": "Disabled", "r-active": "Active" },
+      });
+
+      const conflicts = getRuleConflicts(
+        useRuleStore.getState().rules,
+        useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
+      );
+
+      // r-disabled belongs to a disabled group and should not shadow r-active.
+      expect(conflicts["r-active"]).toBeUndefined();
+    });
+
+    it("should ignore group priority and follow flat execution order", () => {
+      const earlyByRulePriority = createRule("r-early", "LowPriorityGroup", 1, { request: [] }, [
+        { type: "block_request" },
+      ]);
+      earlyByRulePriority.name = "z-early";
+
+      const laterByRulePriority = createRule("r-late", "HighPriorityGroup", 2, { request: [] }, [
+        { type: "map_local", target: "request", value: "y" },
+      ]);
+      laterByRulePriority.name = "a-late";
+
+      useRuleStore.setState({
+        rules: [laterByRulePriority, earlyByRulePriority],
+        groups: [
+          createGroup("HighPriorityGroup", 1, true),
+          createGroup("LowPriorityGroup", 99, true),
+        ],
+        ruleGroups: { "r-early": "LowPriorityGroup", "r-late": "HighPriorityGroup" },
+      });
+
+      const conflicts = getRuleConflicts(
+        useRuleStore.getState().rules,
+        useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
+      );
+
+      // Group priority should not affect execution/conflict order.
+      expect(conflicts["r-late"]).toEqual({ type: "shadowed", byRuleId: "r-early" });
+    });
+
+    it("should break same-priority ties by name then id", () => {
+      const alphaTerminator = createRule("r-alpha", "G1", 10, { request: [] }, [
+        { type: "block_request" },
+      ]);
+      alphaTerminator.name = "A";
+
+      const betaRule = createRule("r-beta", "G1", 10, { request: [] }, [
+        { type: "map_local", target: "request", value: "payload" },
+      ]);
+      betaRule.name = "B";
+
+      useRuleStore.setState({
+        rules: [betaRule, alphaTerminator],
+        groups: [createGroup("G1")],
+        ruleGroups: { "r-alpha": "G1", "r-beta": "G1" },
+      });
+
+      const conflicts = getRuleConflicts(
+        useRuleStore.getState().rules,
+        useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
+      );
+
+      expect(conflicts["r-beta"]).toEqual({ type: "shadowed", byRuleId: "r-alpha" });
+    });
+
     it("should detect shadowed conflicts correctly (Method shadow)", () => {
       // Rule 1 maps all GET requests
       const rule1 = createRule(
@@ -173,6 +253,7 @@ describe("ruleStore and algorithm logic", () => {
       const conflicts = getRuleConflicts(
         useRuleStore.getState().rules,
         useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
       );
 
       // r1 triggers a termination action (map_local) for a VERY BROAD match (GET or POST for any host)
@@ -218,6 +299,7 @@ describe("ruleStore and algorithm logic", () => {
       const conflicts = getRuleConflicts(
         useRuleStore.getState().rules,
         useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
       );
 
       // r1 blocks narrow scope, r2 blocks wide scope. It's fine, the wide scope catches everything else.
@@ -254,6 +336,7 @@ describe("ruleStore and algorithm logic", () => {
       const conflicts = getRuleConflicts(
         useRuleStore.getState().rules,
         useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
       );
 
       // r1 is broad but doesn't terminate, so r2 will still get executed.
@@ -292,6 +375,7 @@ describe("ruleStore and algorithm logic", () => {
       const conflicts = getRuleConflicts(
         useRuleStore.getState().rules,
         useRuleStore.getState().groups,
+        useRuleStore.getState().ruleGroups,
       );
 
       // Now r1 terminates, so r2 is shadowed.
