@@ -18,82 +18,24 @@ import base64
 import uuid
 import json
 import threading
-import codecs
-import hashlib
 from collections import deque
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple, List
 
-import string
 from mitmproxy import http, ctx
 
 from .debug import DebugManager
 from .utils import setup_logging
 from .flow_database import FlowDatabase
-
-# Professional translations for the certificate landing page
-I18N_CERT_LANDING = {
-    "zh": {
-        "lang": "zh-CN",
-        "title": "RelayCraft · 证书安装指南",
-        "tagline": "AI 原生网络流量调试工具",
-        "proxy_connected_label": "代理已连接",
-        "device_system_label": "选择设备系统",
-        "ios_label": "iOS",
-        "android_label": "Android",
-        "harmony_label": "HarmonyOS",
-        "dl_ios_btn": "下载 iOS 证书",
-        "dl_android_btn": "下载 Android 证书",
-        "dl_harmony_btn": "下载 HarmonyOS 证书",
-        "step_ios_1": "在 <strong>Safari</strong> 浏览器中点击允许下载",
-        "step_ios_2": "进入 <strong>设置 → 已下载描述文件</strong> 进行安装",
-        "step_ios_3": "进入 <strong>通用 → 关于本机 → 证书信任设置</strong>",
-        "step_ios_4": "勾选 <strong>RelayCraft CA</strong> 开启完全信任",
-        "step_android_1": "点击上方按钮下载 <code>.crt</code> 证书文件",
-        "step_android_2": "进入 <strong>系统设置 → 安全 → 从存储设备安装</strong>",
-        "step_android_3": "选择 <strong>CA 证书</strong> 选项",
-        "step_android_4": "在文件选择器中找到下载的证书并确认",
-        "step_harmony_1": "点击上方按钮下载 <code>.pem</code> 证书文件",
-        "step_harmony_2": "设置 → 安全 → 更多安全设置 → 加密和凭据",
-        "step_harmony_3": "点击 <strong>从存储设备安装</strong> → <strong>CA 证书</strong>",
-        "step_harmony_4": "在下载目录选择证书并确认安装",
-        "manual_install_label": "手动下载格式",
-        "pem_format_label": "PEM 格式",
-        "crt_format_label": "CRT 格式",
-        "warning_text": "仅供本地调试使用。请勿在非信任设备上安装。",
-        "footer_text": "RelayCraft · AI 原生网络流量调试工具",
-    },
-    "en": {
-        "lang": "en-US",
-        "title": "RelayCraft · Certificate Guide",
-        "tagline": "AI-Native Web Traffic Debugging Tool",
-        "proxy_connected_label": "Proxy Connected",
-        "device_system_label": "Device System",
-        "ios_label": "iOS",
-        "android_label": "Android",
-        "harmony_label": "HarmonyOS",
-        "dl_ios_btn": "Download for iOS",
-        "dl_android_btn": "Download for Android",
-        "dl_harmony_btn": "Download for HarmonyOS",
-        "step_ios_1": "Allow download in <strong>Safari</strong>",
-        "step_ios_2": "Install in <strong>Settings → Profile Downloaded</strong>",
-        "step_ios_3": "Go to <strong>General → About → Trust Settings</strong>",
-        "step_ios_4": "Enable full trust for <strong>RelayCraft CA</strong>",
-        "step_android_1": "Download the <code>.crt</code> certificate file",
-        "step_android_2": "Go to <strong>Settings → Security → Install from storage</strong>",
-        "step_android_3": "Select <strong>CA Certificate</strong>",
-        "step_android_4": "Choose the RelayCraft file to confirm",
-        "step_harmony_1": "Download the <code>.pem</code> certificate file",
-        "step_harmony_2": "Settings → Security → More → Encryption & Credentials",
-        "step_harmony_3": "Tap <strong>Install from storage</strong> → <strong>CA Certificate</strong>",
-        "step_harmony_4": "Select the certificate from Downloads to confirm",
-        "manual_install_label": "Manual Install",
-        "pem_format_label": "PEM Format",
-        "crt_format_label": "CRT Format",
-        "warning_text": "For local debugging only. Do not install on untrusted devices.",
-        "footer_text": "RelayCraft · AI-Native Web Traffic Debugging Tool",
-    }
-}
+from .har_converters import (
+    cookies_to_har,
+    headers_to_har,
+    normalize_har_entries,
+    query_to_har,
+    safe_decode,
+)
+from .i18n_cert import build_cert_template_vars
+from . import sse_processor, ws_handler
 
 
 class TrafficMonitor:
@@ -127,274 +69,37 @@ class TrafficMonitor:
     # ==================== SSE Processing ====================
 
     def _is_sse_content_type(self, content_type: str) -> bool:
-        return "text/event-stream" in (content_type or "").lower()
+        return sse_processor.is_sse_content_type(content_type)
 
     def _is_client_disconnect_error(self, err_msg: str) -> bool:
-        if not err_msg:
-            return False
-        err_lower = err_msg.lower()
-        disconnect_markers = (
-            "client disconnected",
-            "client disconnect",
-            "connection reset by peer",
-            "broken pipe",
-            "connection closed",
-            "stream closed",
-            "peer closed connection",
-            "eof",
-            "cancelled",
-            "canceled",
-        )
-        return any(marker in err_lower for marker in disconnect_markers)
+        return sse_processor.is_client_disconnect_error(err_msg)
 
     def _get_response_content_type(self, flow: http.HTTPFlow) -> str:
-        if not flow or not flow.response:
-            return ""
-        for k, v in flow.response.headers.items():
-            if k.lower() == "content-type":
-                return v or ""
-        return ""
+        return sse_processor.get_response_content_type(flow)
 
     def _ensure_sse_state(self, flow_id: str) -> Dict[str, Any]:
-        state = self._sse_states.get(flow_id)
-        if state is None:
-            state = {
-                "flow_id": flow_id,
-                "buffer": "",
-                "events": deque(maxlen=self._sse_max_events_per_flow),
-                "next_seq": 0,
-                "stream_open": True,
-                "dropped_count": 0,
-                "finalized": False,
-                "decoder": codecs.getincrementaldecoder("utf-8")(errors="replace"),
-                "last_touched": time.time(),
-            }
-            self._sse_states[flow_id] = state
-        else:
-            state["last_touched"] = time.time()
-        return state
+        return sse_processor.ensure_sse_state(self, flow_id)
 
     def _cleanup_inactive_sse_states_locked(self, now_ts: Optional[float] = None) -> None:
-        now = now_ts if now_ts is not None else time.time()
-        stale_ids: List[str] = []
-        for flow_id, state in self._sse_states.items():
-            if state.get("stream_open", False):
-                continue
-            last_touched = float(state.get("last_touched", now))
-            if now - last_touched >= self._sse_state_retention_seconds:
-                stale_ids.append(flow_id)
-        for flow_id in stale_ids:
-            self._sse_states.pop(flow_id, None)
+        sse_processor.cleanup_inactive_sse_states_locked(self, now_ts)
 
     def bind_sse_stream_if_needed(self, flow: http.HTTPFlow) -> None:
-        """Attach mitmproxy stream callback for SSE flows."""
-        if not flow or not flow.response:
-            return
-
-        content_type = self._get_response_content_type(flow)
-        if not self._is_sse_content_type(content_type):
-            return
-
-        flow.metadata["_relaycraft_is_sse"] = True
-        flow.metadata["_relaycraft_msg_ts"] = time.time()
-
-        with self._sse_lock:
-            self._cleanup_inactive_sse_states_locked()
-            state = self._ensure_sse_state(flow.id)
-            state["stream_open"] = True
-            state["finalized"] = False
-            state["last_touched"] = time.time()
-
-        # Ensure frontend can identify this flow as SSE before connection closes.
-        flow_data = self.process_flow(flow)
-        if flow_data:
-            self._store_flow(flow_data)
-
-        def _stream_handler(chunk: bytes) -> bytes:
-            try:
-                self.handle_sse_chunk(flow.id, chunk)
-            except Exception as e:
-                self.logger.debug(f"SSE chunk handler error: {e}")
-            return chunk
-
-        flow.response.stream = _stream_handler
+        sse_processor.bind_sse_stream_if_needed(self, flow)
 
     def handle_sse_chunk(self, flow_id: str, chunk: bytes) -> None:
-        if not flow_id or chunk is None:
-            return
-
-        persisted_events: List[Dict[str, Any]] = []
-        with self._sse_lock:
-            state = self._ensure_sse_state(flow_id)
-            decoder = state.get("decoder")
-            if decoder is None:
-                decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
-                state["decoder"] = decoder
-
-            text = decoder.decode(chunk)
-            text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-            state["buffer"] += text
-            state["stream_open"] = True
-            state["finalized"] = False
-            state["last_touched"] = time.time()
-
-            # Guard rail: malformed streams without frame delimiter can cause unbounded growth.
-            if len(state["buffer"].encode("utf-8")) > self._sse_max_buffer_bytes:
-                overflow_raw = state["buffer"]
-                state["buffer"] = ""
-                state["dropped_count"] += 1
-                parsed = self._parse_sse_frame_locked(state, overflow_raw)
-                if parsed:
-                    persisted_events.append(parsed)
-
-            parts = state["buffer"].split("\n\n")
-            state["buffer"] = parts.pop() if parts else ""
-
-            for raw_event in parts:
-                parsed = self._parse_sse_frame_locked(state, raw_event)
-                if parsed:
-                    persisted_events.append(parsed)
-
-        self._persist_sse_events(flow_id, persisted_events)
+        sse_processor.handle_sse_chunk(self, flow_id, chunk)
 
     def _parse_sse_frame_locked(self, state: Dict[str, Any], raw_event: str) -> Optional[Dict[str, Any]]:
-        lines = raw_event.split("\n")
-        data_lines: List[str] = []
-        event_name: Optional[str] = None
-        event_id: Optional[str] = None
-        retry: Optional[int] = None
-
-        for line in lines:
-            if not line:
-                continue
-            if line.startswith(":"):
-                continue
-
-            if ":" in line:
-                field, value = line.split(":", 1)
-                if value.startswith(" "):
-                    value = value[1:]
-            else:
-                field, value = line, ""
-
-            if field == "data":
-                data_lines.append(value)
-            elif field == "event":
-                event_name = value
-            elif field == "id":
-                event_id = value
-            elif field == "retry":
-                try:
-                    retry = int(value)
-                except (TypeError, ValueError):
-                    retry = None
-
-        if not data_lines and event_name is None and event_id is None and retry is None:
-            return None
-
-        event = {
-            "flowId": state["flow_id"],
-            "seq": state["next_seq"],
-            "ts": int(time.time() * 1000),
-            "event": event_name,
-            "id": event_id,
-            "retry": retry,
-            "data": "\n".join(data_lines),
-            "rawSize": len(raw_event.encode("utf-8")),
-        }
-
-        state["next_seq"] += 1
-        events: deque = state["events"]
-        was_full = len(events) == events.maxlen
-        events.append(event)
-        if was_full:
-            state["dropped_count"] += 1
-        return event
+        return sse_processor.parse_sse_frame_locked(state, raw_event)
 
     def get_sse_events(self, flow_id: str, since_seq: int = 0, limit: int = 0) -> Dict[str, Any]:
-        limit_value = limit or self._sse_default_limit
-        limit_value = max(1, min(limit_value, self._sse_max_limit))
-        since = max(0, since_seq)
-
-        with self._sse_lock:
-            self._cleanup_inactive_sse_states_locked()
-            state = self._sse_states.get(flow_id)
-            if state is None:
-                payload = self.db.get_sse_events(flow_id, since_seq=since, limit=limit_value)
-                return {
-                    "flowId": flow_id,
-                    "events": payload.get("events", []),
-                    "nextSeq": int(payload.get("nextSeq", since)),
-                    "streamOpen": False,
-                    "droppedCount": 0,
-                }
-
-            events = [e for e in list(state["events"]) if e.get("seq", -1) >= since]
-            events = events[:limit_value]
-            next_seq = state["next_seq"]
-            if events:
-                next_seq = events[-1]["seq"] + 1
-
-            return {
-                "flowId": flow_id,
-                "events": events,
-                "nextSeq": next_seq,
-                "streamOpen": bool(state.get("stream_open", False)),
-                "droppedCount": int(state.get("dropped_count", 0)),
-            }
+        return sse_processor.get_sse_events(self, flow_id, since_seq, limit)
 
     def _persist_sse_events(self, flow_id: str, events: List[Dict[str, Any]]) -> None:
-        if not flow_id or not events:
-            return
-        db = getattr(self, "db", None)
-        if db is None or not hasattr(db, "store_sse_events"):
-            return
-        try:
-            db.store_sse_events(flow_id, events)
-        except Exception as e:
-            self.logger.debug(f"SSE events persistence failed: {e}")
+        sse_processor.persist_sse_events(self, flow_id, events)
 
     def finalize_sse_flow(self, flow: http.HTTPFlow, stream_open: bool = False) -> None:
-        if not flow or not flow.id:
-            return
-        if not flow.metadata.get("_relaycraft_is_sse"):
-            return
-
-        persisted_events: List[Dict[str, Any]] = []
-        with self._sse_lock:
-            state = self._ensure_sse_state(flow.id)
-            state["stream_open"] = bool(stream_open)
-            state["last_touched"] = time.time()
-            already_finalized = bool(state.get("finalized", False))
-            # Try to parse a trailing frame without delimiter on stream end.
-            tail = state.get("buffer", "")
-            tail_flushed = False
-            if not stream_open:
-                if not already_finalized:
-                    decoder = state.get("decoder")
-                    if decoder is not None:
-                        flushed = decoder.decode(b"", final=True)
-                        if flushed:
-                            tail = f"{tail}{flushed}"
-                state["buffer"] = ""
-                if tail:
-                    parsed = self._parse_sse_frame_locked(state, tail)
-                    if parsed:
-                        persisted_events.append(parsed)
-                    tail_flushed = True
-                state["finalized"] = True
-            else:
-                state["finalized"] = False
-            should_store = (not already_finalized) or tail_flushed
-            self._cleanup_inactive_sse_states_locked()
-
-        self._persist_sse_events(flow.id, persisted_events)
-        if should_store:
-            flow.metadata["_relaycraft_msg_ts"] = time.time()
-            flow_data = self.process_flow(flow)
-            if flow_data:
-                self._store_flow(flow_data)
+        sse_processor.finalize_sse_flow(self, flow, stream_open)
 
     # ==================== Content Processing ====================
 
@@ -459,55 +164,16 @@ class TrafficMonitor:
     # ==================== HAR Format Converters ====================
 
     def headers_to_har(self, headers) -> List[Dict[str, str]]:
-        """
-        Convert mitmproxy headers to HAR format.
-
-        @note Uses .fields to preserve all values including duplicates
-        """
-        result = []
-        for name, value in headers.fields:
-            result.append({
-                "name": self._safe_decode(name),
-                "value": self._safe_decode(value),
-            })
-        return result
+        return headers_to_har(headers)
 
     def cookies_to_har(self, cookies) -> List[Dict[str, Any]]:
-        """
-        Convert mitmproxy cookies to HAR format.
-
-        @note Uses .fields to preserve all values including duplicates
-        """
-        result = []
-        for name, value in cookies.fields:
-            result.append({
-                "name": self._safe_decode(name),
-                "value": self._safe_decode(value),
-            })
-        return result
+        return cookies_to_har(cookies)
 
     def query_to_har(self, query) -> List[Dict[str, str]]:
-        """
-        Convert mitmproxy query to HAR format.
-
-        @note Uses .fields to preserve all values including duplicates
-        """
-        result = []
-        for name, value in query.fields:
-            result.append({
-                "name": self._safe_decode(name),
-                "value": self._safe_decode(value),
-            })
-        return result
+        return query_to_har(query)
 
     def _safe_decode(self, value) -> str:
-        """Safely decode bytes to string."""
-        if isinstance(value, bytes):
-            try:
-                return value.decode('utf-8')
-            except UnicodeDecodeError:
-                return value.decode('latin-1')
-        return str(value)
+        return safe_decode(value)
 
     # ==================== Flow Processing ====================
 
@@ -980,266 +646,45 @@ class TrafficMonitor:
             self._store_flow(flow_data)
 
     def register_ws_flow(self, flow: http.HTTPFlow) -> None:
-        """Register an active WebSocket flow so it can receive injected frames."""
-        if not flow or not getattr(flow, "id", None):
-            return
-        with self._ws_flows_lock:
-            self._ws_flows[flow.id] = flow
+        ws_handler.register_ws_flow(self, flow)
 
     def unregister_ws_flow(self, flow: http.HTTPFlow) -> None:
-        """Remove a WebSocket flow from the inject registry when it closes."""
-        if not flow or not getattr(flow, "id", None):
-            return
-        with self._ws_flows_lock:
-            self._ws_flows.pop(flow.id, None)
+        ws_handler.unregister_ws_flow(self, flow)
 
     def _is_ws_closed(self, ws: Any) -> bool:
-        """Check whether a mitmproxy WebSocketData is already closed on either side."""
-        if ws is None:
-            return True
-        return bool(
-            getattr(ws, "closed_at_client", None)
-            or getattr(ws, "closed_at_server", None)
-        )
+        return ws_handler.is_ws_closed(ws)
 
     def _ws_has_close_frame(self, ws: Any) -> bool:
-        """Best-effort close detection from captured WS CLOSE frames."""
-        messages = getattr(ws, "messages", None) or []
-        for msg in reversed(messages[-20:]):
-            msg_type = getattr(getattr(msg, "type", None), "name", None)
-            if msg_type is None:
-                msg_type = str(getattr(msg, "type", "")).lower()
-            else:
-                msg_type = str(msg_type).lower()
-            if msg_type == "close":
-                return True
-        return False
+        return ws_handler.ws_has_close_frame(ws)
 
     def _ensure_injected_seq_set(self, flow: http.HTTPFlow) -> set:
-        injected_seqs = flow.metadata.setdefault("_relaycraft_injected_seqs", set())
-        if not isinstance(injected_seqs, set):
-            injected_seqs = set(injected_seqs)
-            flow.metadata["_relaycraft_injected_seqs"] = injected_seqs
-        return injected_seqs
+        return ws_handler.ensure_injected_seq_set(flow)
 
     def _payload_fingerprint(self, payload_bytes: bytes) -> Dict[str, Any]:
-        return {
-            "len": len(payload_bytes),
-            "sha256": hashlib.sha256(payload_bytes).hexdigest(),
-        }
+        return ws_handler.payload_fingerprint(payload_bytes)
 
     def _message_matches_fingerprint(
         self, message: Any, is_text: bool, fingerprint: Dict[str, Any]
     ) -> bool:
-        if bool(getattr(message, "from_client", False)) is not True:
-            return False
-        if bool(getattr(message, "is_text", False)) is not bool(is_text):
-            return False
-        content = getattr(message, "content", None)
-        if not isinstance(content, (bytes, bytearray)):
-            return False
-        if len(content) != fingerprint["len"]:
-            return False
-        return hashlib.sha256(bytes(content)).hexdigest() == fingerprint["sha256"]
+        return ws_handler.message_matches_fingerprint(message, is_text, fingerprint)
 
     def _append_pending_injected_marker(
         self, flow: http.HTTPFlow, lower_bound: int, is_text: bool, fingerprint: Dict[str, Any]
     ) -> None:
-        pending = flow.metadata.setdefault("_relaycraft_pending_injected", [])
-        if not isinstance(pending, list):
-            pending = []
-            flow.metadata["_relaycraft_pending_injected"] = pending
-        pending.append(
-            {
-                "lower_bound": max(0, int(lower_bound)),
-                "is_text": bool(is_text),
-                "len": int(fingerprint["len"]),
-                "sha256": str(fingerprint["sha256"]),
-                "created_at": time.time(),
-            }
-        )
+        ws_handler.append_pending_injected_marker(flow, lower_bound, is_text, fingerprint)
 
     def _resolve_pending_injected_markers(self, flow: http.HTTPFlow, ws: Any) -> None:
-        pending = flow.metadata.get("_relaycraft_pending_injected")
-        if not pending or not isinstance(pending, list):
-            return
-        messages = getattr(ws, "messages", None) or []
-        if not messages:
-            return
-
-        injected_seqs = self._ensure_injected_seq_set(flow)
-        now = time.time()
-        ttl_seconds = 15.0
-        unresolved: List[Dict[str, Any]] = []
-
-        resolved_count = 0
-        for marker in pending:
-            if not isinstance(marker, dict):
-                continue
-            created_at = float(marker.get("created_at", now))
-            if now - created_at > ttl_seconds:
-                continue
-            lower_bound = max(0, int(marker.get("lower_bound", 0)))
-            marker_fp = {
-                "len": int(marker.get("len", 0)),
-                "sha256": str(marker.get("sha256", "")),
-            }
-            marker_is_text = bool(marker.get("is_text", False))
-            matched = False
-            for seq in range(lower_bound, len(messages)):
-                if seq in injected_seqs:
-                    continue
-                if self._message_matches_fingerprint(messages[seq], marker_is_text, marker_fp):
-                    injected_seqs.add(seq)
-                    matched = True
-                    resolved_count += 1
-                    break
-            if not matched:
-                unresolved.append(marker)
-
-        if unresolved:
-            flow.metadata["_relaycraft_pending_injected"] = unresolved
-        else:
-            flow.metadata.pop("_relaycraft_pending_injected", None)
-        if resolved_count > 0:
-            self.logger.debug(
-                "Resolved pending WS injected markers for flow %s: +%s (remaining=%s)",
-                getattr(flow, "id", ""),
-                resolved_count,
-                len(unresolved),
-            )
+        ws_handler.resolve_pending_injected_markers(self, flow, ws)
 
     def inject_ws_frame(
         self, flow_id: str, type_: str, payload: str
     ) -> Tuple[int, Dict[str, Any]]:
-        """Inject a WebSocket frame from client to server on an active flow.
-
-        Returns (http_status, body_dict). The body always follows the shape
-        {"ok": bool, "code"?: str, "message"?: str}.
-        """
-        if not flow_id:
-            return 404, {
-                "ok": False,
-                "code": "flow_not_found",
-                "message": "flow_id is missing",
-            }
-
-        with self._ws_flows_lock:
-            flow = self._ws_flows.get(flow_id)
-
-        if not flow or not getattr(flow, "websocket", None):
-            return 404, {
-                "ok": False,
-                "code": "flow_not_found",
-                "message": f"No active WebSocket flow for id {flow_id}",
-            }
-
-        ws = flow.websocket
-        if self._is_ws_closed(ws):
-            # Drop from registry proactively so the next call short-circuits.
-            self.unregister_ws_flow(flow)
-            return 409, {
-                "ok": False,
-                "code": "flow_closed",
-                "message": "WebSocket connection is already closed",
-            }
-
-        if type_ not in ("text", "binary"):
-            return 400, {
-                "ok": False,
-                "code": "invalid_payload",
-                "message": f"Unsupported frame type: {type_!r}",
-            }
-
-        is_text = type_ == "text"
-        try:
-            if is_text:
-                if not isinstance(payload, str):
-                    raise TypeError("text payload must be a string")
-                payload_bytes = payload.encode("utf-8")
-            else:
-                if not isinstance(payload, str):
-                    raise TypeError("binary payload must be a base64 string")
-                payload_bytes = base64.b64decode(payload, validate=True)
-        except Exception as e:
-            return 400, {
-                "ok": False,
-                "code": "invalid_payload",
-                "message": f"Invalid payload: {e}",
-            }
-
-        if len(payload_bytes) > self._ws_inject_max_payload_bytes:
-            return 400, {
-                "ok": False,
-                "code": "invalid_payload",
-                "message": (
-                    f"Payload {len(payload_bytes)} bytes exceeds 1 MiB limit"
-                ),
-            }
-
-        try:
-            # Snapshot message length before injection for best-effort seq
-            # correlation.
-            before_len = len(getattr(ws, "messages", None) or [])
-            # mitmproxy inject.websocket's direction flag is "to_client":
-            # False => client -> server, True => server -> client.
-            # Our WS resend scope is fixed to client -> server.
-            ctx.master.commands.call(
-                "inject.websocket", flow, False, payload_bytes, is_text
-            )
-            # Only mark injected seq after inject call succeeds. This avoids
-            # stale metadata when injection fails.
-            after_len = len(getattr(ws, "messages", None) or [])
-            injected_seqs = self._ensure_injected_seq_set(flow)
-            fingerprint = self._payload_fingerprint(payload_bytes)
-            matched_seq: Optional[int] = None
-            messages_after = getattr(ws, "messages", None) or []
-            if after_len > before_len and messages_after:
-                for seq in range(before_len, after_len):
-                    if seq >= len(messages_after):
-                        break
-                    if self._message_matches_fingerprint(
-                        messages_after[seq], is_text, fingerprint
-                    ):
-                        matched_seq = seq
-                        break
-            if matched_seq is not None:
-                injected_seqs.add(matched_seq)
-                self.logger.debug(
-                    "WS inject matched immediately for flow %s at seq=%s (before=%s after=%s)",
-                    flow_id,
-                    matched_seq,
-                    before_len,
-                    after_len,
-                )
-            else:
-                # Fallback for asynchronous append / concurrent frame races:
-                # defer matching to process_flow where more messages are visible.
-                self._append_pending_injected_marker(
-                    flow, lower_bound=before_len, is_text=is_text, fingerprint=fingerprint
-                )
-                pending = flow.metadata.get("_relaycraft_pending_injected") or []
-                self.logger.debug(
-                    "WS inject deferred marker for flow %s (before=%s after=%s pending=%s)",
-                    flow_id,
-                    before_len,
-                    after_len,
-                    len(pending) if isinstance(pending, list) else 0,
-                )
-            return 200, {"ok": True}
-        except Exception as e:
-            self.logger.error(f"Error injecting WebSocket frame: {e}")
-            return 500, {
-                "ok": False,
-                "code": "engine_error",
-                "message": str(e),
-            }
+        return ws_handler.inject_ws_frame(self, flow_id, type_, payload)
 
     # ==================== HTTP Handlers ====================
 
     async def handle_request(self, flow: http.HTTPFlow) -> None:
         """Handle polling and control requests."""
-        import json
         from mitmproxy.http import Response
 
         # CORS preflight
@@ -2198,9 +1643,6 @@ class TrafficMonitor:
         elif "/_relay/import_har" in flow.request.path and "_file" not in flow.request.path:
             try:
                 if flow.request.method == "POST":
-                    import uuid as _uuid
-                    from urllib.parse import urlparse
-
                     har_data = json.loads(flow.request.content.decode('utf-8'))
                     entries = har_data.get("log", {}).get("entries", []) or []
 
@@ -2234,7 +1676,6 @@ class TrafficMonitor:
         elif "/_relay/import_har_file" in flow.request.path:
             try:
                 if flow.request.method == "POST":
-                    from urllib.parse import urlparse
                     import os as _os
 
                     req_data = json.loads(flow.request.content.decode('utf-8'))
@@ -2277,7 +1718,6 @@ class TrafficMonitor:
                         try:
                             import ijson
                             import time
-                            import threading
                             
                             with open(file_path, 'rb') as fh:
                                 entries_stream = ijson.items(fh, "log.entries.item")
@@ -2403,12 +1843,7 @@ class TrafficMonitor:
                     return
 
                 # ── Landing page ───────────────────────────────────────────────
-                # 1. Detect language
-                lang_header = flow.request.headers.get("accept-language", "").lower()
-                lang = "zh" if "zh" in lang_header else "en"
-                t_vars = I18N_CERT_LANDING[lang].copy()
-
-                # 2. Determine proxy address for display
+                # 1. Determine proxy address for display
                 try:
                     proxy_host = flow.request.host if flow.request.host != "relay.guide" else "127.0.0.1"
                     current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
@@ -2416,23 +1851,15 @@ class TrafficMonitor:
                 except Exception as e:
                     self.logger.debug(f"Failed to get proxy address, using default: {e}")
                     proxy_addr = "127.0.0.1:9090"
-                t_vars["proxy_addr"] = proxy_addr
+                t_vars = build_cert_template_vars(
+                    flow.request.headers.get("accept-language", ""),
+                    flow.request.headers.get("user-agent", ""),
+                    proxy_addr,
+                )
 
-                # 3. Detect OS for default tab
-                ua = flow.request.headers.get("user-agent", "").lower()
-                if "iphone" in ua or "ipad" in ua or "macintosh" in ua or "mac os x" in ua:
-                    detected_os = "ios"
-                elif "harmony" in ua or "hms" in ua or "openharmony" in ua:
-                    detected_os = "harmony"
-                elif "android" in ua:
-                    detected_os = "android"
-                else:
-                    # Default to android for other mobile contexts
-                    detected_os = "android"
-                t_vars["detected_os"] = detected_os
-
-                # 4. Load and render template
+                # 2. Load and render template
                 try:
+                    import string
                     assets_dir = os.path.join(os.path.dirname(__file__), "assets")
                     template_path = os.path.join(assets_dir, "cert_landing.html")
                     with open(template_path, "r", encoding="utf-8") as f:
@@ -2511,73 +1938,7 @@ class TrafficMonitor:
         Returns:
             Tuple of (flows list, indices list)
         """
-        import uuid as _uuid
-        from urllib.parse import urlparse
-
-        flows = []
-        indices = []
-        base_ts = time.time()
-
-        for idx, entry in enumerate(entries):
-            if not entry:
-                continue
-
-            flow_id = str(_uuid.uuid4())
-            req = entry.get("request") or {}
-            url = req.get("url") or ""
-            parsed = urlparse(url) if url else None
-            resp = entry.get("response") or {}
-            resp_content = resp.get("content") or {}
-            rc = entry.get("_rc") or {}
-
-            msg_ts = base_ts + idx * 0.001
-
-            flow_data = {
-                "id": flow_id,
-                "msg_ts": msg_ts,
-                "request": req,
-                "response": resp,
-                "host": (parsed.hostname if parsed else "") or "",
-                "path": (parsed.path if parsed else "") or "",
-                "contentType": resp_content.get("mimeType") or "",
-                "startedDateTime": entry.get("startedDateTime") or "",
-                "time": entry.get("time") or 0,
-                "size": resp_content.get("size") or 0,
-                "_rc": rc,
-            }
-            flows.append(flow_data)
-
-            indices.append({
-                "id": flow_id,
-                "msg_ts": msg_ts,
-                "method": req.get("method") or "",
-                "url": url,
-                "host": flow_data["host"],
-                "path": flow_data["path"],
-                "status": resp.get("status") or 0,
-                "contentType": flow_data["contentType"],
-                "startedDateTime": flow_data["startedDateTime"],
-                "time": flow_data["time"],
-                "size": flow_data["size"],
-                "hasError": bool(rc.get("error")),
-                "hasRequestBody": bool((req.get("postData") or {}).get("text")),
-                "hasResponseBody": bool(resp_content.get("text")),
-                "isWebsocket": bool(rc.get("isWebsocket")),
-                "isSse": bool(rc.get("isSse")),
-                "websocketFrameCount": rc.get("websocketFrameCount") or 0,
-                "isIntercepted": bool((rc.get("intercept") or {}).get("intercepted")),
-                "hits": [
-                    {
-                        "id": (h or {}).get("id") or "",
-                        "name": (h or {}).get("name") or "",
-                        "type": (h or {}).get("type") or "",
-                        "status": (h or {}).get("status"),
-                    }
-                    for h in (rc.get("hits") or [])
-                ],
-            })
-
-        return flows, indices
+        return normalize_har_entries(entries)
 
     def _store_flow(self, flow_data: Dict) -> None:
         """Store flow data to database.
