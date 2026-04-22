@@ -1,16 +1,4 @@
-import {
-  Bot,
-  Check,
-  Code,
-  FileCode,
-  Loader2,
-  PlusCircle,
-  RotateCcw,
-  Sparkles,
-  SquareCode,
-  Wand2,
-  X,
-} from "lucide-react";
+import { Code, FileCode, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
@@ -35,13 +23,10 @@ import { useScriptStore } from "../../stores/scriptStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Rule } from "../../types/rules";
 import { Button } from "../common/Button";
-import { CopyButton } from "../common/CopyButton";
-import { Editor } from "../common/Editor";
-import { Input } from "../common/Input";
-import { Skeleton } from "../common/Skeleton";
-import { Switch } from "../common/Switch";
-import { Tooltip } from "../common/Tooltip";
-import { AIMarkdown } from "./AIMarkdown";
+import { AIRuleMode } from "./AIRuleAssistant/AIRuleMode";
+import { parseAIResponse } from "./AIRuleAssistant/parseAIResponse";
+import { ScriptMode } from "./AIRuleAssistant/ScriptMode";
+import { YAMLEditorMode } from "./AIRuleAssistant/YAMLEditorMode";
 
 interface AIRuleAssistantProps {
   initialRule?: Partial<Rule>;
@@ -324,133 +309,23 @@ export function AIRuleAssistant({
         { includeContext: false },
       );
 
-      // AI output should be JSON or contains JSON. Extract it.
-      let jsonString = "";
       let streamParseError: unknown = null;
-
-      // 1. Try to find JSON in markdown code blocks first (highest priority)
-      const codeBlockMatch = fullResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-      if (codeBlockMatch) {
-        jsonString = codeBlockMatch[1];
-      } else {
-        // Try to find the message content directly to avoid JSON wrap issues
-        const msgMatch = fullResponse.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (msgMatch && !fullResponse.includes('"rule"')) {
-          // This is likely an explanation. We can extract it directly to avoid parsing issues.
-          const content = msgMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
-          setExplanation(content);
-          return;
-        }
-
-        // 2. Try to find the largest balanced JSON-like structure
-        // We look for { and find its matching } by counting braces
-        const firstBraceIndex = fullResponse.indexOf("{");
-        if (firstBraceIndex !== -1) {
-          let braceCount = 0;
-          let lastBraceIndex = -1;
-          for (let i = firstBraceIndex; i < fullResponse.length; i++) {
-            if (fullResponse[i] === "{") braceCount++;
-            else if (fullResponse[i] === "}") {
-              braceCount--;
-              if (braceCount === 0) {
-                lastBraceIndex = i;
-                break; // Found the matching closing brace
-              }
-            }
-          }
-          if (lastBraceIndex !== -1) {
-            jsonString = fullResponse.substring(firstBraceIndex, lastBraceIndex + 1);
-          }
-        }
-
-        // 3. Fallback: If still not found, try the old method or fragment matching
-        if (!jsonString) {
-          const lastBrace = fullResponse.lastIndexOf("}");
-          if (firstBraceIndex !== -1 && lastBrace !== -1 && lastBrace > firstBraceIndex) {
-            jsonString = fullResponse.substring(firstBraceIndex, lastBrace + 1);
-          } else if (fullResponse.includes('"rule":') || fullResponse.includes('"name":')) {
-            const fragmentMatch = fullResponse.match(/("rule"|"name")\s*:\s*(\{[\s\S]*\}|"[^"]*")/);
-            if (fragmentMatch) {
-              jsonString = `{ ${fragmentMatch[0]} }`;
-            }
-          }
-        }
+      const parsedResult = parseAIResponse(fullResponse, { parseYAML });
+      if (parsedResult.type === "message") {
+        setYamlErrors([]);
+        setExplanation(parsedResult.message);
+        setPreview(null);
+        return;
       }
-
-      if (jsonString) {
-        try {
-          let aiData: any;
-          const tryParse = (str: string) => {
-            try {
-              return JSON.parse(str);
-            } catch (_e) {
-              // Try to fix common LLM JSON errors
-              const cleaned = str
-                .replace(/,\s*([\]}])/g, "$1") // remove trailing commas
-                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":') // ensure keys are quoted
-                .replace(/'/g, '"'); // replace single quotes with double quotes
-
-              try {
-                return JSON.parse(cleaned);
-              } catch (e2) {
-                // Last resort: if it's a raw YAML-like block that AI forgot to wrap
-                // (not a perfect fix, but helps with some models)
-                if (str.includes("name:") && str.includes("type:")) {
-                  try {
-                    const yamlParsed = parseYAML(str);
-                    if (yamlParsed && typeof yamlParsed === "object") return yamlParsed;
-                  } catch (_e3) {}
-                }
-                throw e2;
-              }
-            }
-          };
-
-          aiData = tryParse(jsonString);
-
-          // Case 1: Explanation / Chat Message
-          if (aiData.message && !aiData.rule) {
-            setYamlErrors([]);
-            // Extract content and handle escaping
-            let finalMsg = aiData.message;
-
-            // If it's still a JSON string (with escaped quotes and newlines), we need to unescape it
-            // The JSON.parse(jsonString) already gave us aiData.message as a string
-            // But if the LLM output was doubly stringified or the parser didn't handle it well:
-            if (
-              typeof finalMsg === "string" &&
-              finalMsg.startsWith('"') &&
-              finalMsg.endsWith('"')
-            ) {
-              try {
-                finalMsg = JSON.parse(finalMsg);
-              } catch (_e) {}
-            }
-
-            setExplanation(finalMsg);
-            setPreview(null);
-            return;
-          }
-
-          // Case 2: Rule Generation
-          const ruleData = aiData.rule || (aiData.name && aiData.type ? aiData : null);
-          if (ruleData) {
-            const internalRule = mapAIRuleToInternal(ruleData);
-            setPreview(internalRule);
-            setYamlErrors([]);
-
-            // Auto-fill YAML content
-            setYamlContent(stringifyYAML(internalRule));
-
-            // Clear explanation if it was just a loading hint
-            setExplanation(null);
-            return;
-          }
-        } catch (e) {
-          console.warn("Failed to parse extracted JSON", e, "Raw string:", jsonString);
-          streamParseError = e;
-        }
+      if (parsedResult.type === "rule") {
+        const internalRule = mapAIRuleToInternal(parsedResult.ruleData);
+        setPreview(internalRule);
+        setYamlErrors([]);
+        setYamlContent(stringifyYAML(internalRule));
+        setExplanation(null);
+        return;
       }
+      streamParseError = parsedResult.parseError;
 
       // Final fallback: if we couldn't parse as a rule but it's clearly a rule intent
       if (detectedIntent === "rule" && !preview) {
@@ -567,6 +442,21 @@ export function AIRuleAssistant({
     });
   };
 
+  const initialYaml = initialRule ? stringifyYAML(initialRule) : "";
+  const canApplyYaml = !!initialRule && yamlContent !== initialYaml;
+
+  const handleGenerateWithPrompt = (value: string) => {
+    setPrompt(value);
+    handleGenerate(value);
+  };
+
+  const handleEditPreviewYAML = () => {
+    if (preview) {
+      setYamlContent(stringifyYAML(preview));
+      setMode("yaml");
+    }
+  };
+
   return (
     <div className="relative w-full bg-background/50 backdrop-blur-xl">
       <div className="relative z-10 w-full bg-background/20 backdrop-blur-md">
@@ -615,284 +505,50 @@ export function AIRuleAssistant({
           className="px-6 py-4 space-y-4 overflow-y-auto max-h-[500px] scroll-smooth"
         >
           {mode === "ai" && aiSettings.enabled && (
-            <>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                    placeholder={t("rules.editor.ai.placeholder")}
-                    className="pr-10 text-xs rounded-xl h-8 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40"
-                    autoFocus
-                  />
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                    {generating ? (
-                      <div className="p-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      </div>
-                    ) : (
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => handleGenerate()}
-                        disabled={!prompt}
-                        className="hover:bg-transparent"
-                      >
-                        <Wand2 className="w-4 h-4 text-primary hover:scale-110 transition-transform disabled:opacity-30" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {initialRule?.id ? (
-                  <>
-                    <button
-                      onClick={() => {
-                        const p = t("rules.editor.ai.chip_explain");
-                        setPrompt(p);
-                        handleGenerate(p);
-                      }}
-                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                    >
-                      {t("rules.editor.ai.chip_explain")}
-                    </button>
-                    <button
-                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_modify")}: `)}
-                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                    >
-                      {t("rules.editor.ai.chip_modify")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_create")}: `)}
-                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                    >
-                      {t("rules.editor.ai.chip_create")}
-                    </button>
-                    <button
-                      onClick={() => setPrompt(`${t("rules.editor.ai.chip_import")}: `)}
-                      className="text-xs font-bold px-3 py-1 bg-muted/20 border border-border/10 rounded-full hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all text-muted-foreground"
-                    >
-                      {t("rules.editor.ai.chip_import")}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {generating && detectedIntent === "rule" && (
-                <div className="p-3 bg-card border border-primary/10 rounded-xl animate-in fade-in duration-500 shadow-sm space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-14 rounded bg-primary/10" />
-                    <Skeleton className="h-4 w-24 rounded bg-muted" />
-                  </div>
-                  <Skeleton className="h-2.5 w-full rounded bg-muted/60" />
-                  <div className="flex justify-end gap-2 pt-0.5">
-                    <Skeleton className="h-7 w-16 rounded bg-muted/40" />
-                    <Skeleton className="h-7 w-20 rounded bg-primary/20" />
-                  </div>
-                </div>
-              )}
-
-              {preview && (
-                <div className="flex items-center justify-between p-3 bg-card border border-primary/20 rounded-xl animate-in fade-in zoom-in-95 duration-200 shadow-sm">
-                  <div className="flex flex-col gap-1 overflow-hidden">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded uppercase flex-shrink-0">
-                        {preview.type
-                          ? t(
-                              `rules.editor.core.types.${preview.type === "rewrite_header" ? "rewrite" : preview.type === "block_request" ? "block" : preview.type}_label`,
-                            )
-                          : "UNKNOWN"}
-                      </span>
-                      <span className="text-xs font-semibold text-foreground truncate">
-                        {preview.name}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground font-mono truncate">
-                      {t("rules.editor.match.label", "Match")}:{" "}
-                      {preview.match?.request?.find((a) => a.type === "url")?.value || ""}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="quiet"
-                      size="sm"
-                      onClick={() => {
-                        if (preview) {
-                          setYamlContent(stringifyYAML(preview));
-                          setMode("yaml");
-                        }
-                      }}
-                      className="text-xs h-8"
-                    >
-                      <Code className="w-3 h-3 mr-1" />
-                      {t("rules.editor.ai.edit_yaml")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => preview && onApply(preview)}
-                      className="flex-shrink-0 gap-1.5 shadow-sm shadow-primary/20"
-                    >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      {t("rules.editor.ai.fill_form")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {explanation && (detectedIntent !== "rule" || !generating) && (
-                <div className="bg-muted/50 rounded-xl p-4 mb-4 animate-in fade-in slide-in-from-bottom-2 border border-border/40 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -mr-12 -mt-12" />
-                  <div className="flex items-start gap-4 relative z-10">
-                    <div className="mt-1 p-1 bg-primary/10 rounded-lg">
-                      <Bot className="w-4 h-4 text-primary shrink-0" />
-                    </div>
-                    <div className="space-y-2 flex-1 overflow-hidden">
-                      {detectedIntent === "explain" && (
-                        <h4 className="text-xs font-bold text-primary tracking-widest uppercase">
-                          {t("rules.editor.ai.analysis_title")}
-                        </h4>
-                      )}
-                      <div>
-                        <AIMarkdown content={explanation || ""} />
-                        {generating && (
-                          <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!(preview || generating || explanation) && <div />}
-            </>
+            <AIRuleMode
+              t={t}
+              prompt={prompt}
+              generating={generating}
+              detectedIntent={detectedIntent}
+              preview={preview}
+              explanation={explanation}
+              initialRule={initialRule}
+              onPromptChange={setPrompt}
+              onGenerate={() => handleGenerate()}
+              onGenerateWithPrompt={handleGenerateWithPrompt}
+              onEditPreviewYAML={handleEditPreviewYAML}
+              onApplyPreview={() => preview && onApply(preview)}
+            />
           )}
 
           {mode === "yaml" && (
-            <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="relative group border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-[400px] focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                <Editor
-                  language="yaml"
-                  value={yamlContent}
-                  onChange={(val: string) => {
-                    setYamlContent(val);
-                    setYamlErrors([]);
-                  }}
-                  options={{
-                    lineNumbers: "on",
-                    tabSize: 2,
-                    lineWrapping: true,
-                  }}
-                />
-                <div className="absolute right-3 top-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <Tooltip content={t("common.beautify")}>
-                    <Button variant="quiet" size="icon-sm" onClick={handleBeautify}>
-                      <SquareCode className="w-3 h-3" />
-                    </Button>
-                  </Tooltip>
-                  <CopyButton text={yamlContent} variant="quiet" className="h-8 w-8" />
-                </div>
-              </div>
-
-              {yamlErrors.length > 0 && (
-                <div className="space-y-1">
-                  {yamlErrors.map((err, i) => (
-                    <div key={i} className="text-xs text-destructive flex items-start gap-1 px-1">
-                      <X className="w-3 h-3 mt-0.5 shrink-0" />
-                      <span>{err}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex justify-end items-center pt-1">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="quiet"
-                    size="sm"
-                    onClick={handleResetYAML}
-                    disabled={!initialRule || yamlContent === stringifyYAML(initialRule)}
-                    className="h-8 text-ui"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1.5" />
-                    {t("common.reset")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleApplyYAML}
-                    className="gap-1.5"
-                    disabled={!initialRule || yamlContent === stringifyYAML(initialRule)}
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    {t("rules.editor.ai.apply_yaml")}
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <YAMLEditorMode
+              t={t}
+              yamlContent={yamlContent}
+              yamlErrors={yamlErrors}
+              canReset={canApplyYaml}
+              canApply={canApplyYaml}
+              onChange={(val: string) => {
+                setYamlContent(val);
+                setYamlErrors([]);
+              }}
+              onBeautify={handleBeautify}
+              onReset={handleResetYAML}
+              onApply={handleApplyYAML}
+            />
           )}
 
           {mode === "script" && scriptContent && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-300">
-              <div className="relative border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-[400px]">
-                <Editor
-                  language="python"
-                  value={scriptContent}
-                  options={{
-                    readOnly: true,
-                    lineNumbers: "on",
-                    tabSize: 4,
-                  }}
-                />
-                <div className="absolute top-2 right-2 z-10">
-                  <CopyButton
-                    text={scriptContent}
-                    variant="secondary"
-                    className="h-8 w-8"
-                    tooltipSide="left"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="disable-rule"
-                      size="sm"
-                      checked={disableOriginal}
-                      onCheckedChange={setDisableOriginal}
-                      disabled={!initialRule?.id}
-                    />
-                    <label
-                      htmlFor="disable-rule"
-                      className={`text-xs select-none cursor-pointer ${!initialRule?.id ? "opacity-50" : ""}`}
-                    >
-                      {t("rules.editor.ai.script.disable_rule")}
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="enable-script"
-                      size="sm"
-                      checked={enableScript}
-                      onCheckedChange={setEnableScript}
-                    />
-                    <label htmlFor="enable-script" className="text-xs select-none cursor-pointer">
-                      {t("rules.editor.ai.script.enable_script")}
-                    </label>
-                  </div>
-                </div>
-                <Button size="sm" onClick={handleCreateScript} className="gap-1.5 h-8">
-                  <FileCode className="w-3.5 h-3.5" />
-                  {t("rules.editor.ai.script.create_btn")}
-                </Button>
-              </div>
-            </div>
+            <ScriptMode
+              t={t}
+              scriptContent={scriptContent}
+              disableOriginal={disableOriginal}
+              enableScript={enableScript}
+              initialRule={initialRule}
+              onDisableOriginalChange={setDisableOriginal}
+              onEnableScriptChange={setEnableScript}
+              onCreateScript={handleCreateScript}
+            />
           )}
         </div>
       </div>
