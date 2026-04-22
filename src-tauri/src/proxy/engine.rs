@@ -1,15 +1,16 @@
 use crate::common::error::AppError;
 use crate::config::AppConfig;
-use crate::logging;
 use crate::proxy::paths::get_engine_path;
 use crate::scripts::storage::ScriptStorage;
 use std::path::PathBuf;
 use std::process::{Child, Command as StdCommand, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
+
+mod crash_watcher;
+mod log_forwarder;
 
 /// On Linux, read `RssAnon` (anonymous RSS) from `/proc/[pid]/status`.
 ///
@@ -616,86 +617,10 @@ impl MitmproxyEngine {
         stream: Option<impl std::io::Read + Send + 'static>,
         _domain: &'static str,
     ) {
-        if let Some(s) = stream {
-            let reader = std::io::BufReader::new(s);
-            std::thread::Builder::new()
-                .name("rc-log-forwarder".into())
-                .spawn(move || {
-                    use std::io::BufRead;
-                    for line in reader.lines().flatten() {
-                        // Classify log domain based on content markers
-                        let domain = if line.contains("[SCRIPT]")
-                            || line.contains("[RELAYCRAFT][SCRIPT]")
-                            || line.contains("._rc_")
-                            || line.contains("_rc_record_hit")
-                            || line.contains("_rc_log")
-                        {
-                            "script"
-                        } else if line.contains("[PLUGIN]") {
-                            "plugin"
-                        } else if line.contains("[AUDIT]") {
-                            "audit"
-                        } else if line.contains("[CRASH]") || line.contains("Traceback") {
-                            "crash"
-                        } else {
-                            "proxy"
-                        };
-                        logging::write_domain_log(domain, &line).ok();
-                    }
-                })
-                .ok();
-        }
+        log_forwarder::spawn_log_forwarder(stream);
     }
 
     fn spawn_crash_watcher(&self, app: AppHandle) {
-        let inner = self.inner.clone();
-        std::thread::Builder::new()
-            .name("rc-crash-watcher".into())
-            .spawn(move || {
-            loop {
-                thread::sleep(Duration::from_secs(2));
-                let mut lock = match inner.child.lock() {
-                    Ok(l) => l,
-                    Err(_) => break,
-                };
-
-                if let Some(mut child) = lock.take() {
-                    match child.try_wait() {
-                        Ok(Some(status)) => {
-                            // Process exited
-                            if !inner.is_stopping.load(Ordering::SeqCst) {
-                                let msg = format!(
-                                    "Proxy engine (PID {}) exited unexpectedly with status: {}. Check engine.log for details.",
-                                    child.id(),
-                                    status
-                                );
-                                log::error!("{}", msg);
-                                logging::write_domain_log("crash", &msg).ok();
-                                // Notify the frontend so the UI can surface the crash.
-                                let _ = app.emit("proxy-engine-crashed", &msg);
-                            }
-                            // Clean up
-                            if let Ok(mut active) = inner.active_scripts.lock() {
-                                active.clear();
-                            }
-                            break;
-                        }
-                        Ok(None) => {
-                            // Still running, put it back
-                            *lock = Some(child);
-                        }
-                        Err(e) => {
-                            let msg = format!("Error watching proxy process: {}", e);
-                            logging::write_domain_log("crash", &msg).ok();
-                            break;
-                        }
-                    }
-                } else {
-                    // No child to watch
-                    break;
-                }
-            }
-            })
-            .ok();
+        crash_watcher::spawn_crash_watcher(self.inner.clone(), app);
     }
 }

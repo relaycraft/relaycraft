@@ -123,7 +123,8 @@ pub fn run() {
     #[cfg(target_os = "windows")]
     {
         if app_config.disable_gpu_acceleration {
-            let existing = std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
+            let existing =
+                std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").unwrap_or_default();
             let merged = if existing.contains("--disable-gpu") {
                 existing
             } else if existing.trim().is_empty() {
