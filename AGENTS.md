@@ -26,6 +26,8 @@ If instructions conflict, follow the higher-priority item and explain the confli
 - `src-tauri/`: Rust/Tauri backend
 - `engine-core/`: Python engine
 - Flow interception/modification logic belongs to engine layer, not duplicated in host UI/backend.
+- Flow persistence submodules under `engine-core/addons/core` must use
+  `addons.core.flowdb.*` import paths.
 
 ## 4) Execution Contract for AI Agents
 
