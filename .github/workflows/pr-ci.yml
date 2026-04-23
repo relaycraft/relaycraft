@@ -74,6 +74,29 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-pr-ci-${{ hashFiles('engine-core/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-pr-ci-
+
+      - name: Install Python dependencies
+        run: python -m pip install -r engine-core/requirements.txt
+
+      - name: Build Linux sidecar for checks
+        run: |
+          python engine-core/build.py
+          mkdir -p src-tauri/binaries
+          mv engine-core/dist/engine src-tauri/binaries/engine-x86_64-unknown-linux-gnu
+          chmod +x src-tauri/binaries/engine-x86_64-unknown-linux-gnu
+
       - name: Cargo check
         working-directory: src-tauri
         run: cargo check --all-targets
