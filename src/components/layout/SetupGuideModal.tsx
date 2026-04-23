@@ -139,6 +139,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <a
                   href={certUrl}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="flex-1 font-mono text-[11px] font-semibold text-primary hover:underline truncate flex items-center gap-1.5"
                 >
                   <span className="truncate">{certUrl}</span>
