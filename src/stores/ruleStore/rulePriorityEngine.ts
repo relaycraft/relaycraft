@@ -25,13 +25,18 @@ function assignWindowPriorities(
   return Array.from({ length: count }, (_, index) => index + 1);
 }
 
+export function compareRulesByExecutionOrder(a: Rule, b: Rule) {
+  if (a.execution.priority !== b.execution.priority) {
+    return a.execution.priority - b.execution.priority;
+  }
+  if (a.name !== b.name) {
+    return a.name.localeCompare(b.name);
+  }
+  return a.id.localeCompare(b.id);
+}
+
 export function sortRulesByExecutionOrder(rules: Rule[]) {
-  return [...rules].sort((a, b) => {
-    if (a.execution.priority !== b.execution.priority) {
-      return a.execution.priority - b.execution.priority;
-    }
-    return a.id.localeCompare(b.id);
-  });
+  return [...rules].sort(compareRulesByExecutionOrder);
 }
 
 export function computeMoveWindow(

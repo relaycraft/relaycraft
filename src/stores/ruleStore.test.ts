@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Rule, RuleGroup } from "../types/rules";
 import { getRuleConflicts, useRuleStore } from "./ruleStore";
+import { sortRulesByExecutionOrder } from "./ruleStore/rulePriorityEngine";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn().mockResolvedValue(undefined),
@@ -105,14 +106,29 @@ describe("ruleStore and algorithm logic", () => {
 
       store.moveRule("r3", "up");
 
-      const ordered = [...useRuleStore.getState().rules].sort((a, b) => {
-        if (a.execution.priority !== b.execution.priority) {
-          return a.execution.priority - b.execution.priority;
-        }
-        return a.id.localeCompare(b.id);
-      });
+      const ordered = sortRulesByExecutionOrder(useRuleStore.getState().rules);
 
       expect(ordered.map((rule) => rule.id)).toEqual(["r1", "r3", "r2"]);
+    });
+
+    it("should move within same-priority neighbors by name then id", () => {
+      const store = useRuleStore.getState();
+      store.addGroup(createGroup("G1"));
+
+      const rAlpha = createRule("r3", "G1", 10);
+      rAlpha.name = "A";
+      const rBeta = createRule("r2", "G1", 10);
+      rBeta.name = "B";
+      const rGamma = createRule("r1", "G1", 10);
+      rGamma.name = "C";
+
+      store.addRule(rAlpha, "G1");
+      store.addRule(rBeta, "G1");
+      store.addRule(rGamma, "G1");
+      store.moveRule("r1", "up");
+
+      const ordered = sortRulesByExecutionOrder(useRuleStore.getState().rules);
+      expect(ordered.map((rule) => rule.id)).toEqual(["r3", "r1", "r2"]);
     });
 
     it("should keep changes scoped to the minimal conflicting window", () => {

@@ -3,6 +3,7 @@ import { AlertTriangle, Folders, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getRuleConflicts, useRuleStore } from "../../stores/ruleStore";
+import { sortRulesByExecutionOrder } from "../../stores/ruleStore/rulePriorityEngine";
 import { useUIStore } from "../../stores/uiStore";
 import type { Rule, RuleGroup } from "../../types/rules";
 import { EmptyState } from "../common/EmptyState";
@@ -109,11 +110,7 @@ export function RuleView() {
 
   // Sort rules within each group by priority (stable)
   Object.keys(groupedRules).forEach((gid) => {
-    groupedRules[gid].sort((a, b) => {
-      if (a.execution.priority !== b.execution.priority)
-        return a.execution.priority - b.execution.priority;
-      return a.id.localeCompare(b.id);
-    });
+    groupedRules[gid] = sortRulesByExecutionOrder(groupedRules[gid]);
   });
 
   const conflicts = getRuleConflicts(rules, groups, ruleGroups);
