@@ -14,8 +14,10 @@ sys.path.append(addons_dir)
 from tests import mock_mitmproxy
 
 from core.http_handlers import (
+    handle_cert_routes,
     handle_control_routes,
     handle_data_routes,
+    handle_import_routes,
     handle_realtime_routes,
 )
 
@@ -152,6 +154,38 @@ class TestHttpHandlersSmoke(unittest.TestCase):
         flow = _make_flow(content=b"", method="POST")
         handle_control_routes(monitor, flow, "relay_session_clear", _FakeResponse)
         self.assertEqual(flow.response.status_code, 500)
+
+    def test_relay_import_session_success_and_exception(self):
+        monitor = _make_monitor()
+        monitor.db.create_session.return_value = "s_imported"
+        monitor._build_session_indices = MagicMock(return_value=[{"id": "f1"}])
+        payload = json.dumps([{"id": "f1", "msg_ts": 1.0}]).encode("utf-8")
+        flow = _make_flow(content=payload, method="POST")
+        handled = handle_import_routes(monitor, flow, "relay_import_session", _FakeResponse)
+        self.assertTrue(handled)
+        self.assertEqual(flow.response.status_code, 200)
+
+        monitor = _make_monitor()
+        monitor.db.create_session.side_effect = RuntimeError("import error")
+        monitor._build_session_indices = MagicMock(return_value=[])
+        flow = _make_flow(content=payload, method="POST")
+        handle_import_routes(monitor, flow, "relay_import_session", _FakeResponse)
+        self.assertEqual(flow.response.status_code, 500)
+
+    def test_cert_serve_success_and_exception(self):
+        monitor = _make_monitor()
+        flow = SimpleNamespace(
+            request=SimpleNamespace(path="/cert", host="127.0.0.1", headers={}),
+            response=None,
+        )
+        handled = handle_cert_routes(monitor, flow, "cert_serve", _FakeResponse)
+        self.assertTrue(handled)
+        self.assertIn(flow.response.status_code, (200, 404))
+
+        monitor = _make_monitor()
+        broken_flow = SimpleNamespace(request=None, response=None)
+        handle_cert_routes(monitor, broken_flow, "cert_serve", _FakeResponse)
+        self.assertEqual(broken_flow.response.status_code, 500)
 
 
 if __name__ == "__main__":
