@@ -1,16 +1,4 @@
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Activity,
-  AlertTriangle,
-  Info,
-  ListFilter,
-  Lock,
-  QrCode,
-  Search,
-  Terminal,
-  Wifi,
-  X,
-} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
@@ -22,14 +10,15 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { FlowIndex } from "../../types";
-import { Button } from "../common/Button";
 import { ContextMenu } from "../common/ContextMenu";
-import { EmptyState } from "../common/EmptyState";
 import { SetupGuideModal } from "../layout/SetupGuideModal";
 import { AddBreakpointModal } from "./AddBreakpointModal";
+import { CertificateWarningBanner } from "./CertificateWarningBanner";
 import { FilterBar } from "./FilterBar";
 import { FlowDetail } from "./FlowDetail";
 import { useTrafficContextMenu } from "./hooks/useTrafficContextMenu";
+import { JumpToBottomBubble } from "./JumpToBottomBubble";
+import { TrafficEmptyStates } from "./TrafficEmptyStates";
 import { TrafficListItem } from "./TrafficListItem";
 
 interface TrafficViewProps {
@@ -399,46 +388,15 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {!(certTrusted || certWarningIgnored) && (
-        <motion.div
-          initial={false}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between group overflow-hidden"
-        >
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-amber-500 leading-tight">
-                {t("traffic.security.untrusted_title")}
-              </p>
-              <p className="text-ui text-amber-500/80 leading-tight mt-0.5">
-                {t("traffic.security.untrusted_desc")}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-ui px-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 font-bold"
-              onClick={() => {
-                useUIStore.getState().setSettingsTab("certificate");
-                setActiveTab("settings");
-              }}
-            >
-              {t("traffic.security.fix_now")}
-            </Button>
-            <button
-              onClick={() => setCertWarningIgnored(true)}
-              className="p-1 hover:bg-amber-500/10 rounded-md text-amber-500/40 hover:text-amber-500 transition-colors"
-              title={t("common.dismiss", "Dismiss")}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </motion.div>
-      )}
+      <CertificateWarningBanner
+        visible={!(certTrusted || certWarningIgnored)}
+        t={t}
+        onFixNow={() => {
+          useUIStore.getState().setSettingsTab("certificate");
+          setActiveTab("settings");
+        }}
+        onDismiss={() => setCertWarningIgnored(true)}
+      />
       <div className="h-full flex flex-1 overflow-hidden">
         {/* Traffic List */}
         <div className="flex-1 border-r border-border flex flex-col bg-muted/30 min-w-0">
@@ -471,114 +429,25 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
           <div className="flex-1 relative flex flex-col min-h-0 z-0">
             {filteredIndices.length === 0 ? (
               <div className="flex-1">
-                {indices.length > 0 ? (
-                  <EmptyState
-                    icon={Search}
-                    title={t("traffic.empty_search")}
-                    description={
-                      <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
-                        {t("traffic.filter.current")}
-                        {filterText && (
-                          <span className="font-mono text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded">
-                            {filterText}
-                          </span>
-                        )}
-                        {onlyMatched && (
-                          <span className="font-bold text-purple-500/80 bg-purple-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                            <ListFilter className="w-3 h-3" />
-                            {t("traffic.filter.matched_tooltip")}
-                          </span>
-                        )}
-                      </div>
-                    }
-                    action={{
-                      label: t("common.clear_filter"),
-                      onClick: () => {
-                        setFilterText("");
-                        setOnlyMatched(false);
-                      },
-                    }}
-                    animation="pulse"
-                  />
-                ) : !active ? (
-                  <EmptyState
-                    icon={Activity}
-                    title={t("traffic.proxy_stopped")}
-                    description={t("traffic.start_hint")}
-                    action={{
-                      label: t("traffic.start_proxy"),
-                      onClick: onToggleProxy,
-                      icon: Wifi,
-                      isLoading: loading,
-                    }}
-                    animation="pulse"
-                    className="py-12"
-                  />
-                ) : (
-                  <EmptyState
-                    icon={Wifi}
-                    title={t("traffic.listening")}
-                    description={
-                      <div className="space-y-6">
-                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-1">
-                          <span className="px-1.5 py-0.5 bg-muted rounded border border-border/50 font-mono">
-                            127.0.0.1:{port}
-                          </span>
-                          <span>•</span>
-                          <span className="text-primary font-medium">
-                            {t("traffic.server_status")}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border/40">
-                          <div className="p-3 bg-muted/30 rounded-xl border border-border/40 text-left group hover:bg-muted/50 transition-all">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <div className="p-1 bg-blue-500/10 rounded text-blue-500">
-                                <Terminal className="w-3.5 h-3.5" />
-                              </div>
-                              <span className="text-ui font-bold">{t("traffic.setup.system")}</span>
-                            </div>
-                            <p className="text-ui text-muted-foreground leading-relaxed">
-                              {t("traffic.setup.system_desc")}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-muted/30 rounded-xl border border-border/40 text-left group hover:bg-muted/50 transition-all">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <div className="p-1 bg-purple-500/10 rounded text-purple-500">
-                                <QrCode className="w-3.5 h-3.5" />
-                              </div>
-                              <span className="text-ui font-bold">{t("traffic.setup.mobile")}</span>
-                            </div>
-                            <p className="text-ui text-muted-foreground leading-relaxed">
-                              {t("traffic.setup.mobile_desc")}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button
-                            onClick={() => setIsGuideOpen(true)}
-                            className="text-ui text-primary hover:underline flex items-center gap-1"
-                          >
-                            <Info className="w-3 h-3" />
-                            {t("traffic.setup.guide")}
-                          </button>
-                          <button
-                            onClick={() => {
-                              useUIStore.getState().setSettingsTab("certificate");
-                              setActiveTab("settings");
-                            }}
-                            className="text-ui text-muted-foreground hover:text-foreground flex items-center gap-1"
-                          >
-                            <Lock className="w-3 h-3" />
-                            {t("traffic.setup.cert")}
-                          </button>
-                        </div>
-                      </div>
-                    }
-                    animation="radar"
-                  />
-                )}
+                <TrafficEmptyStates
+                  t={t}
+                  hasAnyIndices={indices.length > 0}
+                  filterText={filterText}
+                  onlyMatched={onlyMatched}
+                  active={active}
+                  port={port}
+                  loading={loading}
+                  onClearFilter={() => {
+                    setFilterText("");
+                    setOnlyMatched(false);
+                  }}
+                  onToggleProxy={onToggleProxy}
+                  onOpenGuide={() => setIsGuideOpen(true)}
+                  onOpenCertificateSettings={() => {
+                    useUIStore.getState().setSettingsTab("certificate");
+                    setActiveTab("settings");
+                  }}
+                />
               </div>
             ) : (
               <>
@@ -596,40 +465,25 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
                   itemContent={virtuosoItemContent}
                 />
 
-                {/* Jump to bottom bubble logic */}
-                <AnimatePresence>
-                  {!(isHistoricalSession || autoScroll || atBottom) &&
+                <JumpToBottomBubble
+                  visible={
+                    !(isHistoricalSession || autoScroll || atBottom) &&
                     newRequestsCount > 0 &&
-                    showJumpBubble && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 4 }}
-                        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto"
-                      >
-                        <button
-                          onClick={() => {
-                            virtuosoRef.current?.scrollToIndex({
-                              index: filteredIndices.length - 1,
-                              behavior: "smooth",
-                            });
-                            setAtBottom(true);
-                            setNewRequestsCount(0);
-                            setShowJumpBubble(false);
-                            if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-xs font-medium backdrop-blur-xl ring-1 ring-white/5"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-micro font-bold">
-                              {newRequestsCount > 99 ? "99+" : newRequestsCount}
-                            </div>
-                            <span>{t("traffic.new_requests", "New Requests")}</span>
-                          </div>
-                        </button>
-                      </motion.div>
-                    )}
-                </AnimatePresence>
+                    showJumpBubble
+                  }
+                  newRequestsCount={newRequestsCount}
+                  t={t}
+                  onClick={() => {
+                    virtuosoRef.current?.scrollToIndex({
+                      index: filteredIndices.length - 1,
+                      behavior: "smooth",
+                    });
+                    setAtBottom(true);
+                    setNewRequestsCount(0);
+                    setShowJumpBubble(false);
+                    if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+                  }}
+                />
               </>
             )}
           </div>

@@ -2,203 +2,13 @@ import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { Logger } from "../lib/logger";
 import { useSettingsStore } from "./settingsStore";
+import { processColorForVibrancy } from "./themeStore/vibrancy";
 import { useUIStore } from "./uiStore";
 
 // Debounce timer for set_window_vibrancy IPC calls.
 // Prevents rapid-fire DWM recomposition when applyVibrancy() is called
 // multiple times during startup or theme switching.
 let _vibrancyTimer: ReturnType<typeof setTimeout> | null = null;
-
-/**
- * CSS variables that are specifically for vibrancy/blur backgrounds.
- * Only these variables will have their rgba values blended when vibrancy is disabled.
- * Other rgba colors (like borders, shadows) are preserved for their intended effects.
- */
-const VIBRANCY_RELATED_VARS = new Set([
-  "--color-background",
-  "--color-muted",
-  "--color-popover",
-  "--color-card",
-  "--color-input",
-  "--color-secondary",
-  "--color-accent",
-]);
-
-/**
- * Platform-specific alpha compensation configuration.
- * Windows requires higher opacity (less transparency) than macOS for similar visual effect
- * due to differences in DWM composition vs NSVisualEffectView.
- */
-const ALPHA_COMPENSATION_CONFIG = {
-  /** Compensation factor for Windows: newAlpha = alpha + (1 - alpha) * factor
-   *  Lowered from 0.45 to 0.30 to match the reduced Acrylic tint alpha (80/255 ≈ 31%).
-   *  The previous 0.45 was calibrated for alpha=200 Acrylic — now that the OS effect
-   *  is more translucent, the CSS layer needs less compensation to stay readable. */
-  windowsFactor: 0.3,
-  /** Maximum alpha cap to prevent fully opaque colors */
-  maxAlpha: 0.92,
-  /** Alpha threshold below which compensation is applied (skip already-opaque colors) */
-  alphaThreshold: 0.9,
-} as const;
-
-/**
- * Apply platform-specific alpha compensation for vibrancy colors.
- * On Windows, the DWM blur effect is weaker than macOS's NSVisualEffectView,
- * so we need to increase opacity to prevent the background from being too visible.
- *
- * Formula: newAlpha = alpha + (1 - alpha) * factor
- * This progressively increases opacity while preserving relative transparency differences.
- *
- * @example
- * - 0.4 → 0.67 (significant boost for very transparent colors)
- * - 0.5 → 0.725 (moderate boost)
- * - 0.7 → 0.835 (subtle boost for already opaque colors)
- * - 0.85 → 0.9175 (minimal adjustment near threshold)
- */
-function compensateAlphaForPlatform(alpha: number, isMac: boolean): number {
-  if (isMac) return alpha; // macOS: use original alpha as-is
-
-  // Windows: apply compensation formula
-  const { windowsFactor, maxAlpha, alphaThreshold } = ALPHA_COMPENSATION_CONFIG;
-
-  // Skip colors that are already sufficiently opaque
-  if (alpha >= alphaThreshold) return alpha;
-
-  // Apply progressive compensation: newAlpha = alpha + (1 - alpha) * factor
-  const compensated = alpha + (1 - alpha) * windowsFactor;
-
-  // Cap at maximum to prevent fully opaque
-  return Math.min(compensated, maxAlpha);
-}
-
-/**
- * Blend semi-transparent rgba() color with a background color.
- * When vibrancy is disabled, we need to composite rgba colors onto a solid background.
- * For dark themes, blend onto near-black; for light themes, blend onto near-white.
- */
-function blendRgbaWithBackground(
-  r: number,
-  g: number,
-  b: number,
-  a: number,
-  isDarkTheme: boolean,
-): string {
-  // Background color depends on theme type
-  const bgR = isDarkTheme ? 11 : 252; // Match --color-background base
-  const bgG = isDarkTheme ? 12 : 253;
-  const bgB = isDarkTheme ? 15 : 253;
-
-  // Alpha blending: result = foreground * alpha + background * (1 - alpha)
-  const outR = Math.round(r * a + bgR * (1 - a));
-  const outG = Math.round(g * a + bgG * (1 - a));
-  const outB = Math.round(b * a + bgB * (1 - a));
-
-  return `rgb(${outR}, ${outG}, ${outB})`;
-}
-
-/**
- * Default alpha values applied when a third-party theme uses solid hex colors for
- * vibrancy-related variables. These mirror the opacity ratios of the built-in
- * Modern Charcoal theme so custom themes get a sensible glass effect out of the box.
- *
- * Theme authors can always override by using rgba() in their theme.yaml/colors,
- * which gives them full control over the transparency level.
- */
-const VIBRANCY_DEFAULT_ALPHA: Readonly<Record<string, number>> = {
-  "--color-background": 0.35,
-  "--color-muted": 0.4,
-  "--color-card": 0.72,
-  "--color-popover": 0.78,
-  "--color-input": 0.58,
-  "--color-secondary": 0.47,
-  "--color-accent": 0.58,
-};
-
-/** Parse #RGB or #RRGGBB hex strings into RGB components. Returns null on failure. */
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const s = hex.trim().replace(/^#/, "");
-  if (s.length === 3) {
-    return {
-      r: parseInt(s[0] + s[0], 16),
-      g: parseInt(s[1] + s[1], 16),
-      b: parseInt(s[2] + s[2], 16),
-    };
-  }
-  if (s.length === 6) {
-    return {
-      r: parseInt(s.slice(0, 2), 16),
-      g: parseInt(s.slice(2, 4), 16),
-      b: parseInt(s.slice(4, 6), 16),
-    };
-  }
-  return null;
-}
-
-/**
- * Process color value for vibrancy setting.
- * Handles both rgba() (built-in themes) and hex (third-party themes).
- *
- * Three-stage logic:
- * 1. Hex colors with vibrancy OFF  → return original hex (solid, as intended by author)
- * 2. Hex colors with vibrancy ON   → convert to rgba using per-variable default alpha
- * 3. rgba() colors                 → existing platform compensation / background blending
- */
-function processColorForVibrancy(
-  varName: string,
-  value: string,
-  vibrancyEnabled: boolean,
-  isDarkTheme: boolean,
-): string {
-  // Only process vibrancy-related variables
-  if (!VIBRANCY_RELATED_VARS.has(varName)) {
-    return value;
-  }
-
-  // ── Hex color path (third-party themes) ──────────────────────────────────
-  const hexMatch = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (hexMatch) {
-    // Vibrancy OFF: hex is already a fully opaque color — the theme author's
-    // intended solid surface. No blending needed; return as-is.
-    if (!vibrancyEnabled) return value;
-
-    // Vibrancy ON: make the surface semi-transparent so the OS blur shows through.
-    const rgb = hexToRgb(value);
-    if (!rgb) return value;
-
-    const defaultAlpha = VIBRANCY_DEFAULT_ALPHA[varName] ?? 0.6;
-    const isMac = useUIStore.getState().isMac;
-    const compensatedAlpha = compensateAlphaForPlatform(defaultAlpha, isMac);
-    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${compensatedAlpha.toFixed(3)})`;
-  }
-
-  // ── rgba() color path (built-in themes) ──────────────────────────────────
-  // Match rgba(r, g, b, a) format (with optional spaces)
-  const rgbaMatch = value.match(/^rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/i);
-  if (!rgbaMatch) {
-    return value; // rgb(), hsl(), custom property — pass through unchanged
-  }
-
-  const r = Number.parseInt(rgbaMatch[1], 10);
-  const g = Number.parseInt(rgbaMatch[2], 10);
-  const b = Number.parseInt(rgbaMatch[3], 10);
-  const originalAlpha = Number.parseFloat(rgbaMatch[4]);
-
-  // When vibrancy is disabled, blend with solid background
-  if (!vibrancyEnabled) {
-    return blendRgbaWithBackground(r, g, b, originalAlpha, isDarkTheme);
-  }
-
-  // When vibrancy is enabled, apply platform-specific alpha compensation
-  const isMac = useUIStore.getState().isMac;
-  const compensatedAlpha = compensateAlphaForPlatform(originalAlpha, isMac);
-
-  // Return rgba with compensated alpha (or original if no change)
-  if (compensatedAlpha === originalAlpha) {
-    return value;
-  }
-
-  return `rgba(${r}, ${g}, ${b}, ${compensatedAlpha})`;
-}
 
 export interface Theme {
   id: string;
@@ -509,6 +319,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     const { getThemeType, activeThemeId, themes } = get();
     const vibrancyEnabled = useSettingsStore.getState().config.enable_vibrancy;
     const isDarkTheme = getThemeType() === "dark";
+    const isMac = useUIStore.getState().isMac;
 
     Logger.debug(
       `[ThemeStore] applyVibrancy -> enabled: ${vibrancyEnabled}, isDark: ${isDarkTheme}`,
@@ -520,7 +331,11 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     if (activeTheme) {
       const root = document.documentElement;
       Object.entries(activeTheme.colors).forEach(([key, value]) => {
-        const processedValue = processColorForVibrancy(key, value, vibrancyEnabled, isDarkTheme);
+        const processedValue = processColorForVibrancy(key, value, {
+          vibrancyEnabled,
+          isDarkTheme,
+          isMac,
+        });
         root.style.setProperty(key, processedValue);
       });
     }
@@ -579,11 +394,16 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       // Check vibrancy setting and theme type to process colors accordingly
       const vibrancyEnabled = useSettingsStore.getState().config.enable_vibrancy;
       const isDarkTheme = theme.type === "dark";
+      const isMac = useUIStore.getState().isMac;
 
       // Apply Variables (blend rgba with background if vibrancy disabled)
       const root = document.documentElement;
       Object.entries(theme.colors).forEach(([key, value]) => {
-        const processedValue = processColorForVibrancy(key, value, vibrancyEnabled, isDarkTheme);
+        const processedValue = processColorForVibrancy(key, value, {
+          vibrancyEnabled,
+          isDarkTheme,
+          isMac,
+        });
         root.style.setProperty(key, processedValue);
       });
 
