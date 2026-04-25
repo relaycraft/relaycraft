@@ -3,7 +3,7 @@ import sys
 import time
 import threading
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 # Add parent addon directory to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +14,7 @@ sys.path.append(addons_dir)
 import tests.mock_mitmproxy  # noqa: F401
 
 from core.monitor import TrafficMonitor
+from core import sse_processor
 
 
 def make_monitor() -> TrafficMonitor:
@@ -36,10 +37,10 @@ class TestSseMonitor(unittest.TestCase):
         flow_id = "f_utf8"
         utf8_char = "你".encode("utf-8")
 
-        monitor.handle_sse_chunk(flow_id, b"data: " + utf8_char[:2])
-        monitor.handle_sse_chunk(flow_id, utf8_char[2:] + b"\n\n")
+        sse_processor.handle_sse_chunk(monitor, flow_id, b"data: " + utf8_char[:2])
+        sse_processor.handle_sse_chunk(monitor, flow_id, utf8_char[2:] + b"\n\n")
 
-        data = monitor.get_sse_events(flow_id, since_seq=0, limit=10)
+        data = sse_processor.get_sse_events(monitor, flow_id, since_seq=0, limit=10)
         self.assertEqual(len(data["events"]), 1)
         self.assertEqual(data["events"][0]["data"], "你")
 
@@ -55,9 +56,9 @@ class TestSseMonitor(unittest.TestCase):
             b"retry: 3000\r\n"
             b"\r\n"
         )
-        monitor.handle_sse_chunk(flow_id, chunk)
+        sse_processor.handle_sse_chunk(monitor, flow_id, chunk)
 
-        data = monitor.get_sse_events(flow_id, since_seq=0, limit=10)
+        data = sse_processor.get_sse_events(monitor, flow_id, since_seq=0, limit=10)
         self.assertEqual(len(data["events"]), 1)
         evt = data["events"][0]
         self.assertEqual(evt["event"], "message")
@@ -70,9 +71,9 @@ class TestSseMonitor(unittest.TestCase):
         monitor._sse_max_buffer_bytes = 32
         flow_id = "f_overflow"
 
-        monitor.handle_sse_chunk(flow_id, b"data: " + (b"a" * 128))
+        sse_processor.handle_sse_chunk(monitor, flow_id, b"data: " + (b"a" * 128))
 
-        data = monitor.get_sse_events(flow_id, since_seq=0, limit=10)
+        data = sse_processor.get_sse_events(monitor, flow_id, since_seq=0, limit=10)
         self.assertGreaterEqual(data["droppedCount"], 1)
         self.assertEqual(len(data["events"]), 1)
         self.assertTrue(data["events"][0]["data"].startswith("a"))
@@ -81,35 +82,37 @@ class TestSseMonitor(unittest.TestCase):
         monitor = make_monitor()
         flow_id = "f_cleanup"
         with monitor._sse_lock:
-            state = monitor._ensure_sse_state(flow_id)
+            state = sse_processor.ensure_sse_state(monitor, flow_id)
             state["stream_open"] = False
             state["last_touched"] = time.time() - 120
-            monitor._cleanup_inactive_sse_states_locked(time.time())
+            sse_processor.cleanup_inactive_sse_states_locked(monitor, time.time())
 
         self.assertNotIn(flow_id, monitor._sse_states)
 
     def test_get_sse_events_falls_back_to_db_when_state_missing(self):
         monitor = make_monitor()
         flow_id = "f_db"
-        monitor.db.get_sse_events.return_value = {
-            "events": [{
-                "flowId": flow_id,
-                "seq": 0,
-                "ts": 1,
-                "event": "message",
-                "id": None,
-                "retry": None,
-                "data": "hello",
-                "rawSize": 5,
-            }],
-            "nextSeq": 1,
-        }
 
-        data = monitor.get_sse_events(flow_id, since_seq=0, limit=10)
-        self.assertEqual(len(data["events"]), 1)
-        self.assertEqual(data["events"][0]["data"], "hello")
-        self.assertFalse(data["streamOpen"])
-        self.assertEqual(data["nextSeq"], 1)
+        with patch("core.sse_processor.db_get_sse_events") as mock_db_get:
+            mock_db_get.return_value = {
+                "events": [{
+                    "flowId": flow_id,
+                    "seq": 0,
+                    "ts": 1,
+                    "event": "message",
+                    "id": None,
+                    "retry": None,
+                    "data": "hello",
+                    "rawSize": 5,
+                }],
+                "nextSeq": 1,
+            }
+
+            data = sse_processor.get_sse_events(monitor, flow_id, since_seq=0, limit=10)
+            self.assertEqual(len(data["events"]), 1)
+            self.assertEqual(data["events"][0]["data"], "hello")
+            self.assertFalse(data["streamOpen"])
+            self.assertEqual(data["nextSeq"], 1)
 
 
 if __name__ == "__main__":

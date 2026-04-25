@@ -2,6 +2,9 @@ import json
 import traceback
 from typing import Any, Callable
 
+from ..flowdb import get_detail, get_indices
+from .. import sse_processor
+
 
 def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Callable[[Any], str]) -> None:
     try:
@@ -15,7 +18,7 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
             since_ts = 0.0
 
         session_id_param = query.get("session_id", None)
-        db_indices = monitor.db.get_indices(session_id=session_id_param, since=since_ts)
+        db_indices = get_indices(monitor.db, session_id=session_id_param, since=since_ts)
 
         indices = []
         for idx in db_indices:
@@ -98,7 +101,7 @@ def _handle_detail(monitor: Any, flow: Any, Response: Any, safe_json_default: Ca
             )
             return
 
-        flow_data = monitor.db.get_detail(flow_id)
+        flow_data = get_detail(monitor.db, flow_id)
         if not flow_data:
             flow.response = Response.make(
                 404,
@@ -156,7 +159,7 @@ def _handle_sse(monitor: Any, flow: Any, Response: Any, safe_json_default: Calla
         except ValueError:
             limit = monitor._sse_default_limit
 
-        payload = monitor.get_sse_events(flow_id, since_seq=since_seq, limit=limit)
+        payload = sse_processor.get_sse_events(monitor, flow_id, since_seq=since_seq, limit=limit)
         json_str = json.dumps(payload, default=safe_json_default, ensure_ascii=False)
         flow.response = Response.make(
             200,
@@ -201,7 +204,8 @@ def _handle_ws_inject(monitor: Any, flow: Any, Response: Any) -> None:
         frame_type = data.get("type", "text")
         payload = data.get("payload", "")
 
-        status, body_dict = monitor.inject_ws_frame(flow_id, frame_type, payload)
+        from .. import ws_handler
+        status, body_dict = ws_handler.inject_ws_frame(monitor, flow_id, frame_type, payload)
         body_json = json.dumps(body_dict, ensure_ascii=False)
         flow.response = Response.make(
             status,

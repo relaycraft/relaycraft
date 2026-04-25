@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from .cleanup import delete_body_files
+
 
 def create_new_session(db) -> str:
     """Create a new session with timestamp name for auto-isolation."""
@@ -156,7 +158,7 @@ def delete_session(db, session_id: str) -> bool:
         if active_row:
             return False
 
-        db._delete_body_files(session_id)
+        delete_body_files(db, session_id)
         conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
         conn.commit()
 

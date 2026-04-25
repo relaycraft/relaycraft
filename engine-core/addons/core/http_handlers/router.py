@@ -20,6 +20,7 @@ from .data import (
     _handle_stats,
     _handle_traffic_active,
 )
+from .errors import make_error_response
 from .importers import (
     _handle_import_har,
     _handle_import_har_file,
@@ -27,6 +28,18 @@ from .importers import (
     _handle_import_session_file,
 )
 from .realtime import _handle_detail, _handle_poll, _handle_sse, _handle_ws_inject
+
+
+def _dispatch(route_map: dict, route_key: str, monitor: Any, flow: Any, Response: Any) -> bool:
+    handler = route_map.get(route_key)
+    if not handler:
+        return False
+    try:
+        handler()
+    except Exception as e:
+        monitor.logger.error(f"{route_key} failed: {e}")
+        flow.response = make_error_response(Response, e)
+    return True
 
 
 def handle_realtime_routes(
@@ -42,11 +55,7 @@ def handle_realtime_routes(
         "relay_sse": lambda: _handle_sse(monitor, flow, Response, safe_json_default),
         "relay_ws_inject": lambda: _handle_ws_inject(monitor, flow, Response),
     }
-    handler = route_map.get(route_key)
-    if not handler:
-        return False
-    handler()
-    return True
+    return _dispatch(route_map, route_key, monitor, flow, Response)
 
 
 def handle_control_routes(monitor: Any, flow: Any, route_key: str, Response: Any) -> bool:
@@ -61,11 +70,7 @@ def handle_control_routes(monitor: Any, flow: Any, route_key: str, Response: Any
         "relay_session_delete": lambda: _handle_session_delete(monitor, flow, Response),
         "relay_session_clear": lambda: _handle_session_clear(monitor, flow, Response),
     }
-    handler = route_map.get(route_key)
-    if not handler:
-        return False
-    handler()
-    return True
+    return _dispatch(route_map, route_key, monitor, flow, Response)
 
 
 def handle_data_routes(
@@ -83,11 +88,7 @@ def handle_data_routes(
         "relay_export_har": lambda: _handle_export_har(monitor, flow, Response, safe_json_default),
         "relay_export_progress": lambda: _handle_export_progress(monitor, flow, Response),
     }
-    handler = route_map.get(route_key)
-    if not handler:
-        return False
-    handler()
-    return True
+    return _dispatch(route_map, route_key, monitor, flow, Response)
 
 
 def handle_import_routes(monitor: Any, flow: Any, route_key: str, Response: Any) -> bool:
@@ -97,19 +98,11 @@ def handle_import_routes(monitor: Any, flow: Any, route_key: str, Response: Any)
         "relay_import_har": lambda: _handle_import_har(monitor, flow, Response),
         "relay_import_har_file": lambda: _handle_import_har_file(monitor, flow, Response),
     }
-    handler = route_map.get(route_key)
-    if not handler:
-        return False
-    handler()
-    return True
+    return _dispatch(route_map, route_key, monitor, flow, Response)
 
 
 def handle_cert_routes(monitor: Any, flow: Any, route_key: str, Response: Any) -> bool:
     route_map = {
         "cert_serve": lambda: _handle_cert_serve(monitor, flow, Response),
     }
-    handler = route_map.get(route_key)
-    if not handler:
-        return False
-    handler()
-    return True
+    return _dispatch(route_map, route_key, monitor, flow, Response)

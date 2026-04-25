@@ -89,7 +89,7 @@ def run_cleanup(db):
             )
             flow_ids, session_flows = _collect_flow_targets(old_flows)
             for session_id, session_flow_ids in session_flows.items():
-                db._delete_body_files(session_id, session_flow_ids)
+                delete_body_files(db, session_id, session_flow_ids)
             deleted_flows += _delete_flows(conn, flow_ids)
 
     total_count = conn.execute("SELECT COUNT(*) FROM flow_indices").fetchone()[0]
@@ -229,7 +229,7 @@ def delete_body_files(db, session_id: str, flow_ids: List[str] = None):
 def clear_session(db, session_id: str = None):
     """Clear all flows in a session."""
     session_id = db._get_session_id(session_id)
-    db._delete_body_files(session_id)
+    delete_body_files(db, session_id)
 
     with db._lock:
         conn = db._get_conn()

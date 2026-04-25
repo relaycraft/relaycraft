@@ -58,6 +58,7 @@ try:
             return False
 except Exception as e:
     print(f"[RELAYCRAFT] Failed to setup _rc_record_hit: {e}", flush=True)
+    # Fallback stubs — keep user scripts running even if setup fails
     def _rc_record_hit(flow, script_path): pass
     def _rc_should_skip_internal(flow): return False
 
@@ -145,7 +146,8 @@ def _rc_log(level, msg):
         injected_in_if = False
 
         # 2. Inject into every top-level IF block (semantic matching)
-        for stmt in func_node.body:
+        # Skip the synthetic internal-request guard we just inserted at index 0.
+        for stmt in func_node.body[1:]:
             if isinstance(stmt, ast.If):
                 stmt.body.insert(0, safe_call)
                 injected_in_if = True

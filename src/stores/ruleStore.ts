@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
-import { Logger } from "../lib/logger";
+import { formatError, Logger } from "../lib/logger";
 import type { Rule, RuleGroup } from "../types/rules";
 import { getUniqueGroupName } from "./ruleStore/groupUniqueness";
 import { getRuleConflicts as getRuleConflictsFromEngine } from "./ruleStore/ruleConflictEngine";
@@ -121,7 +121,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
     try {
       await invoke("delete_rule", { ruleId: id });
     } catch (error) {
-      console.error("Failed to delete rule file:", error);
+      Logger.error("Failed to delete rule file:", error);
     }
   },
 
@@ -415,7 +415,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         loadErrors: response.errors || [],
       }));
     } catch (error) {
-      console.error("Failed to load rules:", error);
+      Logger.error("Failed to load rules:", error);
     }
   },
 
@@ -433,7 +433,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         groupsJson: JSON.stringify(state.groups),
       });
     } catch (error) {
-      console.error("Failed to save rules:", error);
+      Logger.error("Failed to save rules:", error);
     }
   },
 
@@ -447,7 +447,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         groupId: groupId,
       });
     } catch (error) {
-      console.error("Failed to save rule:", error);
+      Logger.error("Failed to save rule:", error);
     }
   },
 
@@ -456,7 +456,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       const state = get();
       await invoke("save_groups", { groupsJson: JSON.stringify(state.groups) });
     } catch (error) {
-      console.error("Failed to save groups:", error);
+      Logger.error("Failed to save groups:", error);
     }
   },
 
@@ -573,7 +573,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       get().saveRules();
       return { success: true, count: addedCount };
     } catch (e: any) {
-      console.error("Import failed", e);
+      Logger.error("Import failed", e);
       return { success: false, error: e.message };
     }
   },
@@ -587,8 +587,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       });
       return { success: true, message };
     } catch (error: any) {
-      console.error("Failed to export ZIP:", error);
-      return { success: false, error: error.toString() };
+      Logger.error("Failed to export ZIP:", error);
+      return { success: false, error: formatError(error) };
     }
   },
 
@@ -618,8 +618,8 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
       }
       return { success: false, error: result.error };
     } catch (error: any) {
-      console.error("Failed to import ZIP:", error);
-      return { success: false, error: error.toString() };
+      Logger.error("Failed to import ZIP:", error);
+      return { success: false, error: formatError(error) };
     }
   },
 }));

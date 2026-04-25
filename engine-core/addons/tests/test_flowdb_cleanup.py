@@ -3,7 +3,7 @@ import sqlite3
 import sys
 import time
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 # Add parent addon directory to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,15 +20,11 @@ class _FakeDb:
         self.logger = MagicMock()
         self.db_path = "/tmp/relaycraft-test-nonexistent.db"
         self.body_dir = "/tmp/relaycraft-test-bodies"
-        self.deleted_body_groups = []
         self.deleted_sessions = []
         self.notifications = []
 
     def _get_conn(self):
         return self._conn
-
-    def _delete_body_files(self, session_id, flow_ids=None):
-        self.deleted_body_groups.append((session_id, list(flow_ids or [])))
 
     def delete_session(self, session_id):
         self.deleted_sessions.append(session_id)
@@ -103,6 +99,10 @@ class TestFlowDbCleanup(unittest.TestCase):
         conn.commit()
 
         db = _FakeDb(conn)
+        deleted_body_groups = []
+
+        def mock_delete_body_files(db_inst, session_id, flow_ids=None):
+            deleted_body_groups.append((session_id, list(flow_ids or [])))
 
         original = (
             Config.MAX_FLOW_AGE_DAYS,
@@ -113,11 +113,12 @@ class TestFlowDbCleanup(unittest.TestCase):
             Config.MAX_FLOW_AGE_DAYS = 1
             Config.MAX_TOTAL_FLOWS = 100000
             Config.MAX_DB_SIZE_MB = 100000
-            cleanup.run_cleanup(db)
+            with patch("core.flowdb.cleanup.delete_body_files", side_effect=mock_delete_body_files):
+                cleanup.run_cleanup(db)
         finally:
             Config.MAX_FLOW_AGE_DAYS, Config.MAX_TOTAL_FLOWS, Config.MAX_DB_SIZE_MB = original
 
-        by_session = {sid: set(ids) for sid, ids in db.deleted_body_groups}
+        by_session = {sid: set(ids) for sid, ids in deleted_body_groups}
         self.assertEqual(by_session.get("s1"), set(old_s1_ids))
         self.assertEqual(by_session.get("s2"), set(old_s2_ids))
 

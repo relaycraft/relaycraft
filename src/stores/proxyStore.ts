@@ -1,11 +1,18 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import i18n from "../i18n";
-import { Logger } from "../lib/logger";
+import { formatError, Logger } from "../lib/logger";
 import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
 import { useScriptStore } from "./scriptStore";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function shouldAttemptRecovery(
+  status: { running: boolean },
+  currentState: { isRecovering: boolean; recoveryAttempts: number },
+): boolean {
+  return !(status.running || currentState.isRecovering) && currentState.recoveryAttempts < 3;
+}
 
 interface ProxyStore {
   running: boolean; // Engine process is running
@@ -105,7 +112,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         source: "Proxy Engine",
       });
     } catch (error) {
-      const errorMsg = error as string;
+      const errorMsg = formatError(error);
       await Logger.error("Failed to start proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
@@ -153,7 +160,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         source: "Proxy Engine",
       });
     } catch (error) {
-      const errorMsg = error as string;
+      const errorMsg = formatError(error);
       await Logger.error("Failed to stop proxy:", errorMsg);
       set({ error: errorMsg });
 
@@ -216,7 +223,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         source: "Proxy Engine",
       });
     } catch (error) {
-      const errorMsg = error as string;
+      const errorMsg = formatError(error);
       await Logger.error("Failed to restart proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
@@ -245,7 +252,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       const currentState = useProxyStore.getState();
 
       // Unexpected engine crash detection & auto-recovery
-      if (!(status.running || currentState.isRecovering) && currentState.recoveryAttempts < 3) {
+      if (shouldAttemptRecovery(status, currentState)) {
         Logger.warn(
           `Proxy engine crash detected (Attempts: ${currentState.recoveryAttempts + 1}/3). Triggering auto-recovery...`,
         );

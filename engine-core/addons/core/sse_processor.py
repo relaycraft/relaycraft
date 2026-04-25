@@ -3,6 +3,8 @@ import time
 from collections import deque
 from typing import Any, Dict, List, Optional
 
+from .flowdb import get_sse_events as db_get_sse_events, store_sse_events as db_store_sse_events
+
 
 def is_sse_content_type(content_type: str) -> bool:
     return "text/event-stream" in (content_type or "").lower()
@@ -207,7 +209,7 @@ def get_sse_events(monitor: Any, flow_id: str, since_seq: int = 0, limit: int = 
         cleanup_inactive_sse_states_locked(monitor)
         state = monitor._sse_states.get(flow_id)
         if state is None:
-            payload = monitor.db.get_sse_events(flow_id, since_seq=since, limit=limit_value)
+            payload = db_get_sse_events(monitor.db, flow_id, since_seq=since, limit=limit_value)
             return {
                 "flowId": flow_id,
                 "events": payload.get("events", []),
@@ -235,10 +237,10 @@ def persist_sse_events(monitor: Any, flow_id: str, events: List[Dict[str, Any]])
     if not flow_id or not events:
         return
     db = getattr(monitor, "db", None)
-    if db is None or not hasattr(db, "store_sse_events"):
+    if db is None:
         return
     try:
-        db.store_sse_events(flow_id, events)
+        db_store_sse_events(db, flow_id, events)
     except Exception as e:
         monitor.logger.debug(f"SSE events persistence failed: {e}")
 

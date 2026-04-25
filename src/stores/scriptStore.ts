@@ -57,7 +57,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
       const scripts = await invoke<ScriptInfo[]>("list_scripts");
       set((state) => ({ version: state.version + 1, scripts }));
     } catch (error) {
-      console.error("Failed to fetch scripts:", error);
+      Logger.error("Failed to fetch scripts:", error);
     } finally {
       set({ loading: false });
     }
@@ -71,7 +71,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
     try {
       return await invoke<string>("get_script_content", { name });
     } catch (error) {
-      console.error(`Failed to get script content for ${name}:`, error);
+      Logger.error(`Failed to get script content for ${name}:`, error);
       throw error;
     }
   },
@@ -124,7 +124,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
       }
       await get().fetchScripts();
     } catch (error) {
-      console.error(`Failed to rename script ${oldName} to ${newName}:`, error);
+      Logger.error(`Failed to rename script ${oldName} to ${newName}:`, error);
       throw error;
     } finally {
       set({ loading: false });
@@ -179,7 +179,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
         set({ modifiedSinceStart: newSet });
       }
     } catch (error) {
-      console.error(`Failed to toggle script ${name}:`, error);
+      Logger.error(`Failed to toggle script ${name}:`, error);
       // Revert on error
       await get().fetchScripts();
     }
@@ -190,7 +190,7 @@ export const useScriptStore = create<ScriptStore>((set, get) => ({
       await invoke("move_script", { name, direction });
       await get().fetchScripts();
     } catch (error) {
-      console.error(`Failed to move script ${name}:`, error);
+      Logger.error(`Failed to move script ${name}:`, error);
     }
   },
 }));

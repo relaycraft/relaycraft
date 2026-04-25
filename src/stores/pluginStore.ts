@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import i18n from "../i18n";
-import { Logger } from "../lib/logger";
+import { formatError, Logger } from "../lib/logger";
 import { loadPluginUI, unloadPluginUI } from "../plugins/pluginLoader";
 import type { PluginInfo } from "../types/plugin";
 
@@ -70,7 +70,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       useNotificationStore.getState().addNotification({
         title: i18n.t("plugins.notifications.load_failed_title"),
         message: i18n.t("plugins.notifications.load_failed_msg", {
-          error: String(error),
+          error: formatError(error),
         }),
         type: "error",
         category: "plugin",
@@ -132,7 +132,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
             ? i18n.t("common.enable", { defaultValue: "enable" })
             : i18n.t("common.disable", { defaultValue: "disable" }),
           id,
-          error: String(error),
+          error: formatError(error),
         }),
         type: "error",
         category: "plugin",
@@ -215,7 +215,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       const { toast } = await import("sonner");
       const { t } = await import("i18next");
 
-      const errorMessage = String(error);
+      const errorMessage = formatError(error);
 
       // Extract meaningful error message
       let displayMessage = t("plugins.errors.install_failed");
@@ -284,7 +284,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       // Show user-friendly error message
       const { useUIStore } = await import("./uiStore");
       const ui = useUIStore.getState();
-      const errorMessage = String(error);
+      const errorMessage = formatError(error);
 
       let title = i18n.t("plugins.errors.install_failed");
       let message = errorMessage;
@@ -352,7 +352,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
 
       // Show user-friendly error message
       const { useUIStore } = await import("./uiStore");
-      const errorMessage = String(error);
+      const errorMessage = formatError(error);
 
       useUIStore.getState().showConfirm({
         title: i18n.t("plugins.notifications.uninstall_failed_title"),

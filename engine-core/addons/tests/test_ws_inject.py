@@ -12,6 +12,7 @@ sys.path.append(addons_dir)
 import tests.mock_mitmproxy  # noqa: F401
 
 from core.monitor import TrafficMonitor
+from core import ws_handler
 
 
 def make_monitor() -> TrafficMonitor:
@@ -68,34 +69,30 @@ class TestWsInject(unittest.TestCase):
         monitor = make_monitor()
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_text", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
         self.call_mock.side_effect = lambda *args: ws.messages.append(
             _FakeMessage(b"hello", from_client=True, is_text=True)
         )
 
-        status, body = monitor.inject_ws_frame("f_text", "text", "hello")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_text", "text", "hello")
 
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
         self.call_mock.assert_called_once()
         args = self.call_mock.call_args.args
-        # inject.websocket, flow, False (to_client=False => client->server),
-        # payload_bytes, is_text
         self.assertEqual(args[0], "inject.websocket")
         self.assertIs(args[1], flow)
         self.assertFalse(args[2])
         self.assertEqual(args[3], b"hello")
         self.assertTrue(args[4])
-        # Injected seq recorded on the appended message.
         self.assertIn(0, flow.metadata["_relaycraft_injected_seqs"])
 
     def test_inject_binary_success(self):
         monitor = make_monitor()
         ws = _FakeWebSocket()
-        # Pre-populate existing messages so seq prediction is non-zero.
         ws.messages = [object(), object(), object()]
         flow = _FakeFlow(flow_id="f_bin", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
         raw = b"\x01\x02\x03\xff"
         payload_b64 = base64.b64encode(raw).decode("ascii")
@@ -103,13 +100,13 @@ class TestWsInject(unittest.TestCase):
             _FakeMessage(raw, from_client=True, is_text=False)
         )
 
-        status, body = monitor.inject_ws_frame("f_bin", "binary", payload_b64)
+        status, body = ws_handler.inject_ws_frame(monitor, "f_bin", "binary", payload_b64)
 
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
         args = self.call_mock.call_args.args
         self.assertEqual(args[3], raw)
-        self.assertFalse(args[4])  # is_text=False
+        self.assertFalse(args[4])
         self.assertIn(3, flow.metadata["_relaycraft_injected_seqs"])
 
     def test_inject_prefers_matching_seq_in_concurrent_append_window(self):
@@ -117,7 +114,7 @@ class TestWsInject(unittest.TestCase):
         ws = _FakeWebSocket()
         ws.messages = [object(), object()]
         flow = _FakeFlow(flow_id="f_race", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
         def _side_effect(*_args):
             ws.messages.append(_FakeMessage(b"other", from_client=True, is_text=True))
@@ -125,18 +122,17 @@ class TestWsInject(unittest.TestCase):
 
         self.call_mock.side_effect = _side_effect
 
-        status, body = monitor.inject_ws_frame("f_race", "text", "hello")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_race", "text", "hello")
 
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
-        # Should mark the exact matching message (seq=3), not the first appended (seq=2).
         self.assertIn(3, flow.metadata["_relaycraft_injected_seqs"])
         self.assertNotIn(2, flow.metadata["_relaycraft_injected_seqs"])
 
     def test_inject_flow_not_found(self):
         monitor = make_monitor()
 
-        status, body = monitor.inject_ws_frame("nope", "text", "x")
+        status, body = ws_handler.inject_ws_frame(monitor, "nope", "text", "x")
 
         self.assertEqual(status, 404)
         self.assertFalse(body["ok"])
@@ -147,14 +143,13 @@ class TestWsInject(unittest.TestCase):
         monitor = make_monitor()
         ws = _FakeWebSocket(closed_client=True)
         flow = _FakeFlow(flow_id="f_closed", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
-        status, body = monitor.inject_ws_frame("f_closed", "text", "x")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_closed", "text", "x")
 
         self.assertEqual(status, 409)
         self.assertEqual(body["code"], "flow_closed")
         self.call_mock.assert_not_called()
-        # Registry should be cleaned up after detecting closure.
         with monitor._ws_flows_lock:
             self.assertNotIn("f_closed", monitor._ws_flows)
 
@@ -162,9 +157,9 @@ class TestWsInject(unittest.TestCase):
         monitor = make_monitor()
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_badb64", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
-        status, body = monitor.inject_ws_frame("f_badb64", "binary", "not-base64!!!")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_badb64", "binary", "not-base64!!!")
 
         self.assertEqual(status, 400)
         self.assertEqual(body["code"], "invalid_payload")
@@ -174,9 +169,9 @@ class TestWsInject(unittest.TestCase):
         monitor = make_monitor()
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_type", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
-        status, body = monitor.inject_ws_frame("f_type", "ping", "x")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_type", "ping", "x")
 
         self.assertEqual(status, 400)
         self.assertEqual(body["code"], "invalid_payload")
@@ -186,10 +181,10 @@ class TestWsInject(unittest.TestCase):
         monitor = make_monitor()
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_fail", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
         self.call_mock.side_effect = RuntimeError("inject failed")
 
-        status, body = monitor.inject_ws_frame("f_fail", "text", "hello")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_fail", "text", "hello")
 
         self.assertEqual(status, 500)
         self.assertEqual(body["code"], "engine_error")
@@ -200,9 +195,9 @@ class TestWsInject(unittest.TestCase):
         monitor._ws_inject_max_payload_bytes = 8
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_big", ws=ws)
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
 
-        status, body = monitor.inject_ws_frame("f_big", "text", "123456789")
+        status, body = ws_handler.inject_ws_frame(monitor, "f_big", "text", "123456789")
 
         self.assertEqual(status, 400)
         self.assertEqual(body["code"], "invalid_payload")
@@ -213,11 +208,11 @@ class TestWsInject(unittest.TestCase):
         ws = _FakeWebSocket()
         flow = _FakeFlow(flow_id="f_rt", ws=ws)
 
-        monitor.register_ws_flow(flow)
+        ws_handler.register_ws_flow(monitor, flow)
         with monitor._ws_flows_lock:
             self.assertIn("f_rt", monitor._ws_flows)
 
-        monitor.unregister_ws_flow(flow)
+        ws_handler.unregister_ws_flow(monitor, flow)
         with monitor._ws_flows_lock:
             self.assertNotIn("f_rt", monitor._ws_flows)
 

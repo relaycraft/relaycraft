@@ -136,3 +136,13 @@ export const Logger = {
     }
   },
 };
+
+/**
+ * Normalize a caught error value into a human-readable string.
+ *
+ * Use this in catch blocks instead of `error as string`, `String(error)`,
+ * or `error.message` to handle all thrown types consistently.
+ */
+export function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

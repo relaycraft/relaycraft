@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { create } from "zustand";
 import i18n from "../i18n";
-import { Logger } from "../lib/logger";
+import { formatError, Logger } from "../lib/logger";
 
 export interface AppConfig {
   ssl_insecure: boolean;
@@ -157,7 +157,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     try {
       await getCurrentWindow().setAlwaysOnTop(value);
     } catch (error) {
-      console.error("Failed to set always on top:", error);
+      Logger.error("Failed to set always on top:", error);
     }
   },
 
@@ -189,7 +189,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       .then((m) => {
         m.useThemeStore.getState().applyVibrancy();
       })
-      .catch(console.error);
+      .catch((e) => Logger.error("Failed to apply vibrancy:", e));
   },
 
   updateDisableGpuAcceleration: async (value: boolean) => {
@@ -211,7 +211,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         upstreamMessage: message,
       });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = formatError(error);
       Logger.error("Proxy connectivity check failed:", errorMsg);
       set({
         upstreamStatus: "error",

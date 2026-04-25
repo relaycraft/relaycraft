@@ -1,15 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getNextRulePriority, useRuleStore } from "../../../stores/ruleStore";
+import { useRuleStore } from "../../../stores/ruleStore";
 import type {
   HeaderOperation,
   HttpMethod,
   JsonModification,
   Rule,
-  RuleAction,
   RuleType,
   UrlMatchType,
 } from "../../../types/rules";
+import {
+  isMapLocalAction,
+  isMapRemoteAction,
+  isRewriteBodyAction,
+  isThrottleAction,
+} from "../../../types/rules";
+import { checkIsDirty } from "./ruleEditorDirtyCheck";
+import {
+  type ActionState,
+  buildActionsForPreview,
+  buildActionsForSave,
+  buildMatchRequest,
+  buildRuleForPreview,
+  buildRuleForSave,
+  parseActionsToState,
+} from "./ruleEditorSerialization";
 
 interface UseRuleEditorProps {
   rule: Partial<Rule> | null;
@@ -20,20 +35,20 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
   const { t } = useTranslation();
   const { addRule, updateRule, setIsEditorDirty, ruleGroups } = useRuleStore();
 
-  // --- 0. Initial Reference for Dirty Check ---
+  // --- Initial Reference for Dirty Check ---
   const [initialRule, setInitialRule] = useState<Partial<Rule> | null>(rule);
 
-  // --- 1. Basic Info State ---
+  // --- Basic Info ---
   const [name, setName] = useState(rule?.name || "");
   const [ruleType, setRuleType] = useState<RuleType>(rule?.type || "rewrite_body");
   const [groupId, setGroupId] = useState(() => {
     if (rule?.id) {
       return ruleGroups[rule.id] || "";
     }
-    return (rule as any)?.groupId || "";
+    return "";
   });
 
-  // --- 2. Match Config State ---
+  // --- Match Config ---
   const [urlPattern, setUrlPattern] = useState(
     (rule?.match?.request?.find((a) => a.type === "url")?.value as string) || "",
   );
@@ -44,241 +59,113 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     (rule?.match?.request?.find((a) => a.type === "method")?.value as HttpMethod[]) || [],
   );
   const [requiredHeaders, setRequiredHeaders] = useState<
-    Array<{
-      key: string;
-      value?: string;
-      matchType: "contains" | "exact" | "regex";
-    }>
+    Array<{ key: string; value?: string; matchType: "contains" | "exact" | "regex" }>
   >(
     rule?.match?.request
       ?.filter((a) => a.type === "header")
       ?.map((a) => ({
         key: a.key!,
-        matchType: (a.matchType as any) || "exact",
+        matchType: (a.matchType as "contains" | "exact" | "regex") || "exact",
         value: a.value as string,
       })) || [],
   );
 
-  // --- 3. Action State (Directly initialized from prop to prevent false dirty states) ---
-  const actions = rule?.actions || [];
-
-  // Rewrite Body
-  const rewriteBodyAction = actions.find((a) => a.type === "rewrite_body") as any;
-  const [rewriteTarget, setRewriteTarget] = useState<"request" | "response">(
-    rewriteBodyAction?.target || "response",
+  // --- Action States (initialized from prop) ---
+  const parsed = parseActionsToState(rule?.actions || []);
+  const [rewriteTarget, setRewriteTarget] = useState<"request" | "response">(parsed.rewriteTarget);
+  const [rewriteType, setRewriteType] = useState<"set" | "replace" | "regex_replace" | "json">(
+    parsed.rewriteType,
   );
-  const [rewriteType, setRewriteType] = useState<"replace" | "regex_replace" | "set" | "json">(
-    () => {
-      if (rewriteBodyAction?.set) return "set";
-      if (rewriteBodyAction?.replace) return "replace";
-      if (rewriteBodyAction?.regex_replace) return "regex_replace";
-      if (rewriteBodyAction?.json) return "json";
-      return "set";
-    },
-  );
-  const [rewriteContent, setRewriteContent] = useState(rewriteBodyAction?.set?.content || "");
-  const [rewritePattern, setRewritePattern] = useState(
-    rewriteBodyAction?.replace?.pattern || rewriteBodyAction?.regex_replace?.pattern || "",
-  );
-  const [rewriteReplacement, setRewriteReplacement] = useState(
-    rewriteBodyAction?.replace?.replacement || rewriteBodyAction?.regex_replace?.replacement || "",
-  );
+  const [rewriteContent, setRewriteContent] = useState(parsed.rewriteContent);
+  const [rewritePattern, setRewritePattern] = useState(parsed.rewritePattern);
+  const [rewriteReplacement, setRewriteReplacement] = useState(parsed.rewriteReplacement);
   const [jsonModifications, setJsonModifications] = useState<JsonModification[]>(
-    rewriteBodyAction?.json?.modifications || [],
+    parsed.jsonModifications,
   );
   const [rewriteStatusCode, setRewriteStatusCode] = useState<number | undefined>(
-    rewriteBodyAction?.statusCode ?? rewriteBodyAction?.set?.statusCode ?? undefined,
+    parsed.rewriteStatusCode,
   );
   const [rewriteContentType, setRewriteContentType] = useState<string | undefined>(
-    rewriteBodyAction?.contentType ?? rewriteBodyAction?.set?.contentType ?? "",
+    parsed.rewriteContentType,
   );
+  const [headersRequest, setHeadersRequest] = useState<HeaderOperation[]>(parsed.headersRequest);
+  const [headersResponse, setHeadersResponse] = useState<HeaderOperation[]>(parsed.headersResponse);
+  const [mapLocalSource, setMapLocalSource] = useState<"file" | "manual">(parsed.mapLocalSource);
+  const [localPath, setLocalPath] = useState(parsed.localPath);
+  const [mapLocalContent, setMapLocalContent] = useState(parsed.mapLocalContent);
+  const [contentType, setContentType] = useState(parsed.contentType);
+  const [mapLocalStatusCode, setMapLocalStatusCode] = useState(parsed.mapLocalStatusCode);
+  const [targetUrl, setTargetUrl] = useState(parsed.targetUrl);
+  const [preservePath, setPreservePath] = useState(parsed.preservePath);
+  const [delayMs, setDelayMs] = useState(parsed.delayMs);
+  const [packetLoss, setPacketLoss] = useState(parsed.packetLoss);
+  const [bandwidthKbps, setBandwidthKbps] = useState(parsed.bandwidthKbps);
 
-  // Headers (Shared)
-  const [headersRequest, setHeadersRequest] = useState<HeaderOperation[]>(() => {
-    const list: HeaderOperation[] = [];
-    actions.forEach((a: any) => {
-      if (a.headers?.request) list.push(...a.headers.request);
-      if (a.type === "rewrite_header" && a.headers?.request) {
-        // Already added above if it has headers.request
-      }
-    });
-    return list;
-  });
-  const [headersResponse, setHeadersResponse] = useState<HeaderOperation[]>(() => {
-    const list: HeaderOperation[] = [];
-    actions.forEach((a: any) => {
-      if (a.headers?.response) list.push(...a.headers.response);
-    });
-    return list;
-  });
-
-  // Map Local
-  const mapLocalAction = actions.find((a) => a.type === "map_local") as any;
-  const [mapLocalSource, setMapLocalSource] = useState<"file" | "manual">(
-    mapLocalAction?.source || "file",
-  );
-  const [localPath, setLocalPath] = useState(mapLocalAction?.localPath || "");
-  const [mapLocalContent, setMapLocalContent] = useState(mapLocalAction?.content || "");
-  const [contentType, setContentType] = useState(mapLocalAction?.contentType || "");
-  const [mapLocalStatusCode, setMapLocalStatusCode] = useState(mapLocalAction?.statusCode || 200);
-
-  // Map Remote
-  const mapRemoteAction = actions.find((a) => a.type === "map_remote") as any;
-  const [targetUrl, setTargetUrl] = useState(mapRemoteAction?.targetUrl || "");
-  const [preservePath, setPreservePath] = useState(mapRemoteAction?.preservePath);
-
-  // Throttle
-  const throttleAction = actions.find((a) => a.type === "throttle") as any;
-  const [delayMs, setDelayMs] = useState(throttleAction?.delayMs || 0);
-  const [packetLoss, setPacketLoss] = useState(throttleAction?.packetLoss || 0);
-  const [bandwidthKbps, setBandwidthKbps] = useState(throttleAction?.bandwidthKbps || 0);
-
-  // Helper to get current rule object (for AI & Save)
-  const getCurrentRuleObject = useCallback((): Partial<Rule> => {
-    const currentRule: Partial<Rule> = {
-      id: rule?.id,
-      name,
-      type: ruleType,
-      execution: {
-        enabled: rule?.execution?.enabled ?? true,
-        priority: rule?.execution?.priority ?? getNextRulePriority(),
-        stopOnMatch: ["map_local", "block_request"].includes(ruleType),
-      },
-      match: {
-        request: [
-          { type: "url", matchType: urlMatchType, value: urlPattern },
-          ...(methods.length > 0
-            ? [{ type: "method", matchType: "exact", value: methods } as any]
-            : []),
-          ...(requiredHeaders.map((h) => ({
-            type: "header",
-            key: h.key,
-            matchType: h.matchType,
-            value: h.value,
-          })) as any[]),
-        ],
-        response: [],
-      },
-      actions: [] as RuleAction[],
-    };
-
-    if (ruleType === "rewrite_body") {
-      const validModifications = jsonModifications.filter((m) => m.path.trim() !== "");
-      const action: any = {
-        type: "rewrite_body",
+  // --- Helper: get action state bundle ---
+  const getActionState = useCallback(
+    (): ActionState => ({
+      rewriteBody: {
         target: rewriteTarget,
+        type: rewriteType,
+        content: rewriteContent,
+        pattern: rewritePattern,
+        replacement: rewriteReplacement,
+        modifications: jsonModifications,
         statusCode: rewriteStatusCode,
         contentType: rewriteContentType,
-      };
-      if (rewriteType === "set") {
-        action.set = { content: rewriteContent };
-      } else if (rewriteType === "replace") {
-        action.replace = {
-          pattern: rewritePattern,
-          replacement: rewriteReplacement,
-        };
-      } else if (rewriteType === "regex_replace") {
-        action.regex_replace = {
-          pattern: rewritePattern,
-          replacement: rewriteReplacement,
-        };
-      } else if (rewriteType === "json") {
-        action.json = { modifications: validModifications };
-      }
-      currentRule.actions?.push(action);
-    } else if (ruleType === "map_local") {
-      // Logic for splitting actions happens at save time usually, but here we just represent the UI state
-      // For preview/AI, we return a single logical action if possible, or standard structure
-      currentRule.actions?.push({
-        type: "map_local",
+      },
+      mapLocal: {
         source: mapLocalSource,
-        localPath: mapLocalSource === "file" ? localPath : undefined,
-        content: mapLocalSource === "manual" ? mapLocalContent : undefined,
-        contentType: contentType || undefined,
+        localPath,
+        content: mapLocalContent,
+        contentType,
         statusCode: mapLocalStatusCode,
-        headers:
-          headersRequest.length > 0 || headersResponse.length > 0
-            ? {
-                request: headersRequest,
-                response: headersResponse,
-              }
-            : undefined,
-      });
-    } else if (ruleType === "map_remote") {
-      currentRule.actions?.push({
-        type: "map_remote",
-        targetUrl,
-        preservePath,
-        headers:
-          headersRequest.length > 0 || headersResponse.length > 0
-            ? {
-                request: headersRequest,
-                response: headersResponse,
-              }
-            : undefined,
-      });
-    } else if (ruleType === "throttle") {
-      currentRule.actions?.push({
-        type: "throttle",
-        delayMs: delayMs > 0 ? delayMs : undefined,
-        packetLoss: packetLoss > 0 ? packetLoss : undefined,
-        bandwidthKbps: bandwidthKbps > 0 ? bandwidthKbps : undefined,
-      });
-    } else if (ruleType === "rewrite_header") {
-      currentRule.actions?.push({
-        type: "rewrite_header",
-        headers: {
-          request: headersRequest,
-          response: headersResponse,
-        },
-      });
-    } else if (ruleType === "block_request") {
-      currentRule.actions?.push({
-        type: "block_request",
-      });
-    }
+      },
+      mapRemote: { targetUrl, preservePath },
+      throttle: { delayMs, packetLoss, bandwidthKbps },
+      headersRequest,
+      headersResponse,
+    }),
+    [
+      rewriteTarget,
+      rewriteType,
+      rewriteContent,
+      rewritePattern,
+      rewriteReplacement,
+      jsonModifications,
+      rewriteStatusCode,
+      rewriteContentType,
+      mapLocalSource,
+      localPath,
+      mapLocalContent,
+      contentType,
+      mapLocalStatusCode,
+      targetUrl,
+      preservePath,
+      delayMs,
+      packetLoss,
+      bandwidthKbps,
+      headersRequest,
+      headersResponse,
+    ],
+  );
 
-    return currentRule;
-  }, [
-    rule,
-    name,
-    ruleType,
-    urlPattern,
-    urlMatchType,
-    methods,
-    requiredHeaders,
-    rewriteTarget,
-    rewriteType,
-    rewriteContent,
-    rewritePattern,
-    rewriteReplacement,
-    jsonModifications,
-    rewriteStatusCode,
-    rewriteContentType,
-    mapLocalSource,
-    localPath,
-    mapLocalContent,
-    contentType,
-    mapLocalStatusCode,
-    headersRequest,
-    headersResponse,
-    targetUrl,
-    preservePath,
-    delayMs,
-    packetLoss,
-    bandwidthKbps,
-  ]);
+  // --- Build Current Rule Object (for AI & preview) ---
+  const getCurrentRuleObject = useCallback((): Partial<Rule> => {
+    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders);
+    const actions = buildActionsForPreview(ruleType, getActionState());
+    return buildRuleForPreview(rule, name, ruleType, matchRequest, actions);
+  }, [rule, name, ruleType, urlPattern, urlMatchType, methods, requiredHeaders, getActionState]);
 
-  // --- Initialization & Sync ---
+  // --- Sync State from Rule Prop ---
   useEffect(() => {
     if (!rule) return;
 
     setName(rule.name || "");
     setRuleType(rule.type || "rewrite_body");
-    const gid = rule.id ? ruleGroups[rule.id] : (rule as any).groupId;
+    const gid = rule.id ? ruleGroups[rule.id] : undefined;
     setGroupId(gid || "Default");
 
-    // Always reset match fields before repopulating
     setUrlPattern("");
     setUrlMatchType("contains");
     setMethods([]);
@@ -297,111 +184,39 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       setRequiredHeaders(
         headerAtoms.map((a) => ({
           key: a.key!,
-          matchType: (a.matchType as any) || "exact",
+          matchType: (a.matchType as "contains" | "exact" | "regex") || "exact",
           value: a.value as string,
         })),
       );
     }
 
-    const actions = rule.actions || [];
-
-    // Reset all action states
-    setRewriteTarget("response");
-    setRewriteType("set");
-    setRewriteContent("");
-    setRewritePattern("");
-    setRewriteReplacement("");
-    setJsonModifications([]);
-    setRewriteStatusCode(undefined);
-    setRewriteContentType("");
-    setMapLocalSource("file");
-    setLocalPath("");
-    setMapLocalContent("");
-    setContentType("");
-    setMapLocalStatusCode(200);
-    setHeadersRequest([]);
-    setHeadersResponse([]);
-    setTargetUrl("");
-    setPreservePath(false);
-    setDelayMs(0);
-    setPacketLoss(0);
-    setBandwidthKbps(0);
-
-    // Populate from actions
-    actions.forEach((a) => {
-      if (a.type === "rewrite_body") {
-        setRewriteTarget(a.target || "response");
-
-        // Normalize null to undefined for dirty check consistency
-        if (a.statusCode !== undefined)
-          setRewriteStatusCode(a.statusCode === null ? undefined : a.statusCode);
-        if (a.contentType !== undefined)
-          setRewriteContentType(a.contentType === null ? undefined : a.contentType);
-
-        if (a.set) {
-          setRewriteType("set");
-          setRewriteContent(a.set.content);
-          if (a.statusCode === undefined && a.set.statusCode) {
-            setRewriteStatusCode(a.set.statusCode === null ? undefined : a.set.statusCode);
-          }
-          if (a.contentType === undefined && a.set.contentType) {
-            setRewriteContentType(a.set.contentType === null ? undefined : a.set.contentType);
-          }
-        } else if (a.replace) {
-          setRewriteType("replace");
-          setRewritePattern(a.replace.pattern);
-          setRewriteReplacement(a.replace.replacement);
-        } else if (a.regex_replace) {
-          setRewriteType("regex_replace");
-          setRewritePattern(a.regex_replace.pattern);
-          setRewriteReplacement(a.regex_replace.replacement);
-        } else if (a.json) {
-          setRewriteType("json");
-          setJsonModifications(a.json.modifications);
-        }
-      } else if (a.type === "map_local") {
-        setMapLocalSource(a.source || "file");
-        setLocalPath(a.localPath || "");
-        setMapLocalContent(a.content || "");
-        setContentType(a.contentType || "");
-        setMapLocalStatusCode(a.statusCode || 200);
-        if (a.headers) {
-          if (a.headers.request && a.headers.request.length > 0)
-            setHeadersRequest(a.headers.request);
-          if (a.headers.response && a.headers.response.length > 0)
-            setHeadersResponse(a.headers.response);
-        }
-      } else if (a.type === "rewrite_header") {
-        if (a.headers) {
-          if (a.headers.request && a.headers.request.length > 0)
-            setHeadersRequest(a.headers.request);
-          if (a.headers.response && a.headers.response.length > 0)
-            setHeadersResponse(a.headers.response);
-        }
-      } else if (a.type === "map_remote") {
-        setTargetUrl(a.targetUrl || "");
-        setPreservePath(a.preservePath ?? false);
-        if (a.headers) {
-          if (a.headers.request && a.headers.request.length > 0)
-            setHeadersRequest(a.headers.request);
-          if (a.headers.response && a.headers.response.length > 0)
-            setHeadersResponse(a.headers.response);
-        }
-      } else if (a.type === "throttle") {
-        setDelayMs(a.delayMs || 0);
-        setPacketLoss(a.packetLoss || 0);
-        setBandwidthKbps(a.bandwidthKbps || 0);
-      }
-    });
-  }, [rule, ruleGroups]); // Added ruleGroups to dep array, technically correct
+    // Reset + populate action states
+    const s = parseActionsToState(rule.actions || []);
+    setRewriteTarget(s.rewriteTarget);
+    setRewriteType(s.rewriteType);
+    setRewriteContent(s.rewriteContent);
+    setRewritePattern(s.rewritePattern);
+    setRewriteReplacement(s.rewriteReplacement);
+    setJsonModifications(s.jsonModifications);
+    setRewriteStatusCode(s.rewriteStatusCode);
+    setRewriteContentType(s.rewriteContentType);
+    setMapLocalSource(s.mapLocalSource);
+    setLocalPath(s.localPath);
+    setMapLocalContent(s.mapLocalContent);
+    setContentType(s.contentType);
+    setMapLocalStatusCode(s.mapLocalStatusCode);
+    setHeadersRequest(s.headersRequest);
+    setHeadersResponse(s.headersResponse);
+    setTargetUrl(s.targetUrl);
+    setPreservePath(s.preservePath);
+    setDelayMs(s.delayMs);
+    setPacketLoss(s.packetLoss);
+    setBandwidthKbps(s.bandwidthKbps);
+  }, [rule, ruleGroups]);
 
   // --- AI Assistant Handler ---
   const handleApplyAIRule = useCallback((partialRule: Partial<Rule>) => {
     if (!partialRule) return;
-
-    // Update initial rule reference to the new AI rule so that
-    // subsequent manual changes are tracked relative to this state,
-    // but the current state remains "dirty" until saved.
     setInitialRule(partialRule);
 
     if (partialRule.name) setName(partialRule.name);
@@ -410,7 +225,6 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     if (partialRule.match) {
       const atoms = partialRule.match.request || [];
       if (atoms.length > 0) {
-        // Try to find URL, Path or Host as they all map to our main URL pattern field
         const urlAtom = atoms.find(
           (a) => a.type === "url" || a.type === "path" || a.type === "host",
         );
@@ -418,7 +232,6 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
           setUrlPattern((urlAtom.value as string) || "");
           setUrlMatchType((urlAtom.matchType as UrlMatchType) || "contains");
         }
-
         const methodAtom = atoms.find((a) => a.type === "method");
         if (methodAtom) setMethods((methodAtom.value as HttpMethod[]) || []);
 
@@ -427,7 +240,7 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
           setRequiredHeaders(
             headerAtoms.map((a) => ({
               key: a.key!,
-              matchType: (a.matchType as any) || "exact",
+              matchType: (a.matchType as "contains" | "exact" | "regex") || "exact",
               value: a.value as string,
             })),
           );
@@ -435,167 +248,51 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       }
     }
 
-    const actions = partialRule.actions || [];
-    actions.forEach((a) => {
-      if (a.type === "rewrite_body") {
-        setRuleType("rewrite_body"); // Force switch type if action found
-        if (a.target) setRewriteTarget(a.target);
-        if (a.statusCode !== undefined) setRewriteStatusCode(a.statusCode);
-        if (a.contentType !== undefined) setRewriteContentType(a.contentType);
+    // Parse and apply actions
+    const s = parseActionsToState(partialRule.actions || []);
+    if (partialRule.actions?.length) {
+      // Force rule type to match the first recognized action
+      const firstAction = partialRule.actions[0];
+      if (isRewriteBodyAction(firstAction)) setRuleType("rewrite_body");
+      else if (isMapLocalAction(firstAction)) setRuleType("map_local");
+      else if (isMapRemoteAction(firstAction)) setRuleType("map_remote");
+      else if (isThrottleAction(firstAction)) setRuleType("throttle");
+      else if (firstAction.type === "rewrite_header") setRuleType("rewrite_header");
+      else if (firstAction.type === "block_request") setRuleType("block_request");
+    }
 
-        if (a.set) {
-          setRewriteType("set");
-          setRewriteContent(a.set.content);
-        } else if (a.replace) {
-          setRewriteType("replace");
-          setRewritePattern(a.replace.pattern);
-          setRewriteReplacement(a.replace.replacement);
-        } else if (a.regex_replace) {
-          setRewriteType("regex_replace");
-          setRewritePattern(a.regex_replace.pattern);
-          setRewriteReplacement(a.regex_replace.replacement);
-        } else if (a.json) {
-          setRewriteType("json");
-          setJsonModifications(a.json.modifications);
-        }
-      } else if (a.type === "map_local") {
-        setRuleType("map_local");
-        if (a.source) setMapLocalSource(a.source);
-        if (a.localPath) setLocalPath(a.localPath);
-        if (a.content) setMapLocalContent(a.content);
-        if (a.contentType) setContentType(a.contentType);
-        if (a.statusCode) setMapLocalStatusCode(a.statusCode);
-        if (a.headers) {
-          setHeadersRequest(a.headers.request || []);
-          setHeadersResponse(a.headers.response || []);
-        }
-      } else if (a.type === "map_remote") {
-        setRuleType("map_remote");
-        if (a.targetUrl) setTargetUrl(a.targetUrl);
-        if (a.preservePath !== undefined) setPreservePath(!!a.preservePath);
-        if (a.headers) {
-          setHeadersRequest(a.headers.request || []);
-          setHeadersResponse(a.headers.response || []);
-        }
-      } else if (a.type === "throttle") {
-        setRuleType("throttle");
-        if (a.delayMs) setDelayMs(a.delayMs);
-        if (a.packetLoss) setPacketLoss(a.packetLoss);
-        if (a.bandwidthKbps) setBandwidthKbps(a.bandwidthKbps);
-      } else if (a.type === "rewrite_header") {
-        setRuleType("rewrite_header");
-        if (a.headers) {
-          setHeadersRequest(a.headers.request || []);
-          setHeadersResponse(a.headers.response || []);
-        }
-      } else if (a.type === "block_request") {
-        setRuleType("block_request");
-      }
-    });
+    setRewriteTarget(s.rewriteTarget);
+    setRewriteType(s.rewriteType);
+    setRewriteContent(s.rewriteContent);
+    setRewritePattern(s.rewritePattern);
+    setRewriteReplacement(s.rewriteReplacement);
+    setJsonModifications(s.jsonModifications);
+    setRewriteStatusCode(s.rewriteStatusCode);
+    setRewriteContentType(s.rewriteContentType);
+    setMapLocalSource(s.mapLocalSource);
+    setLocalPath(s.localPath);
+    setMapLocalContent(s.mapLocalContent);
+    setContentType(s.contentType);
+    setMapLocalStatusCode(s.mapLocalStatusCode);
+    setHeadersRequest(s.headersRequest);
+    setHeadersResponse(s.headersResponse);
+    setTargetUrl(s.targetUrl);
+    setPreservePath(s.preservePath);
+    setDelayMs(s.delayMs);
+    setPacketLoss(s.packetLoss);
+    setBandwidthKbps(s.bandwidthKbps);
   }, []);
 
   // --- Save Logic ---
   const handleSave = useCallback(() => {
-    const actions: any[] = [];
-
-    if (ruleType === "rewrite_body") {
-      const validModifications = jsonModifications.filter((m) => m.path.trim() !== "");
-      const action: any = {
-        type: "rewrite_body",
-        target: rewriteTarget,
-        statusCode: rewriteStatusCode,
-        contentType: rewriteContentType,
-      };
-      if (rewriteType === "set") {
-        action.set = { content: rewriteContent };
-      } else if (rewriteType === "replace") {
-        action.replace = {
-          pattern: rewritePattern,
-          replacement: rewriteReplacement,
-        };
-      } else if (rewriteType === "regex_replace") {
-        action.regex_replace = {
-          pattern: rewritePattern,
-          replacement: rewriteReplacement,
-        };
-      } else if (rewriteType === "json") {
-        action.json = { modifications: validModifications };
-      }
-      actions.push(action);
-    } else if (ruleType === "map_local") {
-      // Fix: Split Map Local into two actions if Request Headers are present
-      if (headersRequest.length > 0) {
-        actions.push({
-          type: "rewrite_header",
-          headers: {
-            request: headersRequest,
-            response: [],
-          },
-        });
-      }
-
-      actions.push({
-        type: "map_local",
-        source: mapLocalSource,
-        localPath: mapLocalSource === "file" ? localPath : undefined,
-        content: mapLocalSource === "manual" ? mapLocalContent : undefined,
-        contentType: contentType || undefined,
-        statusCode: mapLocalStatusCode,
-        headers:
-          headersResponse.length > 0
-            ? {
-                request: [],
-                response: headersResponse,
-              }
-            : undefined,
-      });
-    } else if (ruleType === "map_remote") {
-      actions.push({
-        type: "map_remote",
-        targetUrl,
-        preservePath,
-        headers:
-          headersRequest.length > 0 || headersResponse.length > 0
-            ? {
-                request: headersRequest,
-                response: headersResponse,
-              }
-            : undefined,
-      });
-    } else if (ruleType === "throttle") {
-      actions.push({
-        type: "throttle",
-        delayMs: delayMs > 0 ? delayMs : undefined,
-        packetLoss: packetLoss > 0 ? packetLoss : undefined,
-        bandwidthKbps: bandwidthKbps > 0 ? bandwidthKbps : undefined,
-      });
-    } else if (ruleType === "rewrite_header") {
-      actions.push({
-        type: "rewrite_header",
-        headers: {
-          request: headersRequest,
-          response: headersResponse,
-        },
-      });
-    } else if (ruleType === "block_request") {
-      actions.push({
-        type: "block_request",
-      });
-    }
+    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders);
+    const actions = buildActionsForSave(ruleType, getActionState());
 
     let finalName = name.trim();
     if (!finalName) {
       let labelKey = ruleType as string;
       if (ruleType === "rewrite_header") labelKey = "rewrite";
       if (ruleType === "block_request") labelKey = "block";
-      if (
-        ruleType === "map_local" ||
-        ruleType === "map_remote" ||
-        ruleType === "throttle" ||
-        ruleType === "rewrite_body"
-      )
-        labelKey = ruleType;
-
       const rawLabel = t(`rules.editor.core.types.${labelKey}_label`);
       const prettyUrl = urlPattern
         ? urlPattern.length > 30
@@ -605,33 +302,7 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       finalName = `${rawLabel}: ${prettyUrl}`;
     }
 
-    const newRule: Rule = {
-      id: rule?.id || `rule-${Date.now()}`,
-      name: finalName,
-      execution: {
-        enabled: rule?.execution?.enabled ?? true,
-        priority: rule?.execution?.priority ?? getNextRulePriority(),
-        stopOnMatch: ["map_local", "block_request"].includes(ruleType),
-      },
-      type: ruleType,
-      match: {
-        request: [
-          { type: "url", matchType: urlMatchType, value: urlPattern },
-          ...(methods.length > 0
-            ? [{ type: "method", matchType: "exact", value: methods } as any]
-            : []),
-          ...(requiredHeaders.map((h) => ({
-            type: "header",
-            key: h.key,
-            matchType: h.matchType,
-            value: h.value,
-          })) as any[]),
-        ],
-        response: [],
-      },
-      actions,
-      tags: rule?.tags,
-    };
+    const newRule = buildRuleForSave(rule, finalName, ruleType, matchRequest, actions);
 
     if (rule?.id) {
       updateRule(rule.id, newRule, groupId);
@@ -644,33 +315,14 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
   }, [
     rule,
     ruleType,
-    rewriteTarget,
-    rewriteStatusCode,
-    rewriteContentType,
-    rewriteType,
-    rewriteContent,
-    rewritePattern,
-    rewriteReplacement,
-    jsonModifications,
-    headersRequest,
-    mapLocalSource,
-    localPath,
-    mapLocalContent,
-    contentType,
-    mapLocalStatusCode,
-    headersResponse,
-    targetUrl,
-    preservePath,
-    delayMs,
-    packetLoss,
-    bandwidthKbps,
     name,
     urlPattern,
     urlMatchType,
     methods,
     requiredHeaders,
-    t,
     groupId,
+    t,
+    getActionState,
     updateRule,
     addRule,
     setIsEditorDirty,
@@ -679,141 +331,45 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
 
   // --- Dirty Check ---
   const checkDirty = useCallback(() => {
-    // If this is a new rule (no ID), it's dirty if it has any meaningful content
-    if (!rule?.id) {
-      // Check if any of the fields have been filled with something non-default
-      if (name.trim() !== "") return true;
-      if (urlPattern.trim() !== "") return true;
-      if (methods.length > 0) return true;
-      if (requiredHeaders.length > 0) return true;
-
-      // Check actions based on type
-      if (ruleType === "map_remote" && targetUrl.trim() !== "") return true;
-      if (ruleType === "map_local" && (localPath.trim() !== "" || mapLocalContent.trim() !== ""))
-        return true;
-      if (
-        ruleType === "rewrite_body" &&
-        (rewriteContent.trim() !== "" || rewritePattern.trim() !== "")
-      )
-        return true;
-      if (ruleType === "throttle" && (delayMs > 0 || packetLoss > 0 || bandwidthKbps > 0))
-        return true;
-      if (
-        ruleType === "rewrite_header" &&
-        (headersRequest.length > 0 || headersResponse.length > 0)
-      )
-        return true;
-    }
-
-    if (name.trim() !== (initialRule?.name || "").trim()) return true;
-    if (ruleType !== (initialRule?.type || "rewrite_body")) return true;
-
-    const initialGid = initialRule?.id ? ruleGroups[initialRule.id] : (initialRule as any)?.groupId;
-    if ((groupId || "Default") !== (initialGid || "Default")) return true;
-
-    const currentUrlPattern =
-      initialRule?.match?.request?.find((a) => a.type === "url")?.value || "";
-    const currentUrlMatchType =
-      initialRule?.match?.request?.find((a) => a.type === "url")?.matchType || "contains";
-    if (urlPattern !== currentUrlPattern) return true;
-    if (urlMatchType !== currentUrlMatchType) return true;
-
-    const initialMethods =
-      initialRule?.match?.request?.find((a) => a.type === "method")?.value || [];
-    if (
-      JSON.stringify([...methods].sort()) !==
-      JSON.stringify([...(initialMethods as string[])].sort())
-    )
-      return true;
-
-    const initialRequiredHeaders =
-      initialRule?.match?.request
-        ?.filter((a) => a.type === "header")
-        ?.map((a) => ({
-          key: a.key!,
-          matchType: (a.matchType as any) || "exact",
-          value: a.value as string,
-        })) || [];
-    if (JSON.stringify(requiredHeaders) !== JSON.stringify(initialRequiredHeaders)) return true;
-
-    const actions = initialRule?.actions || [];
-    const initialHeadersReq: HeaderOperation[] = [];
-    const initialHeadersRes: HeaderOperation[] = [];
-    actions.forEach((a) => {
-      const action = a as any;
-      if (action.headers) {
-        if (action.headers.request) initialHeadersReq.push(...action.headers.request);
-        if (action.headers.response) initialHeadersRes.push(...action.headers.response);
-      }
+    return checkIsDirty({
+      initialRule,
+      rule,
+      ruleGroups,
+      groupId,
+      name,
+      ruleType,
+      urlPattern,
+      urlMatchType,
+      methods,
+      requiredHeaders,
+      rewriteTarget,
+      rewriteType,
+      rewriteContent,
+      rewritePattern,
+      rewriteReplacement,
+      jsonModifications,
+      rewriteStatusCode,
+      rewriteContentType,
+      mapLocalSource,
+      localPath,
+      mapLocalContent,
+      contentType,
+      mapLocalStatusCode,
+      headersRequest,
+      headersResponse,
+      targetUrl,
+      preservePath,
+      delayMs,
+      packetLoss,
+      bandwidthKbps,
     });
-
-    if (ruleType === "rewrite_body") {
-      const initialAction = actions.find((a) => a.type === "rewrite_body") as any;
-      if (rewriteTarget !== (initialAction?.target || "response")) return true;
-
-      const initialStatusCode = initialAction?.statusCode ?? initialAction?.set?.statusCode;
-      const initialContentType = initialAction?.contentType ?? initialAction?.set?.contentType;
-
-      // Normalize null/undefined for comparison
-      const currentStatusCode = rewriteStatusCode === null ? undefined : rewriteStatusCode;
-      const normalizedInitialStatusCode =
-        initialStatusCode === null ? undefined : initialStatusCode;
-      if (currentStatusCode !== normalizedInitialStatusCode) return true;
-
-      const currentContentType = rewriteContentType === null ? undefined : rewriteContentType;
-      const normalizedInitialContentType =
-        initialContentType === null ? undefined : initialContentType;
-      if (currentContentType !== normalizedInitialContentType) return true;
-
-      if (rewriteType === "set") {
-        if (!initialAction?.set) return true;
-        if (rewriteContent !== (initialAction.set.content || "")) return true;
-      } else if (rewriteType === "replace") {
-        if (!initialAction?.replace) return true;
-        if (rewritePattern !== (initialAction.replace.pattern || "")) return true;
-        if (rewriteReplacement !== (initialAction.replace.replacement || "")) return true;
-      } else if (rewriteType === "regex_replace") {
-        if (!initialAction?.regex_replace) return true;
-        if (rewritePattern !== (initialAction.regex_replace.pattern || "")) return true;
-        if (rewriteReplacement !== (initialAction.regex_replace.replacement || "")) return true;
-      } else if (rewriteType === "json") {
-        if (!initialAction?.json) return true;
-        if (
-          JSON.stringify(jsonModifications) !==
-          JSON.stringify(initialAction.json.modifications || [])
-        )
-          return true;
-      }
-    } else if (ruleType === "map_local") {
-      const initialAction = actions.find((a) => a.type === "map_local") as any;
-      if (mapLocalSource !== (initialAction?.source || "file")) return true;
-      if (localPath !== (initialAction?.localPath || "")) return true;
-      if (mapLocalContent !== (initialAction?.content || "")) return true;
-      if (contentType !== (initialAction?.contentType || "")) return true;
-      if (mapLocalStatusCode !== (initialAction?.statusCode || 200)) return true;
-      if (JSON.stringify(headersRequest) !== JSON.stringify(initialHeadersReq)) return true;
-      if (JSON.stringify(headersResponse) !== JSON.stringify(initialHeadersRes)) return true;
-    } else if (ruleType === "map_remote") {
-      const initialAction = actions.find((a) => a.type === "map_remote") as any;
-      if (targetUrl !== (initialAction?.targetUrl || "")) return true;
-      if (preservePath !== initialAction?.preservePath) return true;
-      if (JSON.stringify(headersRequest) !== JSON.stringify(initialHeadersReq)) return true;
-      if (JSON.stringify(headersResponse) !== JSON.stringify(initialHeadersRes)) return true;
-    } else if (ruleType === "throttle") {
-      const initialAction = actions.find((a) => a.type === "throttle") as any;
-      if (delayMs !== (initialAction?.delayMs || 0)) return true;
-      if (packetLoss !== (initialAction?.packetLoss || 0)) return true;
-      if (bandwidthKbps !== (initialAction?.bandwidthKbps || 0)) return true;
-    } else if (ruleType === "rewrite_header") {
-      if (JSON.stringify(headersRequest) !== JSON.stringify(initialHeadersReq)) return true;
-      if (JSON.stringify(headersResponse) !== JSON.stringify(initialHeadersRes)) return true;
-    }
-
-    return false;
   }, [
+    initialRule,
+    rule,
+    ruleGroups,
+    groupId,
     name,
     ruleType,
-    groupId,
     urlPattern,
     urlMatchType,
     methods,
@@ -838,9 +394,6 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     delayMs,
     packetLoss,
     bandwidthKbps,
-    rule,
-    initialRule,
-    ruleGroups,
   ]);
 
   useEffect(() => {

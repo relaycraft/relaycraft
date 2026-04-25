@@ -2,6 +2,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
+import { startImportPolling } from "../hooks/useImportPolling";
 import { Logger } from "../lib/logger";
 import { setPollTimestamp } from "../lib/trafficMonitor";
 import type { Session, SessionMetadata } from "../types/session";
@@ -39,6 +40,7 @@ interface SessionStore {
   switchDbSession: (sessionId: string) => Promise<void>;
   deleteDbSession: (sessionId: string) => Promise<void>;
   deleteAllDbSessions: () => Promise<void>;
+  clearSession: (sessionId?: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
@@ -345,50 +347,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
 
-            // Start a temporary poller to refresh the list and load the data periodically
-            // while the background import is happening
-            let importPollCount = 0;
-            const importPollInterval = setInterval(async () => {
-              await get().fetchDbSessions();
-              const { dbSessions } = get();
-              const currentSess = dbSessions.find((s) => s.id === session_id);
-
-              let md: any = {};
-              try {
-                md =
-                  typeof currentSess?.metadata === "string"
-                    ? JSON.parse(currentSess.metadata)
-                    : currentSess?.metadata || {};
-              } catch (_e) {}
-
-              if (!currentSess || md.status !== "importing" || importPollCount > 600) {
-                // Max 10 mins
-                clearInterval(importPollInterval);
-                // Trigger a final reload circuit to show the complete data
-                if (get().showSessionId === session_id) {
-                  await get().switchDbSession(session_id);
-                }
-
-                if (md.status === "ready") {
-                  const { notify } = await import("../lib/notify");
-                  const i18next = await import("i18next");
-                  notify.success(
-                    i18next.default.t("session.import_complete", {
-                      defaultValue: "Session import complete!",
-                    }),
-                  );
-                } else if (md.status === "error") {
-                  const { notify } = await import("../lib/notify");
-                  notify.error(`Session import failed: ${md.error_message}`);
-                }
-              } else {
-                // While still importing, occasionally refresh the view if selected
-                if (importPollCount % 3 === 0 && get().showSessionId === session_id) {
-                  await get().switchDbSession(session_id);
-                }
-              }
-              importPollCount++;
-            }, 1000);
+            const i18next = await import("i18next");
+            startImportPolling(
+              session_id,
+              i18next.default.t("session.import_complete", {
+                defaultValue: "Session import complete!",
+              }),
+              i18next.default.t("session.import_failed", {
+                defaultValue: "Session import failed",
+              }),
+            );
           }
 
           const { notify } = await import("../lib/notify");
@@ -469,7 +437,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         }),
       );
     } catch (error) {
-      console.error("Failed to export HAR:", error);
+      Logger.error("Failed to export HAR:", error);
     } finally {
       set({ loading: false });
     }
@@ -516,45 +484,16 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
 
-            let importPollCount = 0;
-            const importPollInterval = setInterval(async () => {
-              await get().fetchDbSessions();
-              const { dbSessions } = get();
-              const currentSess = dbSessions.find((s) => s.id === session_id);
-
-              let md: any = {};
-              try {
-                md =
-                  typeof currentSess?.metadata === "string"
-                    ? JSON.parse(currentSess.metadata)
-                    : currentSess?.metadata || {};
-              } catch (_e) {}
-
-              if (!currentSess || md.status !== "importing" || importPollCount > 600) {
-                clearInterval(importPollInterval);
-                if (get().showSessionId === session_id) {
-                  await get().switchDbSession(session_id);
-                }
-
-                if (md.status === "ready") {
-                  const { notify } = await import("../lib/notify");
-                  const i18next = await import("i18next");
-                  notify.success(
-                    i18next.default.t("session.import_har_success", {
-                      defaultValue: "HAR imported successfully",
-                    }),
-                  );
-                } else if (md.status === "error") {
-                  const { notify } = await import("../lib/notify");
-                  notify.error(`HAR import failed: ${md.error_message}`);
-                }
-              } else {
-                if (importPollCount % 3 === 0 && get().showSessionId === session_id) {
-                  await get().switchDbSession(session_id);
-                }
-              }
-              importPollCount++;
-            }, 1000);
+            const i18next = await import("i18next");
+            startImportPolling(
+              session_id,
+              i18next.default.t("session.import_har_success", {
+                defaultValue: "HAR imported successfully",
+              }),
+              i18next.default.t("session.import_har_failed", {
+                defaultValue: "HAR import failed",
+              }),
+            );
           }
 
           const { notify } = await import("../lib/notify");
@@ -573,6 +512,37 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       Logger.error("Failed to import HAR:", error);
     } finally {
       set({ loading: false });
+    }
+  },
+
+  clearSession: async (sessionId?: string) => {
+    const targetId = sessionId || get().showSessionId;
+    if (!targetId) return;
+
+    const { dbSessions } = get();
+    const sessionToClear = dbSessions.find((s) => s.id === targetId);
+    const isHistorical = sessionToClear && sessionToClear.is_active === 0;
+
+    // Clear frontend traffic state
+    useTrafficStore.getState().clearLocal();
+
+    // Clear backend database
+    const port = useSettingsStore.getState().config.proxy_port;
+    try {
+      const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/session/clear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: targetId }),
+        cache: "no-store",
+      });
+
+      if (response.ok && isHistorical) {
+        await get().deleteDbSession(targetId);
+      } else {
+        await get().fetchDbSessions();
+      }
+    } catch (err) {
+      Logger.error("Failed to clear backend session:", err);
     }
   },
 

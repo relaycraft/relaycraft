@@ -7,6 +7,7 @@ from .monitor import TrafficMonitor
 from .debug import DebugManager
 from .proxy import ProxyManager
 from .utils import setup_logging, RelayCraftLogger
+from . import sse_processor, ws_handler
 
 # Global traffic active state (in-memory, controlled via HTTP API)
 _traffic_active: bool = False
@@ -35,8 +36,6 @@ class CoreAddon:
         """Standard mitmproxy load hook"""
         if hasattr(ctx, "master"):
             ctx.master.relaycraft_main = self
-        
-        # Note: User scripts are loaded before CoreAddon (see entry.py)
 
     async def running(self) -> None:
         """Called when proxy is up and running."""
@@ -57,9 +56,7 @@ class CoreAddon:
             return
 
         # 2. Check if traffic processing is active
-        # If not active, kill the connection (simulate proxy off)
         if not is_traffic_active():
-            # Kill the connection to simulate proxy being off
             flow.kill()
             return
 
@@ -71,8 +68,6 @@ class CoreAddon:
             # 1. Rule Engine (Automated) - Synchronous
             self.rule_engine.handle_request(flow)
 
-            # We don't capture here anymore; anchor.py will handle it in the response phase.
-            # EXCEPT if we are mocking a response immediately, then we should still capture.
             if flow.response:
                 flow_data = self.traffic_monitor.process_flow(flow)
                 if flow_data:
@@ -117,15 +112,13 @@ class CoreAddon:
             self.logger.error(f"Critical error in CoreAddon.response hook processing: {e}")
 
         # 3. Baseline Capture - before anchor.py runs
-        # Records BEFORE user scripts, AFTER rules
         try:
             self.traffic_monitor.handle_response(flow)
         except Exception as e:
             self.logger.error(f"Critical error capturing traffic: {e}")
         finally:
-            # Finalize SSE stream state after response lifecycle.
             try:
-                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+                sse_processor.finalize_sse_flow(self.traffic_monitor, flow, stream_open=False)
             except Exception as e:
                 self.logger.debug(f"SSE finalize on response failed: {e}")
 
@@ -147,17 +140,13 @@ class CoreAddon:
             host = flow.request.host or ""
             port = flow.request.port
 
-            # relay.guide is always internal (certificate landing page)
             if host == "relay.guide":
                 return True
 
-            # Robust: /_relay paths are internal
             if "/_relay" in path or path == "/cert" or path in ("/cert.pem", "/cert.crt"):
                 return True
 
-            # Secondary check for localhost on proxy port
             is_localhost = host in ["127.0.0.1", "localhost", "::1"]
-            # Dynamically get current port
             current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
             is_proxy_port = port == current_port
 
@@ -185,30 +174,25 @@ class CoreAddon:
             return
 
         err_msg = str(flow.error)
-        
+
         # Skip CONNECT client TLS failures (logged by tls_failed_client)
         if flow.request and flow.request.method == "CONNECT":
             err_lower = err_msg.lower()
             if "client" in err_lower and ("disconnect" in err_lower or "tls" in err_lower or "handshake" in err_lower or "closed" in err_lower):
                 return
 
-        # For SSE long-lived streams, user/client initiated disconnect should not be
-        # surfaced as a failed request in the UI.
-        if self._is_sse_flow(flow) and self.traffic_monitor._is_client_disconnect_error(err_msg):
+        if self._is_sse_flow(flow) and sse_processor.is_client_disconnect_error(err_msg):
             try:
-                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+                sse_processor.finalize_sse_flow(self.traffic_monitor, flow, stream_open=False)
             except Exception as e:
                 self.logger.debug(f"SSE finalize on client disconnect failed: {e}")
             return
 
         self.logger.error(f"RelayCraft: [ERROR] Flow error for {flow.request.pretty_url if (flow.request and hasattr(flow.request, 'pretty_url')) else 'unknown'}: {err_msg}")
 
-        # Capture the error flow for the UI so it doesn't just disappear
         try:
-            # Mark as error for monitor
             flow_data = self.traffic_monitor.process_flow(flow)
             if flow_data:
-                # Add error info to data
                 flow_data["error"] = {
                     "message": err_msg,
                     "errorType": "connection"
@@ -218,7 +202,7 @@ class CoreAddon:
             self.logger.error(f"Error capturing error flow: {e}")
         finally:
             try:
-                self.traffic_monitor.finalize_sse_flow(flow, stream_open=False)
+                sse_processor.finalize_sse_flow(self.traffic_monitor, flow, stream_open=False)
             except Exception as e:
                 self.logger.debug(f"SSE finalize on error failed: {e}")
 
@@ -227,7 +211,7 @@ class CoreAddon:
         if self.is_internal_request(flow):
             return
         try:
-            self.traffic_monitor.bind_sse_stream_if_needed(flow)
+            sse_processor.bind_sse_stream_if_needed(self.traffic_monitor, flow)
         except Exception as e:
             self.logger.error(f"Error binding SSE stream handler: {e}")
 
@@ -237,9 +221,8 @@ class CoreAddon:
             return
 
         try:
-            # Record connection-open timestamp for scripts that need it
             flow.metadata["_relaycraft_ws_started"] = True
-            self.traffic_monitor.register_ws_flow(flow)
+            ws_handler.register_ws_flow(self.traffic_monitor, flow)
         except Exception as e:
             self.logger.error(f"Error handling WebSocket start: {e}")
 
@@ -249,7 +232,6 @@ class CoreAddon:
             return
 
         try:
-            # Update the flow data with new WebSocket frames
             self.traffic_monitor.handle_websocket_message(flow)
         except Exception as e:
             self.logger.error(f"Error handling WebSocket message: {e}")
@@ -260,7 +242,6 @@ class CoreAddon:
             return
 
         try:
-            # Final store to capture the definitive frame count and last frames
             flow_data = self.traffic_monitor.process_flow(flow)
             if flow_data:
                 self.traffic_monitor._store_flow(flow_data)
@@ -268,18 +249,13 @@ class CoreAddon:
             self.logger.error(f"Error handling WebSocket end: {e}")
         finally:
             try:
-                self.traffic_monitor.unregister_ws_flow(flow)
+                ws_handler.unregister_ws_flow(self.traffic_monitor, flow)
             except Exception as e:
                 self.logger.debug(f"WS registry unregister failed: {e}")
 
     def tls_failed_client(self, tls_start: tls.TlsData) -> None:
-        """
-        Hook called when a client TLS handshake fails (e.g. unknown CA, pinning).
-        This is critical for detecting SSL Pinning issues.
-        """
+        """Hook called when a client TLS handshake fails."""
         try:
-            # TlsData is lower-level, just pass to error processor
-            # For now, trust process_tls_error to format it.
             self.traffic_monitor.process_tls_error(tls_start)
         except Exception as e:
             self.logger.error(f"Error in tls_failed_client: {e}")

@@ -2,6 +2,13 @@ import json
 import traceback
 from typing import Any
 
+from ..flowdb import (
+    create_session,
+    store_flows_batch,
+    update_session_flow_count,
+)
+from ..har_converters import normalize_har_entries
+
 
 def _handle_import_session(monitor: Any, flow: Any, Response: Any) -> None:
     try:
@@ -39,7 +46,8 @@ def _handle_import_session(monitor: Any, flow: Any, Response: Any) -> None:
                     else:
                         item["msg_ts"] = time.time() + idx * 0.001
 
-            session_id = monitor.db.create_session(
+            session_id = create_session(
+                monitor.db,
                 name=session_name,
                 description=session_description,
                 metadata=session_metadata,
@@ -47,8 +55,8 @@ def _handle_import_session(monitor: Any, flow: Any, Response: Any) -> None:
                 created_at=session_created_at,
             )
 
-            monitor.db.store_flows_batch(flows, session_id=session_id)
-            monitor.db.update_session_flow_count(session_id)
+            store_flows_batch(monitor.db, flows, session_id=session_id)
+            update_session_flow_count(monitor.db, session_id)
 
             indices = monitor._build_session_indices(flows)
             json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
@@ -124,7 +132,8 @@ def _handle_import_session_file(monitor: Any, flow: Any, Response: Any) -> None:
             except Exception as e:
                 monitor.logger.warning(f"Fast metadata parse failed, using defaults: {e}")
 
-            session_id = monitor.db.create_session(
+            session_id = create_session(
+                monitor.db,
                 name=session_name,
                 description=session_description,
                 metadata=session_metadata,
@@ -165,14 +174,14 @@ def _handle_import_session_file(monitor: Any, flow: Any, Response: Any) -> None:
                             count += 1
 
                             if len(batch) >= batch_size:
-                                monitor.db.store_flows_batch(batch, session_id=session_id)
+                                store_flows_batch(monitor.db, batch, session_id=session_id)
                                 batch = []
                                 time.sleep(0.01)
 
                         if batch:
-                            monitor.db.store_flows_batch(batch, session_id=session_id)
+                            store_flows_batch(monitor.db, batch, session_id=session_id)
 
-                        monitor.db.update_session_flow_count(session_id)
+                        update_session_flow_count(monitor.db, session_id)
 
                         with monitor.db._lock:
                             conn = monitor.db._get_conn()
@@ -229,16 +238,17 @@ def _handle_import_har(monitor: Any, flow: Any, Response: Any) -> None:
             har_data = json.loads(flow.request.content.decode("utf-8"))
             entries = har_data.get("log", {}).get("entries", []) or []
 
-            session_id = monitor.db.create_session(
+            session_id = create_session(
+                monitor.db,
                 name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                 description="",
                 metadata={"type": "har_import"},
                 is_active=False,
             )
 
-            flows, indices = monitor._normalize_har_entries(entries)
-            monitor.db.store_flows_batch(flows, session_id=session_id)
-            monitor.db.update_session_flow_count(session_id)
+            flows, indices = normalize_har_entries(entries)
+            store_flows_batch(monitor.db, flows, session_id=session_id)
+            update_session_flow_count(monitor.db, session_id)
 
             json_str = json.dumps({"session_id": session_id, "indices": indices}, ensure_ascii=False)
             flow.response = Response.make(
@@ -292,7 +302,8 @@ def _handle_import_har_file(monitor: Any, flow: Any, Response: Any) -> None:
                 )
                 return
 
-            session_id = monitor.db.create_session(
+            session_id = create_session(
+                monitor.db,
                 name=f"Imported HAR ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                 description="",
                 metadata={"type": "har_import", "status": "importing"},
@@ -314,16 +325,16 @@ def _handle_import_har_file(monitor: Any, flow: Any, Response: Any) -> None:
                             batch.append(entry)
 
                             if len(batch) >= batch_size:
-                                flows, _ = monitor._normalize_har_entries(batch)
-                                monitor.db.store_flows_batch(flows, session_id=session_id)
+                                flows, _ = normalize_har_entries(batch)
+                                store_flows_batch(monitor.db, flows, session_id=session_id)
                                 batch = []
                                 time.sleep(0.01)
 
                         if batch:
-                            flows, _ = monitor._normalize_har_entries(batch)
-                            monitor.db.store_flows_batch(flows, session_id=session_id)
+                            flows, _ = normalize_har_entries(batch)
+                            store_flows_batch(monitor.db, flows, session_id=session_id)
 
-                        monitor.db.update_session_flow_count(session_id)
+                        update_session_flow_count(monitor.db, session_id)
 
                         with monitor.db._lock:
                             conn = monitor.db._get_conn()

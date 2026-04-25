@@ -90,8 +90,8 @@ class ActionExecutor:
                     if not content_type:
                         content_type = set_mode.get("contentType")
 
-                if status_code is not None and status_code != "":
-                    flow.response.status_code = int(status_code)
+                if isinstance(status_code, int) and status_code >= 100:
+                    flow.response.status_code = status_code
                 if content_type:
                     flow.response.headers["Content-Type"] = content_type
 

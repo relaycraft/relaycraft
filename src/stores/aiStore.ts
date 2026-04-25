@@ -245,7 +245,7 @@ export const useAIStore = create<AIStore>((set, get) => {
           Logger.info("AI completion aborted");
           throw new Error("Aborted");
         }
-        console.error("AI completion failed:", error);
+        Logger.error("AI completion failed:", error);
         throw error;
       }
     },
@@ -279,7 +279,7 @@ export const useAIStore = create<AIStore>((set, get) => {
           Logger.info("AI stream aborted");
           return;
         }
-        console.error("AI streaming failed:", error);
+        Logger.error("AI streaming failed:", error);
         throw error;
       }
     },
@@ -308,7 +308,7 @@ export const useAIStore = create<AIStore>((set, get) => {
           Logger.info("AI tool completion aborted");
           throw new Error("Aborted");
         }
-        console.error("AI tool completion failed:", error);
+        Logger.error("AI tool completion failed:", error);
         throw error;
       }
     },
@@ -349,7 +349,7 @@ export const useAIStore = create<AIStore>((set, get) => {
           Logger.info("AI tool stream aborted");
           return;
         }
-        console.error("AI tool streaming failed:", error);
+        Logger.error("AI tool streaming failed:", error);
         throw error;
       }
     },

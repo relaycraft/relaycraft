@@ -4,8 +4,10 @@ import json
 import time
 from typing import Dict, List, Optional, Tuple
 
+from .body_storage import get_placeholder
 
-def build_flow_data_clean(db, flow_data: Dict, req_ref: str, res_ref: str) -> str:
+
+def build_flow_data_clean(flow_data: Dict, req_ref: str, res_ref: str) -> str:
     """Serialize flow data for storage, replacing non-inline bodies with placeholders.
 
     Avoids the expensive json.loads(json.dumps(flow_data)) round-trip by only
@@ -20,7 +22,7 @@ def build_flow_data_clean(db, flow_data: Dict, req_ref: str, res_ref: str) -> st
         if req and req.get("postData"):
             req_copy = dict(req)
             pd_copy = dict(req.get("postData"))
-            pd_copy["text"] = db._get_placeholder(req_ref)
+            pd_copy["text"] = get_placeholder(req_ref)
             req_copy["postData"] = pd_copy
             flow_copy["request"] = req_copy
 
@@ -29,7 +31,7 @@ def build_flow_data_clean(db, flow_data: Dict, req_ref: str, res_ref: str) -> st
         if res and res.get("content"):
             res_copy = dict(res)
             ct_copy = dict(res.get("content"))
-            ct_copy["text"] = db._get_placeholder(res_ref)
+            ct_copy["text"] = get_placeholder(res_ref)
             res_copy["content"] = ct_copy
             flow_copy["response"] = res_copy
 
@@ -53,7 +55,7 @@ def store_flow(db, flow_data: Dict, session_id: str = None, update_session_ts: b
     if not flow_id:
         return False
 
-    index_data = db._extract_index(flow_data, session_id)
+    index_data = extract_index(db, flow_data, session_id)
 
     req = flow_data.get("request") or {}
     res = flow_data.get("response") or {}
@@ -70,12 +72,13 @@ def store_flow(db, flow_data: Dict, session_id: str = None, update_session_ts: b
         "response",
     )
 
-    detail_json = db._build_flow_data_clean(flow_data, req_ref, res_ref)
+    detail_json = build_flow_data_clean(flow_data, req_ref, res_ref)
 
     with db._lock:
         conn = db._get_conn()
         try:
-            db._insert_flow_rows(
+            insert_flow_rows(
+                db,
                 conn,
                 flow_id,
                 session_id,
@@ -205,7 +208,7 @@ def store_flows_batch(db, flows: List[Dict], session_id: str, batch_size: int = 
         if not flow_id:
             continue
         try:
-            index_data = db._extract_index(flow_data, session_id)
+            index_data = extract_index(db, flow_data, session_id)
             req = flow_data.get("request") or {}
             res = flow_data.get("response") or {}
             req_body, req_ref = db._process_body(
@@ -220,7 +223,7 @@ def store_flows_batch(db, flows: List[Dict], session_id: str, batch_size: int = 
                 (res.get("content") or {}).get("text", ""),
                 "response",
             )
-            detail_json = db._build_flow_data_clean(flow_data, req_ref, res_ref)
+            detail_json = build_flow_data_clean(flow_data, req_ref, res_ref)
             prepared.append((flow_id, index_data, detail_json, req_body, req_ref, res_body, res_ref))
         except Exception as e:
             db.logger.warning(f"store_flows_batch: skipping flow {flow_id}: {e}")
@@ -232,7 +235,8 @@ def store_flows_batch(db, flows: List[Dict], session_id: str, batch_size: int = 
             conn = db._get_conn()
             try:
                 for flow_id, index_data, detail_json, req_body, req_ref, res_body, res_ref in batch:
-                    db._insert_flow_rows(
+                    insert_flow_rows(
+                        db,
                         conn,
                         flow_id,
                         session_id,
@@ -279,6 +283,7 @@ def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
     req = flow_data.get("request") or {}
     res = flow_data.get("response") or {}
     rc = flow_data.get("_rc") or {}
+    parsed_url = req.get("_parsedUrl") or {}
 
     def to_float(v, default=0.0):
         if v is None:
@@ -292,15 +297,15 @@ def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
         "session_id": session_id,
         "method": req.get("method", ""),
         "url": req.get("url", ""),
-        "host": flow_data.get("host", ""),
-        "path": flow_data.get("path", ""),
+        "host": parsed_url.get("host") or flow_data.get("host", ""),
+        "path": parsed_url.get("path") or flow_data.get("path", ""),
         "status": to_float(res.get("status"), 0),
-        "http_version": flow_data.get("httpVersion", "") or req.get("httpVersion", ""),
-        "content_type": flow_data.get("contentType", ""),
+        "http_version": req.get("httpVersion", "") or flow_data.get("httpVersion", ""),
+        "content_type": (res.get("content") or {}).get("mimeType", "") or flow_data.get("contentType", ""),
         "started_datetime": flow_data.get("startedDateTime", ""),
         "time": to_float(flow_data.get("time"), 0),
         "size": to_float(
-            flow_data.get("size") or (flow_data.get("response") or {}).get("content", {}).get("size", 0),
+            (res.get("content") or {}).get("size", 0) or flow_data.get("size", 0),
             0,
         ),
         "client_ip": rc.get("clientIp", "") or flow_data.get("clientIp", ""),

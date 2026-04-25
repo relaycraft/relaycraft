@@ -5,9 +5,8 @@
  * FlowDetail: full data loaded on demand with LRU cache (~95% memory reduction)
  */
 
-import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
-import { fetchFlowDetail, getBackendPort } from "../lib/trafficMonitor";
+import { fetchFlowDetail } from "../lib/trafficMonitor";
 import type { Flow, FlowIndex } from "../types";
 import { useSessionStore } from "./sessionStore";
 
@@ -233,38 +232,7 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
   },
 
   clearAll: async (sessionId?: string) => {
-    // Use current viewed session if ID not provided
-    const targetId = sessionId || useSessionStore.getState().showSessionId;
-    if (!targetId) return;
-
-    const { dbSessions } = useSessionStore.getState();
-    const sessionToClear = dbSessions.find((s) => s.id === targetId);
-    const isHistorical = sessionToClear && sessionToClear.is_active === 0;
-
-    // Clear frontend state
-    get().clearLocal();
-
-    // Also clear backend database (of the specified session)
-    const port = getBackendPort();
-    try {
-      const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/session/clear`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: targetId }),
-        cache: "no-store",
-      });
-
-      if (response.ok && isHistorical) {
-        // If it was a historical session, it's now deleted on backend
-        // We need to refresh the session list and switch view
-        await useSessionStore.getState().deleteDbSession(targetId);
-      } else {
-        // Just refresh counts for active session
-        await useSessionStore.getState().fetchDbSessions();
-      }
-    } catch (err) {
-      console.error("Failed to clear backend session:", err);
-    }
+    await useSessionStore.getState().clearSession(sessionId);
   },
 
   clearFlows: () => {
