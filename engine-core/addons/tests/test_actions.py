@@ -114,5 +114,49 @@ class TestActions(unittest.TestCase):
         self.assertEqual(flow.request.port, 8080)
         self.assertEqual(flow.request.path, "/foo")
 
+    def test_rewrite_body_replace_applies_response_status_and_content_type(self):
+        flow = mock_env.get_mock_flow(url="https://example.com/api")
+        flow.response.text = "hello world"
+        flow.response.content = b"hello world"
+        flow.response.headers = {}
+
+        action = {
+            "type": "rewrite_body",
+            "target": "response",
+            "replace": {
+                "pattern": "world",
+                "replacement": "relaycraft",
+            },
+            "statusCode": 418,
+            "contentType": "text/plain; charset=utf-8",
+        }
+
+        self.executor.apply_rewrite_body(flow, action)
+
+        self.assertEqual(flow.response.text, "hello relaycraft")
+        self.assertEqual(flow.response.status_code, 418)
+        self.assertEqual(flow.response.headers.get("Content-Type"), "text/plain; charset=utf-8")
+
+    def test_rewrite_body_json_applies_response_status_without_set_mode(self):
+        flow = mock_env.get_mock_flow(url="https://example.com/api")
+        flow.response.text = '{"ok": true}'
+        flow.response.content = b'{"ok": true}'
+        flow.response.headers = {}
+
+        action = {
+            "type": "rewrite_body",
+            "target": "response",
+            "json": {
+                "modifications": [],
+            },
+            "statusCode": 204,
+            "contentType": "application/json; charset=utf-8",
+        }
+
+        self.executor.apply_rewrite_body(flow, action)
+
+        self.assertEqual(flow.response.status_code, 204)
+        self.assertEqual(flow.response.headers.get("Content-Type"), "application/json; charset=utf-8")
+
 if __name__ == "__main__":
     unittest.main()

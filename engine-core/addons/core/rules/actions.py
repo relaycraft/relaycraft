@@ -78,12 +78,20 @@ class ActionExecutor:
                     message.text = new_content_str
                     self.logger.info(f"Applied body rewrite to {target}")
 
-            # Apply status code / content type if specified (Set mode only in V3)
-            if set_mode and target == "response" and flow.response:
-                status_code = set_mode.get("statusCode")
-                if status_code:
+            # Response meta settings are independent from rewrite mode.
+            # Prefer top-level fields (V3), and fall back to legacy set.* fields.
+            if target == "response" and flow.response:
+                status_code = action.get("statusCode")
+                content_type = action.get("contentType")
+
+                if set_mode:
+                    if status_code is None:
+                        status_code = set_mode.get("statusCode")
+                    if not content_type:
+                        content_type = set_mode.get("contentType")
+
+                if status_code is not None and status_code != "":
                     flow.response.status_code = int(status_code)
-                content_type = set_mode.get("contentType")
                 if content_type:
                     flow.response.headers["Content-Type"] = content_type
 
