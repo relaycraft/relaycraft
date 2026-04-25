@@ -102,11 +102,28 @@ function extractTemplateLiteral(content, exportName) {
 }
 
 function loadPrompts() {
-  const promptFile = path.resolve(process.cwd(), "src/lib/ai/prompts.ts");
-  if (!(fs.existsSync(promptFile) && fs.statSync(promptFile).isFile())) {
-    throw new Error(`prompt file not found: ${promptFile}`);
+  const root = process.cwd();
+  const promptEntryFile = path.resolve(root, "src/lib/ai/prompts.ts");
+  const promptDir = path.resolve(root, "src/lib/ai/prompts");
+
+  const sources = [];
+  if (fs.existsSync(promptEntryFile) && fs.statSync(promptEntryFile).isFile()) {
+    sources.push(fs.readFileSync(promptEntryFile, "utf8"));
   }
-  const source = fs.readFileSync(promptFile, "utf8");
+  if (fs.existsSync(promptDir) && fs.statSync(promptDir).isDirectory()) {
+    const promptFiles = fs
+      .readdirSync(promptDir)
+      .filter((name) => name.endsWith(".ts"))
+      .sort();
+    for (const name of promptFiles) {
+      const file = path.resolve(promptDir, name);
+      sources.push(fs.readFileSync(file, "utf8"));
+    }
+  }
+  if (sources.length === 0) {
+    throw new Error(`prompt sources not found: ${promptEntryFile}, ${promptDir}`);
+  }
+  const source = sources.join("\n");
   const pick = (name) => {
     const raw = extractTemplateLiteral(source, name);
     if (!raw.trim()) throw new Error(`${name} not found`);
