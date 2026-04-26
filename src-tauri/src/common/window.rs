@@ -47,7 +47,7 @@ fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     unsafe {
         if effect == "none" {
             // If none, we make sure to just remove the visual effect or hide it
-            if let Some(view_ptr) = *VIBRANCY_VIEW.lock().unwrap() {
+            if let Some(view_ptr) = *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") {
                 let view = &*(view_ptr as *const NSVisualEffectView);
                 view.setHidden(true);
             }
@@ -60,7 +60,7 @@ fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
             return;
         }
 
-        if let Some(view_ptr) = *VIBRANCY_VIEW.lock().unwrap() {
+        if let Some(view_ptr) = *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") {
             let view = &*(view_ptr as *const NSVisualEffectView);
             view.setHidden(false); // Ensure it's visible again
 
@@ -130,7 +130,7 @@ fn setup_macos_window(window: &tauri::WebviewWindow) {
             visual_effect_view.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
 
             let view_ptr = (&*visual_effect_view as *const NSVisualEffectView) as usize;
-            *VIBRANCY_VIEW.lock().unwrap() = Some(view_ptr);
+            *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") = Some(view_ptr);
 
             ns_window.setOpaque(false);
             ns_window.setBackgroundColor(Some(&NSColor::clearColor()));
@@ -159,7 +159,7 @@ fn setup_windows_linux_window(window: &tauri::WebviewWindow) {
 fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     use window_vibrancy::{apply_acrylic, apply_mica, clear_vibrancy};
 
-    let current = WINDOWS_CURRENT_EFFECT.lock().unwrap().clone();
+    let current = WINDOWS_CURRENT_EFFECT.lock().expect("windows effect lock poisoned").clone();
 
     // Skip entirely if same effect is already applied.
     // This prevents redundant DWM recomposition (a common source of flicker and
@@ -205,7 +205,7 @@ fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
         }
     }
 
-    *WINDOWS_CURRENT_EFFECT.lock().unwrap() = Some(effect.to_string());
+    *WINDOWS_CURRENT_EFFECT.lock().expect("windows effect lock poisoned") = Some(effect.to_string());
 }
 
 #[tauri::command]

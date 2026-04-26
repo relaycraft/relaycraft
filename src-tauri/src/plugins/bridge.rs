@@ -101,7 +101,7 @@ pub async fn plugin_call(
     // 2. Get plugin manifest from cache (populate if empty)
     let cache = app.state::<PluginCache>();
     let plugin = {
-        let cached = cache.plugins.lock().unwrap();
+        let cached = cache.plugins.lock().expect("plugin cache lock poisoned");
 
         // Try to find in cache
         if let Some(p) = cached.iter().find(|p| p.manifest.id == payload.plugin_id) {
@@ -120,7 +120,7 @@ pub async fn plugin_call(
                 .clone();
 
             // Update cache
-            let mut cached = cache.plugins.lock().unwrap();
+            let mut cached = cache.plugins.lock().expect("plugin cache lock poisoned");
             *cached = plugins;
 
             plugin
@@ -594,7 +594,7 @@ pub async fn plugin_call(
             let proxy_status = crate::proxy::get_proxy_status(app.state()).await?;
             let mcp_state = app.state::<crate::mcp::McpState>();
             let mcp_running = mcp_state.running.load(std::sync::atomic::Ordering::Relaxed);
-            let mcp_port = *mcp_state.port.lock().unwrap();
+            let mcp_port = *mcp_state.port.lock().expect("mcp port lock poisoned");
 
             Ok(serde_json::json!({
                 "proxyPort": config.proxy_port,

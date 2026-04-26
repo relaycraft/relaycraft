@@ -13,7 +13,7 @@ pub async fn get_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, String> {
 
     // Update cache
     let cache = app.state::<PluginCache>();
-    let mut cached = cache.plugins.lock().unwrap();
+    let mut cached = cache.plugins.lock().expect("plugin cache lock poisoned");
     *cached = plugins.clone();
 
     Ok(plugins)
