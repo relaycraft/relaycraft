@@ -19,6 +19,10 @@ If instructions conflict, follow the higher-priority item and explain the confli
 4. **Tauri command registration**: every new command must be added to `src-tauri/src/lib.rs` `invoke_handler`.
 5. **Python hook safety**: top-level `try/except`; exceptions must not escape hook boundary.
 6. **Commit types**: only `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `perf`.
+7. **Commit message quality**:
+   - If commitlint length checks fail, rewrite into a shorter message; do not solve by forced line breaks.
+   - Keep subject concise and meaningful; include a body only when it adds real context.
+   - Do not add trailing reference blocks (for example `Refs:`) unless explicitly requested by the user.
 
 ## 3) Architectural Boundaries
 
