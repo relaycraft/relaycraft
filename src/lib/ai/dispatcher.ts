@@ -5,7 +5,7 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { AIContextBudgetProfile, AIContextOptions, AIMessage } from "../../types/ai";
 import { Logger } from "../logger";
-import { buildAIContext } from "./contextBuilder";
+import { buildAIContext } from "./context";
 import { classifyAIError } from "./errorClassifier";
 import { prepareHistoryForRequest } from "./historyManager";
 import { getAILanguageInfo } from "./lang";

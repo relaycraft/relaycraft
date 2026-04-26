@@ -2,7 +2,7 @@ import { Code, FileCode, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
-import { buildAIContext } from "../../lib/ai/contextBuilder";
+import { buildAIContext } from "../../lib/ai/context";
 import {
   classifyAIError,
   composeActionableMessage,

@@ -1,6 +1,6 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
-import { buildAIContext } from "../lib/ai/contextBuilder";
+import { buildAIContext } from "../lib/ai/context";
 import { getProviderById } from "../lib/ai/providers";
 import { Logger } from "../lib/logger";
 import type {
