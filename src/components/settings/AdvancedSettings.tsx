@@ -26,8 +26,16 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
     useSettingsStore();
   const { setLogViewerOpen } = useUIStore();
 
-  const verboseLoggingSnapshot = React.useRef(config.verbose_logging);
-  const verboseLoggingChanged = config.verbose_logging !== verboseLoggingSnapshot.current;
+  const verboseLoggingSnapshot = React.useRef<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (loading || verboseLoggingSnapshot.current !== null) return;
+    verboseLoggingSnapshot.current = config.verbose_logging;
+  }, [config.verbose_logging, loading]);
+
+  const verboseLoggingChanged =
+    verboseLoggingSnapshot.current !== null &&
+    config.verbose_logging !== verboseLoggingSnapshot.current;
 
   const isWindows = React.useMemo(() => {
     if (systemInfo?.platform) return /win/i.test(systemInfo.platform);

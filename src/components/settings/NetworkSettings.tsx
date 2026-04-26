@@ -11,6 +11,7 @@ export function NetworkSettings() {
   const { t } = useTranslation();
   const {
     config,
+    loading,
     updateProxyPort,
     updateSslInsecure,
     updateUpstreamProxy,
@@ -27,9 +28,11 @@ export function NetworkSettings() {
     ssl_insecure: config.ssl_insecure,
     upstream_proxy: config.upstream_proxy,
   });
+  const snapshotReady = React.useRef(false);
 
   const networkChanged =
     running &&
+    snapshotReady.current &&
     (config.proxy_port !== networkSnapshot.current.proxy_port ||
       config.ssl_insecure !== networkSnapshot.current.ssl_insecure ||
       JSON.stringify(config.upstream_proxy) !==
@@ -50,6 +53,20 @@ export function NetworkSettings() {
       setRestarting(false);
     }
   };
+
+  React.useEffect(() => {
+    if (!running) {
+      snapshotReady.current = false;
+      return;
+    }
+    if (loading || snapshotReady.current) return;
+    networkSnapshot.current = {
+      proxy_port: config.proxy_port,
+      ssl_insecure: config.ssl_insecure,
+      upstream_proxy: config.upstream_proxy,
+    };
+    snapshotReady.current = true;
+  }, [running, loading, config.proxy_port, config.ssl_insecure, config.upstream_proxy]);
 
   React.useEffect(() => {
     return () => {
