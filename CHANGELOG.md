@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [release-it](https://github.com/release-it/release-it) for commit guidelines.
 
 ## [1.1.0](https://github.com/relaycraft/relaycraft/compare/v1.0.2...v1.1.0) (2026-04-19)
 

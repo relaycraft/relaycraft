@@ -1,5 +1,6 @@
 import type { TabType } from "../../stores/uiStore";
 import type { Flow } from "../../types";
+import type { TranslateFn } from "../../types/ai";
 import type { Rule } from "../../types/rules";
 import { Logger } from "../logger";
 
@@ -33,10 +34,7 @@ export interface Suggestion {
  */
 export interface SuggestionProvider {
   name: string;
-  getSuggestions(
-    context: SuggestionContext,
-    t: (key: string, options?: any) => string,
-  ): Suggestion[];
+  getSuggestions(context: SuggestionContext, t: TranslateFn): Suggestion[];
 }
 
 /**
@@ -77,10 +75,7 @@ class SuggestionEngineRegistry {
     }
   }
 
-  getAllSuggestions(
-    context: SuggestionContext,
-    t: (key: string, options?: any) => string,
-  ): Suggestion[] {
+  getAllSuggestions(context: SuggestionContext, t: TranslateFn): Suggestion[] {
     let allSuggestions: Suggestion[] = [];
     const frequencies = this.getFrequencies();
 

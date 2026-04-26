@@ -1,9 +1,10 @@
+import type { TranslateFn } from "../../../types/ai";
 import type { Suggestion, SuggestionContext, SuggestionProvider } from "../suggestionEngine";
 
 export class NavigationProvider implements SuggestionProvider {
   name = "NavigationProvider";
 
-  getSuggestions(context: SuggestionContext, t: (key: string) => string): Suggestion[] {
+  getSuggestions(context: SuggestionContext, t: TranslateFn): Suggestion[] {
     const suggestions: Suggestion[] = [];
 
     // Base score for navigation commands

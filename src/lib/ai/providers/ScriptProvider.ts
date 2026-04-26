@@ -1,12 +1,10 @@
+import type { TranslateFn } from "../../../types/ai";
 import type { Suggestion, SuggestionContext, SuggestionProvider } from "../suggestionEngine";
 
 export class ScriptProvider implements SuggestionProvider {
   name = "ScriptProvider";
 
-  getSuggestions(
-    context: SuggestionContext,
-    t: (key: string, options?: any) => string,
-  ): Suggestion[] {
+  getSuggestions(context: SuggestionContext, t: TranslateFn): Suggestion[] {
     if (!context.aiEnabled || context.activeTab !== "scripts") return [];
 
     const suggestions: Suggestion[] = [];

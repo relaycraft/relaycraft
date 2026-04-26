@@ -1,5 +1,5 @@
 /**
- * Custom updater for standard-version to handle Cargo.toml
+ * Custom version updater for Cargo.toml (used by bump-extra-files.cjs)
  */
 const _stringify = (obj) => JSON.stringify(obj, null, 2);
 

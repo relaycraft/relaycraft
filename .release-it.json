@@ -1,0 +1,37 @@
+{
+  "git": {
+    "commitMessage": "chore: release ${version}",
+    "tagName": "v${version}"
+  },
+  "npm": {
+    "publish": false
+  },
+  "github": {
+    "release": false
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "angular",
+      "infile": "CHANGELOG.md",
+      "types": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance Improvements" },
+        { "type": "chore", "hidden": true },
+        { "type": "docs", "hidden": true },
+        { "type": "style", "hidden": true },
+        { "type": "refactor", "hidden": true },
+        { "type": "test", "hidden": true },
+        { "type": "ci", "hidden": true }
+      ]
+    }
+  },
+  "bump": {
+    "inFile": "src-tauri/tauri.conf.json"
+  },
+  "hooks": {
+    "before:bump": "cd src-tauri && cargo metadata --format-version 1 --offline",
+    "after:bump": "node scripts/bump-extra-files.cjs ${version}",
+    "after:release": "cd src-tauri && cargo update --workspace"
+  }
+}

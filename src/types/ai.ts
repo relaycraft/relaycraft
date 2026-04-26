@@ -1,3 +1,5 @@
+export type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
 export type AIContextBudgetProfile =
   | "default"
   | "command_center"

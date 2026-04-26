@@ -1,5 +1,5 @@
 /**
- * Custom updater for standard-version to handle version strings in HTML files.
+ * Custom version updater for HTML files (used by bump-extra-files.cjs).
  * Supports:
  * - Splash footer: <div class="footer-line">v1.2.3 · © …</div>
  * - Legacy: <div class="version">v1.2.3</div>

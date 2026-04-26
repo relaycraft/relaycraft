@@ -1,5 +1,5 @@
 /**
- * Custom updater for standard-version to handle Cargo.lock
+ * Custom version updater for Cargo.lock (used by bump-extra-files.cjs)
  * It specifically targets the relaycraft package to avoid updating other dependencies
  */
 module.exports.readVersion = (contents) => {
