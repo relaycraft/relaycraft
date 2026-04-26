@@ -1,6 +1,6 @@
-import threading
 import asyncio
 import re
+import threading
 from typing import List, Dict, Any, Optional, Callable
 from mitmproxy import http, ctx
 from .utils import setup_logging
@@ -163,7 +163,12 @@ class DebugManager:
                     del self.intercepted_flows[flow_id]
 
     def resume_flow(self, flow_id: str, modified_data: Optional[Dict[str, Any]] = None) -> bool:
-        """Signal a flow to resume, optionally applying modifications"""
+        """Signal a flow to resume, optionally applying modifications.
+
+        Thread-safety contract: MUST be called from within the mitmproxy
+        event loop (i.e. from an HTTP handler). Calling from a non-event-loop
+        thread will cause unsafe cross-thread asyncio.Event.set().
+        """
         with self.lock:
             if flow_id in self.intercepted_flows:
                 info = self.intercepted_flows[flow_id]
@@ -195,20 +200,8 @@ class DebugManager:
                             if "statusCode" in modified_data:
                                 flow.response.status_code = int(modified_data["statusCode"])
 
-                # Signal the event safely
-                # Use call_soon_threadsafe with the event's loop to avoid Windows ProactorEventLoop issues
-                try:
-                    loop = info["event"]._loop if hasattr(info["event"], '_loop') else None
-                    if loop is None:
-                        # Fallback: try to get running loop
-                        try:
-                            loop = asyncio.get_running_loop()
-                        except RuntimeError:
-                            loop = asyncio.get_event_loop()
-                    loop.call_soon_threadsafe(info["event"].set)
-                except Exception as e:
-                    # Last resort: set directly (may cause warning but works)
-                    self.logger.warn(f"Could not signal event safely: {e}")
-                    info["event"].set()
+                # Signal the waiting coroutine — safe because resume_flow is
+                # always called from within the mitmproxy event loop (HTTP handler).
+                info["event"].set()
                 return True
         return False

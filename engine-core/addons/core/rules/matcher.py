@@ -81,25 +81,33 @@ class RuleMatcher:
 
         return not result if invert else result
 
-    def match_rule(self, flow: http.HTTPFlow, rule: Dict[str, Any]) -> Tuple[bool, Optional[re.Match]]:
+    def match_rule(self, flow: http.HTTPFlow, rule: Dict[str, Any], compiled_patterns: Dict[tuple, "re.Pattern"] = None) -> Tuple[bool, Optional[re.Match]]:
         """Check if flow matches rule conditions (Request Phase)
         Returns: (matched: bool, url_match_object: Optional[re.Match])
         """
-        # V2 Schema: match.request is the array
         atoms = rule.get("match", {}).get("request", [])
-        
+
         if not atoms:
-            # No request matchers = match all
             return (True, None)
 
+        # Attach compiled patterns to atoms for match_atom (don't mutate originals).
+        # Key is (id(rule), atom_index) — guaranteed unique per object identity.
+        rule_key = id(rule)
+        enriched_atoms = []
+        for i, atom in enumerate(atoms):
+            if compiled_patterns and (rule_key, i) in compiled_patterns:
+                enriched_atoms.append({**atom, "_compiled_re": compiled_patterns[(rule_key, i)]})
+            else:
+                enriched_atoms.append(atom)
+
         # Standard AND logic for the atom array
-        matched = all(self.match_atom(flow, atom) for atom in atoms)
-        
+        matched = all(self.match_atom(flow, atom) for atom in enriched_atoms)
+
         # Extract regex match object
         url_match_obj = None
-        for atom in atoms:
+        for atom in enriched_atoms:
             if atom.get("type") == "url" and atom.get("matchType") == "regex":
                 _, url_match_obj = self.match_url(flow.request.pretty_url, str(atom.get("value")), "regex", atom.get("_compiled_re"))
                 break
-        
+
         return (matched, url_match_obj)

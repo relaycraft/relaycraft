@@ -35,31 +35,21 @@ class RelayCraftLogger:
     def debug(self, msg: str):
         self._get_log_func("debug")(f"{msg}")
 
-_LOG_INITIALIZED = False
-
-def setup_logging() -> RelayCraftLogger:
-    global _LOG_INITIALIZED
-    
-    # Configure root logger for standalone runs
+def setup_logging(name: str = "relaycraft") -> RelayCraftLogger:
+    """Create a named RelayCraftLogger. Root logger setup is idempotent."""
     root = logging.getLogger()
     if root.level == logging.NOTSET:
         root.setLevel(logging.INFO)
-    
-    # Add stdout handler in standalone mode
+
     if not root.handlers and not any(arg.startswith("mitm") for arg in sys.argv):
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%H:%M:%S')
         handler.setFormatter(formatter)
         root.addHandler(handler)
-            
-    # Reduce noise from mitmproxy's own logging
+
     logging.getLogger("mitmproxy").setLevel(logging.WARNING)
-    
-    logger = RelayCraftLogger("relaycraft")
-    if not _LOG_INITIALIZED:
-        logger.info("RelayCraft system logger initialized")
-        _LOG_INITIALIZED = True
-    return logger
+
+    return RelayCraftLogger(name)
 
 def get_mime_type(file_path: str) -> str:
     """Detect MIME type from file extension"""

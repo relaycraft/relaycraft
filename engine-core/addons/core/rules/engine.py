@@ -43,7 +43,7 @@ class RuleEngine:
             if not rule.get("execution", {}).get("enabled", True):
                 continue
 
-            matched, url_match = self.matcher.match_rule(flow, rule)
+            matched, url_match = self.matcher.match_rule(flow, rule, self.loader._compiled_patterns)
             if matched:
                 # Store match context for this flow
                 rc = rule.copy()

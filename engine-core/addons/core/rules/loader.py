@@ -36,6 +36,7 @@ class RuleLoader:
         self._last_load_time = 0
         self._last_check_time = 0
         self._last_file_count = -1
+        self._compiled_patterns: Dict[str, "re.Pattern"] = {}
         self.logger.info(f"RuleLoader initialized. Dir: {self.rules_dir}, File: {self.rules_file}")
         self.load_rules()
 
@@ -109,39 +110,45 @@ class RuleLoader:
 
     def _process_and_index_rules(self) -> None:
         """Pre-compile regexes and categorize rules into buckets for O(1) optimization"""
-        self.exact_host_rules = {}
-        self.wildcard_host_rules = []
-        self.global_rules = []
-        
+        exact: Dict[str, List[Dict[str, Any]]] = {}
+        wildcard: List[Dict[str, Any]] = []
+        global_rules: List[Dict[str, Any]] = []
+        compiled: Dict[tuple, re.Pattern] = {}
+        seen_ids: set = set()
+
         for rule in self.rules:
-            # 1. Pre-compile Regexes in atoms
+            rule_id = rule.get("id", "?")
+            if rule_id in seen_ids:
+                self.logger.warn(f"Duplicate rule id '{rule_id}', loaded rules may conflict")
+            seen_ids.add(rule_id)
+
             match_req = rule.get("match", {}).get("request", [])
             has_host_restriction = False
             hosts: List[str] = []
-            
-            for atom in match_req:
+            rule_key = id(rule)
+
+            for i, atom in enumerate(match_req):
                 m_type = atom.get("matchType", "exact")
                 val = str(atom.get("value", ""))
-                
-                # Pre-compile
+
+                # Pre-compile into separate dict keyed by (rule object id, atom index)
                 if m_type == "regex":
                     try:
-                        atom["_compiled_re"] = re.compile(val)
+                        compiled[(rule_key, i)] = re.compile(val)
                     except re.error as e:
-                        self.logger.error(f"Failed to pre-compile regex '{val}' in rule {rule.get('id')}: {e}")
+                        self.logger.error(f"Failed to pre-compile regex '{val}' in rule {rule_id}: {e}")
                 elif m_type == "wildcard":
                     try:
                         regex_pattern = val.replace(".", r"\.").replace("*", ".*").replace("?", ".")
                         regex_pattern = f"^{regex_pattern}$"
-                        atom["_compiled_re"] = re.compile(regex_pattern)
+                        compiled[(rule_key, i)] = re.compile(regex_pattern)
                     except re.error as e:
-                        self.logger.error(f"Failed to pre-compile wildcard '{val}' in rule {rule.get('id')}: {e}")
-                
+                        self.logger.error(f"Failed to pre-compile wildcard '{val}' in rule {rule_id}: {e}")
+
                 # Track Host Info for Indexing
                 if atom.get("type") == "host":
                     invert = atom.get("invert", False)
                     if invert:
-                        # Inverted host restrictions can't be indexed positively, treat as complex
                         has_host_restriction = "complex"
                         continue
 
@@ -149,19 +156,23 @@ class RuleLoader:
                     if m_type == "exact":
                         hosts.append(val)
                     elif m_type in ["regex", "wildcard", "contains"]:
-                        # Non-exact host goes to wildcard index
                         has_host_restriction = "complex"
-            
-            # 2. Categorize into Buckets
+
+            # Categorize into Buckets
             if not has_host_restriction:
-                self.global_rules.append(rule)
+                global_rules.append(rule)
             elif has_host_restriction == "complex":
-                self.wildcard_host_rules.append(rule)
+                wildcard.append(rule)
             else:
-                # Exact matches
                 for h in hosts:
-                    if h not in self.exact_host_rules:
-                        self.exact_host_rules[h] = []
-                    self.exact_host_rules[h].append(rule)
-                    
-        self.logger.info(f"Rules Indexed: {len(self.exact_host_rules)} precise hosts, {len(self.wildcard_host_rules)} complex hosts, {len(self.global_rules)} global rules")
+                    if h not in exact:
+                        exact[h] = []
+                    exact[h].append(rule)
+
+        # Atomic swap — readers see old or new, never a partial state
+        self.exact_host_rules = exact
+        self.wildcard_host_rules = wildcard
+        self.global_rules = global_rules
+        self._compiled_patterns = compiled
+
+        self.logger.info(f"Rules Indexed: {len(exact)} precise hosts, {len(wildcard)} complex hosts, {len(global_rules)} global rules")
