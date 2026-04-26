@@ -52,8 +52,9 @@ class FlowDatabase:
 
         # Thread-local storage for connections
         self._local = threading.local()
-        # Write lock for write operations
-        self._lock = threading.Lock()
+        # Write lock for write operations.
+        # Use RLock so maintenance paths can safely call helpers that also lock.
+        self._lock = threading.RLock()
         # Separate lock for cleanup
         self._cleanup_lock = threading.Lock()
 

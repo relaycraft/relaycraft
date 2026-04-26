@@ -51,155 +51,160 @@ def run_wal_checkpoint(db, mode: str = "PASSIVE"):
         mode = "PASSIVE"
 
     try:
-        conn = db._get_conn()
-        result = conn.execute(f"PRAGMA wal_checkpoint({mode})").fetchone()
-        if result:
-            busy, log_pages, checkpointed = result[0], result[1], result[2]
-            if mode == "TRUNCATE":
-                db.logger.info(
-                    f"WAL TRUNCATE checkpoint: busy={busy}, "
-                    f"log={log_pages}, checkpointed={checkpointed}"
-                )
-            elif busy > 0:
-                db.logger.debug(f"WAL PASSIVE checkpoint busy: {result}")
+        # Serialize checkpoint with normal writers to avoid lock contention.
+        with db._lock:
+            conn = db._get_conn()
+            result = conn.execute(f"PRAGMA wal_checkpoint({mode})").fetchone()
+            if result:
+                busy, log_pages, checkpointed = result[0], result[1], result[2]
+                if mode == "TRUNCATE":
+                    db.logger.info(
+                        f"WAL TRUNCATE checkpoint: busy={busy}, "
+                        f"log={log_pages}, checkpointed={checkpointed}"
+                    )
+                elif busy > 0:
+                    db.logger.debug(f"WAL PASSIVE checkpoint busy: {result}")
     except sqlite3.Error as e:
         db.logger.warning(f"WAL checkpoint ({mode}) error: {e}")
 
 
 def run_cleanup(db):
     """Clean up old data and enforce total flow limit."""
-    conn = db._get_conn()
-    cleanup_start = time.time()
-    deleted_flows = 0
-    deleted_sessions = 0
+    # Serialize cleanup with writes; avoids concurrent write transactions
+    # from cleanup thread and capture path on separate SQLite connections.
+    with db._lock:
+        conn = db._get_conn()
+        cleanup_start = time.time()
+        deleted_flows = 0
+        deleted_sessions = 0
 
-    if Config.MAX_FLOW_AGE_DAYS > 0:
-        age_threshold = time.time() - (Config.MAX_FLOW_AGE_DAYS * 24 * 60 * 60)
-        old_flows = conn.execute(
-            """
-            SELECT id, session_id FROM flow_indices
-            WHERE msg_ts < ?
-            """,
-            (age_threshold,),
-        ).fetchall()
+        if Config.MAX_FLOW_AGE_DAYS > 0:
+            age_threshold = time.time() - (Config.MAX_FLOW_AGE_DAYS * 24 * 60 * 60)
+            old_flows = conn.execute(
+                """
+                SELECT id, session_id FROM flow_indices
+                WHERE msg_ts < ?
+                """,
+                (age_threshold,),
+            ).fetchall()
 
-        if old_flows:
+            if old_flows:
+                db.logger.info(
+                    f"Deleting {len(old_flows)} flows older than {Config.MAX_FLOW_AGE_DAYS} days"
+                )
+                flow_ids, session_flows = _collect_flow_targets(old_flows)
+                for session_id, session_flow_ids in session_flows.items():
+                    delete_body_files(db, session_id, session_flow_ids)
+                deleted_flows += _delete_flows(conn, flow_ids)
+
+        total_count = conn.execute("SELECT COUNT(*) FROM flow_indices").fetchone()[0]
+
+        if total_count > Config.MAX_TOTAL_FLOWS:
+            excess = total_count - Config.MAX_TOTAL_FLOWS
             db.logger.info(
-                f"Deleting {len(old_flows)} flows older than {Config.MAX_FLOW_AGE_DAYS} days"
+                f"Total flows ({total_count}) exceeds limit ({Config.MAX_TOTAL_FLOWS}), "
+                f"deleting {excess} oldest flows"
             )
+            old_flows = conn.execute(
+                """
+                SELECT id, session_id FROM flow_indices
+                ORDER BY msg_ts ASC
+                LIMIT ?
+                """,
+                (excess,),
+            ).fetchall()
             flow_ids, session_flows = _collect_flow_targets(old_flows)
             for session_id, session_flow_ids in session_flows.items():
-                delete_body_files(db, session_id, session_flow_ids)
+                db._delete_body_files(session_id, session_flow_ids)
             deleted_flows += _delete_flows(conn, flow_ids)
 
-    total_count = conn.execute("SELECT COUNT(*) FROM flow_indices").fetchone()[0]
-
-    if total_count > Config.MAX_TOTAL_FLOWS:
-        excess = total_count - Config.MAX_TOTAL_FLOWS
-        db.logger.info(
-            f"Total flows ({total_count}) exceeds limit ({Config.MAX_TOTAL_FLOWS}), "
-            f"deleting {excess} oldest flows"
-        )
-        old_flows = conn.execute(
+        conn.execute(
             """
-            SELECT id, session_id FROM flow_indices
-            ORDER BY msg_ts ASC
-            LIMIT ?
-            """,
-            (excess,),
+            UPDATE sessions SET flow_count = (
+                SELECT COUNT(*) FROM flow_indices WHERE session_id = sessions.id
+            )
+            """
+        )
+
+        empty_sessions = conn.execute(
+            """
+            SELECT id FROM sessions
+            WHERE id != 'default'
+            AND is_active = 0
+            AND flow_count = 0
+            """
         ).fetchall()
-        flow_ids, session_flows = _collect_flow_targets(old_flows)
-        for session_id, session_flow_ids in session_flows.items():
-            db._delete_body_files(session_id, session_flow_ids)
-        deleted_flows += _delete_flows(conn, flow_ids)
 
-    conn.execute(
-        """
-        UPDATE sessions SET flow_count = (
-            SELECT COUNT(*) FROM flow_indices WHERE session_id = sessions.id
+        for row in empty_sessions:
+            db.delete_session(row["id"])
+            deleted_sessions += 1
+
+        db_size_mb = 0
+        try:
+            db_size_mb = os.path.getsize(db.db_path) / (1024 * 1024)
+            if db_size_mb > Config.MAX_DB_SIZE_MB:
+                db.logger.warning(
+                    f"Database size ({db_size_mb:.1f}MB) exceeds "
+                    f"limit ({Config.MAX_DB_SIZE_MB}MB)."
+                )
+                db.push_notification(
+                    title_key="database.notifications.storage_warning_title",
+                    message_key="database.notifications.storage_warning_msg",
+                    params={"size_mb": f"{db_size_mb:.0f}"},
+                    n_type="warning",
+                    priority="high",
+                )
+        except Exception as e:
+            db.logger.debug(f"DB size check failed: {e}")
+
+        checkpoint_result = None
+        try:
+            checkpoint_result = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+            if checkpoint_result and checkpoint_result[0] > 0:
+                db.logger.debug(f"WAL checkpoint partial: {checkpoint_result}")
+        except Exception as e:
+            db.logger.debug(f"WAL checkpoint failed: {e}")
+
+        try:
+            conn.execute("PRAGMA optimize")
+        except Exception as e:
+            db.logger.debug(f"PRAGMA optimize failed: {e}")
+
+        integrity_ok = True
+        if db_size_mb < 1000:
+            try:
+                result = conn.execute("PRAGMA quick_check").fetchone()
+                integrity_ok = result[0] == "ok" if result else False
+                if not integrity_ok:
+                    db.logger.error(f"Database integrity check failed: {result}")
+            except Exception as e:
+                db.logger.debug(f"Integrity check failed: {e}")
+
+        conn.commit()
+
+        if deleted_flows > max(1000, total_count * 0.1):
+            db.logger.info(f"Running VACUUM after deleting {deleted_flows} flows...")
+            try:
+                conn.execute("VACUUM")
+                conn.commit()
+            except Exception as e:
+                db.logger.error(f"VACUUM failed: {e}")
+
+        cleanup_time = (time.time() - cleanup_start) * 1000
+        db.logger.info(
+            f"Cleanup: deleted {deleted_sessions} sessions, {deleted_flows} flows "
+            f"in {cleanup_time:.0f}ms "
+            f"(db={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'})"
         )
-        """
-    )
 
-    empty_sessions = conn.execute(
-        """
-        SELECT id FROM sessions
-        WHERE id != 'default'
-        AND is_active = 0
-        AND flow_count = 0
-        """
-    ).fetchall()
-
-    for row in empty_sessions:
-        db.delete_session(row["id"])
-        deleted_sessions += 1
-
-    db_size_mb = 0
-    try:
-        db_size_mb = os.path.getsize(db.db_path) / (1024 * 1024)
-        if db_size_mb > Config.MAX_DB_SIZE_MB:
-            db.logger.warning(
-                f"Database size ({db_size_mb:.1f}MB) exceeds "
-                f"limit ({Config.MAX_DB_SIZE_MB}MB)."
-            )
+        if deleted_flows > 0 or deleted_sessions > 0:
             db.push_notification(
-                title_key="database.notifications.storage_warning_title",
-                message_key="database.notifications.storage_warning_msg",
-                params={"size_mb": f"{db_size_mb:.0f}"},
-                n_type="warning",
-                priority="high",
+                title_key="database.notifications.cleanup_title",
+                message_key="database.notifications.cleanup_msg",
+                params={"flows": deleted_flows, "sessions": deleted_sessions},
+                n_type="info",
+                priority="low",
             )
-    except Exception as e:
-        db.logger.debug(f"DB size check failed: {e}")
-
-    checkpoint_result = None
-    try:
-        checkpoint_result = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
-        if checkpoint_result and checkpoint_result[0] > 0:
-            db.logger.debug(f"WAL checkpoint partial: {checkpoint_result}")
-    except Exception as e:
-        db.logger.debug(f"WAL checkpoint failed: {e}")
-
-    try:
-        conn.execute("PRAGMA optimize")
-    except Exception as e:
-        db.logger.debug(f"PRAGMA optimize failed: {e}")
-
-    integrity_ok = True
-    if db_size_mb < 1000:
-        try:
-            result = conn.execute("PRAGMA quick_check").fetchone()
-            integrity_ok = result[0] == "ok" if result else False
-            if not integrity_ok:
-                db.logger.error(f"Database integrity check failed: {result}")
-        except Exception as e:
-            db.logger.debug(f"Integrity check failed: {e}")
-
-    conn.commit()
-
-    if deleted_flows > max(1000, total_count * 0.1):
-        db.logger.info(f"Running VACUUM after deleting {deleted_flows} flows...")
-        try:
-            conn.execute("VACUUM")
-            conn.commit()
-        except Exception as e:
-            db.logger.error(f"VACUUM failed: {e}")
-
-    cleanup_time = (time.time() - cleanup_start) * 1000
-    db.logger.info(
-        f"Cleanup: deleted {deleted_sessions} sessions, {deleted_flows} flows "
-        f"in {cleanup_time:.0f}ms "
-        f"(db={db_size_mb:.0f}MB, integrity={'ok' if integrity_ok else 'FAIL'})"
-    )
-
-    if deleted_flows > 0 or deleted_sessions > 0:
-        db.push_notification(
-            title_key="database.notifications.cleanup_title",
-            message_key="database.notifications.cleanup_msg",
-            params={"flows": deleted_flows, "sessions": deleted_sessions},
-            n_type="info",
-            priority="low",
-        )
 
 
 def delete_body_files(db, session_id: str, flow_ids: List[str] = None):
