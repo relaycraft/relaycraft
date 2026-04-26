@@ -4,7 +4,7 @@ import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { create } from "zustand";
 import { startImportPolling } from "../hooks/useImportPolling";
 import { Logger } from "../lib/logger";
-import { setPollTimestamp } from "../lib/trafficMonitor";
+import { setPollTimestamp } from "../lib/traffic";
 import type { Session, SessionMetadata } from "../types/session";
 import { useSettingsStore } from "./settingsStore";
 import { useTrafficStore } from "./trafficStore";

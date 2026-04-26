@@ -6,7 +6,7 @@
  */
 
 import { create } from "zustand";
-import { fetchFlowDetail } from "../lib/trafficMonitor";
+import { fetchFlowDetail } from "../lib/traffic";
 import type { Flow, FlowIndex } from "../types";
 import { useSessionStore } from "./sessionStore";
 

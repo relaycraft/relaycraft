@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchSseEvents } from "../../../lib/trafficMonitor";
+import { fetchSseEvents } from "../../../lib/traffic";
 import type { SseEvent } from "../../../types";
 
 const SSE_MAX_STORED_EVENTS = 2000;

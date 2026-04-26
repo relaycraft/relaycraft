@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchFlowDetail } from "../lib/trafficMonitor";
+import { fetchFlowDetail } from "../lib/traffic";
 import { useTrafficStore } from "./trafficStore";
 
 // Mock Tauri HTTP fetch

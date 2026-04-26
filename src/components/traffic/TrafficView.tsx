@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import { matchFlow, parseFilter } from "../../lib/filterParser";
-import { searchFlowContent } from "../../lib/trafficMonitor";
+import { searchFlowContent } from "../../lib/traffic";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useSettingsStore } from "../../stores/settingsStore";

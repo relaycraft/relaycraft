@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateCurlCommand } from "../../../lib/curl";
 import { notify } from "../../../lib/notify";
-import { fetchFlowDetail } from "../../../lib/trafficMonitor";
+import { fetchFlowDetail } from "../../../lib/traffic";
 import { useComposerStore } from "../../../stores/composerStore";
 import {
   type TrafficFlowSummary,

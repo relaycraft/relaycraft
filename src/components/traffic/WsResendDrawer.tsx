@@ -2,7 +2,7 @@ import { RotateCw, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { notify } from "../../lib/notify";
-import { wsInjectFrame } from "../../lib/trafficMonitor";
+import { wsInjectFrame } from "../../lib/traffic";
 import type { RcWebSocketFrame } from "../../types";
 import { Button } from "../common/Button";
 import { Editor } from "../common/Editor";

@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import i18n from "../i18n";
 import { formatError, Logger } from "../lib/logger";
-import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/trafficMonitor";
+import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/traffic";
 import { useScriptStore } from "./scriptStore";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
