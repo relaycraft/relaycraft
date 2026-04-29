@@ -36,7 +36,7 @@ lazy_static = "1.4"
 log = "0.4"
 simplelog = "0.12"
 chrono = "0.4"
-reqwest = { version = "0.13.1", features = ["json", "gzip", "brotli", "deflate", "stream"] }
+reqwest = { version = "0.13.3", features = ["json", "gzip", "brotli", "deflate", "stream"] }
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
 url = "2"
@@ -49,7 +49,7 @@ rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
 walkdir = "2"
-zip = "8.5"
+zip = "8.6"
 tauri-plugin-single-instance = "2.4.1"
 thiserror = "2.0"
 sha1 = "0.11.0"
