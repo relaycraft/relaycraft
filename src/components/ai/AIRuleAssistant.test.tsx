@@ -53,7 +53,7 @@ vi.mock("../../stores/ruleStore", () => ({
   }),
 }));
 
-vi.mock("../../lib/ai/contextBuilder", () => ({
+vi.mock("../../lib/ai/context", () => ({
   buildAIContext: vi.fn().mockResolvedValue({
     summary: "ctx",
     activeRules: [],

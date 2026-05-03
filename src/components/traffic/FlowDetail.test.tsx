@@ -81,7 +81,7 @@ vi.mock("../../stores/composerStore", () => ({
   },
 }));
 
-vi.mock("../../lib/trafficMonitor", () => ({
+vi.mock("../../lib/traffic", () => ({
   fetchSseEvents,
 }));
 

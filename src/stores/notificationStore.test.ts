@@ -1,4 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Zustand persist middleware tries to access localStorage at store creation time.
+// In tests we bypass the persist layer — we only care about the store logic.
+vi.mock("zustand/middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("zustand/middleware")>();
+  return {
+    ...actual,
+    persist: (config: any) => config,
+  };
+});
+
 import { type NotificationItem, useNotificationStore } from "./notificationStore";
 
 describe("notificationStore", () => {

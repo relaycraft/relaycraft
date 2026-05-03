@@ -7,8 +7,8 @@ vi.mock("@tauri-apps/plugin-http", () => ({
   fetch: vi.fn(),
 }));
 
-// Mock trafficMonitor
-vi.mock("../lib/trafficMonitor", () => ({
+// Mock traffic module
+vi.mock("../lib/traffic", () => ({
   fetchFlowDetail: vi.fn(),
   getBackendPort: vi.fn(() => 9091),
 }));
