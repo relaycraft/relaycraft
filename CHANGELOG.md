@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.0...v1.1.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* avoid false restart prompts after app relaunch ([ed1755f](https://github-relaycraft/relaycraft/relaycraft/commit/ed1755f3018b1929c6f73c1361941f0b7e7fd921))
+* **engine:** align response status/content-type handling with UI model ([42a9abf](https://github-relaycraft/relaycraft/relaycraft/commit/42a9abf66ee3058cff3d80c66b81d7abf9185d2d))
+* **engine:** serialize flowdb maintenance writes to prevent sqlite locks ([3d0d7e7](https://github-relaycraft/relaycraft/relaycraft/commit/3d0d7e7bb5d94c4a2e1ab56d8debc6a3341c3495))
+* **test:** repair mock paths and localStorage after module refactoring ([4ecd38e](https://github-relaycraft/relaycraft/relaycraft/commit/4ecd38e57ef6bec3c35de8726a31012e8195de85))
+
+
+### Features
+
+* enforce commit message quality gates and AI commit workflow ([209f98d](https://github-relaycraft/relaycraft/relaycraft/commit/209f98d493da8c0885a270c7e521f556fdd4881d))
+
 All notable changes to this project will be documented in this file. See [release-it](https://github.com/release-it/release-it) for commit guidelines.
 
 ## [1.1.0](https://github.com/relaycraft/relaycraft/compare/v1.0.2...v1.1.0) (2026-04-19)
