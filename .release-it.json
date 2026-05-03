@@ -30,7 +30,7 @@
     "inFile": "src-tauri/tauri.conf.json"
   },
   "hooks": {
-    "before:bump": "cd src-tauri && cargo metadata --format-version 1 --offline",
+    "before:bump": "cd src-tauri && cargo metadata --format-version 1 --offline > /dev/null",
     "after:bump": "node scripts/bump-extra-files.cjs ${version}"
   }
 }
