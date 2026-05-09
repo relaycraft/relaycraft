@@ -128,13 +128,13 @@ Governance:
 - Use the GitHub Issue tracker to report bugs or suggest features.
 - Provide as much detail as possible, including steps to reproduce for bugs.
 
-## Legal: contributor agreement and AGPLv3
+## Legal: contributor agreement and GPLv3
 
-RelayCraft is licensed under the [GNU Affero General Public License v3.0](LICENSE) (**AGPL-3.0**). To keep the project clearly AGPL-compliant and auditable, please follow the rules below.
+RelayCraft is licensed under the [GNU General Public License v3.0](LICENSE) (**GPL-3.0**). To keep the project clearly GPL-compliant and auditable, please follow the rules below.
 
 ### Inbound license (your contribution)
 
-Unless you state otherwise **in writing** when opening a pull request or issue that includes a patch, you grant everyone the same rights to your contribution as this repository’s license: your contribution is **licensed under AGPL-3.0**, the same license as the rest of RelayCraft. Do not submit code you are not allowed to license that way (for example, proprietary third-party code or code under an incompatible license).
+Unless you state otherwise **in writing** when opening a pull request or issue that includes a patch, you grant everyone the same rights to your contribution as this repository's license: your contribution is **licensed under GPL-3.0**, the same license as the rest of RelayCraft. Do not submit code you are not allowed to license that way (for example, proprietary third-party code or code under an incompatible license).
 
 ### Developer Certificate of Origin (DCO)
 
@@ -149,13 +149,13 @@ You must agree to the **[Developer Certificate of Origin](DCO.md)** for every co
 
    Use `git commit -s` (or equivalent) so Git adds this line for you.
 
-If you cannot use `Signed-off-by` (for example, only editing via the GitHub web UI), state explicitly in the pull request that you agree to the DCO and AGPL-3.0 for the changes in that PR; maintainers may still ask you to amend commits before merge.
+If you cannot use `Signed-off-by` (for example, only editing via the GitHub web UI), state explicitly in the pull request that you agree to the DCO and GPL-3.0 for the changes in that PR; maintainers may still ask you to amend commits before merge.
 
 ### Third-party and copied code
 
-- Dependencies must be **compatible with AGPL-3.0** when linked or combined with this project as we distribute it.
+- Dependencies must be **compatible with GPL-3.0** when linked or combined with this project as we distribute it.
 - If you import or adapt code from elsewhere, **preserve copyright and license notices** as required by the original license, and say so in the PR description.
 
 ### Employer or client work
 
-If your contribution is related to your job, make sure you are **authorized** to submit it under AGPL-3.0 (and to agree to the DCO) before you open a pull request.
+If your contribution is related to your job, make sure you are **authorized** to submit it under GPL-3.0 (and to agree to the DCO) before you open a pull request.

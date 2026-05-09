@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/v/release/relaycraft/relaycraft?style=for-the-badge&logo=tauri&color=blueviolet" alt="release">
   <img src="https://img.shields.io/github/stars/relaycraft/relaycraft?style=for-the-badge&logo=github&color=blue" alt="stars">
   <img src="https://img.shields.io/github/downloads/relaycraft/relaycraft/total?style=for-the-badge&logo=github&color=success" alt="downloads">
-  <img src="https://img.shields.io/github/license/relaycraft/relaycraft?style=for-the-badge&color=orange" alt="license">
+  <img src="https://img.shields.io/github/license/relaycraft/relaycraft?style=for-the-badge&color=orange&v=1" alt="license">
 </p>
 
 <p align="center">
@@ -172,7 +172,7 @@ Pre-built binaries for macOS, Windows, and Linux are available on the [Releases 
 
 ## 📄 License
 
-RelayCraft is open-sourced under the **GNU AGPL v3 or later**. See the [LICENSE](LICENSE) file for details.
+RelayCraft is open-sourced under the **GNU GPL v3 or later**. See the [LICENSE](LICENSE) file for details.
 
 ## 🙌 Contributors
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->

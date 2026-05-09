@@ -2,7 +2,7 @@
 
 ## Legal | 法律确认
 
-- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md) and agree that my contribution is licensed under **[AGPL-3.0](../LICENSE)** the same as this project, and I agree to the **[Developer Certificate of Origin (DCO)](../DCO.md)** for this contribution. | 我已阅读 [CONTRIBUTING.md](../CONTRIBUTING.md)，并同意本贡献与项目相同，按 **[AGPL-3.0](../LICENSE)** 授权，且就本贡献同意 **[DCO](../DCO.md)**。
+- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md) and agree that my contribution is licensed under **[GPL-3.0](../LICENSE)** the same as this project, and I agree to the **[Developer Certificate of Origin (DCO)](../DCO.md)** for this contribution. | 我已阅读 [CONTRIBUTING.md](../CONTRIBUTING.md)，并同意本贡献与项目相同，按 **[GPL-3.0](../LICENSE)** 授权，且就本贡献同意 **[DCO](../DCO.md)**。
 
 *(Commits should include `Signed-off-by: Your Name <email>` via `git commit -s` when possible.) | （建议每个提交使用 `git commit -s` 包含 `Signed-off-by`。）*
 

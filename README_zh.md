@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/v/release/relaycraft/relaycraft?style=for-the-badge&logo=tauri&color=blueviolet" alt="release">
   <img src="https://img.shields.io/github/stars/relaycraft/relaycraft?style=for-the-badge&logo=github&color=blue" alt="stars">
   <img src="https://img.shields.io/github/downloads/relaycraft/relaycraft/total?style=for-the-badge&logo=github&color=success" alt="downloads">
-  <img src="https://img.shields.io/github/license/relaycraft/relaycraft?style=for-the-badge&color=orange" alt="license">
+  <img src="https://img.shields.io/github/license/relaycraft/relaycraft?style=for-the-badge&color=orange&v=1" alt="license">
 </p>
 
 <p align="center">
@@ -171,7 +171,7 @@ macOS、Windows 和 Linux 的预构建二进制文件可在 [Releases 页面](ht
 
 ## 📄 许可证
 
-RelayCraft 基于 **GNU AGPL v3 或更高版本** 开源。详情请参阅 [LICENSE](LICENSE) 文件。
+RelayCraft 基于 **GNU GPL v3 或更高版本** 开源。详情请参阅 [LICENSE](LICENSE) 文件。
 
 ## 🙌 贡献者
 

@@ -925,7 +925,7 @@
       "homepage": "Product Home",
       "homepage_desc": "Official RelayCraft product website",
       "app_license": "Product License",
-      "app_license_desc": "RelayCraft is released under the GNU Affero General Public License v3.0",
+      "app_license_desc": "RelayCraft is released under the GNU General Public License v3.0",
       "licenses": {
         "title": "Third-Party Licenses",
         "title_short": "Open Source Licenses",

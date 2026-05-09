@@ -22,6 +22,6 @@ By making a contribution to this project, I certify that:
 
 ## RelayCraft project policy
 
-For this repository, the **inbound** license for contributions is the [GNU Affero General Public License v3.0](LICENSE) (**AGPL-3.0**), as described in [CONTRIBUTING.md](CONTRIBUTING.md). New files you add should follow the copyright and license notice conventions used in nearby files.
+For this repository, the **inbound** license for contributions is the [GNU General Public License v3.0](LICENSE) (**GPL-3.0**), as described in [CONTRIBUTING.md](CONTRIBUTING.md). New files you add should follow the copyright and license notice conventions used in nearby files.
 
 Canonical English text: [developercertificate.org](https://developercertificate.org/).

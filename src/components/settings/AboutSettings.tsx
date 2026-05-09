@@ -194,7 +194,7 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
           title={t("settings.about.app_license", "Product License")}
           description={t(
             "settings.about.app_license_desc",
-            "RelayCraft is released under the GNU Affero General Public License v3.0",
+            "RelayCraft is released under the GNU General Public License v3.0",
           )}
         >
           <Button

@@ -925,7 +925,7 @@
       "homepage": "产品主页",
       "homepage_desc": "RelayCraft 官方产品主页",
       "app_license": "产品许可协议",
-      "app_license_desc": "RelayCraft 基于 GNU Affero General Public License v3.0 开源",
+      "app_license_desc": "RelayCraft 基于 GNU General Public License v3.0 开源",
       "licenses": {
         "title": "第三方许可协议",
         "title_short": "开源许可协议",
