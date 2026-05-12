@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.1...v1.1.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* **notifications:** show plugin manifest names in the notification center and tighten panel density ([83d3847](https://github.com/relaycraft/relaycraft/commit/83d3847))
+* **settings:** isolate the in-app updater dialog, dedupe release-note noise, and block dismiss during install ([8033be6](https://github.com/relaycraft/relaycraft/commit/8033be6))
+
+
+### Chores
+
+* relicense from AGPLv3 to GPLv3 ([2c6706d](https://github.com/relaycraft/relaycraft/commit/2c6706d))
+* **release:** include package.json and tauri.conf.json in bump-extra-files ([7273aa6](https://github.com/relaycraft/relaycraft/commit/7273aa6))
+
 ## [1.1.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.0...v1.1.1) (2026-05-03)
 
 
