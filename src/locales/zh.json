@@ -921,9 +921,11 @@
       "checking": "检查中...",
       "checking_updates": "检查是否有新版本发布",
       "downloading": "正在下载...",
+      "update_modal_cannot_close": "正在安装更新，请稍候…",
       "update_available": {
-        "message": "发现新版本 {{version}}！\n\n{{body}}\n\n是否立即更新？",
-        "title": "更新可用"
+        "install_prompt": "是否立即下载并安装？",
+        "title": "更新可用",
+        "version_line": "新版本 {{version}} 已发布"
       },
       "dev_tools": "开发者工具",
       "error_fetch": "获取版本信息失败，请检查网络设置。",

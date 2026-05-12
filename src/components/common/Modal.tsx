@@ -2,6 +2,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { X } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "../../lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,6 +12,10 @@ interface ModalProps {
   className?: string;
   icon?: ReactNode;
   headerActions?: ReactNode;
+  /** When true, backdrop click, Escape, and header close are disabled (e.g. during a blocking operation). */
+  preventDismiss?: boolean;
+  /** Native tooltip / aria-label when `preventDismiss` is true (e.g. why the window cannot be closed). */
+  preventDismissHint?: string;
 }
 
 export function Modal({
@@ -21,10 +26,12 @@ export function Modal({
   className = "max-w-lg",
   icon,
   headerActions,
+  preventDismiss = false,
+  preventDismissHint,
 }: ModalProps) {
   // Handle Escape key
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || preventDismiss) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -35,7 +42,7 @@ export function Modal({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, preventDismiss]);
 
   // Backdrop animation
   const backdropVariants: Variants = {
@@ -76,8 +83,12 @@ export function Modal({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-            onClick={onClose}
+            className={cn(
+              "absolute inset-0 bg-black/40 backdrop-blur-[2px]",
+              preventDismiss ? "cursor-default" : "cursor-pointer",
+            )}
+            onClick={preventDismiss ? undefined : onClose}
+            aria-hidden="true"
           />
 
           {/* Modal Content */}
@@ -100,7 +111,16 @@ export function Modal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1 text-muted-foreground/60 hover:text-foreground rounded-lg transition-all hover:bg-muted/50"
+                  disabled={preventDismiss}
+                  aria-disabled={preventDismiss}
+                  aria-label={preventDismiss && preventDismissHint ? preventDismissHint : undefined}
+                  title={preventDismiss && preventDismissHint ? preventDismissHint : undefined}
+                  className={cn(
+                    "p-1 text-muted-foreground/60 rounded-lg transition-all",
+                    preventDismiss
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:text-foreground hover:bg-muted/50",
+                  )}
                 >
                   <X className="w-4 h-4" />
                 </button>

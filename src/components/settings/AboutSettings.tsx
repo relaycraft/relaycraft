@@ -1,12 +1,12 @@
 import { Globe, Shield } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
 import { GitHubMark } from "../common/icons/GitHubMark";
 import { AppLogo } from "../layout/AppLogo";
 import { LicensesModal } from "./LicensesModal";
 import { SettingsRow, SettingsSection } from "./SettingsLayout";
+import { UpdateAvailableModal } from "./UpdateAvailableModal";
 
 interface SystemInfo {
   version: string;
@@ -20,10 +20,67 @@ interface AboutSettingsProps {
   systemInfo: SystemInfo | null;
 }
 
+interface PendingUpdate {
+  version: string;
+  body?: string;
+  download: () => Promise<void>;
+}
+
 export function AboutSettings({ systemInfo }: AboutSettingsProps) {
   const { t } = useTranslation();
-  const { showConfirm } = useUIStore();
   const [licensesOpen, setLicensesOpen] = React.useState(false);
+  const [pendingUpdate, setPendingUpdate] = React.useState<PendingUpdate | null>(null);
+  const [updateInstallLoading, setUpdateInstallLoading] = React.useState(false);
+  const pendingUpdateRef = React.useRef<PendingUpdate | null>(null);
+  const relaunchRef = React.useRef<() => Promise<void>>(async () => {});
+  const checkBtnOriginalLabelRef = React.useRef("");
+
+  const restoreCheckUpdateButton = React.useCallback(() => {
+    const btn = document.getElementById("btn-check-update");
+    if (!btn) return;
+    btn.innerText = checkBtnOriginalLabelRef.current;
+    btn.removeAttribute("disabled");
+  }, []);
+
+  const handleUpdateModalClose = React.useCallback(() => {
+    setPendingUpdate(null);
+    pendingUpdateRef.current = null;
+    restoreCheckUpdateButton();
+  }, [restoreCheckUpdateButton]);
+
+  const handleConfirmUpdate = React.useCallback(async () => {
+    const payload = pendingUpdateRef.current;
+    if (!payload) return;
+
+    const btn = document.getElementById("btn-check-update");
+    if (btn) btn.innerText = t("settings.about.downloading");
+
+    setUpdateInstallLoading(true);
+    try {
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("prepare_update_install");
+      } catch (_) {
+        try {
+          const { invoke } = await import("@tauri-apps/api/core");
+          await invoke("stop_proxy");
+        } catch (_) {}
+      }
+      await payload.download();
+      await relaunchRef.current();
+    } catch (error) {
+      console.error("Installation failed:", error);
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("restart_proxy");
+      } catch (_) {}
+      const { notify } = await import("../../lib/notify");
+      notify.error(t("settings.about.error_fetch"));
+      handleUpdateModalClose();
+    } finally {
+      setUpdateInstallLoading(false);
+    }
+  }, [t, handleUpdateModalClose]);
 
   return (
     <div className="space-y-6">
@@ -56,6 +113,7 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
               const btn = document.getElementById("btn-check-update");
               if (btn) {
                 const originalText = btn.innerText;
+                checkBtnOriginalLabelRef.current = originalText;
                 btn.innerText = t("settings.about.checking");
                 btn.setAttribute("disabled", "true");
 
@@ -65,51 +123,14 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
 
                   const update = await check();
                   if (update) {
-                    showConfirm({
-                      title: t("settings.about.update_available.title"),
-                      message: t("settings.about.update_available.message", {
-                        version: update.version,
-                        body: update.body || "",
-                      }),
-                      confirmLabel: t("common.yes"),
-                      cancelLabel: t("common.no"),
-                      variant: "info",
-                      onConfirm: async () => {
-                        btn.innerText = t("settings.about.downloading");
-                        try {
-                          try {
-                            const { invoke } = await import("@tauri-apps/api/core");
-                            await invoke("prepare_update_install");
-                          } catch (_) {
-                            try {
-                              const { invoke } = await import("@tauri-apps/api/core");
-                              await invoke("stop_proxy");
-                            } catch (_) {}
-                          }
-                          await update.downloadAndInstall();
-                          await relaunch();
-                        } catch (error) {
-                          console.error("Installation failed:", error);
-                          try {
-                            const { invoke } = await import("@tauri-apps/api/core");
-                            await invoke("restart_proxy");
-                          } catch (_) {}
-                          const { notify } = await import("../../lib/notify");
-                          notify.error(t("settings.about.error_fetch"));
-                          btn.innerText = originalText;
-                          btn.removeAttribute("disabled");
-                        }
-                      },
-                      onCancel: () => {
-                        btn.innerText = originalText;
-                        btn.removeAttribute("disabled");
-                      },
-                      customIcon: (
-                        <div className="p-1 bg-primary/10 rounded-lg">
-                          <AppLogo size={24} />
-                        </div>
-                      ),
-                    });
+                    relaunchRef.current = relaunch;
+                    const payload: PendingUpdate = {
+                      version: update.version,
+                      body: update.body,
+                      download: () => update.downloadAndInstall(),
+                    };
+                    pendingUpdateRef.current = payload;
+                    setPendingUpdate(payload);
                   } else {
                     btn.innerText = t("settings.about.up_to_date");
                     setTimeout(() => {
@@ -229,6 +250,15 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
       </SettingsSection>
 
       <LicensesModal isOpen={licensesOpen} onClose={() => setLicensesOpen(false)} />
+
+      <UpdateAvailableModal
+        isOpen={pendingUpdate !== null}
+        version={pendingUpdate?.version ?? ""}
+        body={pendingUpdate?.body}
+        onClose={handleUpdateModalClose}
+        onConfirm={handleConfirmUpdate}
+        isLoading={updateInstallLoading}
+      />
     </div>
   );
 }
