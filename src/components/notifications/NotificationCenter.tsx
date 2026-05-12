@@ -170,30 +170,30 @@ export function NotificationCenter() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("common.search", "Search...")}
-                  className="w-full h-8 pl-8 pr-3 bg-muted/40 border border-border/40 rounded-md text-ui focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50 hover:bg-muted/60 hover:border-border/60 focus:bg-background focus:border-primary/30"
+                  className="w-full h-7 pl-8 pr-3 bg-muted/40 border border-border/40 rounded-md text-tiny focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50 hover:bg-muted/60 hover:border-border/60 focus:bg-background focus:border-primary/30"
                 />
               </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-3">
               {filteredNotifications.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-4">
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-3">
                   <div className="relative">
-                    <Bell className="w-16 h-16 stroke-[1]" />
+                    <Bell className="w-14 h-14 stroke-[1]" />
                     <div className="absolute top-0 right-0 w-3 h-3 bg-primary/20 rounded-full blur-sm animate-pulse" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-ui font-semibold text-muted-foreground/50 tracking-tight">
+                  <div className="text-center px-2">
+                    <p className="text-xs font-semibold text-muted-foreground/50 tracking-tight">
                       {t("notifications.empty", "No notifications")}
                     </p>
-                    <p className="text-ui mt-1 opacity-60">
+                    <p className="text-tiny mt-1 opacity-60">
                       {t("notifications.all_processed", "You are all caught up")}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <AnimatePresence mode="popLayout">
                     {filteredNotifications.map((item) => (
                       <NotificationItemCard

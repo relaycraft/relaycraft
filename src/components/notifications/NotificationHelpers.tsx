@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import {
   AlertCircle,
   AlertTriangle,
@@ -12,7 +13,46 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "../../i18n";
-import type { NotificationCategory, NotificationPriority } from "../../stores/notificationStore";
+import type {
+  NotificationCategory,
+  NotificationItem,
+  NotificationPriority,
+} from "../../stores/notificationStore";
+
+const PLUGIN_SOURCE_PREFIX = "Plugin: ";
+
+/** Strip legacy "Plugin: …" prefix from titles/sources. */
+export function stripPluginSourcePrefix(value: string): string {
+  if (!value.startsWith(PLUGIN_SOURCE_PREFIX)) return value;
+  return value.slice(PLUGIN_SOURCE_PREFIX.length).trim() || value;
+}
+
+/**
+ * Prefer `metadata.pluginId`; otherwise parse `Plugin: …` only when the remainder looks like a
+ * reverse-DNS id (avoids treating `Plugin: API Manager` as an id).
+ */
+export function extractPluginIdFromNotification(
+  n: Pick<NotificationItem, "title" | "source" | "metadata">,
+): string | undefined {
+  const fromMeta = n.metadata?.pluginId;
+  if (typeof fromMeta === "string" && fromMeta.trim()) return fromMeta.trim();
+
+  const tryParse = (s?: string) => {
+    if (!s?.startsWith(PLUGIN_SOURCE_PREFIX)) return undefined;
+    const rest = s.slice(PLUGIN_SOURCE_PREFIX.length).trim();
+    if (!rest?.includes(".")) return undefined;
+    return rest;
+  };
+
+  return tryParse(n.title) ?? tryParse(n.source);
+}
+
+export function translateNotificationSubsystemSource(source: string, t: TFunction): string {
+  if (source === "Proxy Engine") return t("notifications.subsystem.proxy_engine");
+  if (source === "System") return t("notifications.subsystem.system");
+  if (source === "database") return t("notifications.subsystem.database");
+  return source;
+}
 
 interface CategoryBadgeProps {
   category: NotificationCategory;

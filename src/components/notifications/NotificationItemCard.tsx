@@ -2,9 +2,17 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { NotificationItem } from "../../stores/notificationStore";
+import { usePluginStore } from "../../stores/pluginStore";
 import { Button } from "../common/Button";
 import { Tooltip } from "../common/Tooltip";
-import { formatRelativeTime, getCategoryConfig, getPriorityConfig } from "./NotificationHelpers";
+import {
+  extractPluginIdFromNotification,
+  formatRelativeTime,
+  getCategoryConfig,
+  getPriorityConfig,
+  stripPluginSourcePrefix,
+  translateNotificationSubsystemSource,
+} from "./NotificationHelpers";
 
 interface NotificationItemCardProps {
   notification: NotificationItem;
@@ -22,6 +30,46 @@ export function NotificationItemCard({
   const category = notification.category || "system";
   const priority = notification.priority || "normal";
 
+  const pluginId = extractPluginIdFromNotification(notification);
+  const resolvedPluginName = usePluginStore((s) =>
+    pluginId ? s.plugins.find((p) => p.manifest.id === pluginId)?.manifest.name : undefined,
+  );
+
+  const displayTitle =
+    category === "plugin" && resolvedPluginName
+      ? resolvedPluginName
+      : category === "plugin" && notification.title.startsWith("Plugin: ")
+        ? stripPluginSourcePrefix(notification.title)
+        : notification.title;
+
+  const titleTooltip =
+    pluginId && resolvedPluginName && resolvedPluginName !== pluginId
+      ? t("notifications.plugin_title_tooltip", { name: resolvedPluginName, id: pluginId })
+      : displayTitle;
+
+  const rawSource = notification.source;
+  const showSourceChip =
+    Boolean(rawSource) && rawSource !== notification.title && rawSource !== displayTitle;
+
+  let sourceChipLabel: string | null = null;
+  if (showSourceChip && rawSource) {
+    if (rawSource.startsWith("Plugin: ")) {
+      const stripped = stripPluginSourcePrefix(rawSource);
+      if (
+        pluginId &&
+        resolvedPluginName &&
+        displayTitle === resolvedPluginName &&
+        resolvedPluginName !== pluginId
+      ) {
+        sourceChipLabel = pluginId;
+      } else {
+        sourceChipLabel = stripped;
+      }
+    } else {
+      sourceChipLabel = translateNotificationSubsystemSource(rawSource, t);
+    }
+  }
+
   const priorityConfig = getPriorityConfig(priority);
   const categoryConfig = getCategoryConfig(category);
   const PriorityIcon = priorityConfig.icon;
@@ -33,39 +81,39 @@ export function NotificationItemCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`relative group/notification-card p-3.5 rounded-xl border transition-all cursor-pointer ${
+      className={`relative group/notification-card p-3 rounded-xl border transition-all cursor-pointer ${
         notification.read
           ? "bg-muted/5 border-border/10 opacity-60 hover:opacity-100"
           : `${priorityConfig.className} shadow-sm border-border/40 hover:border-border/60`
       } ${priorityConfig.shouldPulse && !notification.read ? "animate-pulse" : ""}`}
       onClick={() => onMarkAsRead(notification.id)}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         {/* 图标 */}
         <div
           className={`mt-0.5 shrink-0 ${priorityConfig.shouldPulse && !notification.read ? "animate-pulse" : ""}`}
         >
-          <PriorityIcon className={`w-5 h-5 ${priorityConfig.iconClassName}`} />
+          <PriorityIcon className={`w-4 h-4 ${priorityConfig.iconClassName}`} />
         </div>
 
         {/* 内容 */}
-        <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex-1 min-w-0 space-y-1">
           {/* 标题和时间 */}
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0 pr-6">
+            <div className="flex items-center gap-1.5 min-w-0 pr-6">
               {!notification.read && (
                 <div
                   className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{ backgroundColor: priorityConfig.color }}
                 />
               )}
-              <Tooltip content={notification.title} side="bottom">
+              <Tooltip content={titleTooltip} side="bottom">
                 <h4
-                  className={`text-ui font-semibold leading-snug truncate ${
+                  className={`text-xs font-semibold leading-snug tracking-tight truncate ${
                     notification.read ? "text-muted-foreground" : "text-foreground"
                   }`}
                 >
-                  {notification.title}
+                  {displayTitle}
                 </h4>
               </Tooltip>
             </div>
@@ -74,33 +122,27 @@ export function NotificationItemCard({
           {/* 消息内容 */}
           {notification.message && (
             <Tooltip content={notification.message} multiline side="bottom" className="w-full">
-              <p className="text-ui text-muted-foreground/80 leading-relaxed line-clamp-2 w-full">
+              <p className="text-tiny text-muted-foreground/85 leading-snug line-clamp-2 w-full">
                 {notification.message}
               </p>
             </Tooltip>
           )}
 
           {/* 底部信息 */}
-          <div className="flex items-center gap-2 pt-0.5">
+          <div className="flex items-center gap-1.5 w-full min-w-0 flex-wrap pt-0.5">
             {/* 分类徽章 */}
-            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-bold bg-muted/40 text-muted-foreground/70 border border-border/10">
-              <CategoryIcon className="w-2.5 h-2.5 opacity-60" />
+            <div className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-tiny font-semibold bg-muted/40 text-muted-foreground/75 border border-border/10">
+              <CategoryIcon className="w-2.5 h-2.5 opacity-60 shrink-0" />
               <span>{t(categoryConfig.label)}</span>
             </div>
 
-            {/* 来源 (If different from title and present) */}
-            {notification.source && notification.source !== notification.title && (
-              <>
-                <span className="text-border/40">|</span>
-                <span className="text-xs text-muted-foreground/40 font-medium truncate max-w-[150px]">
-                  {notification.source.replace("Plugin: ", "")}
-                </span>
-              </>
+            {sourceChipLabel && (
+              <div className="inline-flex items-center max-w-[min(160px,42%)] min-w-0 px-1.5 py-0.5 rounded-md text-tiny font-medium bg-muted/25 text-muted-foreground/70 border border-border/10">
+                <span className="truncate">{sourceChipLabel}</span>
+              </div>
             )}
 
-            {/* 时间 */}
-            <span className="text-border/40">|</span>
-            <span className="text-xs text-muted-foreground/40 tabular-nums">
+            <span className="text-tiny text-muted-foreground/45 tabular-nums shrink-0 ml-auto">
               {formatRelativeTime(notification.timestamp)}
             </span>
           </div>

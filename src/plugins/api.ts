@@ -240,13 +240,17 @@ export const createPluginApi = (
         // Add to history only if it's a warning or error
         // Success messages are ephemeral only (to avoid cluttering the notification center with "Active", "Saved" etc.)
         if (toastType === "warning" || toastType === "error") {
+          const pluginLabel =
+            usePluginStore.getState().plugins.find((p) => p.manifest.id === pluginId)?.manifest
+              .name ?? pluginId;
+          const itemTitle = i18n.t("notifications.plugin_item_title", { name: pluginLabel });
           useNotificationStore.getState().addNotification({
-            title: `Plugin: ${pluginId}`,
+            title: itemTitle,
             message: message,
             type: (type || "info") as "info" | "success" | "warning" | "error",
             category: "plugin",
             priority,
-            source: `Plugin: ${pluginId}`,
+            source: itemTitle,
             metadata: {
               pluginId,
             },

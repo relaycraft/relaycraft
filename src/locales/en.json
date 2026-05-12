@@ -520,6 +520,13 @@
       "just_now": "Just now",
       "minutes_ago": "{{count}}m ago"
     },
+    "plugin_item_title": "{{name}}",
+    "plugin_title_tooltip": "{{name}} ({{id}})",
+    "subsystem": {
+      "database": "Database",
+      "proxy_engine": "Proxy Engine",
+      "system": "System"
+    },
     "title": "Notifications"
   },
   "plugins": {
