@@ -4,12 +4,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 mod ca_generator;
+#[cfg(target_os = "linux")]
+mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
-#[cfg(target_os = "linux")]
-mod linux;
 
 use ca_generator::generate_ca;
 
@@ -109,15 +109,20 @@ fn local_cert_hash() -> Result<String, String> {
     use sha1::{Digest, Sha1};
 
     let cert_path = get_cert_path()?;
-    let cert_content = fs::read_to_string(&cert_path)
-        .map_err(|e| format!("Failed to read local cert: {}", e))?;
+    let cert_content =
+        fs::read_to_string(&cert_path).map_err(|e| format!("Failed to read local cert: {}", e))?;
 
     let start_marker = "-----BEGIN CERTIFICATE-----";
     let end_marker = "-----END CERTIFICATE-----";
-    if let (Some(start), Some(end)) = (cert_content.find(start_marker), cert_content.find(end_marker))
-    {
+    if let (Some(start), Some(end)) = (
+        cert_content.find(start_marker),
+        cert_content.find(end_marker),
+    ) {
         let base64_content = &cert_content[start + start_marker.len()..end].trim();
-        let clean_base64: String = base64_content.chars().filter(|c| !c.is_whitespace()).collect();
+        let clean_base64: String = base64_content
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
         if let Ok(der_bytes) = BASE64_STANDARD.decode(&clean_base64) {
             let mut hasher = Sha1::new();
             hasher.update(&der_bytes);
@@ -234,7 +239,8 @@ pub fn open_cert_dir() -> Result<(), String> {
     let cert_dir = get_cert_dir()?;
 
     if !cert_dir.exists() {
-        fs::create_dir_all(&cert_dir).map_err(|e| format!("Failed to create cert directory: {}", e))?;
+        fs::create_dir_all(&cert_dir)
+            .map_err(|e| format!("Failed to create cert directory: {}", e))?;
     }
 
     platform().open_cert_dir(&cert_dir)

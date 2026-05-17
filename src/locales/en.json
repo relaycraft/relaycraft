@@ -488,7 +488,26 @@
     "config_snippet_desc": "Paste into Claude Desktop or Cursor MCP config file to connect",
     "copy_config": "Copy Config",
     "copied": "Copied!",
-    "privacy_notice": "Traffic data may contain sensitive information such as tokens and credentials. Only enable MCP Server in trusted environments."
+    "privacy_notice": "Traffic data may contain sensitive information such as tokens and credentials. Only enable MCP Server in trusted environments.",
+    "timeline": {
+      "title": "AI Debug Timeline",
+      "toggle_reads": "Toggle read operations",
+      "hidden_reads": "Hidden {{count}} read operations",
+      "last_action": "Last: {{action}}",
+      "empty": "No AI debugging activities yet.",
+      "empty_desc": "Activities will appear here when an external AI assistant (like Cursor or Claude Desktop) interacts with RelayCraft via MCP.",
+      "created_rule": "{{client}} created a rule",
+      "create_rule_failed": "{{client}} failed to create rule",
+      "toggled_rule": "{{client}} toggled rule {{name}}",
+      "toggle_rule_failed": "{{client}} failed to toggle rule",
+      "deleted_rule": "{{client}} deleted rule {{name}}",
+      "delete_rule_failed": "{{client}} failed to delete rule",
+      "replayed_request": "{{client}} replayed a request",
+      "replay_request_failed": "{{client}} failed to replay request",
+      "read_data": "{{client}} read data: {{tool}}",
+      "view_flow": "View Flow",
+      "view_rule": "View Rule"
+    }
   },
   "notifications": {
     "all_processed": "You are all caught up",
@@ -628,6 +647,7 @@
     "creator": {
       "ai_assistant": "Created by RelayCraft AI Assistant",
       "mcp": "Created by MCP External Tool",
+      "mcp_activity": "Recent Activity:",
       "plugin": "Created by Plugin",
       "plugin_unknown": "Unknown plugin"
     },
@@ -1065,6 +1085,7 @@
     "engine_healthy": "Engine running",
     "engine_idle": "Engine idle",
     "engine_error": "Engine not running",
+    "mcp_timeline_desc": "AI active operations",
     "engine_crashed_title": "Proxy Engine Crashed",
     "engine_crashed_msg": "The proxy engine stopped unexpectedly. Check the crash log for details, then restart the engine."
   },

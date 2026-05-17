@@ -205,6 +205,17 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     };
   }, []);
 
+  // Listen to MCP Activity events
+  useEffect(() => {
+    const unlisten = listen("mcp-activity", async (event) => {
+      const { useMcpActivityStore } = await import("../stores/mcpActivityStore");
+      useMcpActivityStore.getState().addActivity(event.payload as any);
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
+
   // Handle plugin/theme installed via OS file association (double-click .rcplugin/.rctheme)
   useEffect(() => {
     const unlistenOk = listen<string>("plugin-installed-from-file", async (event) => {

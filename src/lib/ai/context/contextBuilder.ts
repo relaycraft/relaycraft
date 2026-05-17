@@ -7,6 +7,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { version as APP_VERSION } from "../../../../package.json";
+import { useMcpActivityStore } from "../../../stores/mcpActivityStore";
 import { useProxyStore } from "../../../stores/proxyStore";
 import { useRuleStore } from "../../../stores/ruleStore";
 import { useScriptStore } from "../../../stores/scriptStore";
@@ -48,6 +49,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
   const { config } = useSettingsStore.getState();
   const { indices, selectedFlow } = useTrafficStore.getState();
   const { activeTab } = useUIStore.getState();
+  const { activities: mcpActivities } = useMcpActivityStore.getState();
 
   // 2. Check cache
   const cacheKey = JSON.stringify({
@@ -67,6 +69,17 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     selectedFlowId: selectedFlow?.id || null,
     trafficCount: indices.length,
     trafficTail: indices.slice(-maxTrafficCount).map((idx) => [idx.id, idx.status]),
+    mcpActivityCount: mcpActivities.length,
+    mcpActivityTail: mcpActivities
+      .slice(0, 10)
+      .map((activity) => [
+        activity.id,
+        activity.phase,
+        activity.status,
+        activity.timestamp,
+        activity.relatedFlowId || null,
+        activity.relatedRuleId || null,
+      ]),
   });
   const now = Date.now();
   if (contextCache && contextCache.key === cacheKey && contextCache.expiresAt > now) {
@@ -119,6 +132,43 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     includeBody,
   );
 
+  const mcpActivitySummary = mcpActivities.slice(0, 15).map((a) => {
+    let actionDesc = a.toolName;
+    if (a.toolName === "create_rule") actionDesc = "Created rule";
+    if (a.toolName === "toggle_rule") actionDesc = "Toggled rule";
+    if (a.toolName === "delete_rule") actionDesc = "Deleted rule";
+    if (a.toolName === "replay_request") actionDesc = "Replayed request";
+    if (
+      a.toolName.startsWith("list_") ||
+      a.toolName.startsWith("get_") ||
+      a.toolName.startsWith("search_")
+    ) {
+      actionDesc = `Read data via ${a.toolName}`;
+    }
+
+    let targetName = "";
+    if (a.relatedRuleId) {
+      const rule = useRuleStore.getState().rules.find((r) => r.id === a.relatedRuleId);
+      if (rule) targetName = `"${rule.name}"`;
+    }
+
+    if (targetName && (a.toolName === "toggle_rule" || a.toolName === "delete_rule")) {
+      actionDesc += ` ${targetName}`;
+    }
+
+    if (a.status === "error") {
+      actionDesc += " (Failed)";
+    }
+
+    return {
+      action: actionDesc,
+      status: a.status,
+      intent: a.intent,
+      relatedFlowId: a.relatedFlowId,
+      relatedRuleId: a.relatedRuleId,
+    };
+  });
+
   let summary = `System on port ${port}. Tab: ${activeTab}. `;
   summary += `Captured requests: ${indices.length}. `;
   if (config.upstream_proxy?.enabled) {
@@ -136,6 +186,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
       recentLogs,
       selectedItem,
       activeTab: activeTab || undefined,
+      mcpActivitySummary: mcpActivitySummary.length > 0 ? mcpActivitySummary : undefined,
       system: {
         proxyPort: port,
         upstreamProxy: config.upstream_proxy?.enabled ? config.upstream_proxy.url : undefined,

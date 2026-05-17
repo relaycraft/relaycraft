@@ -488,7 +488,26 @@
     "config_snippet_desc": "将以下配置粘贴到 Claude Desktop 或 Cursor 的 MCP 配置文件中",
     "copy_config": "复制配置",
     "copied": "已复制！",
-    "privacy_notice": "流量数据可能包含 Token、密钥等敏感信息，请仅在受信任的环境中启用 MCP 服务器。"
+    "privacy_notice": "流量数据可能包含 Token、密钥等敏感信息，请仅在受信任的环境中启用 MCP 服务器。",
+    "timeline": {
+      "title": "AI 调试时间线",
+      "toggle_reads": "切换显示读操作",
+      "hidden_reads": "已隐藏 {{count}} 条读操作",
+      "last_action": "最新: {{action}}",
+      "empty": "暂无 AI 调试活动",
+      "empty_desc": "当外部 AI 助手（如 Cursor 或 Claude Desktop）通过 MCP 与 RelayCraft 交互时，活动会显示在这里。",
+      "created_rule": "{{client}} 创建了规则",
+      "create_rule_failed": "{{client}} 创建规则失败",
+      "toggled_rule": "{{client}} 切换了规则状态 {{name}}",
+      "toggle_rule_failed": "{{client}} 切换规则状态失败",
+      "deleted_rule": "{{client}} 删除了规则 {{name}}",
+      "delete_rule_failed": "{{client}} 删除规则失败",
+      "replayed_request": "{{client}} 重放了请求",
+      "replay_request_failed": "{{client}} 重放请求失败",
+      "read_data": "{{client}} 读取了数据: {{tool}}",
+      "view_flow": "查看请求",
+      "view_rule": "查看规则"
+    }
   },
   "notifications": {
     "all_processed": "所有通知都已处理完毕",
@@ -628,6 +647,7 @@
     "creator": {
       "ai_assistant": "RelayCraft AI 助手创建",
       "mcp": "MCP 外部工具创建",
+      "mcp_activity": "最近活动:",
       "plugin": "插件创建",
       "plugin_unknown": "未知插件"
     },
@@ -1065,7 +1085,8 @@
     "engine_healthy": "引擎工作中",
     "engine_idle": "引擎空闲",
     "engine_error": "引擎未运行",
-    "engine_crashed_title": "代理引擎崩溃",
+    "mcp_timeline_desc": "AI 活跃操作",
+    "engine_crashed_title": "代理引擎已崩溃",
     "engine_crashed_msg": "代理引擎意外停止，请查看崩溃日志，然后重启引擎。"
   },
   "titlebar": {

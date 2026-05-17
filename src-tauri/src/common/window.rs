@@ -159,7 +159,10 @@ fn setup_windows_linux_window(window: &tauri::WebviewWindow) {
 fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     use window_vibrancy::{apply_acrylic, apply_mica, clear_vibrancy};
 
-    let current = WINDOWS_CURRENT_EFFECT.lock().expect("windows effect lock poisoned").clone();
+    let current = WINDOWS_CURRENT_EFFECT
+        .lock()
+        .expect("windows effect lock poisoned")
+        .clone();
 
     // Skip entirely if same effect is already applied.
     // This prevents redundant DWM recomposition (a common source of flicker and
@@ -205,7 +208,9 @@ fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
         }
     }
 
-    *WINDOWS_CURRENT_EFFECT.lock().expect("windows effect lock poisoned") = Some(effect.to_string());
+    *WINDOWS_CURRENT_EFFECT
+        .lock()
+        .expect("windows effect lock poisoned") = Some(effect.to_string());
 }
 
 #[tauri::command]

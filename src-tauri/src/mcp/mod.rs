@@ -26,6 +26,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::Emitter;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -106,9 +107,37 @@ struct ServerState {
     token: String,
     /// App handle — used to emit events to the frontend after write operations
     app: tauri::AppHandle,
+    /// The name of the AI client that last connected
+    client_name: Arc<tokio::sync::RwLock<Option<String>>>,
 }
 
 // ─── JSON-RPC 2.0 types ─────────────────────────────────────────────────────
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct McpActivity {
+    pub id: String,
+    pub timestamp: u64,
+    pub tool_name: String,
+    pub phase: String, // "started" | "completed" | "failed"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u64>,
+    pub status: String, // "success" | "error" | "unauthorized"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub argument_summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub result_summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub related_flow_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub related_rule_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub intent: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_name: Option<String>,
+}
 
 #[derive(Deserialize)]
 struct RpcRequest {
@@ -168,6 +197,13 @@ fn error_result(text: impl Into<String>) -> Value {
     json!({ "content": [{ "type": "text", "text": text.into() }], "isError": true })
 }
 
+fn get_current_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
 // ─── MCP protocol handler ────────────────────────────────────────────────────
 
 async fn handle_mcp(
@@ -176,6 +212,20 @@ async fn handle_mcp(
     Json(req): Json<RpcRequest>,
 ) -> Json<RpcResponse> {
     let id = req.id.clone();
+
+    // Try to extract client name from initialize request
+    if req.method == "initialize" {
+        let mut extracted_name = None;
+        if let Some(client_info) = req.params.get("clientInfo") {
+            if let Some(n) = client_info.get("name").and_then(|n| n.as_str()) {
+                extracted_name = Some(n.to_string());
+            }
+        }
+        if let Some(n) = extracted_name {
+            let mut cn = state.client_name.write().await;
+            *cn = Some(n);
+        }
+    }
 
     // Extract auth header once; passed down to tools/call for per-tool checks.
     let auth_header = headers
@@ -458,10 +508,54 @@ async fn handle_tools_call(
     let name = params["name"].as_str().ok_or("Missing tool name")?;
     let args = &params["arguments"];
 
+    let is_write = WRITE_TOOLS.contains(&name);
+    let mut activity = McpActivity {
+        id: uuid::Uuid::new_v4().to_string(),
+        timestamp: get_current_timestamp(),
+        tool_name: name.to_string(),
+        phase: "started".to_string(),
+        duration_ms: None,
+        status: "success".to_string(),
+        argument_summary: None,
+        result_summary: None,
+        related_flow_id: args["flow_id"]
+            .as_str()
+            .or(args["id"].as_str())
+            .map(|s| s.to_string()),
+        related_rule_id: args["rule_id"].as_str().map(|s| s.to_string()),
+        intent: args["intent"].as_str().map(|s| s.to_string()),
+        error_message: None,
+        client_name: state.client_name.read().await.clone(),
+    };
+
+    if is_write {
+        // Simple argument summary for write tools
+        if name == "create_rule" {
+            activity.argument_summary = Some(format!(
+                "{} {}",
+                args["type"].as_str().unwrap_or(""),
+                args["url_pattern"].as_str().unwrap_or("")
+            ));
+        } else if name == "replay_request" {
+            activity.argument_summary = Some(format!(
+                "flow_id: {}",
+                args["flow_id"].as_str().unwrap_or("")
+            ));
+        } else {
+            activity.argument_summary = Some(serde_json::to_string(args).unwrap_or_default());
+        }
+        let _ = state.app.emit("mcp-activity", &activity);
+    }
+
     // Write tools require a valid Bearer token; read tools are open.
-    if WRITE_TOOLS.contains(&name) {
+    if is_write {
         let expected = format!("Bearer {}", state.token);
         if auth != expected {
+            activity.phase = "failed".to_string();
+            activity.status = "unauthorized".to_string();
+            activity.error_message =
+                Some("Unauthorized: Bearer token missing or invalid".to_string());
+            let _ = state.app.emit("mcp-activity", &activity);
             return Ok(error_result(
                 "Unauthorized: this tool requires a Bearer token. \
                  Copy it from RelayCraft Settings → Integrations → MCP Server."
@@ -471,20 +565,61 @@ async fn handle_tools_call(
     }
 
     let engine_port = get_engine_port();
+    let start_time = Instant::now();
 
-    match name {
+    let result = match name {
         "list_sessions" => tool_list_sessions(state, engine_port).await,
         "list_flows" => tool_list_flows(state, engine_port, args).await,
         "get_flow" => tool_get_flow(state, engine_port, args).await,
         "search_flows" => tool_search_flows(state, engine_port, args).await,
         "get_session_stats" => tool_get_session_stats(state, engine_port, args).await,
-        "create_rule" => tool_create_rule(state, args).await,
+        "create_rule" => tool_create_rule(state, args, &mut activity).await,
         "replay_request" => tool_replay_request(state, engine_port, args).await,
         "list_rules" => tool_list_rules(state).await,
         "delete_rule" => tool_delete_rule(state, args).await,
         "toggle_rule" => tool_toggle_rule(state, args).await,
-        _ => Ok(error_result(format!("Unknown tool: {name}"))),
+        _ => {
+            activity.phase = "failed".to_string();
+            activity.status = "error".to_string();
+            activity.error_message = Some(format!("Unknown tool: {name}"));
+            let _ = state.app.emit("mcp-activity", &activity);
+            return Ok(error_result(format!("Unknown tool: {name}")));
+        }
+    };
+
+    activity.duration_ms = Some(start_time.elapsed().as_millis() as u64);
+    match &result {
+        Ok(val) => {
+            if val
+                .get("isError")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
+                activity.phase = "failed".to_string();
+                activity.status = "error".to_string();
+                let err_text = val
+                    .get("content")
+                    .and_then(|c| c.as_array())
+                    .and_then(|a| a.get(0))
+                    .and_then(|c| c.get("text"))
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("Unknown error");
+                activity.error_message = Some(err_text.to_string());
+            } else {
+                activity.phase = "completed".to_string();
+                activity.status = "success".to_string();
+            }
+        }
+        Err(e) => {
+            activity.phase = "failed".to_string();
+            activity.status = "error".to_string();
+            activity.error_message = Some(e.clone());
+        }
     }
+
+    let _ = state.app.emit("mcp-activity", &activity);
+
+    result
 }
 
 /// Read the current proxy port from config (engine listens on this port).
@@ -1192,7 +1327,11 @@ async fn tool_replay_request(
 
 // ─── Tool: create_rule ───────────────────────────────────────────────────────
 
-async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, String> {
+async fn tool_create_rule(
+    state: &ServerState,
+    args: &Value,
+    activity: &mut McpActivity,
+) -> Result<Value, String> {
     use crate::rules::{model::Rule, storage::RuleStorage};
 
     let rule_type = args["type"]
@@ -1293,6 +1432,7 @@ async fn tool_create_rule(state: &ServerState, args: &Value) -> Result<Value, St
     };
 
     let rule_id = uuid::Uuid::new_v4().to_string();
+    activity.related_rule_id = Some(rule_id.clone());
     let rule_value = json!({
         "id": rule_id,
         "name": name,
@@ -1533,7 +1673,12 @@ async fn run_server(
         .build()
         .map_err(|e| e.to_string())?;
 
-    let server_state = ServerState { client, token, app };
+    let server_state = ServerState {
+        client,
+        token,
+        app,
+        client_name: Arc::new(tokio::sync::RwLock::new(None)),
+    };
 
     let cors = CorsLayer::new()
         .allow_origin(Any)

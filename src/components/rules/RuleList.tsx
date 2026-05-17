@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getRuleTypeTheme } from "../../lib/ruleTypeTheme";
+import { useMcpActivityStore } from "../../stores/mcpActivityStore";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Rule, RuleType } from "../../types/rules";
@@ -94,13 +95,25 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
     return pluginId ? prettifyPluginId(pluginId) : t("rules.creator.plugin_unknown");
   };
 
+  const mcpActivities = useMcpActivityStore((state) => state.activities);
+
   const getCreatorMeta = (
     rule: Rule,
-  ): { title: string; subtitle?: string; aiIntent?: string } | null => {
+  ): { title: string; subtitle?: string; aiIntent?: string; recentActivity?: string } | null => {
     const source = rule.metadata?.source;
     if (!source || source === "user") return null;
+
+    let recentActivity: string | undefined;
     if (source === "ai_mcp") {
-      return { title: t("rules.creator.mcp"), aiIntent: rule.metadata?.aiIntent };
+      const related = mcpActivities.find((a) => a.relatedRuleId === rule.id);
+      if (related?.timestamp) {
+        recentActivity = new Date(related.timestamp).toLocaleString();
+      }
+      return {
+        title: t("rules.creator.mcp", "Created by AI via MCP"),
+        aiIntent: rule.metadata?.aiIntent,
+        recentActivity,
+      };
     }
     if (source.startsWith("plugin:")) {
       return {
@@ -255,8 +268,14 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
                             </p>
                           )}
                           {creatorMeta.aiIntent && (
-                            <p className="text-xs opacity-75 leading-tight">
-                              {creatorMeta.aiIntent}
+                            <p className="text-xs opacity-75 leading-tight italic">
+                              "{creatorMeta.aiIntent}"
+                            </p>
+                          )}
+                          {creatorMeta.recentActivity && (
+                            <p className="text-[10px] opacity-60 leading-tight pt-1 border-t border-white/10">
+                              {t("rules.creator.mcp_activity", "Recent Activity:")}{" "}
+                              {creatorMeta.recentActivity}
                             </p>
                           )}
                         </div>

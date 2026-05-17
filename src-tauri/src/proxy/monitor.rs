@@ -14,7 +14,10 @@ pub struct ProcessStats {
 pub async fn get_process_stats(
     state: tauri::State<'_, ProxyState>,
 ) -> Result<ProcessStats, String> {
-    let mut sys = state.system.lock().expect("proxy system state lock poisoned");
+    let mut sys = state
+        .system
+        .lock()
+        .expect("proxy system state lock poisoned");
 
     // Refresh network stats
     let mut networks = state.networks.lock().expect("network data lock poisoned");

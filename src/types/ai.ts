@@ -95,6 +95,17 @@ export interface AIContext {
   activeTab?: string;
 
   /**
+   * Recent MCP (AI Debugging) activities summary.
+   */
+  mcpActivitySummary?: {
+    action: string;
+    status: string;
+    intent?: string;
+    relatedFlowId?: string;
+    relatedRuleId?: string;
+  }[];
+
+  /**
    * Lightweight fingerprint for cache/reuse decisions.
    */
   contextHash?: string;

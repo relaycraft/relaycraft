@@ -1,15 +1,21 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, BellOff, Database, Globe, Server, Zap } from "lucide-react";
+import { Activity, Bell, BellOff, Database, Globe, Server, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { version as APP_VERSION } from "../../../package.json";
 import { useBreakpointStore } from "../../stores/breakpointStore";
+import { useMcpActivityStore } from "../../stores/mcpActivityStore";
 import { useNotificationStore } from "../../stores/notificationStore";
 import { PLUGIN_SLOTS, usePluginSlotStore } from "../../stores/pluginSlotStore";
 import { useProxyStore } from "../../stores/proxyStore";
+import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { Tooltip } from "../common/Tooltip";
+import { McpActivityTimeline } from "../mcp/McpTimeline";
 import { BreakpointManager } from "../traffic/BreakpointManager";
+
+const isMcpReadActivity = (toolName: string) =>
+  toolName.startsWith("get_") || toolName.startsWith("list_") || toolName.startsWith("search_");
 
 export function StatusBar() {
   const running = useProxyStore((state) => state.running);
@@ -18,7 +24,10 @@ export function StatusBar() {
   // Only length is displayed; subscribe to the number to avoid re-rendering on every poll batch
   const capturedCount = useTrafficStore((state) => state.indices.length);
   const breakpoints = useBreakpointStore((state) => state.breakpoints);
+  const mcpActivities = useMcpActivityStore((state) => state.activities);
+  const mcpEnabled = useSettingsStore((state) => state.config.mcp_config?.enabled);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
+  const [showMcpTimeline, setShowMcpTimeline] = useState(false);
   const { t } = useTranslation();
   const { isOpen, setIsOpen, unreadCount, dnd } = useNotificationStore();
   const unread = unreadCount();
@@ -31,12 +40,16 @@ export function StatusBar() {
     return componentList.map((item) => <item.component key={item.id} />);
   };
 
+  const writeMcpActivities = mcpActivities.filter(
+    (activity) => !isMcpReadActivity(activity.toolName),
+  );
+
   // Close on click outside
   useEffect(() => {
-    if (!showBreakpoints) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (
+        showBreakpoints &&
         !(
           target.closest(".breakpoint-manager-trigger") ||
           target.closest(".breakpoint-manager-container")
@@ -44,10 +57,20 @@ export function StatusBar() {
       ) {
         setShowBreakpoints(false);
       }
+      if (
+        showMcpTimeline &&
+        !(
+          target.closest(".mcp-timeline-trigger") ||
+          target.closest(".mcp-timeline-container") ||
+          target.closest("[data-relaycraft-tooltip]")
+        )
+      ) {
+        setShowMcpTimeline(false);
+      }
     };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [showBreakpoints]);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showBreakpoints, showMcpTimeline]);
 
   // Engine health status - shows running state (engine process health)
   // active state is shown in TitleBar, this is for engine health only
@@ -181,6 +204,47 @@ export function StatusBar() {
                     className="relaycraft-popup breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
                   >
                     <BreakpointManager variant="minimal" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+
+        {/* MCP Timeline */}
+        {mcpEnabled && (
+          <div className="relative flex items-center">
+            <div className="w-px h-3 bg-border/40 mx-2" />
+            <div className="relative flex items-center">
+              <Tooltip content={t("status_bar.mcp_timeline_desc", "AI active operations")}>
+                <div
+                  onClick={() => setShowMcpTimeline(!showMcpTimeline)}
+                  className={`mcp-timeline-trigger flex items-center gap-1.5 transition-all cursor-pointer select-none rounded-full px-2 py-0.5 ${
+                    showMcpTimeline
+                      ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                      : writeMcpActivities.length > 0
+                        ? "text-primary/80 hover:text-primary hover:bg-primary/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  {writeMcpActivities.length > 0 && (
+                    <span className="font-bold font-mono text-[11px] leading-none">
+                      {writeMcpActivities.length}
+                    </span>
+                  )}
+                </div>
+              </Tooltip>
+
+              <AnimatePresence>
+                {showMcpTimeline && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="relaycraft-popup mcp-timeline-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 h-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl flex"
+                  >
+                    <McpActivityTimeline />
                   </motion.div>
                 )}
               </AnimatePresence>

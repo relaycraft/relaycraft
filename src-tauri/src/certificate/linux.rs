@@ -21,10 +21,10 @@ impl CertManager for LinuxCertManager {
         }
 
         let common_bundles = [
-            "/etc/ssl/certs/ca-certificates.crt",         // Debian, Ubuntu, Gentoo, Arch
-            "/etc/pki/tls/certs/ca-bundle.crt",           // RedHat, Fedora, CentOS
+            "/etc/ssl/certs/ca-certificates.crt", // Debian, Ubuntu, Gentoo, Arch
+            "/etc/pki/tls/certs/ca-bundle.crt",   // RedHat, Fedora, CentOS
             "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // Newer RHEL/Fedora
-            "/etc/ssl/ca-bundle.pem",                     // OpenSUSE
+            "/etc/ssl/ca-bundle.pem",             // OpenSUSE
         ];
 
         for bundle_path in &common_bundles {
