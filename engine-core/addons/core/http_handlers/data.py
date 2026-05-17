@@ -8,6 +8,7 @@ from ..flowdb import (
     get_stats,
     search_by_body,
     search_by_header,
+    search_by_url,
 )
 from .errors import CORS_HEADERS, JSON_HEADERS
 
@@ -21,6 +22,13 @@ def _handle_search(monitor: Any, flow: Any, Response: Any) -> None:
 
     if not keyword:
         result = {"matches": [], "scanned": 0}
+    elif search_type == "url":
+        result = search_by_url(
+            monitor.db,
+            keyword=keyword,
+            session_id=session_id_param,
+            case_sensitive=case_sensitive,
+        )
     elif search_type == "header":
         result = search_by_header(
             monitor.db,

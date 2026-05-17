@@ -300,6 +300,10 @@ fn handle_tools_list() -> Value {
                             "type": "string",
                             "description": "Session ID to query. Omit to use the current active session."
                         },
+                        "since": {
+                            "type": "number",
+                            "description": "Timestamp in milliseconds. Only return flows captured after this time. Useful for incremental polling to avoid re-fetching all flows. Omit to fetch all flows."
+                        },
                         "limit": {
                             "type": "integer",
                             "description": "Maximum number of flows to return. Default 50, max 200.",
@@ -339,13 +343,18 @@ fn handle_tools_list() -> Value {
                         "id": {
                             "type": "string",
                             "description": "Flow ID obtained from list_flows or search_flows."
+                        },
+                        "fields": {
+                            "type": "array",
+                            "items": { "type": "string", "enum": ["metadata", "headers", "body"] },
+                            "description": "Which sections to include. 'metadata': id, status, timing, URL. 'headers': request/response headers. 'body': request/response body. Default (empty or omitted): all sections."
                         }
                     }
                 }
             },
             {
                 "name": "search_flows",
-                "description": "Search HTTP flows by keyword. By default searches the URL. Use search_in to search request/response bodies or headers instead.",
+                "description": "Search HTTP flows by keyword. All search modes go through the engine for consistent, efficient results. Use search_in to search URL, request/response bodies, or headers.",
                 "inputSchema": {
                     "type": "object",
                     "required": ["query"],
@@ -357,7 +366,7 @@ fn handle_tools_list() -> Value {
                         "search_in": {
                             "type": "string",
                             "enum": ["url", "response_body", "request_body", "header"],
-                            "description": "Where to search. 'url' (default): match URL/host/path. 'response_body': scan response bodies. 'request_body': scan request bodies. 'header': scan request and response header names/values.",
+                            "description": "Where to search. 'url' (default): match URL/host/path via engine. 'response_body': scan response bodies. 'request_body': scan request bodies. 'header': scan request and response header names/values.",
                             "default": "url"
                         },
                         "case_sensitive": {
@@ -465,10 +474,24 @@ fn handle_tools_list() -> Value {
             },
             {
                 "name": "list_rules",
-                "description": "List all proxy rules with their ID, name, type, URL pattern, and enabled status. Call this before delete_rule or toggle_rule to find the rule ID you want to act on.",
+                "description": "List proxy rules with their ID, name, type, URL pattern, and enabled status. Supports filtering to narrow results. Call this before delete_rule or toggle_rule to find the rule ID you want to act on.",
                 "inputSchema": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "Filter by enabled state: true for active rules, false for disabled rules."
+                        },
+                        "rule_type": {
+                            "type": "string",
+                            "enum": ["map_local", "map_remote", "rewrite_header", "rewrite_body", "throttle", "block_request"],
+                            "description": "Filter by rule type."
+                        },
+                        "source": {
+                            "type": "string",
+                            "description": "Filter by rule source: 'user', 'ai_mcp', or 'plugin:xxx'."
+                        }
+                    }
                 }
             },
             {
@@ -575,7 +598,7 @@ async fn handle_tools_call(
         "get_session_stats" => tool_get_session_stats(state, engine_port, args).await,
         "create_rule" => tool_create_rule(state, args, &mut activity).await,
         "replay_request" => tool_replay_request(state, engine_port, args).await,
-        "list_rules" => tool_list_rules(state).await,
+        "list_rules" => tool_list_rules(state, args).await,
         "delete_rule" => tool_delete_rule(state, args).await,
         "toggle_rule" => tool_toggle_rule(state, args).await,
         _ => {
@@ -583,7 +606,9 @@ async fn handle_tools_call(
             activity.status = "error".to_string();
             activity.error_message = Some(format!("Unknown tool: {name}"));
             let _ = state.app.emit("mcp-activity", &activity);
-            return Ok(error_result(format!("Unknown tool: {name}")));
+            return Ok(error_result(format!(
+                "Unknown tool: '{name}'. Use tools/list to see available tools."
+            )));
         }
     };
 
@@ -674,6 +699,7 @@ async fn tool_list_flows(
     args: &Value,
 ) -> Result<Value, String> {
     let session_id = args["session_id"].as_str();
+    let since_ms = args["since"].as_f64();
     let limit = args["limit"].as_u64().unwrap_or(50).min(200) as usize;
     let method_filter = args["method"].as_str().map(|s| s.to_uppercase());
     let status_filter = args["status"].as_str().map(|s| s.to_lowercase());
@@ -681,7 +707,8 @@ async fn tool_list_flows(
     let has_error_filter = args["has_error"].as_bool();
     let content_type_filter = args["content_type"].as_str().map(|s| s.to_lowercase());
 
-    let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
+    let since_sec = since_ms.map(|ms| ms / 1000.0).unwrap_or(0.0);
+    let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since={since_sec}");
     if let Some(sid) = session_id {
         url.push_str(&format!("&session_id={sid}"));
     }
@@ -762,19 +789,6 @@ async fn tool_list_flows(
         .take(limit)
         .collect();
 
-    let total_before_limit = indices
-        .iter()
-        .filter(|flow| {
-            if let Some(ref m) = method_filter {
-                if flow["method"].as_str().unwrap_or("").to_uppercase() != *m {
-                    return false;
-                }
-            }
-            true // simplified re-count not needed for UX
-        })
-        .count();
-    let _ = total_before_limit; // used only for display
-
     // Build a clean output list
     let output: Vec<Value> = filtered
         .iter()
@@ -819,6 +833,16 @@ async fn tool_get_flow(
 ) -> Result<Value, String> {
     let id = args["id"].as_str().ok_or("Missing required argument: id")?;
 
+    // Parse fields filter
+    let fields: Vec<&str> = args["fields"]
+        .as_array()
+        .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
+        .unwrap_or_default();
+    let include_all = fields.is_empty();
+    let want_metadata = include_all || fields.contains(&"metadata");
+    let want_headers = include_all || fields.contains(&"headers");
+    let want_body = include_all || fields.contains(&"body");
+
     let url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={id}");
     let resp =
         state.client.get(&url).send().await.map_err(|e| {
@@ -827,7 +851,7 @@ async fn tool_get_flow(
 
     if resp.status().as_u16() == 404 {
         return Ok(error_result(format!(
-            "Flow '{id}' not found. It may have been evicted from the engine buffer."
+            "Flow '{id}' not found. It may have been evicted from the engine buffer. Use list_flows to see available flows."
         )));
     }
 
@@ -861,7 +885,7 @@ async fn tool_get_flow(
         }
     }
 
-    // Build a clean, AI-readable output
+    // Build a clean, AI-readable output respecting fields filter
     let req = &flow["request"];
     let res = &flow["response"];
     let timings = &flow["timings"];
@@ -871,45 +895,83 @@ async fn tool_get_flow(
         "id": id,
         "startedAt": flow["startedDateTime"],
         "durationMs": flow["time"],
-        "request": {
+    });
+
+    if want_metadata {
+        output["request"] = json!({
             "method": req["method"],
             "url": req["url"],
             "httpVersion": req["httpVersion"],
-            "headers": req["headers"],
             "queryString": req["queryString"],
             "bodySize": req["bodySize"]
-        },
-        "response": {
+        });
+        output["response"] = json!({
             "status": res["status"],
             "statusText": res["statusText"],
-            "headers": res["headers"],
             "bodySize": res["bodySize"],
             "contentType": res["content"]["mimeType"]
-        },
-        "timings": timings
-    });
+        });
+        output["timings"] = timings.clone();
+    }
 
-    // Include bodies only when present
-    if let Some(text) = req["postData"]["text"].as_str() {
-        if !text.is_empty() {
-            output["request"]["body"] = json!(text);
-            output["request"]["bodyMimeType"] = req["postData"]["mimeType"].clone();
+    if want_headers {
+        if let Some(req_obj) = output.get_mut("request") {
+            req_obj["headers"] = req["headers"].clone();
+        } else {
+            output["request"] = json!({"headers": req["headers"]});
+        }
+        if let Some(res_obj) = output.get_mut("response") {
+            res_obj["headers"] = res["headers"].clone();
+        } else {
+            output["response"] = json!({"headers": res["headers"]});
         }
     }
-    if let Some(text) = res["content"]["text"].as_str() {
-        if !text.is_empty() {
-            output["response"]["body"] = json!(text);
-            if res["content"]["encoding"].as_str() == Some("base64") {
-                output["response"]["bodyEncoding"] = json!("base64");
+
+    // Include bodies only when present and requested
+    if want_body {
+        if let Some(text) = req["postData"]["text"].as_str() {
+            if !text.is_empty() {
+                if let Some(req_obj) = output.get_mut("request") {
+                    req_obj["body"] = json!(text);
+                    req_obj["bodyMimeType"] = req["postData"]["mimeType"].clone();
+                } else {
+                    output["request"] = json!({
+                        "body": text,
+                        "bodyMimeType": req["postData"]["mimeType"]
+                    });
+                }
+            }
+        }
+        if let Some(text) = res["content"]["text"].as_str() {
+            if !text.is_empty() {
+                if let Some(res_obj) = output.get_mut("response") {
+                    res_obj["body"] = json!(text);
+                    if res["content"]["encoding"].as_str() == Some("base64") {
+                        res_obj["bodyEncoding"] = json!("base64");
+                    }
+                } else {
+                    let mut body_entry = json!({"body": text});
+                    if res["content"]["encoding"].as_str() == Some("base64") {
+                        body_entry["bodyEncoding"] = json!("base64");
+                    }
+                    output["response"] = body_entry;
+                }
+            }
+        }
+        if body_truncated {
+            if let Some(res_obj) = output.get_mut("response") {
+                res_obj["bodyTruncated"] = json!(true);
+                res_obj["bodyTruncatedAt"] = json!("100KB");
+            } else {
+                output["response"] = json!({
+                    "bodyTruncated": true,
+                    "bodyTruncatedAt": "100KB"
+                });
             }
         }
     }
-    if body_truncated {
-        output["response"]["bodyTruncated"] = json!(true);
-        output["response"]["bodyTruncatedAt"] = json!("100KB");
-    }
 
-    // Include error info if present
+    // Include error info if present (always included, it's diagnostic)
     if let Some(err) = rc["error"].as_object() {
         if !err.is_empty() {
             output["error"] = rc["error"].clone();
@@ -936,145 +998,76 @@ async fn tool_search_flows(
     let search_in = args["search_in"].as_str().unwrap_or("url");
     let case_sensitive = args["case_sensitive"].as_bool().unwrap_or(false);
 
-    // Deep search: body or header — delegate to /_relay/search
-    if search_in != "url" {
-        let search_type = match search_in {
-            "response_body" => "response",
-            "request_body" => "request",
-            "header" => "header",
-            other => return Ok(error_result(format!("Unknown search_in value: '{other}'"))),
-        };
-
-        let search_url = format!("http://127.0.0.1:{engine_port}/_relay/search");
-        let payload = json!({
-            "keyword": query,
-            "type": search_type,
-            "session_id": session_id,
-            "case_sensitive": case_sensitive,
-        });
-        let resp = state
-            .client
-            .post(&search_url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| format!("Cannot reach RelayCraft engine: {e}"))?;
-        if !resp.status().is_success() {
-            return Ok(error_result(format!(
-                "Engine returned status {}",
-                resp.status()
-            )));
-        }
-        let result: Value = resp
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse search result: {e}"))?;
-        let matched_ids: Vec<&str> = result["matches"]
-            .as_array()
-            .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
-            .unwrap_or_default();
-        let scanned = result["scanned"].as_u64().unwrap_or(0);
-
-        if matched_ids.is_empty() {
-            return Ok(text_result(format!(
-                "No flows found matching '{query}' in {search_in} (scanned {scanned} flow(s))."
-            )));
-        }
-
-        // Fetch index to enrich matched IDs with metadata
-        let mut poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
-        if let Some(sid) = session_id {
-            poll_url.push_str(&format!("&session_id={sid}"));
-        }
-        let poll_resp = state
-            .client
-            .get(&poll_url)
-            .send()
-            .await
-            .map_err(|e| format!("Cannot reach engine: {e}"))?;
-        let poll_body: Value = poll_resp
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse flows: {e}"))?;
-        let indices = poll_body["indices"].as_array().cloned().unwrap_or_default();
-
-        let total_matched = matched_ids.len();
-        let matches: Vec<Value> = indices
-            .iter()
-            .filter(|f| matched_ids.contains(&f["id"].as_str().unwrap_or("")))
-            .take(limit)
-            .map(|flow| {
-                json!({
-                    "id": flow["id"],
-                    "method": flow["method"],
-                    "url": flow["url"],
-                    "status": flow["status"],
-                    "contentType": flow["contentType"],
-                    "startedAt": flow["startedDateTime"],
-                    "durationMs": flow["time"],
-                    "hasError": flow["hasError"]
-                })
-            })
-            .collect();
-
-        let showing = matches.len();
-        let summary = if total_matched > showing {
-            format!("Found {total_matched} total, showing {showing} (scanned {scanned} flow(s)).")
-        } else {
-            format!("Found {total_matched} match(es) (scanned {scanned} flow(s)).")
-        };
-        return Ok(text_result(format!(
-            "{summary} Query: '{query}' in {search_in}\n\n{}",
-            serde_json::to_string_pretty(&matches).unwrap_or_default()
-        )));
-    }
-
-    // URL search (default)
-    let query_lower = if case_sensitive {
-        query.to_string()
-    } else {
-        query.to_lowercase()
+    // All search types go through engine /search for consistency
+    let search_type = match search_in {
+        "url" => "url",
+        "response_body" => "response",
+        "request_body" => "request",
+        "header" => "header",
+        other => return Ok(error_result(format!(
+            "Unknown search_in value: '{other}'. Use url, response_body, request_body, or header."
+        ))),
     };
-    let mut poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
-    if let Some(sid) = session_id {
-        poll_url.push_str(&format!("&session_id={sid}"));
-    }
 
-    let resp = state.client.get(&poll_url).send().await.map_err(|e| {
-        format!("Cannot reach RelayCraft engine at port {engine_port}. Is the proxy running? Error: {e}")
-    })?;
-
+    let search_url = format!("http://127.0.0.1:{engine_port}/_relay/search");
+    let payload = json!({
+        "keyword": query,
+        "type": search_type,
+        "session_id": session_id,
+        "case_sensitive": case_sensitive,
+    });
+    let resp = state
+        .client
+        .post(&search_url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("Cannot reach RelayCraft engine: {e}"))?;
     if !resp.status().is_success() {
         return Ok(error_result(format!(
-            "Engine returned status {}: {}",
-            resp.status(),
-            resp.text().await.unwrap_or_default()
+            "Engine returned status {}",
+            resp.status()
+        )));
+    }
+    let result: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse search result: {e}"))?;
+    let matched_ids: Vec<&str> = result["matches"]
+        .as_array()
+        .map(|a| a.iter().filter_map(|v| v.as_str()).collect())
+        .unwrap_or_default();
+    let scanned = result["scanned"].as_u64().unwrap_or(0);
+
+    if matched_ids.is_empty() {
+        return Ok(text_result(format!(
+            "No flows found matching '{query}' in {search_in} (scanned {scanned} flow(s)). Use list_flows to browse available flows."
         )));
     }
 
-    let body: Value = resp
+    // Fetch index to enrich matched IDs with metadata
+    let poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since=0");
+    let poll_url = if let Some(sid) = session_id {
+        format!("{poll_url}&session_id={sid}")
+    } else {
+        poll_url
+    };
+    let poll_resp = state
+        .client
+        .get(&poll_url)
+        .send()
+        .await
+        .map_err(|e| format!("Cannot reach engine: {e}"))?;
+    let poll_body: Value = poll_resp
         .json()
         .await
         .map_err(|e| format!("Failed to parse flows: {e}"))?;
-    let indices = body["indices"].as_array().cloned().unwrap_or_default();
+    let indices = poll_body["indices"].as_array().cloned().unwrap_or_default();
 
+    let total_matched = matched_ids.len();
     let matches: Vec<Value> = indices
         .iter()
-        .filter(|flow| {
-            let normalize = |s: &str| {
-                if case_sensitive {
-                    s.to_string()
-                } else {
-                    s.to_lowercase()
-                }
-            };
-            let url_str = normalize(flow["url"].as_str().unwrap_or(""));
-            let host = normalize(flow["host"].as_str().unwrap_or(""));
-            let path = normalize(flow["path"].as_str().unwrap_or(""));
-            url_str.contains(&query_lower)
-                || host.contains(&query_lower)
-                || path.contains(&query_lower)
-        })
+        .filter(|f| matched_ids.contains(&f["id"].as_str().unwrap_or("")))
         .take(limit)
         .map(|flow| {
             json!({
@@ -1090,22 +1083,16 @@ async fn tool_search_flows(
         })
         .collect();
 
-    let text = if matches.is_empty() {
-        format!(
-            "No flows found matching '{query}' in {} total flow(s).",
-            indices.len()
-        )
+    let showing = matches.len();
+    let summary = if total_matched > showing {
+        format!("Found {total_matched} total, showing {showing} (scanned {scanned} flow(s)).")
     } else {
-        format!(
-            "Found {} match(es) for '{}' in {} total flow(s):\n\n{}",
-            matches.len(),
-            query,
-            indices.len(),
-            serde_json::to_string_pretty(&matches).unwrap_or_default()
-        )
+        format!("Found {total_matched} match(es) (scanned {scanned} flow(s)).")
     };
-
-    Ok(text_result(text))
+    Ok(text_result(format!(
+        "{summary} Query: '{query}' in {search_in}\n\n{}",
+        serde_json::to_string_pretty(&matches).unwrap_or_default()
+    )))
 }
 
 // ─── Tool: get_session_stats ──────────────────────────────────────────────────
@@ -1237,7 +1224,9 @@ async fn tool_replay_request(
         .await
         .map_err(|e| format!("Cannot reach engine at port {engine_port}: {e}"))?;
     if resp.status().as_u16() == 404 {
-        return Ok(error_result(format!("Flow '{flow_id}' not found.")));
+        return Ok(error_result(format!(
+            "Flow '{flow_id}' not found. Use list_flows to see available flows."
+        )));
     }
     if !resp.status().is_success() {
         return Ok(error_result(format!(
@@ -1258,7 +1247,9 @@ async fn tool_replay_request(
         .as_str()
         .unwrap_or_else(|| flow["request"]["url"].as_str().unwrap_or(""));
     if url.is_empty() {
-        return Ok(error_result("Flow has no URL — cannot replay."));
+        return Ok(error_result(
+            "Flow has no URL — cannot replay. This flow may be incomplete or malformed.",
+        ));
     }
     let body = if !mods["body"].is_null() {
         mods["body"].as_str().map(|s| s.to_string())
@@ -1291,7 +1282,6 @@ async fn tool_replay_request(
         for h in headers_arr {
             let name = h["name"].as_str().unwrap_or("");
             let value = h["value"].as_str().unwrap_or("");
-            // Skip headers that interfere with the proxy
             if name.eq_ignore_ascii_case("content-length") {
                 continue;
             }
@@ -1310,7 +1300,8 @@ async fn tool_replay_request(
         req_builder = req_builder.body(b);
     }
 
-    // 4. Send
+    // 4. Send — record timestamp before sending to find the new flow after
+    let before_ts_ms = get_current_timestamp();
     let start = std::time::Instant::now();
     let response = req_builder
         .send()
@@ -1320,9 +1311,36 @@ async fn tool_replay_request(
     let status = response.status().as_u16();
     let _body_text = response.text().await.unwrap_or_default();
 
-    Ok(text_result(format!(
-        "Replayed {method_str} {url}\n\nStatus: {status}\nDuration: {duration_ms}ms\n\nThe request was captured through the proxy and is now visible in RelayCraft's traffic list. Use list_flows to find it and get_flow to inspect the full response."
-    )))
+    // 5. Try to find the newly captured flow
+    let mut new_flow_id: Option<String> = None;
+    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    let since_sec = (before_ts_ms as f64) / 1000.0;
+    let poll_url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since={since_sec}");
+    if let Ok(poll_resp) = state.client.get(&poll_url).send().await {
+        if poll_resp.status().is_success() {
+            if let Ok(poll_body) = poll_resp.json::<Value>().await {
+                if let Some(indices) = poll_body["indices"].as_array() {
+                    // Match by URL (the replayed flow shares the same URL)
+                    for f in indices {
+                        if f["url"].as_str() == Some(url) {
+                            new_flow_id = f["id"].as_str().map(|s| s.to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(ref new_id) = new_flow_id {
+        Ok(text_result(format!(
+            "Replayed {method_str} {url}\n\nStatus: {status}\nDuration: {duration_ms}ms\nNew flow ID: {new_id}\n\nUse get_flow(id=\"{new_id}\") to inspect the replayed request/response."
+        )))
+    } else {
+        Ok(text_result(format!(
+            "Replayed {method_str} {url}\n\nStatus: {status}\nDuration: {duration_ms}ms\n\nThe replayed request was captured through the proxy. Use list_flows to find it (sort by most recent) and get_flow to inspect the full response."
+        )))
+    }
 }
 
 // ─── Tool: create_rule ───────────────────────────────────────────────────────
@@ -1446,8 +1464,8 @@ async fn tool_create_rule(
         }
     });
 
-    let rule: Rule =
-        serde_json::from_value(rule_value).map_err(|e| format!("Failed to build rule: {e}"))?;
+    let rule: Rule = serde_json::from_value(rule_value.clone())
+        .map_err(|e| format!("Failed to build rule: {e}"))?;
 
     RuleStorage::from_config()
         .map_err(|e| format!("Cannot access rules storage: {e}"))?
@@ -1464,14 +1482,19 @@ async fn tool_create_rule(
     );
 
     Ok(text_result(format!(
-        "Rule '{name}' created (type: {rule_type}, id: {rule_id}).\nThe rule is now active and visible in the RelayCraft Rules panel."
+        "Rule created:\n\n{}",
+        serde_json::to_string_pretty(&rule_value).unwrap()
     )))
 }
 
 // ─── Tool: list_rules ────────────────────────────────────────────────────────
 
-async fn tool_list_rules(_state: &ServerState) -> Result<Value, String> {
+async fn tool_list_rules(_state: &ServerState, args: &Value) -> Result<Value, String> {
     use crate::rules::storage::RuleStorage;
+
+    let enabled_filter = args["enabled"].as_bool();
+    let type_filter = args["rule_type"].as_str();
+    let source_filter = args["source"].as_str();
 
     let storage =
         RuleStorage::from_config().map_err(|e| format!("Cannot access rules storage: {e}"))?;
@@ -1482,9 +1505,33 @@ async fn tool_list_rules(_state: &ServerState) -> Result<Value, String> {
     let rules: Vec<Value> = loaded
         .rules
         .iter()
+        .filter(|entry| {
+            let rule = &entry.rule;
+            if let Some(want_enabled) = enabled_filter {
+                if rule.execution.enabled != want_enabled {
+                    return false;
+                }
+            }
+            if let Some(ref rule_type) = type_filter {
+                let current_type = json!(rule.r#type);
+                if current_type.as_str() != Some(rule_type) {
+                    return false;
+                }
+            }
+            if let Some(ref source) = source_filter {
+                let rule_source = rule
+                    .metadata
+                    .as_ref()
+                    .and_then(|m| m.source.as_deref())
+                    .unwrap_or("user");
+                if rule_source != *source {
+                    return false;
+                }
+            }
+            true
+        })
         .map(|entry| {
             let rule = &entry.rule;
-            // Extract the first URL match pattern for display
             let url_pattern = rule
                 .match_config
                 .request

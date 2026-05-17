@@ -25,7 +25,7 @@ from .flow_repo import (
     store_flow,
     store_flows_batch,
 )
-from .query_repo import get_flow_count, search_by_body, search_by_header
+from .query_repo import get_flow_count, search_by_body, search_by_header, search_by_url
 from .schema import Config, SCHEMA
 from .session_repo import (
     create_new_session,
@@ -77,4 +77,5 @@ __all__ = [
     "get_flow_count",
     "search_by_body",
     "search_by_header",
+    "search_by_url",
 ]

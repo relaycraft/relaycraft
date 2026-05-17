@@ -86,6 +86,38 @@ def search_by_body(
     return db._execute_with_retry("search_by_body", _query)
 
 
+def search_by_url(
+    db,
+    keyword: str,
+    session_id: str = None,
+    case_sensitive: bool = False,
+) -> dict:
+    """Search flow URLs (host, path, full URL) for a keyword."""
+    session_id = db._get_session_id(session_id)
+    if not session_id or not keyword:
+        return {"matches": [], "scanned": 0}
+
+    like_op = "" if case_sensitive else " COLLATE NOCASE"
+    pattern = f"%{keyword}%"
+
+    def _query(conn):
+        rows = conn.execute(
+            f"""
+            SELECT id FROM flow_indices
+            WHERE session_id = ?
+              AND (url LIKE ?{like_op} OR host LIKE ?{like_op} OR path LIKE ?{like_op})
+            ORDER BY msg_ts DESC
+            LIMIT ?
+            """,
+            (session_id, pattern, pattern, pattern, db.BODY_SEARCH_SCAN_LIMIT),
+        ).fetchall()
+
+        matches = [row["id"] for row in rows]
+        return {"matches": matches, "scanned": len(rows)}
+
+    return db._execute_with_retry("search_by_url", _query)
+
+
 def search_by_header(
     db,
     keyword: str,
