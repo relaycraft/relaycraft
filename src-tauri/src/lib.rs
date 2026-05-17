@@ -267,21 +267,7 @@ pub fn run() {
             // Kill stale engine processes
             #[cfg(target_os = "windows")]
             {
-                use std::os::windows::process::CommandExt;
-                use std::process::Command;
-                const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-                let targets = [
-                    "engine.exe",
-                    "engine-x86_64-pc-windows-msvc.exe",
-                    "mitmdump.exe",
-                ];
-                for im in targets {
-                    let _ = Command::new("taskkill")
-                        .args(["/F", "/IM", im])
-                        .creation_flags(CREATE_NO_WINDOW)
-                        .output();
-                }
+                common::process::kill_known_engine_processes();
             }
 
             // Allow themes directory in asset scope
@@ -426,21 +412,7 @@ pub fn run() {
                 // Force kill remaining engine processes as fallback
                 #[cfg(target_os = "windows")]
                 {
-                    use std::os::windows::process::CommandExt;
-                    use std::process::Command;
-                    const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-                    let targets = [
-                        "engine.exe",
-                        "engine-x86_64-pc-windows-msvc.exe",
-                        "mitmdump.exe",
-                    ];
-                    for im in targets {
-                        let _ = Command::new("taskkill")
-                            .args(["/F", "/IM", im])
-                            .creation_flags(CREATE_NO_WINDOW)
-                            .output();
-                    }
+                    common::process::kill_known_engine_processes();
                 }
 
                 #[cfg(target_os = "macos")]

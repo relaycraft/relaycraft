@@ -1,9 +1,9 @@
 import json
-import traceback
 from typing import Any, Callable
 
 from ..flowdb import get_detail, get_indices
 from .. import sse_processor
+from .errors import make_error_response
 
 
 def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Callable[[Any], str]) -> None:
@@ -69,23 +69,7 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
         flow.response.reason = b"OK"
 
     except Exception as e:
-        tb = traceback.format_exc()
-        print(f"RelayCraft Poll Error:\n{tb}")
-        monitor.logger.error(f"Error in poll handler: {tb}")
-        error_resp = {"error": str(e), "traceback": tb}
-        try:
-            safe_err = json.dumps(error_resp, default=safe_json_default)
-            flow.response = Response.make(
-                500,
-                safe_err.encode("utf-8"),
-                {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-            )
-        except Exception:
-            flow.response = Response.make(
-                500,
-                b'{"error": "Critical serialization failure"}',
-                {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-            )
+        flow.response = make_error_response(Response, e, monitor, "poll", safe_json_default)
 
 
 def _handle_detail(monitor: Any, flow: Any, Response: Any, safe_json_default: Callable[[Any], str]) -> None:
@@ -118,23 +102,7 @@ def _handle_detail(monitor: Any, flow: Any, Response: Any, safe_json_default: Ca
         )
 
     except Exception as e:
-        tb = traceback.format_exc()
-        print(f"RelayCraft Detail Error:\n{tb}")
-        monitor.logger.error(f"Error in detail handler: {tb}")
-        error_resp = {"error": str(e), "traceback": tb}
-        try:
-            safe_err = json.dumps(error_resp, default=safe_json_default)
-            flow.response = Response.make(
-                500,
-                safe_err.encode("utf-8"),
-                {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-            )
-        except Exception:
-            flow.response = Response.make(
-                500,
-                b'{"error": "Critical serialization failure"}',
-                {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-            )
+        flow.response = make_error_response(Response, e, monitor, "detail", safe_json_default)
 
 
 def _handle_sse(monitor: Any, flow: Any, Response: Any, safe_json_default: Callable[[Any], str]) -> None:
@@ -167,12 +135,7 @@ def _handle_sse(monitor: Any, flow: Any, Response: Any, safe_json_default: Calla
             {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
         )
     except Exception as e:
-        error_resp = {"error": str(e)}
-        flow.response = Response.make(
-            500,
-            json.dumps(error_resp, ensure_ascii=False).encode("utf-8"),
-            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
-        )
+        flow.response = make_error_response(Response, e, monitor, "sse", safe_json_default)
 
 
 def _handle_ws_inject(monitor: Any, flow: Any, Response: Any) -> None:
@@ -213,9 +176,11 @@ def _handle_ws_inject(monitor: Any, flow: Any, Response: Any) -> None:
             {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
         )
     except Exception as e:
-        error_resp = {"ok": False, "code": "engine_error", "message": str(e)}
-        flow.response = Response.make(
-            500,
-            json.dumps(error_resp, ensure_ascii=False).encode("utf-8"),
-            {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
+        flow.response = make_error_response(
+            Response,
+            e,
+            monitor,
+            "ws_inject",
+            None,
+            {"ok": False, "code": "engine_error", "message": str(e)},
         )

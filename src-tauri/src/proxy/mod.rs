@@ -83,21 +83,7 @@ pub async fn prepare_update_install(state: tauri::State<'_, ProxyState>) -> Resu
 
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
-        use std::process::Command;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-        let targets = [
-            "engine.exe",
-            "engine-x86_64-pc-windows-msvc.exe",
-            "mitmdump.exe",
-        ];
-        for im in targets {
-            let _ = Command::new("taskkill")
-                .args(["/F", "/IM", im])
-                .creation_flags(CREATE_NO_WINDOW)
-                .output();
-        }
+        crate::common::process::kill_known_engine_processes();
     }
 
     // Give OS process teardown a brief moment before updater writes files.

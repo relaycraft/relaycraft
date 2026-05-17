@@ -36,6 +36,8 @@ from .session_repo import (
     list_sessions,
     switch_session,
     update_session_flow_count,
+    update_session_import_status,
+    update_session_metadata,
     update_session_stats,
 )
 from .sse_event_repo import get_sse_events, store_sse_events
@@ -49,6 +51,8 @@ __all__ = [
     "create_new_session",
     "create_session",
     "update_session_flow_count",
+    "update_session_import_status",
+    "update_session_metadata",
     "get_active_session",
     "switch_session",
     "list_sessions",

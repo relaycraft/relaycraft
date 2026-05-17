@@ -5,7 +5,7 @@ import threading
 import time
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .cleanup import delete_body_files
 
@@ -89,6 +89,45 @@ def update_session_flow_count(db, session_id: str) -> None:
             (session_id, session_id),
         )
         conn.commit()
+
+
+def update_session_metadata(db, session_id: str, updates: Dict[str, Any]) -> bool:
+    """Merge metadata updates for a session."""
+    with db._lock:
+        conn = db._get_conn()
+        row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
+        if not row:
+            return False
+
+        metadata: Dict[str, Any] = {}
+        if row[0]:
+            try:
+                parsed = json.loads(row[0])
+                if isinstance(parsed, dict):
+                    metadata = parsed
+            except (TypeError, json.JSONDecodeError):
+                metadata = {}
+
+        metadata.update(updates)
+        conn.execute(
+            "UPDATE sessions SET metadata = ? WHERE id = ?",
+            (json.dumps(metadata), session_id),
+        )
+        conn.commit()
+        return True
+
+
+def update_session_import_status(
+    db,
+    session_id: str,
+    status: str,
+    error_message: Optional[str] = None,
+) -> bool:
+    """Update background import status metadata for a session."""
+    updates: Dict[str, Any] = {"status": status}
+    if error_message is not None:
+        updates["error_message"] = error_message
+    return update_session_metadata(db, session_id, updates)
 
 
 def get_active_session(db) -> Optional[Dict]:

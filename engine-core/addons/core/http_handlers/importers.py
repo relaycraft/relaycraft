@@ -6,6 +6,7 @@ from ..flowdb import (
     create_session,
     store_flows_batch,
     update_session_flow_count,
+    update_session_import_status,
 )
 from ..har_converters import normalize_har_entries
 
@@ -182,34 +183,12 @@ def _handle_import_session_file(monitor: Any, flow: Any, Response: Any) -> None:
                             store_flows_batch(monitor.db, batch, session_id=session_id)
 
                         update_session_flow_count(monitor.db, session_id)
-
-                        with monitor.db._lock:
-                            conn = monitor.db._get_conn()
-                            row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
-                            if row and row[0]:
-                                md = json.loads(row[0])
-                                md["status"] = "ready"
-                                conn.execute(
-                                    "UPDATE sessions SET metadata = ? WHERE id = ?",
-                                    (json.dumps(md), session_id),
-                                )
-                                conn.commit()
+                        update_session_import_status(monitor.db, session_id, "ready")
 
                 except Exception as e:
                     monitor.logger.error(f"Background stream import failed: {traceback.format_exc()}")
                     try:
-                        with monitor.db._lock:
-                            conn = monitor.db._get_conn()
-                            row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
-                            if row and row[0]:
-                                md = json.loads(row[0])
-                                md["status"] = "error"
-                                md["error_message"] = str(e)
-                                conn.execute(
-                                    "UPDATE sessions SET metadata = ? WHERE id = ?",
-                                    (json.dumps(md), session_id),
-                                )
-                                conn.commit()
+                        update_session_import_status(monitor.db, session_id, "error", str(e))
                     except Exception as inner_e:
                         monitor.logger.debug(f"Failed to update session error status: {inner_e}")
 
@@ -335,34 +314,12 @@ def _handle_import_har_file(monitor: Any, flow: Any, Response: Any) -> None:
                             store_flows_batch(monitor.db, flows, session_id=session_id)
 
                         update_session_flow_count(monitor.db, session_id)
-
-                        with monitor.db._lock:
-                            conn = monitor.db._get_conn()
-                            row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
-                            if row and row[0]:
-                                md = json.loads(row[0])
-                                md["status"] = "ready"
-                                conn.execute(
-                                    "UPDATE sessions SET metadata = ? WHERE id = ?",
-                                    (json.dumps(md), session_id),
-                                )
-                                conn.commit()
+                        update_session_import_status(monitor.db, session_id, "ready")
 
                 except Exception as e:
                     monitor.logger.error(f"Background HAR stream import failed: {traceback.format_exc()}")
                     try:
-                        with monitor.db._lock:
-                            conn = monitor.db._get_conn()
-                            row = conn.execute("SELECT metadata FROM sessions WHERE id = ?", (session_id,)).fetchone()
-                            if row and row[0]:
-                                md = json.loads(row[0])
-                                md["status"] = "error"
-                                md["error_message"] = str(e)
-                                conn.execute(
-                                    "UPDATE sessions SET metadata = ? WHERE id = ?",
-                                    (json.dumps(md), session_id),
-                                )
-                                conn.commit()
+                        update_session_import_status(monitor.db, session_id, "error", str(e))
                     except Exception as inner_e:
                         monitor.logger.debug(f"Failed to update session error status: {inner_e}")
 

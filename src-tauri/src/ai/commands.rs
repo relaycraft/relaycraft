@@ -78,6 +78,39 @@ fn tuple_messages_to_chat_messages(messages: Vec<(String, String)>) -> Vec<ChatM
         .collect()
 }
 
+fn apply_stored_api_key(config: &mut AIConfig) {
+    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
+        config.api_key = key;
+    }
+}
+
+fn load_runtime_config(state: &AIState, normalize_profile: bool) -> Result<AIConfig, String> {
+    let mut config = state
+        .config
+        .lock()
+        .map_err(|e| format!("Config lock poisoned: {}", e))?
+        .clone();
+
+    if normalize_profile {
+        normalize_profile_for_provider(&mut config);
+    }
+    apply_stored_api_key(&mut config);
+
+    if !config.enabled {
+        return Err("AI is not enabled".to_string());
+    }
+
+    Ok(config)
+}
+
+fn build_ai_client(
+    state: &AIState,
+    normalize_profile: bool,
+) -> Result<(AIClient, AIConfig), String> {
+    let config = load_runtime_config(state, normalize_profile)?;
+    Ok((AIClient::new(config.clone()), config))
+}
+
 #[tauri::command]
 pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, String> {
     let mut config_guard = state
@@ -88,10 +121,7 @@ pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, Strin
     normalize_profile_for_provider(&mut config_guard);
     let mut config = config_guard.clone();
 
-    // Load API key from local storage
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
+    apply_stored_api_key(&mut config);
 
     Ok(config)
 }
@@ -147,37 +177,8 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
 
 #[tauri::command]
 pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
+    let (client, config) = build_ai_client(&state, false)?;
     log::info!("Testing AI connection. Provider: {}", config.provider);
-
-    // Load API key from local storage
-    match crypto::retrieve_api_key(&config.provider) {
-        Ok(key) => {
-            log::info!(
-                "Retrieved API key from local storage (length: {})",
-                key.len()
-            );
-            config.api_key = key;
-        }
-        Err(e) => {
-            log::info!("No API key found in local storage: {}", e);
-        }
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
-    // Key check mostly handled by client
-    if config.api_key.is_empty() && config.provider != "custom" { // custom might not need key
-    }
-
-    let client = AIClient::new(config);
 
     log::info!("Executing AI test connection request...");
     match client.test_connection().await {
@@ -196,24 +197,8 @@ pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, Str
 pub async fn probe_ai_capabilities(
     state: State<'_, AIState>,
 ) -> Result<CapabilityProbeResult, String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
-    normalize_profile_for_provider(&mut config);
-
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
+    let (client, config) = build_ai_client(&state, true)?;
     let profile_id = config.profile_id.clone();
-    let client = AIClient::new(config);
 
     let chat = match client.test_connection().await {
         Ok(msg) => CapabilityProbeItem {
@@ -262,22 +247,7 @@ pub async fn ai_chat_completion(
     temperature: Option<f32>,
     state: State<'_, AIState>,
 ) -> Result<String, String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
-    // Load API key from local storage
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
-    let client = AIClient::new(config);
+    let (client, _) = build_ai_client(&state, false)?;
 
     let response = client
         .chat_completion(messages, temperature)
@@ -299,21 +269,7 @@ pub async fn ai_chat_completion_with_tools(
     temperature: Option<f32>,
     state: State<'_, AIState>,
 ) -> Result<ToolCompletionResult, String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
-    let client = AIClient::new(config);
+    let (client, _) = build_ai_client(&state, false)?;
 
     let response = client
         .chat_completion_with_tools(messages, tools, tool_choice, temperature)
@@ -337,23 +293,9 @@ pub async fn ai_chat_completion_stream(
     on_chunk: Channel<ChatCompletionChunk>,
     state: State<'_, AIState>,
 ) -> Result<(), String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
     let chat_messages = tuple_messages_to_chat_messages(messages);
 
-    let client = AIClient::new(config);
+    let (client, _) = build_ai_client(&state, false)?;
     let mut stream = client
         .chat_completion_stream_with_tools(chat_messages, None, None, temperature)
         .await
@@ -495,21 +437,7 @@ pub async fn ai_chat_completion_stream_with_tools(
     on_chunk: Channel<ChatCompletionChunk>,
     state: State<'_, AIState>,
 ) -> Result<(), String> {
-    let mut config = state
-        .config
-        .lock()
-        .map_err(|e| format!("Config lock poisoned: {}", e))?
-        .clone();
-
-    if let Ok(key) = crypto::retrieve_api_key(&config.provider) {
-        config.api_key = key;
-    }
-
-    if !config.enabled {
-        return Err("AI is not enabled".to_string());
-    }
-
-    let client = AIClient::new(config);
+    let (client, _) = build_ai_client(&state, false)?;
     let mut stream = client
         .chat_completion_stream_with_tools(messages, tools, tool_choice, temperature)
         .await

@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
@@ -10,18 +11,20 @@ from .utils import setup_logging, RelayCraftLogger
 from . import sse_processor, ws_handler
 
 # Global traffic active state (in-memory, controlled via HTTP API)
-_traffic_active: bool = False
+_traffic_active_event = threading.Event()
 
 
 def is_traffic_active() -> bool:
     """Check if traffic processing is active."""
-    return _traffic_active
+    return _traffic_active_event.is_set()
 
 
 def set_traffic_active(active: bool) -> None:
     """Set traffic processing active state."""
-    global _traffic_active
-    _traffic_active = active
+    if active:
+        _traffic_active_event.set()
+    else:
+        _traffic_active_event.clear()
 
 
 class CoreAddon:
