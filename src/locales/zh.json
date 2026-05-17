@@ -871,9 +871,11 @@
     },
     "export_har_success": "HAR 导出成功",
     "import_har_success": "HAR 导入成功",
+    "import_har_failed": "HAR 导入失败",
     "import_har_started": "HAR 文件正在后台导入...",
     "import_started": "会话正在后台导入...",
     "import_complete": "会话导入完成！",
+    "import_failed": "会话导入失败",
     "switch_hint": "切换到历史会话",
     "time": {
       "days_ago": "{{count}}天前",

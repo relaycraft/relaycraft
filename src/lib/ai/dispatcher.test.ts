@@ -34,7 +34,7 @@ vi.mock("../../stores/uiStore", () => ({
   },
 }));
 
-vi.mock("./contextBuilder", () => ({
+vi.mock("./context", () => ({
   buildAIContext: vi.fn().mockResolvedValue({}),
 }));
 

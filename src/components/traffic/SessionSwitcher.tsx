@@ -112,13 +112,12 @@ export function SessionSwitcher() {
     if (session.is_active === 1) return;
 
     showConfirm({
-      title: t("session.delete_title", { defaultValue: "Delete Session" }),
+      title: t("session.delete_title"),
       message: t("session.delete_confirm_msg", {
         name: session.name,
-        defaultValue: `Delete this session? This cannot be undone.`,
       }),
       variant: "danger",
-      confirmLabel: t("common.delete", { defaultValue: "Delete" }),
+      confirmLabel: t("common.delete"),
       onConfirm: async () => {
         await deleteDbSession(session.id);
       },
@@ -130,12 +129,10 @@ export function SessionSwitcher() {
     e.preventDefault();
 
     showConfirm({
-      title: t("session.clear_all_confirm", { defaultValue: "Clear All History?" }),
-      message: t("session.clear_all_msg", {
-        defaultValue: "This will delete all historical sessions. This action cannot be undone.",
-      }),
+      title: t("session.clear_all_confirm"),
+      message: t("session.clear_all_msg"),
       variant: "danger",
-      confirmLabel: t("common.clear", { defaultValue: "Clear" }),
+      confirmLabel: t("common.clear"),
       onConfirm: () => {
         // Start deletion without awaiting — keep dropdown open to show loading state
         setIsClearingAll(true);
@@ -170,10 +167,10 @@ export function SessionSwitcher() {
       <Tooltip
         content={
           isHistoricalMode
-            ? t("session.historical_mode", { defaultValue: "Viewing historical session" })
+            ? t("session.historical_mode")
             : writingSession
-              ? t("session.switch_hint", { defaultValue: "Switch session" })
-              : t("common.loading", { defaultValue: "Loading..." })
+              ? t("session.switch_hint")
+              : t("common.loading")
         }
       >
         <Button
@@ -218,11 +215,11 @@ export function SessionSwitcher() {
             <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-muted/20 border-l-2 border-transparent">
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground tracking-tight">
                 <History className="w-3.5 h-3.5" />
-                {t("session.history", { defaultValue: "Session History" })}
+                {t("session.history")}
               </div>
               <div className="flex items-center gap-1.5">
                 {hasHistoricalSessions && (
-                  <Tooltip content={t("session.clear_all", { defaultValue: "Clear All History" })}>
+                  <Tooltip content={t("session.clear_all")}>
                     <Button
                       variant="ghost"
                       size="icon-xs"
@@ -247,7 +244,7 @@ export function SessionSwitcher() {
             <div className="max-h-48 overflow-y-auto">
               {loadingSessions ? (
                 <div className="px-4 py-3 text-center text-muted-foreground text-ui">
-                  {t("common.loading", { defaultValue: "Loading..." })}
+                  {t("common.loading")}
                 </div>
               ) : (
                 dbSessions.map((session) => {

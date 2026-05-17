@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
-import i18n from "../i18n";
 import { formatError, Logger } from "../lib/logger";
+import { notifyProxyEvent } from "../lib/proxyNotifications";
 import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/traffic";
 import { useScriptStore } from "./scriptStore";
 
@@ -101,31 +101,16 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         activeScripts: activeScriptNames,
       });
 
-      // 添加成功通知
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.start_success_title"),
-        message: `${i18n.t("proxy_store.start_success_msg", { port: config.proxy_port })}${activeScriptNames.length > 0 ? i18n.t("proxy_store.scripts_loaded", { count: activeScriptNames.length }) : ""}`,
-        type: "success",
-        category: "system",
-        priority: "normal",
-        source: "Proxy Engine",
+      await notifyProxyEvent("start_success", {
+        port: config.proxy_port,
+        scriptCount: activeScriptNames.length,
       });
     } catch (error) {
       const errorMsg = formatError(error);
       await Logger.error("Failed to start proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
-      // 添加错误通知
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.start_fail_title"),
-        message: i18n.t("proxy_store.start_fail_msg", { error: errorMsg }),
-        type: "error",
-        category: "system",
-        priority: "critical",
-        source: "Proxy Engine",
-      });
+      await notifyProxyEvent("start_fail", { error: errorMsg });
 
       throw error;
     }
@@ -149,31 +134,13 @@ export const useProxyStore = create<ProxyStore>((set) => ({
 
       set({ active: false, requestCount: 0 });
 
-      // 添加成功通知
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.stop_success_title"),
-        message: i18n.t("proxy_store.stop_success_msg"),
-        type: "info",
-        category: "system",
-        priority: "normal",
-        source: "Proxy Engine",
-      });
+      await notifyProxyEvent("stop_success");
     } catch (error) {
       const errorMsg = formatError(error);
       await Logger.error("Failed to stop proxy:", errorMsg);
       set({ error: errorMsg });
 
-      // 添加错误通知
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.stop_fail_title"),
-        message: i18n.t("proxy_store.stop_fail_msg", { error: errorMsg }),
-        type: "error",
-        category: "system",
-        priority: "high",
-        source: "Proxy Engine",
-      });
+      await notifyProxyEvent("stop_fail", { error: errorMsg });
 
       throw error;
     }
@@ -212,31 +179,16 @@ export const useProxyStore = create<ProxyStore>((set) => ({
       // Clear modified since start flag
       useScriptStore.getState().clearModifiedSinceStart();
 
-      // Add success notification
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.restart_success_title"),
-        message: `${i18n.t("proxy_store.restart_success_msg", { port: config.proxy_port })}${activeScriptNames.length > 0 ? i18n.t("proxy_store.scripts_loaded", { count: activeScriptNames.length }) : ""}`,
-        type: "success",
-        category: "system",
-        priority: "normal",
-        source: "Proxy Engine",
+      await notifyProxyEvent("restart_success", {
+        port: config.proxy_port,
+        scriptCount: activeScriptNames.length,
       });
     } catch (error) {
       const errorMsg = formatError(error);
       await Logger.error("Failed to restart proxy:", errorMsg);
       set({ error: errorMsg, active: false });
 
-      // Add error notification
-      const { useNotificationStore } = await import("./notificationStore");
-      useNotificationStore.getState().addNotification({
-        title: i18n.t("proxy_store.restart_fail_title"),
-        message: i18n.t("proxy_store.restart_fail_msg", { error: errorMsg }),
-        type: "error",
-        category: "system",
-        priority: "critical",
-        source: "Proxy Engine",
-      });
+      await notifyProxyEvent("restart_fail", { error: errorMsg });
 
       throw error;
     }

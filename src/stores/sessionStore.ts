@@ -10,11 +10,18 @@ import { useSettingsStore } from "./settingsStore";
 import { useTrafficStore } from "./trafficStore";
 
 // Database session type (from backend)
+export interface DbSessionMetadata extends Partial<SessionMetadata> {
+  type?: string;
+  status?: "importing" | "ready" | "error" | string;
+  error_message?: string;
+  [key: string]: unknown;
+}
+
 export interface DbSession {
   id: string;
   name: string;
   description?: string;
-  metadata?: any;
+  metadata?: DbSessionMetadata;
   created_at: number;
   updated_at: number;
   flow_count: number;
@@ -200,11 +207,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         const { notify } = await import("../lib/notify");
         // We can't use the hook here, so we'll import i18next directly
         const i18next = await import("i18next");
-        notify.success(
-          i18next.t("session.all_cleared", {
-            defaultValue: "All historical sessions have been cleared",
-          }),
-        );
+        notify.success(i18next.t("session.all_cleared"));
       } else {
         const errorText = await response.text();
         throw new Error(`Server returned ${response.status}: ${errorText}`);
@@ -213,9 +216,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       Logger.error("Failed to clear historical sessions:", error);
       const { notify } = await import("../lib/notify");
       const i18next = await import("i18next");
-      notify.error(
-        i18next.t("session.clear_error", { defaultValue: "Failed to clear historical sessions" }),
-      );
+      notify.error(i18next.t("session.clear_error"));
     } finally {
       set({ loadingSessions: false });
     }
@@ -298,9 +299,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       const { notify } = await import("../lib/notify");
       const i18next = await import("i18next");
-      notify.success(
-        i18next.default.t("session.save.success", { defaultValue: "Session saved successfully" }),
-      );
+      notify.success(i18next.default.t("session.save.success"));
     } catch (error) {
       Logger.error("Failed to save session:", error);
     } finally {
@@ -350,22 +349,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             const i18next = await import("i18next");
             startImportPolling(
               session_id,
-              i18next.default.t("session.import_complete", {
-                defaultValue: "Session import complete!",
-              }),
-              i18next.default.t("session.import_failed", {
-                defaultValue: "Session import failed",
-              }),
+              i18next.default.t("session.import_complete"),
+              i18next.default.t("session.import_failed"),
             );
           }
 
           const { notify } = await import("../lib/notify");
           const i18next = await import("i18next");
-          notify.success(
-            i18next.default.t("session.import_started", {
-              defaultValue: "Session is importing in the background...",
-            }),
-          );
+          notify.success(i18next.default.t("session.import_started"));
         } else {
           const errorText = await response.text();
           Logger.error(`Session import failed: ${response.status} - ${errorText}`);
@@ -431,11 +422,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
       const { notify } = await import("../lib/notify");
       const i18next = await import("i18next");
-      notify.success(
-        i18next.default.t("session.export_har_success", {
-          defaultValue: "HAR exported successfully",
-        }),
-      );
+      notify.success(i18next.default.t("session.export_har_success"));
     } catch (error) {
       Logger.error("Failed to export HAR:", error);
     } finally {
@@ -487,22 +474,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             const i18next = await import("i18next");
             startImportPolling(
               session_id,
-              i18next.default.t("session.import_har_success", {
-                defaultValue: "HAR imported successfully",
-              }),
-              i18next.default.t("session.import_har_failed", {
-                defaultValue: "HAR import failed",
-              }),
+              i18next.default.t("session.import_har_success"),
+              i18next.default.t("session.import_har_failed"),
             );
           }
 
           const { notify } = await import("../lib/notify");
           const i18next = await import("i18next");
-          notify.success(
-            i18next.default.t("session.import_har_started", {
-              defaultValue: "HAR file is importing in the background...",
-            }),
-          );
+          notify.success(i18next.default.t("session.import_har_started"));
         } else {
           const errorText = await response.text();
           Logger.error(`HAR import failed: ${response.status} - ${errorText}`);

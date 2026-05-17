@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { SettingsTabType } from "./uiStore";
 
 export type CommandIntent =
   | "NAVIGATE"
@@ -14,9 +15,32 @@ export type CommandIntent =
 
 export type CommandRoutingLayer = "direct_command" | "guided_action" | "conversation";
 
+export type CommandRequestBodyType = "none" | "raw" | "x-www-form-urlencoded";
+
+export interface CommandHeaderParam {
+  key: string;
+  value: string;
+}
+
+export interface CommandParams {
+  path?: string;
+  action?: "start" | "stop";
+  category?: SettingsTabType;
+  requirement?: string;
+  description?: string;
+  message?: string;
+  name?: string;
+  query?: string;
+  method?: string;
+  url?: string;
+  headers?: CommandHeaderParam[];
+  body?: string;
+  bodyType?: CommandRequestBodyType;
+}
+
 export interface CommandAction {
   intent: CommandIntent;
-  params?: any;
+  params?: CommandParams;
   confidence: number;
   explanation?: string;
   executionMode?: "auto" | "confirm";
@@ -29,7 +53,7 @@ export interface SuggestionItem {
   description?: string;
   group: "history" | "navigation" | "action" | "ai";
   score: number;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface CommandStore {

@@ -96,7 +96,7 @@ export async function executeCommandAction({
     }
     case "OPEN_SETTINGS":
       if (action.params?.category) {
-        useUIStore.getState().setSettingsTab(action.params.category as any);
+        useUIStore.getState().setSettingsTab(action.params.category);
       }
       setActiveTab("settings");
       setIsOpen(false);
@@ -192,7 +192,7 @@ export async function executeCommandAction({
         if (action.params.method) composer.setMethod(action.params.method);
         if (action.params.url) composer.setUrl(action.params.url);
         if (action.params.headers) {
-          composer.setHeaders(action.params.headers.map((h: any) => ({ ...h, enabled: true })));
+          composer.setHeaders(action.params.headers.map((h) => ({ ...h, enabled: true })));
         }
         if (action.params.body) composer.setBody(action.params.body);
         if (action.params.bodyType) composer.setBodyType(action.params.bodyType);

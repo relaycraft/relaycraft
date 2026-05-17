@@ -871,9 +871,11 @@
     },
     "export_har_success": "HAR exported successfully",
     "import_har_success": "HAR imported successfully",
+    "import_har_failed": "HAR import failed",
     "import_har_started": "HAR file is importing in the background...",
     "import_started": "Session is importing in the background...",
     "import_complete": "Session import complete!",
+    "import_failed": "Session import failed",
     "switch_hint": "Switch session",
     "time": {
       "days_ago": "{{count}}d ago",

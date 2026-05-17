@@ -128,9 +128,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       useNotificationStore.getState().addNotification({
         title: i18n.t("plugins.notifications.toggle_failed_title"),
         message: i18n.t("plugins.notifications.toggle_failed_msg", {
-          action: enabled
-            ? i18n.t("common.enable", { defaultValue: "enable" })
-            : i18n.t("common.disable", { defaultValue: "disable" }),
+          action: enabled ? i18n.t("common.enable") : i18n.t("common.disable"),
           id,
           error: formatError(error),
         }),
@@ -274,7 +272,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
         title: i18n.t("plugins.notifications.install_success_title"),
         message: successMessage,
         variant: "success",
-        confirmLabel: i18n.t("common.ok", { defaultValue: "OK" }),
+        confirmLabel: i18n.t("common.ok"),
         onConfirm: () => {},
       });
     } catch (error) {
@@ -313,7 +311,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
         title,
         message,
         variant: "danger",
-        confirmLabel: i18n.t("common.ok", { defaultValue: "OK" }),
+        confirmLabel: i18n.t("common.ok"),
         onConfirm: () => {},
       });
 
@@ -361,7 +359,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
           error: errorMessage,
         }),
         variant: "danger",
-        confirmLabel: i18n.t("common.ok", { defaultValue: "OK" }),
+        confirmLabel: i18n.t("common.ok"),
         onConfirm: () => {},
       });
 
