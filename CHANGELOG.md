@@ -1,5 +1,18 @@
 # Changelog
 
+# [1.2.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.2...v1.2.0) (2026-05-19)
+
+
+### Bug Fixes
+
+* **mcp:** narrow Zustand subscriptions to avoid over-rendering ([93b4276](https://github-relaycraft/relaycraft/relaycraft/commit/93b4276b1e9a98d5d7610988a2de29c1046733f0))
+
+
+### Features
+
+* **mcp:** add debug visibility for external AI tool activity ([76d6b59](https://github-relaycraft/relaycraft/relaycraft/commit/76d6b59fd0a7afa81c8f4e0e3db12270779cf7bd))
+* **mcp:** improve tool ergonomics for AI clients ([788094c](https://github-relaycraft/relaycraft/relaycraft/commit/788094c31367316a393cccd6842b726fca33119c))
+
 ## [1.1.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.1...v1.1.2) (2026-05-13)
 
 
