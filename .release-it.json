@@ -28,7 +28,7 @@
   },
   "bump": {},
   "hooks": {
-    "before:bump": "cd src-tauri && cargo metadata --format-version 1 --offline > /dev/null",
+    "before:bump": "cd src-tauri && cargo metadata --format-version 1 > /dev/null",
     "after:bump": "node scripts/bump-extra-files.cjs ${version}"
   }
 }
