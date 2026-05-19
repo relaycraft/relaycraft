@@ -14,6 +14,7 @@ import {
   Trash2,
   Wifi,
 } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { getRuleTypeTheme } from "../../lib/ruleTypeTheme";
 import { useMcpActivityStore } from "../../stores/mcpActivityStore";
@@ -97,6 +98,16 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
 
   const mcpActivities = useMcpActivityStore((state) => state.activities);
 
+  const ruleActivityMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const a of mcpActivities) {
+      if (a.relatedRuleId && !(a.relatedRuleId in map)) {
+        map[a.relatedRuleId] = a.timestamp;
+      }
+    }
+    return map;
+  }, [mcpActivities]);
+
   const getCreatorMeta = (
     rule: Rule,
   ): { title: string; subtitle?: string; aiIntent?: string; recentActivity?: string } | null => {
@@ -105,9 +116,9 @@ export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: Rule
 
     let recentActivity: string | undefined;
     if (source === "ai_mcp") {
-      const related = mcpActivities.find((a) => a.relatedRuleId === rule.id);
-      if (related?.timestamp) {
-        recentActivity = new Date(related.timestamp).toLocaleString();
+      const ts = ruleActivityMap[rule.id];
+      if (ts) {
+        recentActivity = new Date(ts).toLocaleString();
       }
       return {
         title: t("rules.creator.mcp", "Created by AI via MCP"),

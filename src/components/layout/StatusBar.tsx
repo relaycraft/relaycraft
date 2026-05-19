@@ -24,7 +24,9 @@ export function StatusBar() {
   // Only length is displayed; subscribe to the number to avoid re-rendering on every poll batch
   const capturedCount = useTrafficStore((state) => state.indices.length);
   const breakpoints = useBreakpointStore((state) => state.breakpoints);
-  const mcpActivities = useMcpActivityStore((state) => state.activities);
+  const writeActivityCount = useMcpActivityStore(
+    (state) => state.activities.filter((a) => !isMcpReadActivity(a.toolName)).length,
+  );
   const mcpEnabled = useSettingsStore((state) => state.config.mcp_config?.enabled);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const [showMcpTimeline, setShowMcpTimeline] = useState(false);
@@ -39,10 +41,6 @@ export function StatusBar() {
     const componentList = slots[slotId] || [];
     return componentList.map((item) => <item.component key={item.id} />);
   };
-
-  const writeMcpActivities = mcpActivities.filter(
-    (activity) => !isMcpReadActivity(activity.toolName),
-  );
 
   // Close on click outside
   useEffect(() => {
@@ -222,15 +220,15 @@ export function StatusBar() {
                   className={`mcp-timeline-trigger flex items-center gap-1.5 transition-all cursor-pointer select-none rounded-full px-2 py-0.5 ${
                     showMcpTimeline
                       ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                      : writeMcpActivities.length > 0
+                      : writeActivityCount > 0
                         ? "text-primary/80 hover:text-primary hover:bg-primary/5"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   <Activity className="w-3.5 h-3.5" />
-                  {writeMcpActivities.length > 0 && (
+                  {writeActivityCount > 0 && (
                     <span className="font-bold font-mono text-[11px] leading-none">
-                      {writeMcpActivities.length}
+                      {writeActivityCount}
                     </span>
                   )}
                 </div>
