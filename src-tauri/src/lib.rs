@@ -44,6 +44,7 @@ fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::
         }
     };
 
+    let mut handled_association = false;
     for path in paths {
         let ext = path
             .extension()
@@ -53,6 +54,7 @@ fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::
         if ext != "rcplugin" && ext != "rctheme" {
             continue;
         }
+        handled_association = true;
         log::info!("[FileOpen] Installing from OS file association: {:?}", path);
         // Bring app to front so users immediately see install result feedback.
         activate_main_window(app);
@@ -71,6 +73,11 @@ fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::
                 let _ = app.emit("plugin-install-failed-from-file", &e);
             }
         }
+    }
+
+    #[cfg(windows)]
+    if handled_association {
+        common::jump_list::reset_jump_list();
     }
 }
 
@@ -268,6 +275,7 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             {
                 common::process::kill_known_engine_processes();
+                common::jump_list::reset_jump_list();
             }
 
             // Allow themes directory in asset scope
