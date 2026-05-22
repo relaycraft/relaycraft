@@ -20,7 +20,7 @@
   "author": "RelayCraft Team",
   "scripts": {
     "dev": "vite",
-    "dev:tauri": "RELAYCRAFT_DEV=1 pnpm tauri dev --config '{\"productName\": \"RelayCraft Dev\", \"identifier\": \"com.beta.relaycraft.dev\", \"proxy_port\": 9091}'",
+    "dev:tauri": "RELAYCRAFT_DEV=1 pnpm tauri dev --config '{\"productName\": \"RelayCraft Dev\", \"identifier\": \"com.relaycraft.app.dev\", \"proxy_port\": 9091}'",
     "build": "pnpm gen:licenses && tsc && vite build",
     "check:i18n": "node scripts/check-i18n.js",
     "preview": "vite preview",

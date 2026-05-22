@@ -1,5 +1,5 @@
 {
-  "identifier": "com.beta.relaycraft",
+  "identifier": "com.relaycraft.app",
   "bundle": {
     "externalBin": ["binaries/engine"]
   }

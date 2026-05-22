@@ -1,5 +1,5 @@
 {
-  "identifier": "com.beta.relaycraft",
+  "identifier": "com.relaycraft.app",
   "bundle": {
     "targets": ["app"],
     "resources": ["resources/addons/**/*", "resources/engine"]

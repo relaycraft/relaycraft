@@ -78,7 +78,7 @@ body:
         粘贴相关日志或附上截图。
         Please redact sensitive data (tokens, cookies, Authorization headers, internal domains/IPs).
         请对敏感信息脱敏（token、cookie、Authorization、内网域名/IP 等）。
-        You can find logs at: macOS `~/Library/Logs/com.relaycraft.app/`, Windows `%APPDATA%\com.relaycraft.app\logs\`
+        You can find logs at: macOS `~/Library/Application Support/relaycraft/logs/`, Linux `~/.config/relaycraft/logs/`, Windows `%APPDATA%\relaycraft\logs\`
       render: shell
 
   - type: textarea

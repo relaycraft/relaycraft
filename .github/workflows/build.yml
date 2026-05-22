@@ -314,6 +314,17 @@ jobs:
 
           ENGINE_PATH="$NEW_ENGINE_PATH"
 
+          MAIN_BIN="$APP_PATH/Contents/MacOS/relaycraft"
+          if [ ! -f "$MAIN_BIN" ]; then
+            MAIN_BIN="$APP_PATH/Contents/MacOS/RelayCraft"
+          fi
+          if [ ! -f "$MAIN_BIN" ]; then
+            echo "❌ ERROR: Main executable not found in Contents/MacOS"
+            ls -la "$APP_PATH/Contents/MacOS/" || true
+            exit 1
+          fi
+          echo "🔍 Main executable: ${MAIN_BIN#$APP_PATH/}"
+
           # CRITICAL: Remove ALL existing signatures before starting fresh
           echo "🧹 Step 1.5: Purging all existing signatures and extended attributes..."
           xattr -rc "$APP_PATH"
@@ -360,13 +371,22 @@ jobs:
 
           echo "  Found $(wc -l < "$MACHO_LIST" | tr -d ' ') Mach-O files to sign"
 
+          engine_sign_id() {
+            local file="$1"
+            local rel="${file#$ENGINE_PATH/}"
+            local hash
+            hash=$(printf '%s' "$rel" | shasum -a 256 | awk '{print $1}' | cut -c1-16)
+            echo "com.relaycraft.app.engine.${hash}"
+          }
+
           while IFS= read -r file; do
             SIGN_COUNT=$((SIGN_COUNT + 1))
+            SIGN_ID="$(engine_sign_id "$file")"
             # Check if it's an executable to apply entitlements
             if file "$file" | grep -q "executable"; then
-              echo "  [$SIGN_COUNT] Signing Executable: ${file#$ENGINE_PATH/}"
+              echo "  [$SIGN_COUNT] Signing Executable: ${file#$ENGINE_PATH/} (${SIGN_ID})"
               if ! codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
-                --identifier "com.beta.relaycraft.engine" \
+                --identifier "$SIGN_ID" \
                 --options runtime \
                 --timestamp \
                 --entitlements src-tauri/entitlements.plist \
@@ -375,9 +395,9 @@ jobs:
                 SIGN_FAIL=$((SIGN_FAIL + 1))
               fi
             else
-              echo "  [$SIGN_COUNT] Signing Library: ${file#$ENGINE_PATH/}"
+              echo "  [$SIGN_COUNT] Signing Library: ${file#$ENGINE_PATH/} (${SIGN_ID})"
               if ! codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
-                --identifier "com.beta.relaycraft.engine" \
+                --identifier "$SIGN_ID" \
                 --options runtime \
                 --timestamp \
                 "$file"; then
@@ -390,6 +410,20 @@ jobs:
 
           if [ "$SIGN_FAIL" -gt 0 ]; then
             echo "❌ ERROR: $SIGN_FAIL out of $SIGN_COUNT Mach-O files failed to sign!"
+            exit 1
+          fi
+
+          echo "  Verifying engine signing identifiers are unique..."
+          ID_DUPES=$(find "$ENGINE_PATH" -type f -exec sh -c '
+            for f; do
+              if file "$f" | grep -q "Mach-O"; then
+                codesign -dv "$f" 2>&1 | awk "/^Identifier=/{print \$0}"
+              fi
+            done
+          ' _ {} + | sort | uniq -d)
+          if [ -n "$ID_DUPES" ]; then
+            echo "❌ ERROR: Duplicate engine code signing identifiers detected:"
+            echo "$ID_DUPES"
             exit 1
           fi
 
@@ -414,14 +448,12 @@ jobs:
           fi
 
           # Sign main executable
-          if [ -f "$APP_PATH/Contents/MacOS/RelayCraft" ]; then
-            echo "  Signing main executable..."
-            codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
-              --options runtime \
-              --timestamp \
-              --entitlements src-tauri/entitlements.plist \
-              "$APP_PATH/Contents/MacOS/RelayCraft"
-          fi
+          echo "  Signing main executable..."
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --timestamp \
+            --entitlements src-tauri/entitlements.plist \
+            "$MAIN_BIN"
 
           # ============================================================
           # Step 4: Sign .app Bundle Shell
@@ -444,7 +476,7 @@ jobs:
           codesign -vvv --strict "$APP_PATH"
 
           echo "  Verifying main executable..."
-          codesign -vvv --strict "$APP_PATH/Contents/MacOS/RelayCraft"
+          codesign -vvv --strict "$MAIN_BIN"
 
           echo "  Verifying engine binary..."
           codesign -vvv --strict "$ENGINE_PATH/engine"
@@ -527,7 +559,15 @@ jobs:
             exit 1
           fi
 
-          # Notarize the DMG as well (Optional but recommended for distribution)
+          echo "🔏 Signing DMG container..."
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+            --timestamp \
+            "$DMG_PATH"
+
+          echo "  Verifying DMG signature..."
+          codesign -vvv --strict "$DMG_PATH"
+
+          # Notarize the signed DMG for distribution (Homebrew, direct download)
           echo "📤 Notarizing DMG..."
           xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$APPLE_ID" \
@@ -537,6 +577,9 @@ jobs:
 
           echo "📌 Stapling DMG..."
           xcrun stapler staple "$DMG_PATH"
+
+          echo "🔍 Verifying stapled DMG with Gatekeeper..."
+          spctl -a -vv -t install "$DMG_PATH" || echo "⚠️ spctl DMG assessment failed (may be expected in CI). Notarization was successful."
 
           echo "  Signing DMG for updater/verification..."
           pnpm exec tauri signer sign "$DMG_PATH"
