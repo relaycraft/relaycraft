@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.0...v1.2.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* unify bundle id and harden macOS release signing ([1aae0b7](https://github-relaycraft/relaycraft/relaycraft/commit/1aae0b770c8bd497901934b0cabdc239f6ff89df))
+* **windows:** suppress plugin IDs in taskbar jump list ([6103b3d](https://github-relaycraft/relaycraft/relaycraft/commit/6103b3da9587dfbbb8e7a73d97c76931d8f8b771))
+
 # [1.2.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.1.2...v1.2.0) (2026-05-19)
 
 
