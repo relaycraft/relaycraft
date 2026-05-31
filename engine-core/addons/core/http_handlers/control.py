@@ -98,6 +98,37 @@ def _handle_session_delete(monitor: Any, flow: Any, Response: Any) -> None:
     )
 
 
+def _handle_database_reset(monitor: Any, flow: Any, Response: Any) -> None:
+    try:
+        db = monitor.db
+        from ..flowdb import get_flow_count, vacuum
+        active = get_active_session(db)
+
+        # 1. Count active session flows before clearing
+        cleared = get_flow_count(db, active['id']) if active else 0
+
+        # 2. Clear the active session's flows
+        if active:
+            clear_session(db, active['id'])
+
+        # 3. Delete all inactive sessions
+        deleted = delete_all_historical_sessions(db)
+
+        # 4. Reclaim disk space
+        vacuum(db, full=True)
+
+        json_str = json.dumps({
+            "success": True,
+            "cleared_active_flows": cleared,
+            "deleted_sessions": deleted,
+        }, ensure_ascii=False)
+        flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)
+    except Exception as e:
+        monitor.logger.error(f"Database reset failed: {e}")
+        json_str = json.dumps({"success": False, "error": str(e)}, ensure_ascii=False)
+        flow.response = Response.make(500, json_str.encode("utf-8"), JSON_HEADERS)
+
+
 def _handle_session_clear(monitor: Any, flow: Any, Response: Any) -> None:
     data = json.loads(flow.request.content.decode("utf-8")) if flow.request.content else {}
     session_id = data.get("id")

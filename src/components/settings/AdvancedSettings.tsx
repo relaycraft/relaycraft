@@ -1,8 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
-import { FolderOpen, RefreshCcw } from "lucide-react";
+import { FolderOpen, RefreshCcw, Trash2 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useSessionStore } from "../../stores/sessionStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
@@ -24,7 +25,27 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
   const { t } = useTranslation();
   const { config, loading, updateVerboseLogging, updateDisableGpuAcceleration } =
     useSettingsStore();
-  const { setLogViewerOpen } = useUIStore();
+  const { resetDatabase, loadingSessions } = useSessionStore();
+  const { setLogViewerOpen, showConfirm } = useUIStore();
+
+  const [resetting, setResetting] = React.useState(false);
+
+  const handleResetDatabase = () => {
+    showConfirm({
+      title: t("database.reset_confirm_title"),
+      message: t("database.reset_confirm_msg"),
+      variant: "danger",
+      confirmLabel: t("database.reset_confirm"),
+      onConfirm: async () => {
+        setResetting(true);
+        try {
+          await resetDatabase();
+        } finally {
+          setResetting(false);
+        }
+      },
+    });
+  };
 
   const verboseLoggingSnapshot = React.useRef<boolean | null>(null);
 
@@ -137,6 +158,25 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
             </AnimatePresence>
           </>
         )}
+      </SettingsSection>
+
+      <SettingsSection title={t("settings.advanced.database")}>
+        <SettingsRow title={t("database.reset_title")} description={t("database.reset_desc")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+            onClick={handleResetDatabase}
+            disabled={resetting || loadingSessions}
+          >
+            {resetting ? (
+              <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+            {t("database.reset_button")}
+          </Button>
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection title={t("settings.advanced.directories")}>

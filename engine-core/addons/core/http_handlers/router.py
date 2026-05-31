@@ -3,6 +3,7 @@ from typing import Any, Callable
 from .cert import _handle_cert_serve
 from .control import (
     _handle_breakpoints,
+    _handle_database_reset,
     _handle_resume,
     _handle_session_activate,
     _handle_session_clear,
@@ -61,6 +62,7 @@ def handle_realtime_routes(
 def handle_control_routes(monitor: Any, flow: Any, route_key: str, Response: Any) -> bool:
     route_map = {
         "relay_breakpoints": lambda: _handle_breakpoints(monitor, flow, Response),
+        "relay_database_reset": lambda: _handle_database_reset(monitor, flow, Response),
         "relay_resume": lambda: _handle_resume(monitor, flow, Response),
         "relay_sessions_delete_all": lambda: _handle_sessions_delete_all(monitor, flow, Response),
         "relay_sessions_get": lambda: _handle_sessions_get(monitor, flow, Response),

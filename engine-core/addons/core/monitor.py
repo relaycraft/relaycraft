@@ -534,6 +534,8 @@ class TrafficMonitor:
             return "relay_breakpoints"
         if "/_relay/resume" in path:
             return "relay_resume"
+        if "/_relay/database/reset" in path:
+            return "relay_database_reset"
         if "/_relay/sessions/delete_all" in path:
             return "relay_sessions_delete_all"
         if "/_relay/sessions" in path and method == "GET":

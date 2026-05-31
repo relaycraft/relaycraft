@@ -473,7 +473,15 @@
       "cleanup_msg": "Automatically removed {{flows}} flow(s) and {{sessions}} session(s) to free storage space.",
       "storage_warning_title": "Storage Space Warning",
       "storage_warning_msg": "Traffic database has reached {{size_mb}} MB. Consider clearing old sessions to free up space."
-    }
+    },
+    "reset_title": "Reset Database",
+    "reset_desc": "Clear all traffic data including recorded flows and session history. Use this when the database is corrupted or app becomes unresponsive.",
+    "reset_button": "Reset Database",
+    "reset_confirm_title": "Reset Entire Database?",
+    "reset_confirm_msg": "This will permanently delete all recorded traffic data and session history. This action cannot be undone.",
+    "reset_confirm": "Reset Database",
+    "reset_success": "Database has been completely reset",
+    "reset_error": "Failed to reset database"
   },
   "mcp": {
     "title": "Integrations",
@@ -987,6 +995,7 @@
     },
     "advanced": {
       "title": "Advanced",
+      "database": "Data Management",
       "directories": "System Data Directories",
       "troubleshooting": "Troubleshooting",
       "disable_gpu": "Compatibility Mode (Disable GPU)",

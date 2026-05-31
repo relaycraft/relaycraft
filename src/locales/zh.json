@@ -473,7 +473,15 @@
       "cleanup_msg": "已自动删除 {{flows}} 条请求记录和 {{sessions}} 个历史会话以释放存储空间。",
       "storage_warning_title": "存储空间警告",
       "storage_warning_msg": "流量数据库已达 {{size_mb}} MB，建议清理历史会话以释放空间。"
-    }
+    },
+    "reset_title": "重置数据库",
+    "reset_desc": "清空所有流量数据和历史会话记录。当数据库文件损坏或应用无法正常使用时，可尝试此操作。",
+    "reset_button": "重置数据库",
+    "reset_confirm_title": "确定要重置数据库？",
+    "reset_confirm_msg": "此操作将永久删除所有已记录的流量数据和历史会话，且无法撤销。",
+    "reset_confirm": "重置数据库",
+    "reset_success": "数据库已成功重置",
+    "reset_error": "重置数据库失败"
   },
   "mcp": {
     "title": "外部集成",
@@ -987,6 +995,7 @@
     },
     "advanced": {
       "title": "高级与诊断",
+      "database": "数据管理",
       "directories": "系统数据目录",
       "troubleshooting": "故障排查",
       "disable_gpu": "兼容模式（禁用 GPU）",
