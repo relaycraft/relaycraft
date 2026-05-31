@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.1...v1.2.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* stability improvements for config, DB, polling, plugins, and memory ([0fccf04](https://github-relaycraft/relaycraft/relaycraft/commit/0fccf04007f3579cb21136aa663ce5589ce67917))
+
+
+### Features
+
+* add database reset to advanced settings ([59084a0](https://github-relaycraft/relaycraft/relaycraft/commit/59084a0b1f7ee42cdca83e92ef109fd130154058))
+* surface script load failures in the UI ([813a9b7](https://github-relaycraft/relaycraft/relaycraft/commit/813a9b7f243b974ca8557597fd8ce3f16e8d9006))
+
 ## [1.2.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.0...v1.2.1) (2026-05-22)
 
 
