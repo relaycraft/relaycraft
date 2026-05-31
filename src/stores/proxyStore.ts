@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
 import { formatError, Logger } from "../lib/logger";
 import { notifyProxyEvent } from "../lib/proxyNotifications";
+import { notifyScriptLoadIssues, resetScriptLoadAlertDedupe } from "../lib/scriptLoadAlerts";
 import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/traffic";
 import { useScriptStore } from "./scriptStore";
 
@@ -183,6 +184,9 @@ export const useProxyStore = create<ProxyStore>((set) => ({
         port: config.proxy_port,
         scriptCount: activeScriptNames.length,
       });
+
+      resetScriptLoadAlertDedupe();
+      await notifyScriptLoadIssues(config.proxy_port, true);
     } catch (error) {
       const errorMsg = formatError(error);
       await Logger.error("Failed to restart proxy:", errorMsg);

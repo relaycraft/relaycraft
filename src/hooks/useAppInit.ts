@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Logger } from "../lib/logger";
 import { notify } from "../lib/notify";
+import { notifyScriptLoadIssues } from "../lib/scriptLoadAlerts";
 import { initPlugins } from "../plugins/pluginLoader";
 import { useAIStore } from "../stores/aiStore";
 import { usePluginStore } from "../stores/pluginStore";
@@ -140,6 +141,11 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         useThemeStore.getState().fetchThemes(),
         usePluginStore.getState().fetchPlugins(),
       ]);
+
+      const { running: engineRunning, port: proxyPort } = useProxyStore.getState();
+      if (engineRunning && proxyPort > 0) {
+        await notifyScriptLoadIssues(proxyPort);
+      }
 
       // Check if traffic monitoring should start
       const currentConfig = useSettingsStore.getState().config;

@@ -932,6 +932,9 @@
       "title": "No Scripts"
     },
     "name_exists": "Script name already exists",
+    "load_failed_title": "Script Failed to Load",
+    "load_failed_msg": "{{count}} script(s) failed to load ({{names}}). First error: {{detail}}",
+    "load_failed_single_msg": "Script \"{{name}}\" failed to load: {{error}}",
     "restart_btn": "Restart Proxy Engine",
     "restart_hint": "Changes require proxy engine restart to take effect",
     "save_failed": "Failed to save script",

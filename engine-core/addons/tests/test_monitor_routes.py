@@ -32,6 +32,7 @@ class TestMonitorRouteResolution(unittest.TestCase):
             ("POST", "/_relay/import_session_file", "127.0.0.1", "relay_import_session_file"),
             ("POST", "/_relay/import_har", "127.0.0.1", "relay_import_har"),
             ("POST", "/_relay/import_har_file", "127.0.0.1", "relay_import_har_file"),
+            ("GET", "/_relay/scripts/load_status", "127.0.0.1", "relay_scripts_load_status"),
             ("GET", "/_relay/export_session?session_id=s1", "127.0.0.1", "relay_export_session"),
             ("GET", "/_relay/export_har?session_id=s1", "127.0.0.1", "relay_export_har"),
             ("GET", "/cert", "127.0.0.1", "cert_serve"),

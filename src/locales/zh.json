@@ -932,6 +932,9 @@
       "title": "暂无脚本"
     },
     "name_exists": "脚本名称已存在",
+    "load_failed_title": "脚本加载失败",
+    "load_failed_msg": "{{count}} 个脚本加载失败（{{names}}）。首个错误：{{detail}}",
+    "load_failed_single_msg": "脚本「{{name}}」加载失败：{{error}}",
     "restart_btn": "重启代理引擎",
     "restart_hint": "更改需要重启代理引擎以生效",
     "save_failed": "保存脚本失败",

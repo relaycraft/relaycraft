@@ -11,6 +11,7 @@ from ..flowdb import (
     list_sessions,
     switch_session,
 )
+from ..script_load_report import get_report
 from .errors import CORS_HEADERS, JSON_HEADERS
 
 
@@ -143,3 +144,17 @@ def _handle_session_clear(monitor: Any, flow: Any, Response: Any) -> None:
         clear_session(monitor.db)
 
     flow.response = Response.make(200, b'{"success": true}', JSON_HEADERS)
+
+
+def _handle_scripts_load_status(monitor: Any, flow: Any, Response: Any) -> None:
+    """Return user script load results for the current engine process."""
+    report = get_report()
+    json_str = json.dumps(report, ensure_ascii=False)
+    flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)
+
+
+def _handle_scripts_load_status(monitor: Any, flow: Any, Response: Any) -> None:
+    """Return user script load results for the current engine process."""
+    report = get_report()
+    json_str = json.dumps(report, ensure_ascii=False)
+    flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)

@@ -556,6 +556,8 @@ class TrafficMonitor:
             return "relay_stats"
         if "/_relay/traffic_active" in path:
             return "relay_traffic_active"
+        if "/_relay/scripts/load_status" in path:
+            return "relay_scripts_load_status"
         if "/_relay/export_session" in path:
             return "relay_export_session"
         if "/_relay/export_har" in path:

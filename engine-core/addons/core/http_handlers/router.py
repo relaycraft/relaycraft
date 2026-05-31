@@ -5,6 +5,7 @@ from .control import (
     _handle_breakpoints,
     _handle_database_reset,
     _handle_resume,
+    _handle_scripts_load_status,
     _handle_session_activate,
     _handle_session_clear,
     _handle_session_delete,
@@ -71,6 +72,7 @@ def handle_control_routes(monitor: Any, flow: Any, route_key: str, Response: Any
         "relay_session_activate": lambda: _handle_session_activate(monitor, flow, Response),
         "relay_session_delete": lambda: _handle_session_delete(monitor, flow, Response),
         "relay_session_clear": lambda: _handle_session_clear(monitor, flow, Response),
+        "relay_scripts_load_status": lambda: _handle_scripts_load_status(monitor, flow, Response),
     }
     return _dispatch(route_map, route_key, monitor, flow, Response)
 

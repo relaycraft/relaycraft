@@ -12,8 +12,9 @@ from pathlib import Path
 # Add current directory to sys.path to allow package imports
 sys.path.append(str(Path(__file__).parent))
 
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Tuple
 from core import CoreAddon
+from core.script_load_report import record_failed, record_loaded, reset as reset_script_load_report
 from injector import inject_tracking
 
 
@@ -141,10 +142,10 @@ def _log_message(level: str, message: str) -> None:
     # Fallback: print with flush for immediate output
     _safe_print(f"[RELAYCRAFT][{level.upper()}] {message}")
 
-def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
+def _preprocess_and_load_script(source_path: str) -> Tuple[Optional[Any], Optional[str]]:
     """
     Preprocess a script by injecting tracking code and load it as a module.
-    Returns the loaded module object, or None on failure.
+    Returns (module, None) on success or (None, error_message) on failure.
     Logs detailed error information for debugging.
     """
     global _preprocessed_dir
@@ -154,13 +155,15 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
     try:
         source = Path(source_path)
         if not source.exists():
+            err = f"File not found: {source_path}"
             _log_message("error", f"Script file not found: {source_path}")
-            return None
+            return None, err
 
         # Check if file is readable
         if not os.access(source, os.R_OK):
+            err = f"Permission denied: {source_path}"
             _log_message("error", f"Script file not readable (permission denied): {source_path}")
-            return None
+            return None, err
 
         # Create temp directory if not exists
         if _preprocessed_dir is None:
@@ -172,16 +175,19 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
             with open(source, "r", encoding="utf-8") as f:
                 original_code = f.read()
         except UnicodeDecodeError as e:
+            err = f"Encoding error (expected UTF-8): {e}"
             _log_message("error", f"Script encoding error (expected UTF-8): {source_path}: {e}")
-            return None
+            return None, err
         except IOError as e:
+            err = f"Failed to read file: {e}"
             _log_message("error", f"Failed to read script: {source_path}: {e}")
-            return None
+            return None, err
 
         # Check for empty script
         if not original_code.strip():
+            err = "Script is empty"
             _log_message("warn", f"Script is empty, skipping: {source_path}")
-            return None
+            return None, err
 
         # Inject tracking code (with path for better error messages)
         modified_code = inject_tracking(original_code, script_path=source_path)
@@ -192,8 +198,9 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
             with open(temp_path, "w", encoding="utf-8") as f:
                 f.write(modified_code)
         except IOError as e:
+            err = f"Failed to write preprocessed script: {e}"
             _log_message("error", f"Failed to write preprocessed script: {temp_path}: {e}")
-            return None
+            return None, err
 
         # Load as module
         module_name = source.stem
@@ -204,8 +211,9 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
 
         spec = importlib.util.spec_from_file_location(module_name, temp_path)
         if spec is None or spec.loader is None:
+            err = "Failed to create module spec"
             _log_message("error", f"Failed to create module spec: {source_path}")
-            return None
+            return None, err
 
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
@@ -214,13 +222,15 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
         try:
             spec.loader.exec_module(module)
         except SyntaxError as e:
+            err = f"SyntaxError: {e}"
             _log_message("error", f"Syntax error in script {script_name}: {e}")
-            return None
+            return None, err
         except Exception as e:
+            err = f"{type(e).__name__}: {e}"
             _log_message("error", f"Error executing script {script_name}: {type(e).__name__}: {e}")
             # Log traceback for debugging
             _log_message("debug", f"Traceback: {traceback.format_exc()}")
-            return None
+            return None, err
 
         # Verify the module has at least one hook function
         # Check both module-level functions and class instances in 'addons' list
@@ -239,11 +249,12 @@ def _preprocess_and_load_script(source_path: str) -> Optional[Any]:
         if not has_hook:
             _log_message("warn", f"Script {script_name} has no hook functions (request/response/error/websocket_message)")
 
-        return module
+        return module, None
     except Exception as e:
+        err = f"{type(e).__name__}: {e}"
         _log_message("error", f"Unexpected error loading script {script_name}: {type(e).__name__}: {e}")
         _log_message("debug", f"Traceback: {traceback.format_exc()}")
-        return None
+        return None, err
 
 # Build addons list
 addons: List[Any] = [
@@ -251,6 +262,7 @@ addons: List[Any] = [
 ]
 
 # Load user scripts from environment variable (Passed by Rust)
+reset_script_load_report()
 user_scripts_env = os.environ.get("RELAYCRAFT_USER_SCRIPTS", "")
 loaded_count = 0
 failed_count = 0
@@ -265,12 +277,15 @@ if user_scripts_env:
         if not path_str:
             continue
 
-        module = _preprocess_and_load_script(path_str)
+        script_name = Path(path_str).name
+        module, load_error = _preprocess_and_load_script(path_str)
         if module is not None:
             addons.append(module)
+            record_loaded(script_name)
             loaded_count += 1
-            _log_message("info", f"Loaded user script: {Path(path_str).name}")
+            _log_message("info", f"Loaded user script: {script_name}")
         else:
+            record_failed(path_str, script_name, load_error or "Unknown error")
             failed_count += 1
 
     if loaded_count > 0 or failed_count > 0:
