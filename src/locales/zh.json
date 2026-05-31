@@ -1078,6 +1078,8 @@
     "switchy_omega_desc": "安装 Chrome/Edge 插件 SwitchyOmega，新建 <strong>HTTP</strong> 代理，地址填入 <code>{{ip}}</code>，端口 <code>{{port}}</code>。",
     "system_proxy": "系统级代理",
     "system_proxy_desc": "在系统设置中搜索「代理」，开启「使用代理服务器」，填入上述地址与端口。",
+    "test_connection": "测试连通性",
+    "test_connection_desc": "用手机扫描二维码或打开链接。如果能正常加载，说明代理配置成功。",
     "title": "代理配置指南",
     "trouble": "遇到问题？",
     "trouble_desc": "检查防火墙设置，确保 {{port}} 端口未被其他程序占用。"

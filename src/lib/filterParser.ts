@@ -329,10 +329,14 @@ export function matchFlow(
   )
     return false;
 
-  // 6. Source IP (Strict)
+  // 6. Source (IP or App)
   if (
     !checkGroup(criteria.source, (item) => {
-      return (flow.clientIp || "").includes(item.value);
+      return (
+        (flow.clientIp || "").includes(item.value) ||
+        matchString(flow.appName || "", item.value) ||
+        matchString(flow.appDisplayName || "", item.value)
+      );
     })
   )
     return false;

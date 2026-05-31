@@ -23,7 +23,7 @@ interface SetupGuideProps {
 
 export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
   const [localIp, setLocalIp] = useState<string>("127.0.0.1");
-  const [qrOpen, setQrOpen] = useState(false);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
   const proxyPort = useProxyStore((state) => state.port);
   const { t } = useTranslation();
   useEffect(() => {
@@ -147,7 +147,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setQrOpen(true);
+                    setQrUrl(certUrl);
                   }}
                   className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
                   title={t("common.show_qr", { defaultValue: "Show QR Code" })}
@@ -165,7 +165,45 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
             </span>
           </div>
 
-          {/* Fallback tip */}
+          {/* Step 3 — Connectivity Test */}
+          <div className="flex gap-3 text-xs text-foreground/90">
+            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-[10px] font-bold text-green-500 mt-0.5">
+              3
+            </div>
+            <span className="flex-1">
+              <span className="font-bold">{t("setup_guide.test_connection")}</span>
+              <p className="mt-1 text-ui text-muted-foreground/70 leading-relaxed">
+                {t("setup_guide.test_connection_desc")}
+              </p>
+              <div className="mt-2 flex items-center gap-3 bg-green-500/5 border border-green-500/15 rounded-xl px-3 py-2.5">
+                <a
+                  href={`http://${localIp}:${proxyPort}/_relay/connectivity`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 font-mono text-[11px] font-semibold text-green-600 dark:text-green-400 hover:underline truncate flex items-center gap-1.5"
+                >
+                  <span className="truncate">{`http://${localIp}:${proxyPort}/_relay/connectivity`}</span>
+                </a>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQrUrl(`http://${localIp}:${proxyPort}/_relay/connectivity`);
+                  }}
+                  className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
+                  title={t("common.show_qr", { defaultValue: "Show QR Code" })}
+                >
+                  <QRCodeSVG
+                    value={`http://${localIp}:${proxyPort}/_relay/connectivity`}
+                    size={20}
+                    level="M"
+                    bgColor="transparent"
+                    fgColor="currentColor"
+                    className="text-foreground/70"
+                  />
+                </button>
+              </div>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -194,7 +232,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
       </div>
       {createPortal(
         <AnimatePresence>
-          {qrOpen && (
+          {qrUrl && (
             <motion.div
               key="qr-overlay-setup"
               initial={{ opacity: 0 }}
@@ -203,7 +241,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
               className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
               onClick={(e) => {
                 e.stopPropagation();
-                setQrOpen(false);
+                setQrUrl(null);
               }}
             >
               <motion.div
@@ -213,13 +251,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
                 className="bg-white p-6 rounded-2xl shadow-2xl relative flex flex-col items-center"
                 onClick={(e) => e.stopPropagation()}
               >
-                <QRCodeSVG
-                  value={certUrl}
-                  size={200}
-                  level="M"
-                  bgColor="#ffffff"
-                  fgColor="#0b0c0f"
-                />
+                <QRCodeSVG value={qrUrl} size={200} level="M" bgColor="#ffffff" fgColor="#0b0c0f" />
               </motion.div>
             </motion.div>
           )}

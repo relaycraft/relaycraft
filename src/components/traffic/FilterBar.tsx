@@ -231,6 +231,8 @@ export function FilterBar({
                   "method:POST",
                   "status:4xx",
                   "type:json",
+                  "source:ios",
+                  "source:android",
                   "size:>1mb",
                   "duration:>500ms",
                   "-domain:google",

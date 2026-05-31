@@ -35,6 +35,7 @@ from .har_converters import (
 )
 from .flowdb.flow_repo import store_flow as _store_flow_repo
 from . import sse_processor, ws_handler
+from .import source_detector
 from .http_handlers import (
     handle_realtime_routes,
     handle_control_routes,
@@ -333,6 +334,9 @@ class TrafficMonitor:
                 if flow.server_conn and flow.server_conn.address else None
             )
 
+            # ========== Source Detection ==========
+            app_name, app_display_name, platform = source_detector.detect_source(flow)
+
             # ========== Status Code ==========
             if is_websocket and not is_aborted:
                 status_code = 101
@@ -405,6 +409,9 @@ class TrafficMonitor:
                 "_rc": {
                     "clientIp": client_ip,
                     "serverIp": server_ip,
+                    "appName": app_name,
+                    "appDisplayName": app_display_name,
+                    "platform": platform,
                     "error": error_detail,
                     "isWebsocket": is_websocket,
                     "isSse": sse["is_sse"],
@@ -556,6 +563,8 @@ class TrafficMonitor:
             return "relay_stats"
         if "/_relay/traffic_active" in path:
             return "relay_traffic_active"
+        if "/_relay/connectivity" in path:
+            return "relay_connectivity"
         if "/_relay/scripts/load_status" in path:
             return "relay_scripts_load_status"
         if "/_relay/export_session" in path:
@@ -641,6 +650,9 @@ class TrafficMonitor:
                 "startedDateTime": f.get("startedDateTime") or "",
                 "time": f.get("time") or 0,
                 "size": (resp.get("content") or {}).get("size", 0) or f.get("size") or 0,
+                "clientIp": rc.get("clientIp") or "",
+                "appName": rc.get("appName") or "",
+                "appDisplayName": rc.get("appDisplayName") or "",
                 "hasError": bool(rc.get("error")),
                 "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                 "hasResponseBody": bool((resp.get("content") or {}).get("text")),

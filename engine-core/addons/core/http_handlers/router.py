@@ -1,6 +1,7 @@
 from typing import Any, Callable
 
 from .cert import _handle_cert_serve
+from .connectivity import _handle_connectivity
 from .control import (
     _handle_breakpoints,
     _handle_database_reset,
@@ -73,6 +74,7 @@ def handle_control_routes(monitor: Any, flow: Any, route_key: str, Response: Any
         "relay_session_delete": lambda: _handle_session_delete(monitor, flow, Response),
         "relay_session_clear": lambda: _handle_session_clear(monitor, flow, Response),
         "relay_scripts_load_status": lambda: _handle_scripts_load_status(monitor, flow, Response),
+        "relay_connectivity": lambda: _handle_connectivity(monitor, flow, Response),
     }
     return _dispatch(route_map, route_key, monitor, flow, Response)
 

@@ -1078,6 +1078,8 @@
     "switchy_omega_desc": "Install SwitchyOmega extension, create <strong>HTTP</strong> proxy with Host <code>{{ip}}</code> and Port <code>{{port}}</code>.",
     "system_proxy": "System Proxy",
     "system_proxy_desc": "Search 'Proxy' in system settings, enable 'Use a proxy server', and enter the address/port above.",
+    "test_connection": "Test Connection",
+    "test_connection_desc": "Scan the QR code or open URL on your mobile device. If it loads, your proxy setup is working.",
     "title": "Proxy Setup Guide",
     "trouble": "Having Issues?",
     "trouble_desc": "Check firewall settings and ensure port {{port}} is available."
