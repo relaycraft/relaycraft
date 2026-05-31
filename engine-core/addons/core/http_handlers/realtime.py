@@ -17,8 +17,11 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
         except ValueError:
             since_ts = 0.0
 
+        limit_param = query.get("limit")
+        limit_val = int(limit_param) if limit_param and int(limit_param) > 0 else 10000
+
         session_id_param = query.get("session_id", None)
-        db_indices = get_indices(monitor.db, session_id=session_id_param, since=since_ts)
+        db_indices = get_indices(monitor.db, session_id=session_id_param, since=since_ts, limit=limit_val)
 
         indices = []
         for idx in db_indices:

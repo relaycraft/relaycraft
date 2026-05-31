@@ -115,7 +115,7 @@ def run_cleanup(db):
             ).fetchall()
             flow_ids, session_flows = _collect_flow_targets(old_flows)
             for session_id, session_flow_ids in session_flows.items():
-                db._delete_body_files(session_id, session_flow_ids)
+                delete_body_files(db, session_id, session_flow_ids)
             deleted_flows += _delete_flows(conn, flow_ids)
 
         conn.execute(

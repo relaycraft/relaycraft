@@ -47,6 +47,7 @@ interface SessionStore {
   switchDbSession: (sessionId: string) => Promise<void>;
   deleteDbSession: (sessionId: string) => Promise<void>;
   deleteAllDbSessions: () => Promise<void>;
+  resetDatabase: () => Promise<void>;
   clearSession: (sessionId?: string) => Promise<void>;
 }
 
@@ -103,9 +104,9 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     try {
       const port = useSettingsStore.getState().config.proxy_port;
 
-      // Load the session data for viewing
+      // Load the session data for viewing (limit initial load to prevent OOM)
       const response = await tauriFetch(
-        `http://127.0.0.1:${port}/_relay/poll?session_id=${sessionId}&since=0`,
+        `http://127.0.0.1:${port}/_relay/poll?session_id=${sessionId}&since=0&limit=5000`,
         {
           cache: "no-store",
         },
@@ -121,8 +122,13 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         // Update which session we're viewing
         set({ showSessionId: sessionId });
 
-        // Reset poll monitor timestamp
-        setPollTimestamp(0);
+        // Set poll timestamp to the latest loaded flow so subsequent polls
+        // only fetch newer data (not re-fetch everything since epoch).
+        if (data.server_ts && data.server_ts > 0) {
+          setPollTimestamp(data.server_ts);
+        } else {
+          setPollTimestamp(0);
+        }
 
         Logger.info(`Switched to view session: ${sessionId}`);
       }
@@ -217,6 +223,48 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       const { notify } = await import("../lib/notify");
       const i18next = await import("i18next");
       notify.error(i18next.t("session.clear_error"));
+    } finally {
+      set({ loadingSessions: false });
+    }
+  },
+
+  // Reset entire database: clear active session + delete all historical sessions + vacuum
+  resetDatabase: async () => {
+    set({ loadingSessions: true });
+    try {
+      const port = useSettingsStore.getState().config.proxy_port;
+      Logger.info("Resetting entire database...");
+      const response = await tauriFetch(`http://127.0.0.1:${port}/_relay/database/reset`, {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        Logger.info(
+          `Database reset: cleared ${data.cleared_active_flows || 0} active flows, ` +
+            `deleted ${data.deleted_sessions || 0} sessions`,
+        );
+
+        // Clear frontend state
+        useTrafficStore.getState().clearLocal();
+        set({ showSessionId: null });
+
+        // Refresh session list
+        await get().fetchDbSessions();
+
+        const { notify } = await import("../lib/notify");
+        const i18next = await import("i18next");
+        notify.success(i18next.t("database.reset_success"));
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      Logger.error("Failed to reset database:", error);
+      const { notify } = await import("../lib/notify");
+      const i18next = await import("i18next");
+      notify.error(i18next.t("database.reset_error"));
     } finally {
       set({ loadingSessions: false });
     }

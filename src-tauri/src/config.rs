@@ -375,7 +375,12 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
 
     let json = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
-    fs::write(&config_path, json).map_err(|e| format!("Failed to write config: {}", e))?;
+
+    // Atomic write: write to temp file, then rename to avoid corruption on crash
+    let tmp_path = config_path.with_extension("json.tmp");
+    fs::write(&tmp_path, &json).map_err(|e| format!("Failed to write config: {}", e))?;
+    fs::rename(&tmp_path, &config_path)
+        .map_err(|e| format!("Failed to finalize config write: {}", e))?;
 
     // Log changes to audit
     if changes.is_empty() {
@@ -405,8 +410,15 @@ pub fn load_config() -> Result<AppConfig, String> {
     match serde_json::from_str::<AppConfig>(&content) {
         Ok(config) => Ok(config),
         Err(e) => {
-            log::warn!("Failed to parse config.json, using defaults: {}", e);
-            Ok(AppConfig::default())
+            // Backup the corrupted file so user can recover data manually
+            let backup_path = config_path.with_extension("json.corrupted");
+            let _ = fs::write(&backup_path, &content);
+            log::error!(
+                "Failed to parse config.json ({}), backed up to {:?}, using defaults",
+                e,
+                backup_path
+            );
+            Err(format!("Config parse error: {}. Backup saved.", e))
         }
     }
 }

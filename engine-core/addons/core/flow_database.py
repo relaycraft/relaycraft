@@ -83,6 +83,8 @@ class FlowDatabase:
         self._last_cleanup = time.time()
         # Last write timestamp (used for WAL idle-TRUNCATE checkpoint)
         self._last_write_ts = time.time()
+        # Expose config constants as instance attributes for query helpers
+        self.BODY_SEARCH_SCAN_LIMIT = Config.BODY_SEARCH_SCAN_LIMIT
 
         # Start background cleanup thread
         self._cleanup_thread = None

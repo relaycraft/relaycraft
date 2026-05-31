@@ -79,6 +79,10 @@ interface TrafficStore {
 
 // ==================== Store Implementation ====================
 
+// Maximum number of flow indices kept in memory.
+// Beyond this, oldest entries are evicted to prevent unbounded growth.
+const MAX_INDICES = 50000;
+
 // Generation counter for selectFlow — prevents stale async responses from
 // overwriting the result of a more recent selection.
 let selectGeneration = 0;
@@ -124,8 +128,11 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
         updatedIndices = Array.from(indicesMap.values());
       }
 
-      // No limit - let database handle storage, frontend keeps all indices in memory
-      // This is acceptable because indices are lightweight (only metadata)
+      // Evict oldest entries when exceeding the window cap to prevent
+      // unbounded memory growth in long-running / large sessions.
+      if (updatedIndices.length > MAX_INDICES) {
+        updatedIndices = updatedIndices.slice(updatedIndices.length - MAX_INDICES);
+      }
 
       return { indices: updatedIndices };
     });

@@ -15,6 +15,7 @@ class Config:
     MAX_TOTAL_FLOWS = 1000000              # Max total flows across all sessions (1M)
     MAX_SESSIONS = 20                      # Max sessions to keep
     MAX_FLOW_AGE_DAYS = 30                 # Delete flows older than this many days
+    BODY_SEARCH_SCAN_LIMIT = 5000          # Max rows to scan in body/header search queries
 
     # Cleanup
     CLEANUP_INTERVAL = 300                 # Seconds between cleanup runs

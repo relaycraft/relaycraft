@@ -1004,9 +1004,11 @@ async fn tool_search_flows(
         "response_body" => "response",
         "request_body" => "request",
         "header" => "header",
-        other => return Ok(error_result(format!(
+        other => {
+            return Ok(error_result(format!(
             "Unknown search_in value: '{other}'. Use url, response_body, request_body, or header."
-        ))),
+        )))
+        }
     };
 
     let search_url = format!("http://127.0.0.1:{engine_port}/_relay/search");

@@ -283,12 +283,15 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     }
 
     let target_dir = target_root.join(&id);
+    let staging_dir = target_root.join(format!(".{}.staging", id));
+    let backup_dir = target_root.join(format!(".{}.bak", id));
 
-    // 3. Extract to target directory
-    if target_dir.exists() {
-        fs::remove_dir_all(&target_dir).map_err(|e| e.to_string())?;
+    // 3. Extract to staging directory first (atomic replace pattern)
+    //    Old version stays intact until extraction fully succeeds.
+    if staging_dir.exists() {
+        fs::remove_dir_all(&staging_dir).map_err(|e| e.to_string())?;
     }
-    fs::create_dir_all(&target_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&staging_dir).map_err(|e| e.to_string())?;
 
     // 100 MB total extraction limit to prevent zip-bomb attacks.
     const MAX_EXTRACT_BYTES: u64 = 100 * 1024 * 1024;
@@ -296,16 +299,16 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     const CHUNK: usize = 64 * 1024;
     let mut total_extracted: u64 = 0;
 
-    // Helper: clean up and return an error.
+    // Helper: clean up staging and return an error.
     let abort = |msg: &str| -> Result<String, String> {
-        let _ = fs::remove_dir_all(&target_dir);
+        let _ = fs::remove_dir_all(&staging_dir);
         Err(msg.to_string())
     };
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         let outpath = match file.enclosed_name() {
-            Some(path) => target_dir.join(path),
+            Some(path) => staging_dir.join(path),
             None => continue,
         };
 
@@ -346,6 +349,29 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
                 outfile.write_all(&buf[..n]).map_err(|e| e.to_string())?;
             }
         }
+    }
+
+    // 4. Atomic replace: backup old → rename staging → cleanup backup
+    if target_dir.exists() {
+        // Remove stale backup first
+        if backup_dir.exists() {
+            let _ = fs::remove_dir_all(&backup_dir);
+        }
+        fs::rename(&target_dir, &backup_dir).map_err(|e| {
+            let _ = fs::remove_dir_all(&staging_dir);
+            format!("Failed to backup existing plugin: {}", e)
+        })?;
+    }
+    fs::rename(&staging_dir, &target_dir).map_err(|e| {
+        // Attempt rollback: restore backup
+        if backup_dir.exists() {
+            let _ = fs::rename(&backup_dir, &target_dir);
+        }
+        format!("Failed to activate new plugin version: {}", e)
+    })?;
+    // Clean up backup on success
+    if backup_dir.exists() {
+        let _ = fs::remove_dir_all(&backup_dir);
     }
 
     if is_theme {
