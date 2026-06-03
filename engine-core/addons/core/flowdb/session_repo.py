@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .cleanup import delete_body_files
+from .cleanup import delete_body_files, vacuum
 
 
 def create_new_session(db) -> str:
@@ -215,14 +215,14 @@ def delete_all_historical_sessions(db) -> int:
     deleted_count = 0
     for row in rows:
         session_id = row[0]
-        if db.delete_session(session_id):
+        if delete_session(db, session_id):
             deleted_count += 1
 
     if deleted_count > 0:
         def _async_vacuum():
             try:
                 db.logger.info("Post-clearall VACUUM started in background thread...")
-                db.vacuum(full=True)
+                vacuum(db, full=True)
                 db.logger.info("Post-clearall VACUUM completed.")
             except Exception as e:
                 db.logger.error(f"Post-clearall vacuum failed: {e}")

@@ -136,7 +136,8 @@ def run_cleanup(db):
         ).fetchall()
 
         for row in empty_sessions:
-            db.delete_session(row["id"])
+            from .session_repo import delete_session
+            delete_session(db, row["id"])
             deleted_sessions += 1
 
         db_size_mb = 0
