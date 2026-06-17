@@ -43,7 +43,7 @@ url = "2"
 tauri-plugin-fs = "2.4.5"
 tokio = { version = "1", features = ["process", "rt-multi-thread", "net", "sync"] }
 axum = { version = "0.8", features = [] }
-tower-http = { version = "0.6", features = ["cors"] }
+tower-http = { version = "0.7", features = ["cors"] }
 tauri-plugin-process = "2"
 rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
@@ -64,7 +64,7 @@ rstest = "0.26"
 pem = "3.0.6"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58", features = [
+windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_System_Com",
     "Win32_UI_Shell",
