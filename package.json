@@ -47,7 +47,7 @@
     "@codemirror/view": "^6.43.1",
     "@lezer/common": "^1.5.2",
     "@lezer/highlight": "^1.2.3",
-    "@tauri-apps/api": "~2.11.0",
+    "@tauri-apps/api": "~2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-http": "^2.5.9",
@@ -66,7 +66,7 @@
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-http-backend": "^4.0.0",
     "js-yaml": "^4.2.0",
-    "lucide-react": "^1.17.0",
+    "lucide-react": "^1.20.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -80,18 +80,18 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.16",
+    "@biomejs/biome": "^2.5.0",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@release-it/conventional-changelog": "^11.0.1",
-    "@tailwindcss/postcss": "^4.3.0",
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/postcss": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.1",
     "@tauri-apps/cli": "^2.11.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.9.2",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
@@ -100,10 +100,10 @@
     "lint-staged": "^17.0.7",
     "postcss": "^8.5.15",
     "release-it": "^20.2.0",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "^4.3.1",
     "typescript": "~6.0.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
