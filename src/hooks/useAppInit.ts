@@ -4,7 +4,7 @@ import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 import { type } from "@tauri-apps/plugin-os";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Logger } from "../lib/logger";
+import { Logger, logInfo } from "../lib/logger";
 import { notify } from "../lib/notify";
 import { notifyScriptLoadIssues } from "../lib/scriptLoadAlerts";
 import { initPlugins } from "../plugins/pluginLoader";
@@ -58,14 +58,14 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       const initStart = Date.now();
       const MIN_SPLASH_MS = 500;
 
-      console.log("[init] Starting initialization...", {
+      logInfo("[init] Starting initialization...", {
         language: i18n.language,
         isInitialized: i18n.isInitialized,
       });
 
       // Wait for i18n to avoid raw keys
       if (!i18n.isInitialized) {
-        console.log("[init] i18n not initialized, waiting...");
+        logInfo("[init] i18n not initialized, waiting...");
         await new Promise((resolve) => {
           const check = () => {
             if (i18n.isInitialized) resolve(true);
@@ -73,12 +73,12 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
           };
           check();
         });
-        console.log("[init] i18n initialized now", { language: i18n.language });
+        logInfo("[init] i18n initialized now", { language: i18n.language });
       }
 
       // Critical path - must complete first
       const osStatus = t("init.status_os");
-      console.log("[init] OS Status string:", osStatus);
+      logInfo("[init] OS Status string:", osStatus);
       await emit("init-status", osStatus);
 
       // Apply OS class
@@ -103,11 +103,11 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         useUIStore.getState().setOsType(isMac);
       }
 
-      console.log("[init] Loading config...");
+      logInfo("[init] Loading config...");
       await emit("init-status", t("init.status_config"));
       // Apply language class
       const currentLang = useSettingsStore.getState().config.language || "en";
-      console.log("[init] Current persistent language:", currentLang);
+      logInfo("[init] Current persistent language:", currentLang);
 
       if (currentLang.startsWith("zh")) {
         document.documentElement.classList.add("lang-zh");
@@ -127,7 +127,7 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
         // Non-critical: ignore if the command fails
       }
 
-      console.log("[init] Loading data stores...");
+      logInfo("[init] Loading data stores...");
       await emit("init-status", t("init.status_data"));
       // Ensure script state is ready
       await fetchScripts();
@@ -151,14 +151,14 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       const currentConfig = useSettingsStore.getState().config;
       const { running: isEngineRunning, active: isTrafficActive } = useProxyStore.getState();
       if (currentConfig.auto_start_proxy && isEngineRunning && !isTrafficActive) {
-        console.log("[init] Auto-starting traffic monitoring...");
+        logInfo("[init] Auto-starting traffic monitoring...");
         await emit("init-status", t("init.status_proxy"));
         startProxy().catch((err) =>
           Logger.error("Failed to auto-start traffic monitoring:", err).then(() => undefined),
         );
       }
 
-      console.log("[init] Initialization complete");
+      logInfo("[init] Initialization complete");
       await emit("init-status", t("init.status_complete"));
 
       // Show Window (Wait for MIN_SPLASH_MS)

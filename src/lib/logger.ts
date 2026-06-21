@@ -138,6 +138,17 @@ export const Logger = {
 };
 
 /**
+ * Fire-and-forget logger call.
+ *
+ * Use when calling an async Logger method (e.g. Logger.info) without
+ * awaiting it. Surfaces any rejection on the console instead of
+ * producing an unhandled promise rejection.
+ */
+export function logInfo(message: string, context?: unknown): void {
+  Logger.info(message, context).catch((e) => consola.error("Failed to log info", e));
+}
+
+/**
  * Normalize a caught error value into a human-readable string.
  *
  * Use this in catch blocks instead of `error as string`, `String(error)`,
