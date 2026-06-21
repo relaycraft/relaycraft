@@ -1164,6 +1164,9 @@
     "stream_edit_unsupported": "Edit in Composer is not supported for SSE/WebSocket requests",
     "url_unavailable": "(URL unavailable)",
     "source": {
+      "app": {
+        "empty": "Source app unknown"
+      },
       "local": "Local",
       "remote": "Remote Device"
     },

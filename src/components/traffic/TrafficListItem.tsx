@@ -9,6 +9,7 @@ import {
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { getReadableUrlPreview } from "../../lib/flowUrl";
+import { getAppIcon } from "../../lib/sourceIcons";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -111,26 +112,36 @@ export const TrafficListItem = memo(
           {index.method}
         </div>
 
-        {/* Source Indicator */}
-        {index.appDisplayName ? (
-          <Tooltip content={`${index.appDisplayName} (${index.clientIp})`} side="bottom">
-            <span className="text-tiny text-primary/60 px-1.5 py-0 rounded-sm border border-primary/20 bg-primary/5 font-medium max-w-[100px] truncate flex-shrink-0">
-              {index.appDisplayName}
-            </span>
-          </Tooltip>
-        ) : (
-          <div className="w-5 flex justify-center text-muted-foreground/60 flex-shrink-0">
-            {isLocal ? (
-              <Tooltip content={t("traffic.source.local")} side="bottom">
-                <Laptop className="w-3.5 h-3.5 opacity-20 grayscale" />
-              </Tooltip>
-            ) : (
-              <Tooltip content={`${t("traffic.source.remote")} (${index.clientIp})`} side="bottom">
-                <Smartphone className="w-3.5 h-3.5 text-blue-500/70" />
-              </Tooltip>
-            )}
-          </div>
-        )}
+        {/* Platform Slot (本机/外部) */}
+        <div className="w-7 flex justify-center flex-shrink-0">
+          {isLocal ? (
+            <Tooltip content={t("traffic.source.local")} side="bottom">
+              <Laptop className="w-3.5 h-3.5 text-muted-foreground/40" />
+            </Tooltip>
+          ) : (
+            <Tooltip content={`${t("traffic.source.remote")} (${index.clientIp})`} side="bottom">
+              <Smartphone className="w-3.5 h-3.5 text-blue-500/70" />
+            </Tooltip>
+          )}
+        </div>
+
+        {/* App Slot */}
+        <div className="w-7 flex justify-center flex-shrink-0">
+          {index.appDisplayName ? (
+            (() => {
+              const { Icon, toneClass } = getAppIcon(index.appName);
+              return (
+                <Tooltip content={`${index.appDisplayName} (${index.clientIp})`} side="bottom">
+                  <Icon className={`w-3.5 h-3.5 ${toneClass}`} />
+                </Tooltip>
+              );
+            })()
+          ) : (
+            <Tooltip content={t("traffic.source.app.empty")} side="bottom">
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/15" />
+            </Tooltip>
+          )}
+        </div>
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">

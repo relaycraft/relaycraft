@@ -1178,6 +1178,9 @@
       "system_desc": "将您电脑的 HTTP/HTTPS 流量通过 RelayCraft 转发。"
     },
     "source": {
+      "app": {
+        "empty": "未识别来源应用"
+      },
       "local": "本机",
       "remote": "远程设备"
     },
