@@ -1,5 +1,17 @@
 # Changelog
 
+# [1.3.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.2...v1.3.0) (2026-06-21)
+
+
+### Bug Fixes
+
+* database reset fails due to calling standalone functions as methods ([db70035](https://github-relaycraft/relaycraft/relaycraft/commit/db700353aaa13b4a278ed9ef47b53d73f67ef464))
+
+
+### Features
+
+* mobile traffic source identification and connectivity diagnostics ([889bce1](https://github-relaycraft/relaycraft/relaycraft/commit/889bce1f765317df95963cb533d41b393861d366))
+
 ## [1.2.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.1...v1.2.2) (2026-05-31)
 
 
