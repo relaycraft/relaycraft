@@ -6,4 +6,4 @@ requests==2.34.2
 pyinstaller==6.21.0
 beautifulsoup4==4.15.0
 PyYAML==6.0.3
-ijson==3.5.0
+ijson==3.5.1
