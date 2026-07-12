@@ -58,10 +58,29 @@ class CoreAddon:
                 self.logger.error(f"Error handling relay request: {e}")
             return
 
-        # 2. Check if traffic processing is active
+        # 2. Check if traffic processing is active.
+        # ReverseMode (Gateway) traffic always processes — Gateway is an
+        # independent entry point shared with colleagues, not gated by the
+        # forward proxy capture toggle.
         if not is_traffic_active():
-            flow.kill()
-            return
+            try:
+                from mitmproxy.proxy import mode_specs
+            except ImportError:
+                mode_specs = None
+                self.logger.warning(
+                    "traffic_active gate: cannot import mode_specs; "
+                    "reverse-mode traffic may be incorrectly killed"
+                )
+
+            client_conn = flow.client_conn
+            is_reverse = (
+                mode_specs is not None
+                and client_conn is not None
+                and isinstance(client_conn.proxy_mode, mode_specs.ReverseMode)
+            )
+            if not is_reverse:
+                flow.kill()
+                return
 
         try:
             # Initialize script hits list if not exists
@@ -135,10 +154,30 @@ class CoreAddon:
                 self.logger.debug(f"Access log write failed: {e}")
 
     def is_internal_request(self, flow: http.HTTPFlow) -> bool:
-        """Check if request is to RelayCraft internal API"""
+        """Check if request is to RelayCraft internal API.
+
+        Internal control surface only listens on forward proxy ports
+        (RegularMode / UpstreamMode). ReverseMode traffic is NEVER
+        treated as internal — it passes through as regular traffic
+        so Gateway routing and Rules can process it, with unmatched
+        paths receiving a 404 from the upstream or Gateway addon.
+        """
         if not flow or not flow.request:
             return False
         try:
+            client_conn = flow.client_conn
+            if client_conn is not None:
+                try:
+                    from mitmproxy.proxy import mode_specs
+
+                    if isinstance(client_conn.proxy_mode, mode_specs.ReverseMode):
+                        return False
+                except ImportError:
+                    self.logger.warning(
+                        "is_internal_request: cannot import mode_specs; "
+                        "reverse-mode traffic may be misrouted"
+                    )
+
             path = flow.request.path or ""
             host = flow.request.host or ""
             port = flow.request.port
@@ -150,10 +189,18 @@ class CoreAddon:
                 return True
 
             is_localhost = host in ["127.0.0.1", "localhost", "::1"]
-            current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
+            current_port = (
+                ctx.options.listen_port
+                if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port"))
+                else 9090
+            )
             is_proxy_port = port == current_port
 
-            return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path in ("/cert", "/cert.pem", "/cert.crt"))
+            return is_localhost and is_proxy_port and (
+                "/_relay" in path
+                or path == "/"
+                or path in ("/cert", "/cert.pem", "/cert.crt")
+            )
         except Exception:
             return False
 

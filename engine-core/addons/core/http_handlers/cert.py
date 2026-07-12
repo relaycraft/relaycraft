@@ -51,13 +51,21 @@ def _handle_cert_serve(monitor: Any, flow: Any, Response: Any) -> None:
             flow.response = Response.make(404, b"Certificate not found", CORS_HEADERS)
         return
 
-    # Non-fatal: fallback to default if proxy address can't be determined
+    # Non-fatal: fallback to default if proxy address can't be determined.
+    # In multi-mode (regular + reverse), listen_port may not uniquely identify
+    # the forward proxy port. We extract the port from the actual request
+    # connection as the primary source.
     try:
         proxy_host = flow.request.host if flow.request.host != "relay.guide" else "127.0.0.1"
+        request_port = getattr(flow.request, "port", None)
         current_port = (
-            ctx.options.listen_port
-            if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port"))
-            else 9090
+            request_port
+            if request_port
+            else (
+                ctx.options.listen_port
+                if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port"))
+                else 9090
+            )
         )
         proxy_addr = f"{proxy_host}:{current_port}"
     except Exception as e:

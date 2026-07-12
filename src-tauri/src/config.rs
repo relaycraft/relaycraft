@@ -27,6 +27,27 @@ pub struct UpstreamProxyConfig {
     pub bypass_domains: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct GatewayConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_gateway_port")]
+    pub port: u16,
+}
+
+fn default_gateway_port() -> u16 {
+    9080
+}
+
+impl Default for GatewayConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            port: default_gateway_port(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AppConfig {
     pub ssl_insecure: bool,
@@ -61,6 +82,8 @@ pub struct AppConfig {
     pub disable_gpu_acceleration: bool,
     #[serde(default)]
     pub mcp_config: McpConfig,
+    #[serde(default)]
+    pub gateway: GatewayConfig,
 }
 
 fn default_registry_url() -> String {
@@ -111,6 +134,7 @@ impl Default for AppConfig {
             enable_vibrancy: default_vibrancy(),
             disable_gpu_acceleration: default_disable_gpu_acceleration(),
             mcp_config: McpConfig::default(),
+            gateway: GatewayConfig::default(),
         }
     }
 }

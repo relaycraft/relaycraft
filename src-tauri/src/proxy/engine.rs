@@ -139,18 +139,37 @@ impl ProxyEngine for MitmproxyEngine {
             "0".to_string(),
             "-s".to_string(),
             addon_file.to_string_lossy().to_string(),
-            "-p".to_string(),
-            config.proxy_port.to_string(),
         ];
 
-        // Setup arguments (Note: mitmdump doesn't support --web-port)
-        if config.ssl_insecure {
-            args.push("--ssl-insecure".to_string());
-        }
+        // Build explicit mode for the forward proxy port.
+        // multi-mode syntax: --mode regular@PORT  or  --mode upstream:URL@PORT
         if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
             args.extend_from_slice(&[
                 "--mode".to_string(),
-                format!("upstream:{}", config.upstream_proxy.url.trim()),
+                format!(
+                    "upstream:{}@{}",
+                    config.upstream_proxy.url.trim(),
+                    config.proxy_port
+                ),
+            ]);
+        } else {
+            args.extend_from_slice(&[
+                "--mode".to_string(),
+                format!("regular@{}", config.proxy_port),
+            ]);
+        }
+
+        if config.ssl_insecure {
+            args.push("--ssl-insecure".to_string());
+        }
+
+        // Gateway reverse proxy (Phase 0 smoke-test; gated by config)
+        if config.gateway.enabled {
+            args.extend_from_slice(&[
+                "--mode".to_string(),
+                format!("reverse:http://127.0.0.1:1@{}", config.gateway.port),
+                "--set".to_string(),
+                "connection_strategy=lazy".to_string(),
             ]);
         }
 
@@ -226,33 +245,47 @@ impl ProxyEngine for MitmproxyEngine {
         self.inner.is_stopping.store(false, Ordering::SeqCst);
         *child_lock = Some(child);
 
-        let port = config.proxy_port;
+        // Build list of ports that must be ready before we report success.
+        let mut ports_to_check: Vec<(u16, &str)> = Vec::new();
+        ports_to_check.push((config.proxy_port, "forward"));
+        if config.gateway.enabled {
+            ports_to_check.push((config.gateway.port, "gateway"));
+        }
 
-        // Save port for stop verification
+        // Save primary port for stop verification
         if let Ok(mut port_lock) = self.inner.last_port.lock() {
-            *port_lock = Some(port);
+            *port_lock = Some(config.proxy_port);
         }
 
         // Release the lock before the port-wait loop so that concurrent
         // calls to stop() / terminate() don't block for up to 120 seconds.
         drop(child_lock);
 
-        // Wait for port to be ready
+        // Wait for all ports to be ready
         let start_time = std::time::Instant::now();
         let mut last_log_time = std::time::Instant::now();
         let timeout = Duration::from_secs(120); // 120s for macOS Gatekeeper verification
-        let mut ready = false;
 
-        log::info!("Waiting for proxy port {} to be ready...", port);
+        log::info!("Waiting for engine ports to be ready...");
+
+        let mut remaining: Vec<(u16, &str)> = ports_to_check.clone();
 
         while start_time.elapsed() < timeout {
-            if std::net::TcpStream::connect(format!("127.0.0.1:{}", port)).is_ok() {
-                ready = true;
-                log::info!(
-                    "Proxy port {} is ready (took {}ms)",
-                    port,
-                    start_time.elapsed().as_millis()
-                );
+            // Check which remaining ports are now ready
+            remaining.retain(|(port, label)| {
+                let reachable = std::net::TcpStream::connect(format!("127.0.0.1:{}", port)).is_ok();
+                if reachable {
+                    log::info!(
+                        "{} port {} is ready (took {}ms)",
+                        label,
+                        port,
+                        start_time.elapsed().as_millis()
+                    );
+                }
+                !reachable
+            });
+
+            if remaining.is_empty() {
                 break;
             }
 
@@ -275,7 +308,12 @@ impl ProxyEngine for MitmproxyEngine {
                 }
             };
             if let Some(status) = startup_crash {
-                let err_msg = format!("Engine crashed during startup with status: {}", status);
+                let labels: Vec<String> = remaining.iter().map(|(_, l)| l.to_string()).collect();
+                let err_msg = format!(
+                    "Engine crashed during startup with status: {} (pending ports: {})",
+                    status,
+                    labels.join(", ")
+                );
                 log::error!("{}", err_msg);
                 return Err(AppError::Config(err_msg));
             }
@@ -283,7 +321,12 @@ impl ProxyEngine for MitmproxyEngine {
             // Periodic logging every 2 seconds
             if last_log_time.elapsed().as_secs() >= 2 {
                 let elapsed = start_time.elapsed().as_secs();
-                log::info!("Still waiting for proxy engine... ({}s elapsed)", elapsed);
+                let labels: Vec<String> = remaining.iter().map(|(_, l)| l.to_string()).collect();
+                log::info!(
+                    "Still waiting for engine ports: {} ({}s elapsed)",
+                    labels.join(", "),
+                    elapsed
+                );
 
                 #[cfg(target_os = "macos")]
                 if elapsed == 10 {
@@ -296,7 +339,8 @@ impl ProxyEngine for MitmproxyEngine {
             std::thread::sleep(Duration::from_millis(200));
         }
 
-        if !ready {
+        if !remaining.is_empty() {
+            let labels: Vec<String> = remaining.iter().map(|(_, l)| l.to_string()).collect();
             // Timeout occurred — re-acquire lock to clean up the zombie process.
             let mut lock = self
                 .inner
@@ -307,7 +351,10 @@ impl ProxyEngine for MitmproxyEngine {
                 let _ = child.kill();
                 let _ = child.wait();
             }
-            return Err(AppError::Config("Timeout waiting for proxy engine to start (120s). Check if something is blocking port or if antivirus is interfering.".into()));
+            return Err(AppError::Config(format!(
+                "Timeout waiting for engine ports: {} (120s). Check if something is blocking the port(s) or if antivirus is interfering.",
+                labels.join(", ")
+            )));
         }
 
         // Spawn crash watcher, passing a cloned app handle so it can notify the frontend.
