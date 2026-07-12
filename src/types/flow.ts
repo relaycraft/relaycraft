@@ -257,8 +257,29 @@ export interface RcExtension {
   // 标记
   bodyTruncated: boolean;
 
+  // 路径解释器
+  relaycraftPath?: PathMetadata;
+
   // 未来扩展预留
   [key: string]: unknown;
+}
+
+export interface PathMetadata {
+  entry: string;
+  rules_applied: PathRuleHit[];
+  outbound: PathOutbound;
+  outcome: string;
+}
+
+export interface PathRuleHit {
+  id: string;
+  type: string;
+  name: string;
+}
+
+export interface PathOutbound {
+  via_upstream_proxy: boolean;
+  proxy_url: string | null;
 }
 
 /**

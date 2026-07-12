@@ -135,6 +135,9 @@ class CoreAddon:
 
         # 3. Baseline Capture - before anchor.py runs
         try:
+            # Must run after rule_engine.handle_response() so that
+            # _relaycraft_terminated and _relaycraft_hits are finalized.
+            self._tag_path_metadata(flow)
             self.traffic_monitor.handle_response(flow)
         except Exception as e:
             self.logger.error(f"Critical error capturing traffic: {e}")
@@ -203,6 +206,79 @@ class CoreAddon:
             )
         except Exception:
             return False
+
+    def _tag_path_metadata(self, flow: http.HTTPFlow) -> None:
+        """Write path metadata so the frontend can explain how this flow was routed.
+
+        Fields follow the contract in .ai/gateway-design.md §4.5.
+        """
+        try:
+            try:
+                from mitmproxy.proxy import mode_specs
+            except ImportError:
+                mode_specs = None
+
+            cc = flow.client_conn
+            is_reverse = (
+                mode_specs is not None
+                and cc is not None
+                and isinstance(cc.proxy_mode, mode_specs.ReverseMode)
+            )
+            entry = "gateway" if is_reverse else "forward"
+
+            hits = flow.metadata.get("_relaycraft_hits", [])
+            rules_applied = []
+            for h in hits:
+                t = h.get("type", "")
+                if t in (
+                    "map_local",
+                    "map_remote",
+                    "rewrite_header",
+                    "rewrite_body",
+                    "throttle",
+                    "block_request",
+                ):
+                    rules_applied.append(
+                        {"id": h.get("id", ""), "type": t, "name": h.get("name", "")}
+                    )
+
+            upstream_proxy = self.proxy_mgr.upstream_proxy
+            proxy_url = None
+            if upstream_proxy is not None:
+                proxy_url = "{}://{}:{}".format(
+                    upstream_proxy[0], upstream_proxy[1][0], upstream_proxy[1][1]
+                )
+
+            terminated = flow.metadata.get("_relaycraft_terminated", False)
+            breakpoint_hits = getattr(flow, "_relaycraft_breakpoint_hits", None)
+
+            if breakpoint_hits:
+                outcome = "breakpoint"
+            elif terminated:
+                if any(h.get("type") == "block_request" for h in hits):
+                    outcome = "blocked"
+                elif any(h.get("type") == "map_local" for h in hits):
+                    outcome = "mapped_local"
+                else:
+                    outcome = "mocked"
+            elif flow.error:
+                outcome = "error"
+            elif flow.response:
+                outcome = "forwarded"
+            else:
+                outcome = "mocked"
+
+            flow.metadata["_relaycraft_path"] = {
+                "entry": entry,
+                "rules_applied": rules_applied,
+                "outbound": {
+                    "via_upstream_proxy": upstream_proxy is not None,
+                    "proxy_url": proxy_url,
+                },
+                "outcome": outcome,
+            }
+        except Exception as e:
+            self.logger.warning(f"_tag_path_metadata failed: {e}")
 
     def _is_sse_flow(self, flow: http.HTTPFlow) -> bool:
         """Best-effort SSE flow detection for error classification."""

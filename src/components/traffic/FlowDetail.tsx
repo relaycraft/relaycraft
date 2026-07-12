@@ -50,6 +50,7 @@ import { useSSEPanel } from "./FlowDetail/SSEPanel.hooks";
 import { WSMessagesPanel, type WsDirectionFilter } from "./FlowDetail/WSMessagesPanel";
 import { useWSRefresh } from "./FlowDetail/WSRefresh.hooks";
 import { HeadersView } from "./HeadersView";
+import { PathInterpreter } from "./PathInterpreter";
 import { WsResendDrawer } from "./WsResendDrawer";
 
 interface FlowDetailProps {
@@ -636,6 +637,12 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 {t("flow.tabs.messages")}
               </TabsTrigger>
             )}
+            <TabsTrigger
+              value="path"
+              className="py-1 px-5 text-xs font-semibold tracking-tight rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm"
+            >
+              {t("flow.tabs.path")}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -758,6 +765,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 setExpandedSseIds={setExpandedSseIds}
               />
             )}
+
+            <TabsContent value="path" className="mt-0 flex-1 overflow-y-auto">
+              <PathInterpreter data={flow._rc.relaycraftPath ?? null} />
+            </TabsContent>
           </AnimatePresence>
         </div>
       </Tabs>

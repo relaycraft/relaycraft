@@ -427,6 +427,7 @@ class TrafficMonitor:
                         "phase": paused_at,
                     },
                     "bodyTruncated": req_truncated or res_truncated,
+                    "relaycraftPath": flow.metadata.get("_relaycraft_path"),
                 },
 
                 "msg_ts": flow.metadata.get("_relaycraft_msg_ts", time.time()),

@@ -444,8 +444,30 @@
     },
     "tabs": {
       "messages": "Messages",
+      "path": "Path",
       "request": "Request",
       "response": "Response"
+    },
+    "path": {
+      "entry": "Entry",
+      "entry_forward": "Forward Proxy",
+      "entry_gateway": "Gateway",
+      "intercept": "Interception",
+      "intercept_none": "No interception",
+      "legacy": "Legacy data — path not recorded",
+      "outbound": "Outbound",
+      "outbound_direct": "Direct connection",
+      "outbound_via": "Via {{proxy}}",
+      "outcome": "Result",
+      "outcome_blocked": "Blocked, request halted",
+      "outcome_breakpoint": "Paused at breakpoint",
+      "outcome_error": "Connection error",
+      "outcome_forwarded": "Forwarded to server",
+      "outcome_mapped_local": "Local file, did not leave device",
+      "outcome_mocked": "Synthetic response, not sent",
+      "rewrite": "Rewrite",
+      "rewrite_none": "No rewrite rules matched",
+      "title": "How did this request go?"
     }
   },
   "header_editor": {

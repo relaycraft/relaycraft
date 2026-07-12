@@ -444,8 +444,30 @@
     },
     "tabs": {
       "messages": "消息",
+      "path": "路径",
       "request": "请求",
       "response": "响应"
+    },
+    "path": {
+      "entry": "入口",
+      "entry_forward": "正向代理",
+      "entry_gateway": "网关",
+      "intercept": "拦截",
+      "intercept_none": "未拦截",
+      "legacy": "历史数据 — 未记录路径",
+      "outbound": "出站",
+      "outbound_direct": "直连",
+      "outbound_via": "经 {{proxy}}",
+      "outcome": "结论",
+      "outcome_blocked": "已阻止，请求被中断",
+      "outcome_breakpoint": "断点暂停",
+      "outcome_error": "连接错误",
+      "outcome_forwarded": "转发至服务器",
+      "outcome_mapped_local": "本地文件，未出网",
+      "outcome_mocked": "模拟响应，未发送",
+      "rewrite": "改写",
+      "rewrite_none": "无改写规则命中",
+      "title": "这条请求怎么走的？"
     }
   },
   "header_editor": {
