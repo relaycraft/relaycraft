@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { explainPath } from "@/lib/traffic/explainPath";
+import type { PathMetadata } from "@/types/flow";
 import { parseCurl } from "../../lib/curlParser";
 import { cn } from "../../lib/utils";
 import { useComposerStore } from "../../stores/composerStore";
@@ -67,6 +69,8 @@ export function ComposerView() {
   const [curlInput, setCurlInput] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
   const [showCurlModal, setShowCurlModal] = useState(false);
+  const [testingPath, setTestingPath] = useState(false);
+  const [pathResult, setPathResult] = useState<PathMetadata | null>(null);
 
   const handleFormatJson = () => {
     if (!body.trim()) return;
@@ -131,6 +135,25 @@ export function ComposerView() {
       setLastResponse(null);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleTryPath = async () => {
+    if (!url || testingPath) return;
+    setTestingPath(true);
+    setPathResult(null);
+    try {
+      const result = await explainPath(method, url);
+      setPathResult(result);
+    } catch {
+      setPathResult({
+        entry: "forward",
+        rules_applied: [],
+        outbound: { via_upstream_proxy: false, proxy_url: null },
+        outcome: "error",
+      });
+    } finally {
+      setTestingPath(false);
     }
   };
 
@@ -252,6 +275,22 @@ export function ComposerView() {
                 )}
               </div>
             </Button>
+
+            <Tooltip content={t("composer.try_path")}>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={handleTryPath}
+                disabled={!url || testingPath}
+                className="h-8 w-8 rounded-md"
+              >
+                {testingPath ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Zap className="w-3.5 h-3.5" />
+                )}
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </header>
@@ -445,6 +484,39 @@ export function ComposerView() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {pathResult && (
+              <div className="border-t border-border">
+                <div className="px-3 py-1.5 border-b border-border/50 bg-muted/10">
+                  <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                    {t("composer.try_path_result")}
+                  </span>
+                </div>
+                <div className="max-h-60 overflow-y-auto overflow-x-hidden px-3 py-2 text-xs space-y-1.5 font-mono">
+                  <div className="text-muted-foreground">
+                    <span className="font-semibold">{t("flow.path.entry")}:</span>{" "}
+                    {pathResult.entry === "gateway"
+                      ? t("flow.path.entry_gateway")
+                      : t("flow.path.entry_forward")}
+                  </div>
+                  <div className="text-muted-foreground break-all">
+                    <span className="font-semibold">{t("flow.path.rewrite")}:</span>{" "}
+                    {pathResult.rules_applied.length > 0
+                      ? pathResult.rules_applied.map((r) => `${r.name} (${r.type})`).join(", ")
+                      : t("flow.path.rewrite_none")}
+                  </div>
+                  <div className="text-muted-foreground">
+                    <span className="font-semibold">{t("flow.path.outbound")}:</span>{" "}
+                    {pathResult.outbound.via_upstream_proxy
+                      ? t("flow.path.outbound_via", { proxy: pathResult.outbound.proxy_url ?? "?" })
+                      : t("flow.path.outbound_direct")}
+                  </div>
+                  <div className="font-semibold text-primary break-all">
+                    {t(`flow.path.outcome_${pathResult.outcome}`, pathResult.outcome)}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

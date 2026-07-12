@@ -574,6 +574,8 @@ class TrafficMonitor:
             return "relay_export_har"
         if "/_relay/export_progress" in path:
             return "relay_export_progress"
+        if "/_relay/explain_path" in path and method == "POST":
+            return "relay_explain_path"
         if "/_relay/import_session" in path and "_file" not in path:
             return "relay_import_session"
         if "/_relay/import_session_file" in path:

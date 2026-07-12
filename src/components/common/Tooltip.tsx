@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface TooltipProps {
@@ -18,6 +18,7 @@ export function Tooltip({
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -49,6 +50,36 @@ export function Tooltip({
     setIsVisible(true);
   };
 
+  useEffect(() => {
+    if (isVisible && tooltipRef.current) {
+      // Reset margin first in case it's re-running
+      tooltipRef.current.style.marginLeft = "0px";
+      tooltipRef.current.style.marginTop = "0px";
+
+      const rect = tooltipRef.current.getBoundingClientRect();
+
+      // Horizontal overflow
+      const overflowRight = rect.right - window.innerWidth;
+      const overflowLeft = 0 - rect.left;
+
+      if (overflowRight > 0) {
+        tooltipRef.current.style.marginLeft = `-${overflowRight + 8}px`;
+      } else if (overflowLeft > 0) {
+        tooltipRef.current.style.marginLeft = `${overflowLeft + 8}px`;
+      }
+
+      // Vertical overflow
+      const overflowBottom = rect.bottom - window.innerHeight;
+      const overflowTop = 0 - rect.top;
+
+      if (overflowBottom > 0) {
+        tooltipRef.current.style.marginTop = `-${overflowBottom + 8}px`;
+      } else if (overflowTop > 0) {
+        tooltipRef.current.style.marginTop = `${overflowTop + 8}px`;
+      }
+    }
+  }, [isVisible]);
+
   return (
     <div
       className={`relative flex items-center ${className}`}
@@ -59,6 +90,7 @@ export function Tooltip({
       {isVisible &&
         createPortal(
           <div
+            ref={tooltipRef}
             data-relaycraft-tooltip
             className={`relaycraft-popup fixed z-[9999] px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
               multiline ? "whitespace-pre-wrap break-all max-w-[320px]" : "whitespace-nowrap"

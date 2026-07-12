@@ -15,8 +15,12 @@ class RuleEngine:
         self.matcher = RuleMatcher()
         self.executor = ActionExecutor(self)
 
-    def handle_request(self, flow: http.HTTPFlow) -> None:
-        """Standard matching and request-phase pipeline execution"""
+    def handle_request(self, flow: http.HTTPFlow, match_only: bool = False) -> None:
+        """Standard matching and request-phase pipeline execution.
+
+        Set match_only=True to run matching and hit recording without
+        executing any actions (used by the explain_path sandbox).
+        """
         self.loader.load_rules()
         matched_rules = []
 
@@ -68,8 +72,8 @@ class RuleEngine:
 
         if matched_rules:
             flow.metadata["_relaycraft_matched_rules"] = matched_rules
-            # 2. Execute Request Pipeline
-            self.execute_pipeline(flow, "request")
+            if not match_only:
+                self.execute_pipeline(flow, "request")
 
     def handle_response(self, flow: http.HTTPFlow) -> None:
         """Execute response-phase pipeline for already matched rules"""

@@ -23,6 +23,7 @@ from .data import (
     _handle_stats,
     _handle_traffic_active,
 )
+from .explain import _handle_explain_path
 from .errors import make_error_response
 from .importers import (
     _handle_import_har,
@@ -93,6 +94,7 @@ def handle_data_routes(
         "relay_export_session": lambda: _handle_export_session(monitor, flow, Response, safe_json_default),
         "relay_export_har": lambda: _handle_export_har(monitor, flow, Response, safe_json_default),
         "relay_export_progress": lambda: _handle_export_progress(monitor, flow, Response),
+        "relay_explain_path": lambda: _handle_explain_path(monitor, flow, Response),
     }
     return _dispatch(route_map, route_key, monitor, flow, Response)
 

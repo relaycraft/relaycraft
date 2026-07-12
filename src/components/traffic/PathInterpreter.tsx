@@ -29,7 +29,7 @@ export function PathInterpreter({ flow }: PathInterpreterProps) {
   if (!data) {
     return (
       <div className="p-6 flex flex-col items-center justify-center text-muted-foreground h-full bg-background relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_14px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:14px_14px]" />
         <Network className="w-12 h-12 mb-4 opacity-10" />
         <span className="text-sm font-mono tracking-widest uppercase opacity-50">
           {t("flow.path.legacy")}
