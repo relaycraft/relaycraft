@@ -250,46 +250,60 @@ pub async fn get_logs(log_name: String, lines: usize) -> Result<Vec<String>, Str
         return Ok(vec![format!("Log file {} not found.", log_filename)]);
     }
 
-    let temp_dir = std::env::temp_dir();
-    let temp_filename = format!(
-        "{}_snap_{}.txt",
-        log_filename,
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    );
-    let temp_path = temp_dir.join(temp_filename);
+    // Read only the tail of the file to avoid reading the entire file
+    let result = tokio::task::spawn_blocking(move || read_last_n_lines(&log_path, lines))
+        .await
+        .map_err(|e| e.to_string())?;
 
-    let mut attempts = 0;
-    while attempts < 3 {
-        match std::fs::copy(&log_path, &temp_path) {
-            Ok(_) => break,
-            Err(_) => {
-                attempts += 1;
-                std::thread::sleep(std::time::Duration::from_millis(50));
-            }
-        }
-    }
+    result.map_err(|e| e.to_string())
+}
 
-    if !temp_path.exists() {
-        return Ok(vec![format!("Could not read logs (File locked).")]);
-    }
+/// Read the last `n` lines from a file by seeking backwards in chunks.
+/// Avoids reading the entire file, making it fast even for very large logs.
+fn read_last_n_lines(path: &std::path::Path, n: usize) -> std::io::Result<Vec<String>> {
+    use std::io::{Read, Seek, SeekFrom};
 
-    let file = std::fs::File::open(&temp_path).map_err(|e| e.to_string())?;
-    let reader = std::io::BufReader::new(file);
-    use std::io::BufRead;
-    let mut all_lines = Vec::new();
-    for line_result in reader.split(b'\n') {
-        if let Ok(bytes) = line_result {
-            all_lines.push(String::from_utf8_lossy(&bytes).into_owned());
-        }
-    }
-    let _ = std::fs::remove_file(&temp_path);
-    let count = all_lines.len();
-    if count == 0 {
+    let mut file = std::fs::File::open(path)?;
+    let file_size = file.metadata()?.len() as usize;
+
+    if file_size == 0 || n == 0 {
         return Ok(vec![]);
     }
-    let skip = count.saturating_sub(lines);
-    Ok(all_lines.into_iter().skip(skip).collect())
+
+    const CHUNK_SIZE: usize = 8192;
+    let mut buf = vec![0u8; CHUNK_SIZE];
+    let mut lines_count = 0usize;
+    let mut pos = file_size;
+    let mut fragments: Vec<Vec<u8>> = vec![];
+
+    // Read backwards in chunks until we have at least n lines or hit the beginning
+    while pos > 0 && lines_count <= n {
+        let read_size = CHUNK_SIZE.min(pos);
+        pos -= read_size;
+        file.seek(SeekFrom::Start(pos as u64))?;
+        file.read_exact(&mut buf[..read_size])?;
+        for &byte in &buf[..read_size] {
+            if byte == b'\n' {
+                lines_count += 1;
+            }
+        }
+        fragments.push(buf[..read_size].to_vec());
+    }
+
+    // Reassemble in forward order
+    let mut full = Vec::with_capacity(fragments.len() * CHUNK_SIZE);
+    for frag in fragments.iter().rev() {
+        full.extend_from_slice(frag);
+    }
+
+    let text = String::from_utf8_lossy(&full);
+    let mut all_lines: Vec<String> = text.split('\n').map(|s| s.to_string()).collect();
+
+    // Remove trailing empty string from trailing newline
+    if all_lines.last().map_or(false, |l| l.is_empty()) {
+        all_lines.pop();
+    }
+
+    let start = all_lines.len().saturating_sub(n);
+    Ok(all_lines[start..].to_vec())
 }
