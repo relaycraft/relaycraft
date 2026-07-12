@@ -767,7 +767,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             )}
 
             <TabsContent value="path" className="mt-0 flex-1 overflow-y-auto">
-              <PathInterpreter data={flow._rc.relaycraftPath ?? null} />
+              <PathInterpreter flow={flow} />
             </TabsContent>
           </AnimatePresence>
         </div>
