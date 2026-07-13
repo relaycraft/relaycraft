@@ -77,17 +77,27 @@ export function PathInterpreter({ flow }: PathInterpreterProps) {
       content: isEntryGateway ? t("flow.path.entry_gateway") : t("flow.path.entry_forward"),
       detail: `NODE_TYPE="${data.entry.toUpperCase()}"`,
       extraMetrics: flow?._rc?.clientIp ? `CLIENT_IP="${flow._rc.clientIp}"` : null,
+      gatewayProfile: isEntryGateway ? data.env_profile : null,
     },
     {
       key: "rewrite",
       icon: FileEdit,
       label: t("flow.path.rewrite"),
-      active: hasRewrite,
-      color: hasRewrite
-        ? "text-amber-400 border-amber-500/50 bg-amber-950/20 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
-        : "text-muted-foreground/50 border-border/50 bg-muted/10",
-      content: hasRewrite ? null : t("flow.path.rewrite_none"),
-      rules: rules,
+      active: hasRewrite || (isEntryGateway && !!data.gateway_route_name),
+      color:
+        hasRewrite || (isEntryGateway && !!data.gateway_route_name)
+          ? "text-amber-400 border-amber-500/50 bg-amber-950/20 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+          : "text-muted-foreground/50 border-border/50 bg-muted/10",
+      content: hasRewrite
+        ? null
+        : isEntryGateway && data.gateway_route_name
+          ? null
+          : t("flow.path.rewrite_none"),
+      rules: rules.length > 0 ? rules : undefined,
+      gatewayRoute:
+        isEntryGateway && data.gateway_route_name
+          ? { name: data.gateway_route_name, upstream: data.resolved_upstream ?? "" }
+          : undefined,
     },
     {
       key: "intercept",
@@ -213,6 +223,24 @@ export function PathInterpreter({ flow }: PathInterpreterProps) {
                     </div>
 
                     <div className="text-[11px] space-y-1.5">
+                      {step.gatewayRoute && (
+                        <div className="mt-1.5 bg-black/20 p-2 rounded border border-border/50">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-cyan-100/90 text-[11px] tracking-wide">
+                              {step.gatewayRoute.name}
+                            </span>
+                            <span className="text-[8px] uppercase bg-cyan-500/20 text-cyan-400 px-1 py-0.5 rounded border border-cyan-500/30">
+                              route
+                            </span>
+                          </div>
+                          {step.gatewayRoute.upstream && (
+                            <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground/70 truncate">
+                              <Terminal className="w-2.5 h-2.5" />
+                              <span className="truncate">{step.gatewayRoute.upstream}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {step.rules && step.rules.length > 0 ? (
                         <div className="space-y-1.5 mt-1.5">
                           {step.rules.map((r: any, j: number) => (
@@ -259,6 +287,14 @@ export function PathInterpreter({ flow }: PathInterpreterProps) {
                             <div className="text-muted-foreground flex items-center gap-1.5">
                               <span className="text-border">|</span>
                               <span className="text-amber-500/80">{step.extraMetrics}</span>
+                            </div>
+                          )}
+                          {step.gatewayProfile && (
+                            <div className="text-muted-foreground flex items-center gap-1.5">
+                              <span className="text-border">|</span>
+                              <span className="text-cyan-400/80">
+                                PROFILE="{step.gatewayProfile}"
+                              </span>
                             </div>
                           )}
                           {step.statusMetric && (

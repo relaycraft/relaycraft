@@ -269,6 +269,10 @@ export interface PathMetadata {
   rules_applied: PathRuleHit[];
   outbound: PathOutbound;
   outcome: string;
+  gateway_route_id?: string;
+  gateway_route_name?: string;
+  env_profile?: string;
+  resolved_upstream?: string;
 }
 
 export interface PathRuleHit {
