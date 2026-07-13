@@ -268,7 +268,9 @@ class CoreAddon:
             else:
                 outcome = "mocked"
 
-            flow.metadata["_relaycraft_path"] = {
+            gateway_meta = flow.metadata.get("_relaycraft_gateway")
+
+            path_data = {
                 "entry": entry,
                 "rules_applied": rules_applied,
                 "outbound": {
@@ -277,6 +279,14 @@ class CoreAddon:
                 },
                 "outcome": outcome,
             }
+
+            if gateway_meta:
+                path_data["gateway_route_id"] = gateway_meta.get("route_id")
+                path_data["gateway_route_name"] = gateway_meta.get("route_name")
+                path_data["env_profile"] = gateway_meta.get("env_profile")
+                path_data["resolved_upstream"] = gateway_meta.get("resolved_upstream")
+
+            flow.metadata["_relaycraft_path"] = path_data
         except Exception as e:
             self.logger.warning(f"_tag_path_metadata failed: {e}")
 

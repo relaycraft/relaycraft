@@ -428,6 +428,7 @@ class TrafficMonitor:
                     },
                     "bodyTruncated": req_truncated or res_truncated,
                     "relaycraftPath": flow.metadata.get("_relaycraft_path"),
+                    "relaycraftGateway": flow.metadata.get("_relaycraft_gateway"),
                 },
 
                 "msg_ts": flow.metadata.get("_relaycraft_msg_ts", time.time()),

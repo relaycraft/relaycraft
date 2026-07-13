@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from typing import List, Any, Optional, Tuple
 from core import CoreAddon
+from core.gateway.addon import GatewayAddon
 from core.script_load_report import record_failed, record_loaded, reset as reset_script_load_report
 from injector import inject_tracking
 
@@ -258,7 +259,8 @@ def _preprocess_and_load_script(source_path: str) -> Tuple[Optional[Any], Option
 
 # Build addons list
 addons: List[Any] = [
-    CoreAddon()
+    CoreAddon(),
+    GatewayAddon(),
 ]
 
 # Load user scripts from environment variable (Passed by Rust)
