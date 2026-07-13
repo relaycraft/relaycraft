@@ -19,7 +19,8 @@ export type TabType =
   | "plugins"
   | "certificate"
   | "settings"
-  | "composer";
+  | "composer"
+  | "environment";
 export type Language = "zh" | "en";
 export type SettingsTabType =
   | "general"

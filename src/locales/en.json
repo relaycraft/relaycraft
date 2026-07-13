@@ -1111,6 +1111,7 @@
   "sidebar": {
     "certificate": "Certificates",
     "composer": "Request Composer",
+    "environment": "Environment",
     "plugins": "Plugins",
     "rules": "Rules",
     "scripts": "Scripts",

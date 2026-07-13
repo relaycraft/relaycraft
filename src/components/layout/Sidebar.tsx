@@ -1,6 +1,14 @@
 import { motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
-import { Braces, Layers, Package, Radar, SendHorizontal, Settings } from "lucide-react";
+import {
+  Braces,
+  Layers,
+  Map as MapIcon,
+  Package,
+  Radar,
+  SendHorizontal,
+  Settings,
+} from "lucide-react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "../../hooks/useNavigate";
@@ -27,6 +35,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
       { id: "composer", icon: SendHorizontal, label: t("sidebar.composer") },
       { id: "rules", icon: Layers, label: t("sidebar.rules") },
       { id: "scripts", icon: Braces, label: t("sidebar.scripts") },
+      { id: "environment", icon: MapIcon, label: t("sidebar.environment") },
       ...pluginPages.map((p) => {
         let IconComponent: any = Package;
         if (typeof p.icon === "string" && p.icon) {

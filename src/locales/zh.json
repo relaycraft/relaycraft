@@ -1111,6 +1111,7 @@
   "sidebar": {
     "certificate": "证书管理",
     "composer": "请求构造",
+    "environment": "环境概览",
     "plugins": "插件",
     "rules": "规则管理",
     "scripts": "脚本管理",
