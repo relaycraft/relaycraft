@@ -16,7 +16,9 @@ class GatewayAddon:
         self.env_resolver = EnvResolver()
 
     def load(self, _loader):
-        self.env_resolver.set_profile("default")
+        import os
+        profile = os.environ.get("RELAYCRAFT_GATEWAY_ACTIVE_PROFILE", "default")
+        self.env_resolver.set_profile(profile)
         self.loader.load_routes()
 
     def request(self, flow: http.HTTPFlow) -> None:

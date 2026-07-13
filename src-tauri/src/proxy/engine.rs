@@ -223,6 +223,12 @@ impl ProxyEngine for MitmproxyEngine {
         cmd.env("PYTHONUTF8", "1");
         cmd.env("PYTHONIOENCODING", "utf-8");
 
+        // Pass gateway configuration to Python engine
+        cmd.env(
+            "RELAYCRAFT_GATEWAY_ACTIVE_PROFILE",
+            &config.gateway.active_profile,
+        );
+
         cmd.args(&args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
