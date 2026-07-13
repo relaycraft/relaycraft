@@ -2,6 +2,7 @@ mod ai;
 mod certificate;
 mod common;
 mod config;
+mod gateway;
 mod mcp;
 pub mod plugins;
 mod proxy;
@@ -398,6 +399,15 @@ pub fn run() {
             rules::get_rules_dir_path,
             rules::export_rules_zip,
             rules::import_rules_zip,
+            gateway::load_all_gateway_routes,
+            gateway::save_gateway_route,
+            gateway::delete_gateway_route,
+            gateway::load_gateway_groups,
+            gateway::save_gateway_groups,
+            gateway::load_gateway_env,
+            gateway::save_gateway_env,
+            gateway::list_gateway_env_profiles,
+            gateway::get_gateway_dir_path,
             logging::log_domain_event,
             logging::get_logs,
             get_startup_warnings,

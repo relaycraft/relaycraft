@@ -33,10 +33,18 @@ pub struct GatewayConfig {
     pub enabled: bool,
     #[serde(default = "default_gateway_port")]
     pub port: u16,
+    #[serde(default = "default_gateway_profile")]
+    pub active_profile: String,
+    #[serde(default)]
+    pub listen_lan: bool,
 }
 
 fn default_gateway_port() -> u16 {
     9080
+}
+
+fn default_gateway_profile() -> String {
+    "default".into()
 }
 
 impl Default for GatewayConfig {
@@ -44,6 +52,8 @@ impl Default for GatewayConfig {
         Self {
             enabled: false,
             port: default_gateway_port(),
+            active_profile: default_gateway_profile(),
+            listen_lan: false,
         }
     }
 }
