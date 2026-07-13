@@ -9,6 +9,7 @@ import { Input } from "./components/common/Input";
 import { Tooltip } from "./components/common/Tooltip";
 import { ComposerView } from "./components/composer/ComposerView";
 import { EnvironmentView } from "./components/environment/EnvironmentView";
+import { GatewayView } from "./components/gateway/GatewayView";
 import { GlobalModals } from "./components/layout/GlobalModals";
 import { Sidebar } from "./components/layout/Sidebar";
 import { StatusBar } from "./components/layout/StatusBar";
@@ -281,6 +282,7 @@ function App() {
                     {activeTab === "scripts" && t("sidebar.scripts")}
                     {activeTab === "settings" && t("sidebar.settings")}
                     {activeTab === "environment" && t("sidebar.environment")}
+                    {activeTab === "gateway" && t("sidebar.gateway")}
                     {/* Plugin Page Title */}
                     {(() => {
                       const page = pluginPages.find((p) => p.id === activeTab);
@@ -427,6 +429,12 @@ function App() {
                     className={`h-full w-full overflow-hidden ${activeTab === "environment" ? "" : "hidden"}`}
                   >
                     <EnvironmentView />
+                  </div>
+
+                  <div
+                    className={`h-full w-full overflow-hidden ${activeTab === "gateway" ? "" : "hidden"}`}
+                  >
+                    <GatewayView />
                   </div>
 
                   <div

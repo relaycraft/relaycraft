@@ -1116,7 +1116,8 @@
     "rules": "Rules",
     "scripts": "Scripts",
     "settings": "Settings",
-    "traffic": "Traffic Monitor"
+    "traffic": "Traffic Monitor",
+    "gateway": "Gateway"
   },
   "status_bar": {
     "breakpoints": "Manage Breakpoints",

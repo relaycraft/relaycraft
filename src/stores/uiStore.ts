@@ -20,7 +20,8 @@ export type TabType =
   | "certificate"
   | "settings"
   | "composer"
-  | "environment";
+  | "environment"
+  | "gateway";
 export type Language = "zh" | "en";
 export type SettingsTabType =
   | "general"

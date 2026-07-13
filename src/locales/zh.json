@@ -1116,7 +1116,8 @@
     "rules": "规则管理",
     "scripts": "脚本管理",
     "settings": "设置",
-    "traffic": "流量监控"
+    "traffic": "流量监控",
+    "gateway": "网关管理"
   },
   "status_bar": {
     "breakpoints": "管理断点",

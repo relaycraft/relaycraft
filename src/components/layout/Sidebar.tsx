@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
 import {
   Braces,
+  Cog,
   Layers,
   Map as MapIcon,
   Package,
@@ -36,6 +37,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
       { id: "rules", icon: Layers, label: t("sidebar.rules") },
       { id: "scripts", icon: Braces, label: t("sidebar.scripts") },
       { id: "environment", icon: MapIcon, label: t("sidebar.environment") },
+      { id: "gateway", icon: Cog, label: t("sidebar.gateway") },
       ...pluginPages.map((p) => {
         let IconComponent: any = Package;
         if (typeof p.icon === "string" && p.icon) {
