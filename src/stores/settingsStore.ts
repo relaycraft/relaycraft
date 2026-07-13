@@ -31,6 +31,12 @@ export interface AppConfig {
     enabled: boolean;
     port: number;
   };
+  gateway?: {
+    enabled: boolean;
+    port: number;
+    active_profile: string;
+    listen_lan: boolean;
+  };
 }
 
 export type ConnectionStatus = "idle" | "success" | "error";
@@ -62,6 +68,12 @@ interface SettingsStore {
   testUpstreamConnectivity: () => Promise<void>;
   resetUpstreamStatus: () => void;
   updateMcpConfig: (mcpConfig: { enabled: boolean; port: number }) => Promise<void>;
+  updateGatewayConfig: (gateway: {
+    enabled: boolean;
+    port: number;
+    active_profile: string;
+    listen_lan: boolean;
+  }) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -88,6 +100,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     mcp_config: {
       enabled: false,
       port: 7090,
+    },
+    gateway: {
+      enabled: false,
+      port: 9080,
+      active_profile: "default",
+      listen_lan: false,
     },
   },
   loading: false,
@@ -235,5 +253,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       Logger.error("Failed to apply MCP config:", error);
     }
+  },
+
+  updateGatewayConfig: async (gateway) => {
+    const { config, saveConfig } = get();
+    await saveConfig({ ...config, gateway });
   },
 }));

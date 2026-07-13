@@ -33,6 +33,12 @@ const {
       enabled: false,
       port: 7090,
     },
+    gateway: {
+      enabled: false,
+      port: 9080,
+      active_profile: "default",
+      listen_lan: false,
+    },
   };
 
   const settingsState = {
@@ -119,6 +125,12 @@ describe("NetworkSettings pending restart state", () => {
       mcp_config: {
         enabled: false,
         port: 7090,
+      },
+      gateway: {
+        enabled: false,
+        port: 9080,
+        active_profile: "default",
+        listen_lan: false,
       },
     };
     proxyState.running = true;

@@ -27,6 +27,12 @@ const { settingsState, useSettingsStoreMock } = vi.hoisted(() => {
       enabled: false,
       port: 7090,
     },
+    gateway: {
+      enabled: false,
+      port: 9080,
+      active_profile: "default",
+      listen_lan: false,
+    },
   };
 
   const settingsState = {
@@ -105,6 +111,12 @@ describe("AdvancedSettings pending restart state", () => {
       mcp_config: {
         enabled: false,
         port: 7090,
+      },
+      gateway: {
+        enabled: false,
+        port: 9080,
+        active_profile: "default",
+        listen_lan: false,
       },
     };
   });

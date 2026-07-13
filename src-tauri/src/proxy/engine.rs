@@ -163,11 +163,16 @@ impl ProxyEngine for MitmproxyEngine {
             args.push("--ssl-insecure".to_string());
         }
 
-        // Gateway reverse proxy (Phase 0 smoke-test; gated by config)
+        // Gateway reverse proxy (gated by config)
         if config.gateway.enabled {
+            let listen = if config.gateway.listen_lan {
+                format!("0.0.0.0:{}", config.gateway.port)
+            } else {
+                format!("127.0.0.1:{}", config.gateway.port)
+            };
             args.extend_from_slice(&[
                 "--mode".to_string(),
-                format!("reverse:http://127.0.0.1:1@{}", config.gateway.port),
+                format!("reverse:http://127.0.0.1:1@{listen}"),
                 "--set".to_string(),
                 "connection_strategy=lazy".to_string(),
             ]);

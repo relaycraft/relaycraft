@@ -40,6 +40,7 @@ const mockConfig: AppConfig = {
   enable_vibrancy: true,
   disable_gpu_acceleration: false,
   mcp_config: { enabled: false, port: 7090 },
+  gateway: { enabled: false, port: 9080, active_profile: "default", listen_lan: false },
 };
 
 describe("settingsStore", () => {
