@@ -25,6 +25,16 @@ class GatewayAddon:
         if not isinstance(flow.client_conn.proxy_mode, mode_specs.ReverseMode):
             return
 
+        try:
+            self._handle_request(flow)
+        except Exception as e:
+            self.logger.error(f"GatewayAddon.request failed: {e}")
+            try:
+                flow.response = http.Response.make(502, b"Gateway internal error")
+            except Exception:
+                pass
+
+    def _handle_request(self, flow: http.HTTPFlow) -> None:
         routes = self.loader.load_routes()
         req = flow.request
         matched = self.router.match(
@@ -42,7 +52,7 @@ class GatewayAddon:
 
         upstream_cfg = matched.get("upstream", {})
         upstream_url = upstream_cfg.get("url", "")
-        strip_prefix = upstream_cfg.get("strip_prefix", "")
+        strip_prefix = upstream_cfg.get("stripPrefix", "")
 
         try:
             resolved = self.env_resolver.resolve(upstream_url)
@@ -59,13 +69,15 @@ class GatewayAddon:
         req.port = parsed.port or (443 if parsed.scheme == "https" else 80)
         req.scheme = parsed.scheme or "http"
 
-        if strip_prefix:
-            new_path = req.path
-            if new_path.startswith(strip_prefix):
-                new_path = new_path[len(strip_prefix):]
-                if not new_path.startswith("/"):
-                    new_path = "/" + new_path
-            req.path = new_path or "/"
+        # Strip prefix from incoming path, then prepend upstream URL path.
+        new_path = req.path
+        if strip_prefix and new_path.startswith(strip_prefix):
+            new_path = new_path[len(strip_prefix):]
+        if parsed.path and parsed.path != "/":
+            new_path = parsed.path.rstrip("/") + new_path
+        if not new_path.startswith("/"):
+            new_path = "/" + new_path
+        req.path = new_path or "/"
 
         self._tag_gateway_path(flow, matched, "forwarded")
 

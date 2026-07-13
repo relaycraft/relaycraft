@@ -258,9 +258,12 @@ def _preprocess_and_load_script(source_path: str) -> Tuple[Optional[Any], Option
         return None, err
 
 # Build addons list
+# Order matters: Gateway routes MUST run before Core/rule engine so that
+# reverse-mode upstream rewriting happens before rules are matched against
+# the post-rewrite URL, matching the "拼环境 / Mock 掺真实" contract.
 addons: List[Any] = [
-    CoreAddon(),
     GatewayAddon(),
+    CoreAddon(),
 ]
 
 # Load user scripts from environment variable (Passed by Rust)

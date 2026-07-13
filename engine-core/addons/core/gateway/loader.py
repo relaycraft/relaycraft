@@ -68,8 +68,8 @@ class GatewayLoader:
                                 match.setdefault("methods", [])
                             if "upstream" in route:
                                 upstream = route["upstream"]
-                                upstream.setdefault("strip_prefix", "")
-                                upstream.setdefault("timeout_ms", 30000)
+                                upstream.setdefault("stripPrefix", "")
+                                upstream.setdefault("timeoutMs", 30000)
                             routes.append(route)
                 except Exception as e:
                     self.logger.debug(f"[Gateway] skip {yaml_file}: {e}")

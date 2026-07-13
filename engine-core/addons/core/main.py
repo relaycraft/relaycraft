@@ -58,6 +58,12 @@ class CoreAddon:
                 self.logger.error(f"Error handling relay request: {e}")
             return
 
+        # 1.5 Gateway short-circuit — if GatewayAddon already set a response
+        # (404 no route / 502 env var missing), skip rule engine.
+        # The flow is still captured by the response() hook later.
+        if flow.response is not None and flow.metadata.get("_relaycraft_gateway"):
+            return
+
         # 2. Check if traffic processing is active.
         # ReverseMode (Gateway) traffic always processes — Gateway is an
         # independent entry point shared with colleagues, not gated by the

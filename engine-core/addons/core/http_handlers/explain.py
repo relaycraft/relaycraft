@@ -1,4 +1,5 @@
 import json
+import os
 from types import SimpleNamespace
 from typing import Any
 from urllib.parse import urlparse
@@ -77,6 +78,59 @@ def _handle_explain_path(monitor: Any, flow: Any, Response: Any) -> None:
                 upstream_proxy[0], upstream_proxy[1][0], upstream_proxy[1][1]
             )
 
+        gateway_info = {}
+        if entry == "gateway":
+            try:
+                from ..gateway.loader import GatewayLoader
+                from ..gateway.router import GatewayRouter
+
+                loader = GatewayLoader()
+                g_routes = loader.load_routes()
+                router = GatewayRouter()
+                gw_match = router.match(
+                    g_routes,
+                    mock_flow.request.host,
+                    mock_flow.request.path,
+                    mock_flow.request.method,
+                    mock_flow.request.headers,
+                )
+                if gw_match is not None:
+                    gateway_info = {
+                        "gateway_route_id": gw_match.get("id"),
+                        "gateway_route_name": gw_match.get("name"),
+                        "env_profile": os.environ.get(
+                            "RELAYCRAFT_GATEWAY_ACTIVE_PROFILE", "default"
+                        ),
+                    }
+
+                    # Rewrite mock URL so Rules match the post-Gateway target.
+                    from ..gateway.env_resolver import EnvResolver
+                    import urllib.parse as urlparse_mod
+
+                    resolver = EnvResolver()
+                    resolver.set_profile(
+                        os.environ.get("RELAYCRAFT_GATEWAY_ACTIVE_PROFILE", "default")
+                    )
+                    upstream_url = gw_match.get("upstream", {}).get("url", "")
+                    strip_prefix = gw_match.get("upstream", {}).get("stripPrefix", "")
+                    try:
+                        resolved = resolver.resolve(upstream_url)
+                        parsed = urlparse_mod.urlparse(resolved)
+                        mock_flow.request.host = parsed.hostname or mock_flow.request.host
+                        mock_flow.request.port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                        new_path = mock_flow.request.path
+                        if strip_prefix and new_path.startswith(strip_prefix):
+                            new_path = new_path[len(strip_prefix):]
+                        if parsed.path and parsed.path != "/":
+                            new_path = parsed.path.rstrip("/") + new_path
+                        if not new_path.startswith("/"):
+                            new_path = "/" + new_path
+                        mock_flow.request.path = new_path or "/"
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
         # Simulate rule matching only (no execution).
         try:
             main.rule_engine.handle_request(mock_flow, match_only=True)
@@ -118,6 +172,7 @@ def _handle_explain_path(monitor: Any, flow: Any, Response: Any) -> None:
                 "proxy_url": proxy_url,
             },
             "outcome": outcome,
+            **gateway_info,
         }
 
     json_str = json.dumps(result, ensure_ascii=False)
