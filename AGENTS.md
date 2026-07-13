@@ -55,3 +55,22 @@ If full validation is not run, explicitly report what was skipped.
 - Do not require `.cursor/` or `.ai/` content for repository correctness.
 - Local private workspace files (`.ai/`, `.cursor/`) must remain out of git.
 - Document durable, repository-wide rules here; keep ephemeral notes local.
+
+## 7) Learned User Preferences
+
+- Prefer Chinese replies unless the user explicitly asks for English.
+- Commit/PR text must not mention internal planning artifacts (`.ai/`, phase labels, internal version-window names); describe user-facing outcomes only.
+- Prefer root-cause diagnosis over arbitrary caps or band-aids when fixing performance or long-running lag.
+- Prefer minimal UI scope: fix the specific surface; do not globally restyle shared modals/components unless asked.
+- Prefer simpler, industry-common first scopes for protocol features over over-engineered v1 designs.
+
+## 8) Learned Workspace Facts
+
+- Product site: https://relaycraft.dev; main repo: https://github.com/relaycraft/relaycraft; plugins repo: https://github.com/relaycraft/relaycraft-plugins (not `relaycraft/plugins`).
+- MCP Server is a core product capability for AI-assisted HTTP traffic debugging, not a side experiment.
+- Proxy engine is mitmproxy-based; engine evolution should treat mitmproxy forward/reverse (multi-mode) patterns as the industry reference.
+- Gateway / reverse-proxy: compose local rules and env, then expose that environment via reverse entry; traffic-path explainability (how Map Local/Remote, upstream proxy, and gateway interact) is a durable UX principle—not a one-off page.
+- Published official plugins are independent repos; do not rely on local monorepo path coupling for shared styles or assets—use explicit host/public contracts.
+- Windows updater: NSIS/EXE is always published; MSI may be absent on prerelease—do not cross-assign installer channels.
+- Do not reintroduce bundle id `com.beta.relaycraft`; treat current bundle id / app data paths as source of truth when touching identity or installers.
+- Long-running stability matters: upgrade paths, unbounded session/DB growth, and surfacing engine/script errors in UI without requiring log diving.
