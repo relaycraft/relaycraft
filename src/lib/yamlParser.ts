@@ -1,11 +1,11 @@
-import yaml from "js-yaml";
+import { dump, load } from "js-yaml";
 
 /**
  * Parse YAML string to typed object
  */
 export function parseYAML<T>(content: string): T {
   try {
-    return yaml.load(content) as T;
+    return load(content) as T;
   } catch (error) {
     const err = error as Error;
     throw new Error(`YAML parse error: ${err.message}`);
@@ -16,12 +16,12 @@ export function parseYAML<T>(content: string): T {
  * Convert object to YAML string
  */
 export function stringifyYAML<T>(data: T): string {
-  return yaml.dump(data, {
+  return dump(data, {
     indent: 2,
     lineWidth: 120,
     noRefs: true,
     sortKeys: false,
-    quotingType: '"',
+    quoteStyle: "double",
     forceQuotes: false,
   });
 }
@@ -50,7 +50,7 @@ export function validateYAML(content: string): {
   error?: string;
 } {
   try {
-    yaml.load(content);
+    load(content);
     return { valid: true };
   } catch (error) {
     const err = error as Error;
