@@ -154,6 +154,39 @@ impl ProxyEngine for MitmproxyEngine {
             ]);
         }
 
+        // Share entry: expose the modified environment through mitmproxy's
+        // native reverse proxy mode. Visitors hit the share port with zero
+        // configuration; the rule engine applies to this traffic as usual.
+        // If the port is unavailable, skip the listener instead of failing
+        // the whole engine — the forward proxy must keep working.
+        if config.share.enabled && !config.share.upstream_url.trim().is_empty() {
+            let upstream = config.share.upstream_url.trim();
+            let valid_scheme = upstream.starts_with("http://") || upstream.starts_with("https://");
+            if !valid_scheme {
+                log::warn!("Share entry skipped: invalid upstream URL: {}", upstream);
+            } else if config.share.port == config.proxy_port {
+                log::warn!(
+                    "Share entry skipped: port {} conflicts with the forward proxy port",
+                    config.share.port
+                );
+            } else if std::net::TcpListener::bind(("127.0.0.1", config.share.port)).is_err() {
+                log::warn!(
+                    "Share entry skipped: port {} already in use",
+                    config.share.port
+                );
+            } else {
+                let bind = if config.share.listen_lan {
+                    "0.0.0.0"
+                } else {
+                    "127.0.0.1"
+                };
+                args.extend_from_slice(&[
+                    "--mode".to_string(),
+                    format!("reverse:{}@{}:{}", upstream, bind, config.share.port),
+                ]);
+            }
+        }
+
         // Scripts
         let script_storage =
             ScriptStorage::from_config().map_err(|e| AppError::Config(e.to_string()))?;

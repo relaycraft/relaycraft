@@ -31,6 +31,16 @@ export interface AppConfig {
     enabled: boolean;
     port: number;
   };
+  // Share entry (reverse proxy). Optional for configs written by older versions;
+  // Rust's #[serde(default)] always returns it.
+  share?: ShareConfig;
+}
+
+export interface ShareConfig {
+  enabled: boolean;
+  port: number;
+  upstream_url: string;
+  listen_lan: boolean;
 }
 
 export type ConnectionStatus = "idle" | "success" | "error";
@@ -62,6 +72,7 @@ interface SettingsStore {
   testUpstreamConnectivity: () => Promise<void>;
   resetUpstreamStatus: () => void;
   updateMcpConfig: (mcpConfig: { enabled: boolean; port: number }) => Promise<void>;
+  updateShareConfig: (share: ShareConfig) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -88,6 +99,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     mcp_config: {
       enabled: false,
       port: 7090,
+    },
+    share: {
+      enabled: false,
+      port: 9080,
+      upstream_url: "",
+      listen_lan: false,
     },
   },
   loading: false,
@@ -235,5 +252,9 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     } catch (error) {
       Logger.error("Failed to apply MCP config:", error);
     }
+  },
+  updateShareConfig: async (share: ShareConfig) => {
+    const { config, saveConfig } = get();
+    await saveConfig({ ...config, share });
   },
 }));

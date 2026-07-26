@@ -75,6 +75,12 @@ pub async fn set_proxy_active(
     Ok(())
 }
 
+/// Check whether a local TCP port is free to bind (used by the share entry UI).
+#[tauri::command]
+pub fn check_port_available(port: u16) -> bool {
+    std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
+}
+
 /// Prepare updater installation by aggressively releasing engine file locks.
 /// On Windows, this force-kills known engine executables as a fallback.
 #[tauri::command]

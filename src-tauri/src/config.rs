@@ -27,6 +27,25 @@ pub struct UpstreamProxyConfig {
     pub bypass_domains: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ShareConfig {
+    pub enabled: bool,
+    pub port: u16,
+    pub upstream_url: String,
+    pub listen_lan: bool,
+}
+
+impl Default for ShareConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            port: 9080,
+            upstream_url: String::new(),
+            listen_lan: false,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AppConfig {
     pub ssl_insecure: bool,
@@ -61,6 +80,8 @@ pub struct AppConfig {
     pub disable_gpu_acceleration: bool,
     #[serde(default)]
     pub mcp_config: McpConfig,
+    #[serde(default)]
+    pub share: ShareConfig,
 }
 
 fn default_registry_url() -> String {
@@ -111,6 +132,7 @@ impl Default for AppConfig {
             enable_vibrancy: default_vibrancy(),
             disable_gpu_acceleration: default_disable_gpu_acceleration(),
             mcp_config: McpConfig::default(),
+            share: ShareConfig::default(),
         }
     }
 }

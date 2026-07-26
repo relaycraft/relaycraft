@@ -3,6 +3,7 @@ import threading
 import time
 from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
+from mitmproxy.proxy import mode_specs
 from .rules import RuleEngine
 from .monitor import TrafficMonitor
 from .debug import DebugManager
@@ -58,8 +59,10 @@ class CoreAddon:
                 self.logger.error(f"Error handling relay request: {e}")
             return
 
-        # 2. Check if traffic processing is active
-        if not is_traffic_active():
+        # 2. Check if traffic processing is active. Reverse-mode (share entry)
+        # traffic is exempt: visitors must be served even when local capture
+        # is paused.
+        if not is_traffic_active() and not self._is_reverse_flow(flow):
             flow.kill()
             return
 
@@ -138,6 +141,9 @@ class CoreAddon:
         """Check if request is to RelayCraft internal API"""
         if not flow or not flow.request:
             return False
+        # Reverse-mode (share entry) traffic always runs the full pipeline.
+        if self._is_reverse_flow(flow):
+            return False
         try:
             path = flow.request.path or ""
             host = flow.request.host or ""
@@ -154,6 +160,14 @@ class CoreAddon:
             is_proxy_port = port == current_port
 
             return is_localhost and is_proxy_port and ("/_relay" in path or path == "/" or path in ("/cert", "/cert.pem", "/cert.crt"))
+        except Exception:
+            return False
+
+    @staticmethod
+    def _is_reverse_flow(flow: http.HTTPFlow) -> bool:
+        """Whether the flow entered via a reverse-mode listener (share entry)."""
+        try:
+            return isinstance(flow.client_conn.proxy_mode, mode_specs.ReverseMode)
         except Exception:
             return False
 

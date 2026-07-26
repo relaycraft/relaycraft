@@ -1,5 +1,6 @@
+import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, RefreshCcw, XCircle } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Copy, RefreshCcw, XCircle } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useProxyStore } from "../../stores/proxyStore";
@@ -15,18 +16,27 @@ export function NetworkSettings() {
     updateProxyPort,
     updateSslInsecure,
     updateUpstreamProxy,
+    updateShareConfig,
     testingUpstream,
     upstreamStatus,
     testUpstreamConnectivity,
     resetUpstreamStatus,
   } = useSettingsStore();
 
-  const { running, restartProxy } = useProxyStore();
+  const { running, restartProxy, ipAddress } = useProxyStore();
+
+  const share = config.share ?? {
+    enabled: false,
+    port: 9080,
+    upstream_url: "",
+    listen_lan: false,
+  };
 
   const networkSnapshot = React.useRef({
     proxy_port: config.proxy_port,
     ssl_insecure: config.ssl_insecure,
     upstream_proxy: config.upstream_proxy,
+    share: config.share,
   });
   const snapshotReady = React.useRef(false);
 
@@ -36,9 +46,30 @@ export function NetworkSettings() {
     (config.proxy_port !== networkSnapshot.current.proxy_port ||
       config.ssl_insecure !== networkSnapshot.current.ssl_insecure ||
       JSON.stringify(config.upstream_proxy) !==
-        JSON.stringify(networkSnapshot.current.upstream_proxy));
+        JSON.stringify(networkSnapshot.current.upstream_proxy) ||
+      JSON.stringify(config.share) !== JSON.stringify(networkSnapshot.current.share));
 
   const [restarting, setRestarting] = React.useState(false);
+  const [shareUrlCopied, setShareUrlCopied] = React.useState(false);
+  const [sharePortInUse, setSharePortInUse] = React.useState(false);
+
+  const shareUpstreamInvalid =
+    share.enabled &&
+    share.upstream_url.trim() !== "" &&
+    !/^https?:\/\/.+/.test(share.upstream_url.trim());
+  const sharePortConflict = share.enabled && share.port === config.proxy_port;
+  const shareHost = share.listen_lan && ipAddress ? ipAddress : "127.0.0.1";
+  const shareUrl = `http://${shareHost}:${share.port}`;
+
+  const handleCopyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareUrlCopied(true);
+      setTimeout(() => setShareUrlCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (e.g. insecure context) — ignore.
+    }
+  };
 
   const handleRestartEngine = async () => {
     setRestarting(true);
@@ -48,6 +79,7 @@ export function NetworkSettings() {
         proxy_port: config.proxy_port,
         ssl_insecure: config.ssl_insecure,
         upstream_proxy: config.upstream_proxy,
+        share: config.share,
       };
     } finally {
       setRestarting(false);
@@ -64,9 +96,37 @@ export function NetworkSettings() {
       proxy_port: config.proxy_port,
       ssl_insecure: config.ssl_insecure,
       upstream_proxy: config.upstream_proxy,
+      share: config.share,
     };
     snapshotReady.current = true;
-  }, [running, loading, config.proxy_port, config.ssl_insecure, config.upstream_proxy]);
+  }, [
+    running,
+    loading,
+    config.proxy_port,
+    config.ssl_insecure,
+    config.upstream_proxy,
+    config.share,
+  ]);
+
+  // Best-effort port occupancy hint. Only checked while the engine is stopped:
+  // when it is running, our own share listener legitimately holds the port.
+  React.useEffect(() => {
+    if (!share.enabled || running || sharePortConflict) {
+      setSharePortInUse(false);
+      return;
+    }
+    let cancelled = false;
+    invoke<boolean>("check_port_available", { port: share.port })
+      .then((available) => {
+        if (!cancelled) setSharePortInUse(!available);
+      })
+      .catch(() => {
+        if (!cancelled) setSharePortInUse(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [share.enabled, share.port, running, sharePortConflict]);
 
   React.useEffect(() => {
     return () => {
@@ -190,6 +250,106 @@ export function NetworkSettings() {
                     : t("settings.network.upstream_check")}
                 </Button>
               </div>
+            </div>
+          </SettingsRow>
+        </div>
+      )}
+
+      <SettingsRow
+        title={t("settings.network.share_title")}
+        description={t("settings.network.share_desc")}
+      >
+        <SettingsToggle
+          checked={share.enabled}
+          onCheckedChange={(val) => updateShareConfig({ ...share, enabled: val })}
+        />
+      </SettingsRow>
+
+      {share.enabled && (
+        <div>
+          <SettingsRow
+            title={t("settings.network.share_upstream")}
+            description={
+              <span className="flex flex-col gap-1">
+                <span>{t("settings.network.share_upstream_desc")}</span>
+                {shareUpstreamInvalid && (
+                  <span className="text-destructive inline-flex items-center gap-1 font-medium scale-90 origin-left">
+                    <AlertTriangle className="w-3 h-3" />{" "}
+                    {t("settings.network.share_invalid_upstream")}
+                  </span>
+                )}
+              </span>
+            }
+          >
+            <SettingsInput
+              value={share.upstream_url}
+              onChange={(e) => updateShareConfig({ ...share, upstream_url: e.target.value })}
+              placeholder={t("settings.network.share_upstream_placeholder")}
+              className="w-64"
+            />
+          </SettingsRow>
+
+          <SettingsRow
+            title={t("settings.network.share_port")}
+            description={
+              <span className="flex flex-col gap-1">
+                <span>{t("settings.network.share_port_desc")}</span>
+                {(sharePortConflict || sharePortInUse) && (
+                  <span className="text-destructive inline-flex items-center gap-1 font-medium scale-90 origin-left">
+                    <AlertTriangle className="w-3 h-3" />{" "}
+                    {sharePortConflict
+                      ? t("settings.network.share_port_conflict")
+                      : t("settings.network.share_port_in_use")}
+                  </span>
+                )}
+              </span>
+            }
+          >
+            <SettingsInput
+              value={share.port}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d*$/.test(val))
+                  updateShareConfig({ ...share, port: val === "" ? 0 : parseInt(val, 10) });
+              }}
+              onBlur={(e) => {
+                let port = parseInt(e.target.value, 10) || 9080;
+                port = Math.max(1024, Math.min(65535, port));
+                updateShareConfig({ ...share, port });
+              }}
+              className="w-24"
+            />
+          </SettingsRow>
+
+          <SettingsRow
+            title={t("settings.network.share_lan")}
+            description={t("settings.network.share_lan_desc")}
+          >
+            <SettingsToggle
+              checked={share.listen_lan}
+              onCheckedChange={(val) => updateShareConfig({ ...share, listen_lan: val })}
+            />
+          </SettingsRow>
+
+          <SettingsRow
+            title={t("settings.network.share_url")}
+            description={t("settings.network.share_url_desc")}
+          >
+            <div className="flex items-center gap-2">
+              <code className="px-2 py-1 rounded bg-muted text-xs font-mono select-all">
+                {shareUrl}
+              </code>
+              <Button
+                variant="outline"
+                size="xs"
+                className="text-xs h-7 px-2 gap-1.5"
+                onClick={handleCopyShareUrl}
+              >
+                {shareUrlCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {shareUrlCopied
+                  ? t("settings.network.share_url_copied")
+                  : t("settings.network.share_url_copy")}
+              </Button>
             </div>
           </SettingsRow>
         </div>
