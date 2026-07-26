@@ -1,5 +1,25 @@
 # Changelog
 
+# [1.4.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.3.0...v1.4.0) (2026-07-26)
+
+
+### Bug Fixes
+
+* declare forward listener explicitly when share mode is set ([002a2a1](https://github-relaycraft/relaycraft/relaycraft/commit/002a2a117d911545b2021f4c54417d2eaec51db3))
+* route app HTTP through upstream proxy setting, not system proxy ([6013753](https://github-relaycraft/relaycraft/relaycraft/commit/6013753eb6ba126dc7df6aa0e93dc7296bb17eee))
+* use virtualized code editor for large rule content fields ([d8402e4](https://github-relaycraft/relaycraft/relaycraft/commit/d8402e416f0b210fdfa8f2f7d96468697de7af87))
+
+
+### Features
+
+* add share entry via mitmproxy reverse mode ([d0aeb5f](https://github-relaycraft/relaycraft/relaycraft/commit/d0aeb5f4f4867c4bbfb01cd9bf830d89dd519c5f))
+* add traffic path panel to status bar ([464b3f6](https://github-relaycraft/relaycraft/relaycraft/commit/464b3f6788c369890d07cc3bef0ae2cdb0485aa4))
+
+
+### Performance Improvements
+
+* **tauri:** tail-read log file instead of copying full file ([2f022ea](https://github-relaycraft/relaycraft/relaycraft/commit/2f022ea50ca37cf784303ac66f0c85fa8da0f97b))
+
 # [1.3.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.2.2...v1.3.0) (2026-06-21)
 
 
