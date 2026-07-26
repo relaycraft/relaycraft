@@ -155,7 +155,7 @@ pub async fn ws_inject_frame(req: WsResendRequest) -> Result<(), String> {
     let config = crate::config::load_config().unwrap_or_default();
     let target = format!("http://127.0.0.1:{}/_relay/ws/inject", config.proxy_port);
 
-    let client = reqwest::Client::builder()
+    let client = crate::common::http::loopback_client_builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .map_err(|e| format!("engine_error: {}", e))?;

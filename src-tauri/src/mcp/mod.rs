@@ -1717,7 +1717,7 @@ async fn run_server(
     shutdown_rx: tokio::sync::oneshot::Receiver<()>,
     running: Arc<AtomicBool>,
 ) -> Result<(), String> {
-    let client = reqwest::Client::builder()
+    let client = crate::common::http::loopback_client_builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
         .map_err(|e| e.to_string())?;

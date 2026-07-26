@@ -43,9 +43,12 @@ pub fn app_client_builder() -> reqwest::ClientBuilder {
 /// Build a reqwest client for loopback engine-API calls. Always direct:
 /// engine control traffic must not depend on NO_PROXY env setup and must
 /// never be routed through any proxy.
+pub fn loopback_client_builder() -> reqwest::ClientBuilder {
+    reqwest::Client::builder().no_proxy()
+}
+
 pub fn loopback_client() -> reqwest::Client {
-    reqwest::Client::builder()
-        .no_proxy()
+    loopback_client_builder()
         .build()
         .unwrap_or_else(|_| reqwest::Client::new())
 }
