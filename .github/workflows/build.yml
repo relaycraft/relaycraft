@@ -36,13 +36,13 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # --- Cache & Setup Node ---
       # setup-node must come first: self-hosted runners have no preinstalled
       # Node, and pnpm/action-setup needs it on PATH.
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -58,7 +58,7 @@ jobs:
         run: pnpm config set store-dir .pnpm-store
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .pnpm-store
           key: ${{ runner.os }}-pnpm-local-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -86,7 +86,7 @@ jobs:
 
       # --- Cache & Setup Python ---
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -108,7 +108,7 @@ jobs:
           echo "dir=$DIR" >> $GITHUB_OUTPUT
 
       - name: Setup Pip cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-v4-${{ hashFiles('engine-core/requirements.txt') }}
@@ -177,7 +177,7 @@ jobs:
       # --- macOS Code Signing ---
       - name: Import Code-Signing Certificates (macOS)
         if: runner.os == 'macOS'
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -607,7 +607,7 @@ jobs:
 
       # --- Upload Artifacts for Metadata ---
       - name: Upload Bundles
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bundles-${{ matrix.platform }}-${{ matrix.target }}
           path: |
@@ -637,17 +637,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Download all bundles
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: all-bundles
           pattern: bundles-*
           merge-multiple: true
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -697,7 +697,7 @@ jobs:
           fi
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: 'RelayCraft v${{ env.VERSION }}'
