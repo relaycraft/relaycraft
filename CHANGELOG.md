@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.0...v1.4.1) (2026-07-26)
+
+### Bug Fixes
+
+* add no-proxy to MCP and WS-inject engine loopback clients ([6f3da51](https://github-relaycraft/relaycraft/relaycraft/commit/6f3da5185ee28e28c389778e0fa89ebfae89c47b))
+* **ci:** set up node before pnpm for self-hosted runners ([29c4f75](https://github-relaycraft/relaycraft/relaycraft/commit/29c4f75df37e6ef4ae24bb275fcbfe4d017f9015))
+* convert ineffective dynamic imports to static imports ([20e2f1b](https://github-relaycraft/relaycraft/relaycraft/commit/20e2f1b69546cdc963d09974e2eacc815d0b23f5))
+
 # [1.4.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.3.0...v1.4.0) (2026-07-26)
 
 
