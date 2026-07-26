@@ -2,6 +2,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../common/Button";
+import { Editor } from "../../../common/Editor";
 import { Input } from "../../../common/Input";
 import { SegmentedControl } from "../../../common/SegmentedControl";
 
@@ -91,12 +92,14 @@ export function ActionMapLocal({
         ) : (
           <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
             <label className={LABEL_STYLE}>{t("rules.editor.action.map_local.content")}</label>
-            <textarea
-              value={content}
-              onChange={(e) => onChangeContent(e.target.value)}
-              className="w-full h-40 bg-background border border-input rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all resize-none"
-              placeholder='{ "mock": true }'
-            />
+            <div className="h-40 bg-background border border-input rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+              <Editor
+                value={content}
+                onChange={(val: string) => onChangeContent(val)}
+                placeholder='{ "mock": true }'
+                options={{ lineNumbers: "off", lineWrapping: true }}
+              />
+            </div>
           </div>
         )}
 

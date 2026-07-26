@@ -2,6 +2,7 @@ import { CheckCircle2, Circle, Info, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { JsonModification } from "../../../../types/rules";
 import { Button } from "../../../common/Button";
+import { Editor } from "../../../common/Editor";
 import { Input } from "../../../common/Input";
 import { SegmentedControl } from "../../../common/SegmentedControl";
 import { Select } from "../../../common/Select";
@@ -156,12 +157,14 @@ export function ActionRewrite({
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
               <label className={LABEL_STYLE}>{t("rules.editor.action.rewrite.modes_set")}</label>
-              <textarea
-                value={content}
-                onChange={(e) => onChangeContent(e.target.value)}
-                className="w-full h-40 bg-background border border-input rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all resize-none"
-                placeholder={t("rules.editor.action.rewrite.placeholders_content")}
-              />
+              <div className="h-40 bg-background border border-input rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+                <Editor
+                  value={content}
+                  onChange={(val: string) => onChangeContent(val)}
+                  placeholder={t("rules.editor.action.rewrite.placeholders_content")}
+                  options={{ lineNumbers: "off", lineWrapping: true }}
+                />
+              </div>
             </div>
           </div>
         )}
