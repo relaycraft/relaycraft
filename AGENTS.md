@@ -63,6 +63,7 @@ If full validation is not run, explicitly report what was skipped.
 - Prefer root-cause diagnosis over arbitrary caps or band-aids when fixing performance or long-running lag.
 - Prefer minimal UI scope: fix the specific surface; do not globally restyle shared modals/components unless asked.
 - Prefer simpler, industry-common first scopes for protocol features over over-engineered v1 designs.
+- Rule actions have distinct semantics: Map Local = short-circuit with local content (owns file mode for large/static content); rewrite_body = modify the upstream response. Do not add file mode to rewrite_body; route "serve local file" needs to Map Local.
 
 ## 8) Learned Workspace Facts
 
