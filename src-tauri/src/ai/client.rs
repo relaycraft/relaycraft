@@ -282,7 +282,7 @@ pub struct AIClient {
 impl AIClient {
     pub fn new(config: AIConfig) -> Self {
         // Use longer timeout for reasoning models that may take a while to respond
-        let client = Client::builder()
+        let client = crate::common::http::app_client_builder()
             .timeout(std::time::Duration::from_secs(120)) // 2 minutes total timeout
             .connect_timeout(std::time::Duration::from_secs(10))
             .build()

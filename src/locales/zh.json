@@ -1072,7 +1072,7 @@
       "upstream_check_failed": "连接失败",
       "upstream_check_success": "连接成功",
       "upstream_checking": "正在测试连接...",
-      "upstream_desc": "在企业内网或特殊网络环境下，RelayCraft 可能需要配置上游代理才能连接互联网。",
+      "upstream_desc": "在企业内网或特殊网络环境下，RelayCraft 可能需要配置上游代理才能连接互联网（如插件市场、AI 服务）。",
       "upstream_placeholder": "http://127.0.0.1:7890",
       "upstream_title": "上游代理",
       "upstream_url": "代理地址",

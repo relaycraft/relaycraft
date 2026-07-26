@@ -642,7 +642,7 @@ pub async fn plugin_call(
                 url.push_str(&format!("&session_id={sid}"));
             }
 
-            let client = reqwest::Client::new();
+            let client = crate::common::http::loopback_client();
             let resp = client
                 .get(&url)
                 .send()
@@ -764,7 +764,7 @@ pub async fn plugin_call(
                 .unwrap_or(9090);
 
             let url = format!("http://127.0.0.1:{engine_port}/_relay/detail?id={id}");
-            let client = reqwest::Client::new();
+            let client = crate::common::http::loopback_client();
             let resp = client
                 .get(&url)
                 .send()

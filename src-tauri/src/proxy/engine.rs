@@ -511,7 +511,7 @@ impl ProxyEngine for MitmproxyEngine {
             let url_clone = url.clone();
             let body_clone = body.clone();
             tauri::async_runtime::spawn(async move {
-                let client = reqwest::Client::new();
+                let client = crate::common::http::loopback_client();
                 match client
                     .post(&url_clone)
                     .header("Content-Type", "application/json")

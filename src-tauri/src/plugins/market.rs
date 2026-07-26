@@ -1,6 +1,5 @@
 use crate::config::get_data_dir;
 use crate::logging;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::command;
@@ -53,7 +52,9 @@ pub async fn plugin_market_fetch(market_type: String) -> Result<RegistryIndex, S
         (&config.plugin_registry_url, "plugins.json")
     };
 
-    let client = Client::new();
+    let client = crate::common::http::app_client_builder()
+        .build()
+        .map_err(|e| format!("Failed to build client: {}", e))?;
     let resp = client
         .get(registry_url)
         .header("User-Agent", "RelayCraft")
@@ -111,7 +112,7 @@ pub async fn plugin_market_install(url: String) -> Result<String, String> {
         reqwest::header::USER_AGENT,
         reqwest::header::HeaderValue::from_static("RelayCraft"),
     );
-    let client = Client::builder()
+    let client = crate::common::http::app_client_builder()
         .timeout(std::time::Duration::from_secs(300)) // Longer timeout for large files
         .default_headers(headers)
         .build()
