@@ -1,18 +1,21 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Bell, BellOff, Database, Globe, Server, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Activity, Bell, BellOff, Database, Globe, Server, Waypoints, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { version as APP_VERSION } from "../../../package.json";
+import { buildTrafficPathModel } from "../../lib/traffic/trafficPath";
 import { useBreakpointStore } from "../../stores/breakpointStore";
 import { useMcpActivityStore } from "../../stores/mcpActivityStore";
 import { useNotificationStore } from "../../stores/notificationStore";
 import { PLUGIN_SLOTS, usePluginSlotStore } from "../../stores/pluginSlotStore";
 import { useProxyStore } from "../../stores/proxyStore";
+import { useRuleStore } from "../../stores/ruleStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { Tooltip } from "../common/Tooltip";
 import { McpActivityTimeline } from "../mcp/McpTimeline";
 import { BreakpointManager } from "../traffic/BreakpointManager";
+import { TrafficPathPanel } from "./TrafficPathPanel";
 
 const isMcpReadActivity = (toolName: string) =>
   toolName.startsWith("get_") || toolName.startsWith("list_") || toolName.startsWith("search_");
@@ -28,8 +31,29 @@ export function StatusBar() {
     (state) => state.activities.filter((a) => !isMcpReadActivity(a.toolName)).length,
   );
   const mcpEnabled = useSettingsStore((state) => state.config.mcp_config?.enabled);
+  const shareConfig = useSettingsStore((state) => state.config.share);
+  const upstreamProxy = useSettingsStore((state) => state.config.upstream_proxy);
+  const rules = useRuleStore((state) => state.rules);
+  const ruleGroupsList = useRuleStore((state) => state.groups);
+  const ruleGroupMap = useRuleStore((state) => state.ruleGroups);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const [showMcpTimeline, setShowMcpTimeline] = useState(false);
+  const [showTrafficPath, setShowTrafficPath] = useState(false);
+
+  const trafficPathModel = useMemo(
+    () =>
+      buildTrafficPathModel({
+        proxyPort: port,
+        running,
+        active,
+        share: shareConfig,
+        upstreamProxy: upstreamProxy ?? { enabled: false, url: "" },
+        rules,
+        groups: ruleGroupsList,
+        ruleGroups: ruleGroupMap,
+      }),
+    [port, running, active, shareConfig, upstreamProxy, rules, ruleGroupsList, ruleGroupMap],
+  );
   const { t } = useTranslation();
   const { isOpen, setIsOpen, unreadCount, dnd } = useNotificationStore();
   const unread = unreadCount();
@@ -65,10 +89,20 @@ export function StatusBar() {
       ) {
         setShowMcpTimeline(false);
       }
+      if (
+        showTrafficPath &&
+        !(
+          target.closest(".traffic-path-trigger") ||
+          target.closest(".traffic-path-container") ||
+          target.closest("[data-relaycraft-tooltip]")
+        )
+      ) {
+        setShowTrafficPath(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [showBreakpoints, showMcpTimeline]);
+  }, [showBreakpoints, showMcpTimeline, showTrafficPath]);
 
   // Engine health status - shows running state (engine process health)
   // active state is shown in TitleBar, this is for engine health only
@@ -168,6 +202,36 @@ export function StatusBar() {
             <span className="font-mono text-foreground">{capturedCount}</span>
           </div>
         </Tooltip>
+
+        {/* Traffic Path */}
+        <div className="w-px h-3 bg-border/40 mx-2" />
+        <div className="relative flex items-center">
+          <Tooltip content={t("status_bar.traffic_path")}>
+            <div
+              onClick={() => setShowTrafficPath(!showTrafficPath)}
+              className={`traffic-path-trigger flex items-center gap-1.5 transition-all cursor-pointer select-none rounded-full px-2 py-0.5 ${
+                showTrafficPath
+                  ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Waypoints className="w-3.5 h-3.5" />
+            </div>
+          </Tooltip>
+
+          <AnimatePresence>
+            {showTrafficPath && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="relaycraft-popup traffic-path-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
+              >
+                <TrafficPathPanel model={trafficPathModel} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Breakpoint Count */}
         {breakpoints.length > 0 && (
