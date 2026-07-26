@@ -147,18 +147,13 @@ impl ProxyEngine for MitmproxyEngine {
         if config.ssl_insecure {
             args.push("--ssl-insecure".to_string());
         }
-        if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
-            args.extend_from_slice(&[
-                "--mode".to_string(),
-                format!("upstream:{}", config.upstream_proxy.url.trim()),
-            ]);
-        }
 
         // Share entry: expose the modified environment through mitmproxy's
         // native reverse proxy mode. Visitors hit the share port with zero
         // configuration; the rule engine applies to this traffic as usual.
         // If the port is unavailable, skip the listener instead of failing
         // the whole engine — the forward proxy must keep working.
+        let mut share_mode: Option<String> = None;
         if config.share.enabled && !config.share.upstream_url.trim().is_empty() {
             let upstream = config.share.upstream_url.trim();
             let valid_scheme = upstream.starts_with("http://") || upstream.starts_with("https://");
@@ -180,11 +175,36 @@ impl ProxyEngine for MitmproxyEngine {
                 } else {
                     "127.0.0.1"
                 };
-                args.extend_from_slice(&[
-                    "--mode".to_string(),
-                    format!("reverse:{}@{}:{}", upstream, bind, config.share.port),
-                ]);
+                share_mode = Some(format!(
+                    "reverse:{}@{}:{}",
+                    upstream, bind, config.share.port
+                ));
             }
+        }
+
+        // Declaring any --mode replaces mitmproxy's implicit regular listener
+        // on -p, so once the share entry adds a mode the forward proxy must be
+        // declared explicitly as well.
+        if share_mode.is_some() {
+            let forward =
+                if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
+                    format!(
+                        "upstream:{}@{}",
+                        config.upstream_proxy.url.trim(),
+                        config.proxy_port
+                    )
+                } else {
+                    format!("regular@{}", config.proxy_port)
+                };
+            args.extend_from_slice(&["--mode".to_string(), forward]);
+        } else if config.upstream_proxy.enabled && !config.upstream_proxy.url.trim().is_empty() {
+            args.extend_from_slice(&[
+                "--mode".to_string(),
+                format!("upstream:{}", config.upstream_proxy.url.trim()),
+            ]);
+        }
+        if let Some(mode) = share_mode {
+            args.extend_from_slice(&["--mode".to_string(), mode]);
         }
 
         // Scripts
