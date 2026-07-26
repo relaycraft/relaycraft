@@ -39,14 +39,19 @@ jobs:
       - uses: actions/checkout@v5
 
       # --- Cache & Setup Node ---
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10
-
+      # setup-node must come first: self-hosted runners have no preinstalled
+      # Node, and pnpm/action-setup needs it on PATH.
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: 24
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          # Install the standalone pnpm binary: does not depend on npm,
+          # which may be missing or broken on self-hosted runners.
+          standalone: true
 
       - name: Configure pnpm store
         shell: bash
