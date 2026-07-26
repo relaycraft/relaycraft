@@ -1,9 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "i18next";
+import { toast } from "sonner";
 import { create } from "zustand";
 import i18n from "../i18n";
 import { formatError, Logger } from "../lib/logger";
 import { loadPluginUI, unloadPluginUI } from "../plugins/pluginLoader";
 import type { PluginInfo } from "../types/plugin";
+import { useNotificationStore } from "./notificationStore";
+import { useSettingsStore } from "./settingsStore";
+import { useThemeStore } from "./themeStore";
+import { useUIStore } from "./uiStore";
 
 // Market Types
 export interface RegistryPlugin {
@@ -66,7 +72,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       set({ loading: false });
 
       // 添加错误通知
-      const { useNotificationStore } = await import("./notificationStore");
       useNotificationStore.getState().addNotification({
         title: i18n.t("plugins.notifications.load_failed_title"),
         message: i18n.t("plugins.notifications.load_failed_msg", {
@@ -84,7 +89,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
     try {
       await invoke("toggle_plugin", { id, enabled });
       // Sync settings store
-      const { useSettingsStore } = await import("./settingsStore");
       useSettingsStore.getState().loadConfig();
 
       set((state) => {
@@ -103,7 +107,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       });
 
       // 添加通知
-      const { useNotificationStore } = await import("./notificationStore");
       const plugin = get().plugins.find((p) => p.manifest.id === id);
       const pluginName = plugin?.manifest.name || id;
 
@@ -124,7 +127,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       Logger.error("Failed to toggle plugin:", error);
 
       // 添加错误通知
-      const { useNotificationStore } = await import("./notificationStore");
       useNotificationStore.getState().addNotification({
         title: i18n.t("plugins.notifications.toggle_failed_title"),
         message: i18n.t("plugins.notifications.toggle_failed_msg", {
@@ -189,7 +191,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       await get().fetchPlugins();
 
       // Also refresh themes, as we don't know if the installed item was a theme or plugin
-      const { useThemeStore } = await import("./themeStore");
       await useThemeStore.getState().fetchThemes();
 
       const installedPlugin = get().plugins.find((plugin) => plugin.manifest.id === id);
@@ -210,8 +211,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       set({ installingPluginUrl: null });
 
       // Show user-friendly error notification
-      const { toast } = await import("sonner");
-      const { t } = await import("i18next");
 
       const errorMessage = formatError(error);
 
@@ -246,7 +245,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       await new Promise((resolve) => setTimeout(resolve, 500));
       await get().fetchPlugins();
 
-      const { useThemeStore } = await import("./themeStore");
       await useThemeStore.getState().fetchThemes();
       const installedPlugin = get().plugins.find((p) => p.manifest.id === id);
       const installedTheme = useThemeStore.getState().themes.find((theme) => theme.id === id);
@@ -259,7 +257,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       set({ loading: false });
 
       // Show success message — prefer plugin/theme display name over raw ID.
-      const { useUIStore } = await import("./uiStore");
       const ui = useUIStore.getState();
       ui.setActiveTab("settings");
       ui.setSettingsTab(installedTheme ? "appearance" : "plugins");
@@ -280,7 +277,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       set({ loading: false });
 
       // Show user-friendly error message
-      const { useUIStore } = await import("./uiStore");
       const ui = useUIStore.getState();
       const errorMessage = formatError(error);
 
@@ -334,7 +330,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       await get().fetchPlugins();
 
       // 添加成功通知
-      const { useNotificationStore } = await import("./notificationStore");
       useNotificationStore.getState().addNotification({
         title: i18n.t("plugins.notifications.uninstall_success_title"),
         message: i18n.t("plugins.notifications.uninstall_success_msg", {
@@ -349,7 +344,6 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       Logger.error("[PluginStore] Failed to uninstall plugin:", error);
 
       // Show user-friendly error message
-      const { useUIStore } = await import("./uiStore");
       const errorMessage = formatError(error);
 
       useUIStore.getState().showConfirm({

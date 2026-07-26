@@ -1,3 +1,4 @@
+import { notify } from "../lib/notify";
 import { useSessionStore } from "../stores/sessionStore";
 
 /**
@@ -39,7 +40,6 @@ export function startImportPolling(
         await switchDbSession(sessionId);
       }
 
-      const { notify } = await import("../lib/notify");
       if (md.status === "ready") {
         notify.success(successMessage);
       } else if (md.status === "error") {

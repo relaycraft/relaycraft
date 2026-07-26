@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { AlertTriangle, Code, Copy, RotateCcw, Send, Terminal, Workflow } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -205,7 +206,6 @@ export function useTrafficContextMenu() {
                 onClick: async () => {
                   if (!menuTargetFlow) return;
                   try {
-                    const { invoke } = await import("@tauri-apps/api/core");
                     await invoke("replay_request", {
                       req: {
                         method: menuTargetFlow.request.method,

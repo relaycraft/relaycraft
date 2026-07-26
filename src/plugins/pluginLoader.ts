@@ -48,6 +48,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 // UI Components for Plugins
 import { Button } from "../components/common/Button";
 import { Input } from "../components/common/Input";
@@ -306,7 +307,6 @@ async function loadPluginLocales(
       Logger.error(`[PluginLoader] Failed to load locale ${langCode} for ${pluginId}:`, e);
       // Only toast error if it's the CURRENT language failing
       if (langCode === currentLang) {
-        const { toast } = await import("sonner");
         toast.error(`Lang Load Failed (${langCode}): ${e.message || String(e)}`);
       }
     }

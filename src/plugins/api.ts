@@ -1,7 +1,10 @@
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import { DiffEditor, Editor } from "../components/common/Editor";
 import { Markdown } from "../components/common/Markdown";
 import i18n from "../i18n";
+import { Logger } from "../lib/logger";
 import { useAIStore } from "../stores/aiStore";
 import { useNotificationStore } from "../stores/notificationStore";
 import { usePluginContextMenuStore } from "../stores/pluginContextMenuStore";
@@ -157,7 +160,6 @@ export const createPluginApi = (
 
   // Scoped invoke helper to route through the security bridge
   const scopedInvoke = async <T>(command: string, args: any = {}): Promise<T> => {
-    const { invoke } = await import("@tauri-apps/api/core");
     return invoke<T>("plugin_call", {
       payload: {
         plugin_id: pluginId,
@@ -323,19 +325,13 @@ export const createPluginApi = (
     },
     log: {
       info: (message: string, context?: any) => {
-        import("../lib/logger").then(({ Logger }) => {
-          Logger.plugin(`[INFO] ${message} ${context ? JSON.stringify(context) : ""}`, pluginId);
-        });
+        Logger.plugin(`[INFO] ${message} ${context ? JSON.stringify(context) : ""}`, pluginId);
       },
       warn: (message: string, context?: any) => {
-        import("../lib/logger").then(({ Logger }) => {
-          Logger.plugin(`[WARN] ${message} ${context ? JSON.stringify(context) : ""}`, pluginId);
-        });
+        Logger.plugin(`[WARN] ${message} ${context ? JSON.stringify(context) : ""}`, pluginId);
       },
       error: (message: string, errorObj?: any) => {
-        import("../lib/logger").then(({ Logger }) => {
-          Logger.plugin(`[ERROR] ${message} ${errorObj ? JSON.stringify(errorObj) : ""}`, pluginId);
-        });
+        Logger.plugin(`[ERROR] ${message} ${errorObj ? JSON.stringify(errorObj) : ""}`, pluginId);
       },
     },
     http: {
@@ -353,16 +349,13 @@ export const createPluginApi = (
         let unlisten: (() => void) | null = null;
         let cancelled = false;
 
-        import("@tauri-apps/api/event").then(({ listen }) => {
-          if (cancelled) return;
-          listen(eventName, (event) => callback(event.payload)).then((unlistenFn) => {
-            if (cancelled) {
-              // unlisten() was called before the promise resolved
-              unlistenFn();
-            } else {
-              unlisten = unlistenFn;
-            }
-          });
+        listen(eventName, (event) => callback(event.payload)).then((unlistenFn) => {
+          if (cancelled) {
+            // unlisten() was called before the promise resolved
+            unlistenFn();
+          } else {
+            unlisten = unlistenFn;
+          }
         });
 
         return () => {

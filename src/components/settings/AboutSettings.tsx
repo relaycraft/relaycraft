@@ -1,6 +1,9 @@
+import { invoke } from "@tauri-apps/api/core";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { Globe, Shield } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { notify } from "../../lib/notify";
 import { Button } from "../common/Button";
 import { GitHubMark } from "../common/icons/GitHubMark";
 import { AppLogo } from "../layout/AppLogo";
@@ -58,11 +61,9 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
     setUpdateInstallLoading(true);
     try {
       try {
-        const { invoke } = await import("@tauri-apps/api/core");
         await invoke("prepare_update_install");
       } catch (_) {
         try {
-          const { invoke } = await import("@tauri-apps/api/core");
           await invoke("stop_proxy");
         } catch (_) {}
       }
@@ -71,10 +72,8 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
     } catch (error) {
       console.error("Installation failed:", error);
       try {
-        const { invoke } = await import("@tauri-apps/api/core");
         await invoke("restart_proxy");
       } catch (_) {}
-      const { notify } = await import("../../lib/notify");
       notify.error(t("settings.about.error_fetch"));
       handleUpdateModalClose();
     } finally {
@@ -119,7 +118,6 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
 
                 try {
                   const { check } = await import("@tauri-apps/plugin-updater");
-                  const { relaunch } = await import("@tauri-apps/plugin-process");
 
                   const update = await check();
                   if (update) {
@@ -140,7 +138,6 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
                   }
                 } catch (e) {
                   console.error("Update check failed:", e);
-                  const { notify } = await import("../../lib/notify");
                   const errorMsg = e instanceof Error ? e.message : String(e);
                   notify.error(`${t("settings.about.error_fetch")}\n${errorMsg}`);
                   btn.innerText = t("settings.about.check_failed");

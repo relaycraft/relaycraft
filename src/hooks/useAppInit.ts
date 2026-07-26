@@ -9,6 +9,8 @@ import { notify } from "../lib/notify";
 import { notifyScriptLoadIssues } from "../lib/scriptLoadAlerts";
 import { initPlugins } from "../plugins/pluginLoader";
 import { useAIStore } from "../stores/aiStore";
+import { useMcpActivityStore } from "../stores/mcpActivityStore";
+import { useNotificationStore } from "../stores/notificationStore";
 import { usePluginStore } from "../stores/pluginStore";
 import { useProxyStore } from "../stores/proxyStore";
 import { useRuleStore } from "../stores/ruleStore";
@@ -214,7 +216,6 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
   // Listen to MCP Activity events
   useEffect(() => {
     const unlisten = listen("mcp-activity", async (event) => {
-      const { useMcpActivityStore } = await import("../stores/mcpActivityStore");
       useMcpActivityStore.getState().addActivity(event.payload as any);
     });
     return () => {
@@ -229,7 +230,7 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
       Logger.info(`[FileOpen] Plugin/theme installed from file: ${id}`);
       // Refresh stores first, then branch by actual installed type.
       await usePluginStore.getState().fetchPlugins();
-      const { useThemeStore: ts } = await import("../stores/themeStore");
+      const ts = useThemeStore;
       await ts.getState().fetchThemes();
       const installedPlugin = usePluginStore.getState().plugins.find((p) => p.manifest.id === id);
       const installedTheme = ts.getState().themes.find((theme) => theme.id === id);
@@ -277,7 +278,6 @@ export function useAppInit({ setShowExitModal }: UseAppInitProps) {
     const unlisten = listen<string>("proxy-engine-crashed", async (event) => {
       Logger.error("[ProxyEngine] Unexpected crash:", event.payload);
       useProxyStore.getState().checkStatus();
-      const { useNotificationStore } = await import("../stores/notificationStore");
       useNotificationStore.getState().addNotification({
         title: t("status_bar.engine_crashed_title"),
         message: t("status_bar.engine_crashed_msg"),

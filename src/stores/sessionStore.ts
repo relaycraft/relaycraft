@@ -1,9 +1,11 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+import i18next from "i18next";
 import { create } from "zustand";
 import { startImportPolling } from "../hooks/useImportPolling";
 import { Logger } from "../lib/logger";
+import { notify } from "../lib/notify";
 import { setPollTimestamp } from "../lib/traffic";
 import type { Session, SessionMetadata } from "../types/session";
 import { useSettingsStore } from "./settingsStore";
@@ -210,9 +212,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           useTrafficStore.getState().clearLocal();
         }
 
-        const { notify } = await import("../lib/notify");
         // We can't use the hook here, so we'll import i18next directly
-        const i18next = await import("i18next");
         notify.success(i18next.t("session.all_cleared"));
       } else {
         const errorText = await response.text();
@@ -220,8 +220,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       }
     } catch (error) {
       Logger.error("Failed to clear historical sessions:", error);
-      const { notify } = await import("../lib/notify");
-      const i18next = await import("i18next");
       notify.error(i18next.t("session.clear_error"));
     } finally {
       set({ loadingSessions: false });
@@ -253,8 +251,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         // Refresh session list
         await get().fetchDbSessions();
 
-        const { notify } = await import("../lib/notify");
-        const i18next = await import("i18next");
         notify.success(i18next.t("database.reset_success"));
       } else {
         const errorText = await response.text();
@@ -262,8 +258,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       }
     } catch (error) {
       Logger.error("Failed to reset database:", error);
-      const { notify } = await import("../lib/notify");
-      const i18next = await import("i18next");
       notify.error(i18next.t("database.reset_error"));
     } finally {
       set({ loadingSessions: false });
@@ -345,9 +339,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       };
       set({ currentSession: session });
 
-      const { notify } = await import("../lib/notify");
-      const i18next = await import("i18next");
-      notify.success(i18next.default.t("session.save.success"));
+      notify.success(i18next.t("session.save.success"));
     } catch (error) {
       Logger.error("Failed to save session:", error);
     } finally {
@@ -394,17 +386,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             set({ showSessionId: session_id });
             await get().fetchDbSessions();
 
-            const i18next = await import("i18next");
             startImportPolling(
               session_id,
-              i18next.default.t("session.import_complete"),
-              i18next.default.t("session.import_failed"),
+              i18next.t("session.import_complete"),
+              i18next.t("session.import_failed"),
             );
           }
 
-          const { notify } = await import("../lib/notify");
-          const i18next = await import("i18next");
-          notify.success(i18next.default.t("session.import_started"));
+          notify.success(i18next.t("session.import_started"));
         } else {
           const errorText = await response.text();
           Logger.error(`Session import failed: ${response.status} - ${errorText}`);
@@ -468,9 +457,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         throw new Error("Export failed");
       }
 
-      const { notify } = await import("../lib/notify");
-      const i18next = await import("i18next");
-      notify.success(i18next.default.t("session.export_har_success"));
+      notify.success(i18next.t("session.export_har_success"));
     } catch (error) {
       Logger.error("Failed to export HAR:", error);
     } finally {
@@ -519,17 +506,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             await get().fetchDbSessions();
             Logger.info(`Imported HAR into new session: ${session_id}`);
 
-            const i18next = await import("i18next");
             startImportPolling(
               session_id,
-              i18next.default.t("session.import_har_success"),
-              i18next.default.t("session.import_har_failed"),
+              i18next.t("session.import_har_success"),
+              i18next.t("session.import_har_failed"),
             );
           }
 
-          const { notify } = await import("../lib/notify");
-          const i18next = await import("i18next");
-          notify.success(i18next.default.t("session.import_har_started"));
+          notify.success(i18next.t("session.import_har_started"));
         } else {
           const errorText = await response.text();
           Logger.error(`HAR import failed: ${response.status} - ${errorText}`);

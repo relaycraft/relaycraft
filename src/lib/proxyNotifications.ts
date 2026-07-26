@@ -1,5 +1,9 @@
 import i18n from "../i18n";
-import type { NotificationPriority, NotificationType } from "../stores/notificationStore";
+import {
+  type NotificationPriority,
+  type NotificationType,
+  useNotificationStore,
+} from "../stores/notificationStore";
 
 type ProxyEvent =
   | "start_success"
@@ -58,7 +62,6 @@ export async function notifyProxyEvent(
   event: ProxyEvent,
   options: ProxyNotificationOptions = {},
 ): Promise<void> {
-  const { useNotificationStore } = await import("../stores/notificationStore");
   const meta = PROXY_EVENT_META[event];
   useNotificationStore.getState().addNotification({
     title: i18n.t(`proxy_store.${event}_title`),
