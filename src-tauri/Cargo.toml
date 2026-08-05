@@ -55,13 +55,13 @@ thiserror = "2.0"
 sha1 = "0.11.0"
 base64 = "0.23.0"
 hex = "0.4.3"
-pem = "3.0.6"
+pem = "4.0.0"
 window-vibrancy = "0.8.0"
 
 [dev-dependencies]
 tempfile = "3"
 rstest = "0.26"
-pem = "3.0.6"
+pem = "4.0.0"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = [
