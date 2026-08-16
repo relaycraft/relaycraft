@@ -15,6 +15,38 @@ pub(super) fn hide_internal_files(paths: &[String]) {
     }
 }
 
+/// Known locations for a usable PowerShell, tried in order. The absolute
+/// System32 path is tried first so cert operations keep working on systems
+/// where the OS PATH is broken (issue #93: "program not found").
+fn powershell_candidates() -> [&'static str; 3] {
+    [
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "powershell.exe",
+        "pwsh.exe",
+    ]
+}
+
+/// Run a PowerShell script through the first available PowerShell binary.
+fn run_powershell(args: &[&str]) -> Result<std::process::Output, String> {
+    use std::os::windows::process::CommandExt;
+
+    let mut last_err = None;
+    for exe in powershell_candidates() {
+        match Command::new(exe)
+            .args(args)
+            .creation_flags(0x08000000)
+            .output()
+        {
+            Ok(out) => return Ok(out),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(format!(
+        "PowerShell is not available on this system ({}). Please reinstall PowerShell or add \"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\\" to the system PATH.",
+        last_err.map(|e| e.to_string()).unwrap_or_default()
+    ))
+}
+
 impl CertManager for WindowsCertManager {
     fn open_cert_dir(&self, cert_dir: &Path) -> Result<(), String> {
         Command::new("explorer")
@@ -25,8 +57,6 @@ impl CertManager for WindowsCertManager {
     }
 
     fn is_installed(&self, _cert_path: &str) -> Result<bool, String> {
-        use std::os::windows::process::CommandExt;
-
         let local_hash = super::local_cert_hash().unwrap_or_default();
         if local_hash.is_empty() {
             return Ok(false);
@@ -37,10 +67,7 @@ impl CertManager for WindowsCertManager {
             local_hash
         );
 
-        let ps_out = Command::new("powershell")
-            .args(["-NoProfile", "-Command", &ps_cmd])
-            .creation_flags(0x08000000)
-            .output();
+        let ps_out = run_powershell(&["-NoProfile", "-Command", &ps_cmd]);
 
         if let Ok(out) = ps_out {
             return Ok(!out.stdout.is_empty());
@@ -50,20 +77,14 @@ impl CertManager for WindowsCertManager {
     }
 
     fn install(&self, cert_path: &str) -> Result<(), String> {
-        use std::os::windows::process::CommandExt;
-
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                &format!(
-                    "Start-Process certutil -ArgumentList '-addstore -f Root \"{}\"' -Verb RunAs -Wait",
-                    cert_path
-                ),
-            ])
-            .creation_flags(0x08000000)
-            .output()
-            .map_err(|e| format!("Failed to trigger cert installation: {}", e))?;
+        let output = run_powershell(&[
+            "-NoProfile",
+            "-Command",
+            &format!(
+                "Start-Process certutil -ArgumentList '-addstore -f Root \"{}\"' -Verb RunAs -Wait",
+                cert_path
+            ),
+        ])?;
 
         if !output.status.success() {
             return Err("Certificate installation was cancelled or failed".to_string());
@@ -72,17 +93,11 @@ impl CertManager for WindowsCertManager {
     }
 
     fn remove(&self) -> Result<(), String> {
-        use std::os::windows::process::CommandExt;
-
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                "Start-Process powershell -ArgumentList '-NoProfile -Command \"Get-ChildItem Cert:\\CurrentUser\\Root, Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -match \\\"RelayCraft\\\" } | Remove-Item\"' -Verb RunAs -Wait",
-            ])
-            .creation_flags(0x08000000)
-            .output()
-            .map_err(|e| format!("Failed to trigger cert removal: {}", e))?;
+        let output = run_powershell(&[
+            "-NoProfile",
+            "-Command",
+            "Start-Process powershell -ArgumentList '-NoProfile -Command \"Get-ChildItem Cert:\\CurrentUser\\Root, Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -match \\\"RelayCraft\\\" } | Remove-Item\"' -Verb RunAs -Wait",
+        ])?;
 
         if !output.status.success() {
             return Err("Certificate removal was cancelled or failed".to_string());
@@ -91,18 +106,12 @@ impl CertManager for WindowsCertManager {
     }
 
     fn get_cert_info(&self, cert_path: &str) -> Result<super::DetailedCertInfo, String> {
-        use std::os::windows::process::CommandExt;
-
         let ps_script = format!(
             "$p = '{}'; if (Test-Path $p) {{ $c = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($p); $obj = @{{ exists=$true; subject=$c.Subject; issuer=$c.Issuer; not_before=$c.NotBefore.ToString('yyyy-MM-dd HH:mm:ss'); not_after=$c.NotAfter.ToString('yyyy-MM-dd HH:mm:ss'); fingerprint=[BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash($c.RawData)) -replace '-', ':' }}; $obj | ConvertTo-Json -Compress }} else {{ echo '{{\"exists\":false}}' }}",
             cert_path
         );
 
-        let output = Command::new("powershell")
-            .args(["-NoProfile", "-Command", &ps_script])
-            .creation_flags(0x08000000)
-            .output()
-            .map_err(|e| format!("Failed to run PowerShell: {}", e))?;
+        let output = run_powershell(&["-NoProfile", "-Command", &ps_script])?;
 
         let out_str = String::from_utf8_lossy(&output.stdout);
 
