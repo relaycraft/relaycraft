@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.1...v1.4.2) (2026-08-16)
+
+### Bug Fixes
+
+* **windows:** resolve PowerShell via absolute path for cert ops ([8e22629](https://github-relaycraft/relaycraft/relaycraft/commit/8e2262926a870d4568aed3cfa4148e181bd47fff))
+
 ## [1.4.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.0...v1.4.1) (2026-07-26)
 
 ### Bug Fixes
