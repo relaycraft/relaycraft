@@ -254,27 +254,62 @@ jobs:
           $MSI = Get-ChildItem "$MSI_PATH/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
 
           if (-not $EXE) {
-            echo "❌ ERROR: Could not find NSIS EXE to sign!"
+            Write-Error "❌ ERROR: Could not find NSIS EXE to sign!"
             exit 1
           }
 
+          # Resolve signtool explicitly so signing works regardless of which
+          # account the runner service runs under and how their PATH is set up.
+          $signtool = (Get-Command signtool -ErrorAction SilentlyContinue).Source
+          if (-not $signtool) {
+            $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+              Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $signtool) {
+            Write-Error "❌ signtool not found on PATH or in Windows Kits. Install the Windows SDK or add signtool to PATH for the runner service account."
+            exit 1
+          }
+          Write-Host "Using signtool: $signtool"
+
+          function Sign-And-Verify {
+            param([System.IO.FileInfo]$File, [string]$Kind)
+
+            # --- Authenticode signature (Windows trust) ---
+            Write-Host "🔍 Authenticode Signing: $($File.Name)"
+            & $signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $File.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "❌ signtool FAILED for $Kind ($($File.Name)). Aborting so an unsigned package is never published."
+              exit 1
+            }
+
+            # Verify the Authenticode signature actually landed on the file
+            $sig = Get-AuthenticodeSignature -FilePath $File.FullName
+            if ($null -eq $sig.SignerCertificate -or $sig.Status -in @('NotSigned', 'HashMismatch')) {
+              Write-Error "❌ Authenticode verification FAILED for $Kind ($($File.Name)): status=$($sig.Status). Aborting so an unsigned package is never published."
+              exit 1
+            }
+            Write-Host "✅ Authenticode verified: $($sig.Status) / $($sig.SignerCertificate.Subject)"
+
+            # --- Tauri updater signature (.sig for latest.json) ---
+            Write-Host "🔍 Regenerating Tauri Updater Signature for $Kind"
+            pnpm exec tauri signer sign $File.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "❌ tauri signer FAILED for $Kind ($($File.Name))."
+              exit 1
+            }
+          }
+
           # Sign NSIS installer (always present)
-          echo "🔍 Authenticode Signing: $($EXE.Name)"
-          signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $EXE.FullName
-          echo "🔍 Regenerating Tauri Updater Signature for EXE"
-          pnpm exec tauri signer sign $EXE.FullName
+          Sign-And-Verify -File $EXE -Kind "NSIS installer"
 
           # Sign MSI installer (stable releases only, not present for RC builds)
           if ($MSI) {
-            echo "🔍 Authenticode Signing: $($MSI.Name)"
-            signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $MSI.FullName
-            echo "🔍 Regenerating Tauri Updater Signature for MSI"
-            pnpm exec tauri signer sign $MSI.FullName
+            Sign-And-Verify -File $MSI -Kind "MSI installer"
           } else {
-            echo "ℹ️ No MSI found (pre-release build), skipping MSI signing"
+            Write-Host "ℹ️ No MSI found (pre-release build), skipping MSI signing"
           }
 
-          echo "✅ Windows signing and signature regeneration complete!"
+          Write-Host "✅ Windows signing and signature regeneration complete!"
 
       # --- Post-Build macOS Signing & Notarization ---
       - name: Sign and Notarize macOS App
