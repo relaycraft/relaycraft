@@ -3,9 +3,10 @@ pub mod commands;
 pub mod config;
 pub mod market;
 pub mod registry;
+pub mod stats;
 pub mod storage;
 
-use crate::plugins::config::PluginInfo;
+use crate::plugins::config::{PluginCompatibility, PluginInfo, PluginManifest};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -84,6 +85,68 @@ pub fn resolve_plugin_path(plugins_dir: &Path, plugin_id: &str) -> Option<PathBu
     None
 }
 
+/// Evaluate a manifest's `engines.relaycraft` SemVer range against the
+/// current app version. No requirement means compatible; an invalid range is
+/// fail-closed (incompatible, with the parse error as the reason).
+/// `min_app_version` is deprecated and ignored here.
+pub fn check_compatibility(manifest: &PluginManifest) -> PluginCompatibility {
+    let current = env!("CARGO_PKG_VERSION").to_string();
+    let requirement = manifest
+        .engines
+        .as_ref()
+        .and_then(|engines| engines.get("relaycraft"))
+        .cloned();
+
+    let Some(req) = requirement else {
+        return PluginCompatibility {
+            requirement: None,
+            current,
+            compatible: true,
+            reason: None,
+        };
+    };
+
+    let range = match semver::VersionReq::parse(&req) {
+        Ok(range) => range,
+        Err(e) => {
+            return PluginCompatibility {
+                requirement: Some(req),
+                current,
+                compatible: false,
+                reason: Some(format!("invalid version requirement: {}", e)),
+            };
+        }
+    };
+
+    let current_version = match semver::Version::parse(&current) {
+        Ok(version) => version,
+        Err(e) => {
+            return PluginCompatibility {
+                requirement: Some(req),
+                current,
+                compatible: false,
+                reason: Some(format!("failed to parse app version: {}", e)),
+            };
+        }
+    };
+
+    if range.matches(&current_version) {
+        PluginCompatibility {
+            requirement: Some(req),
+            current,
+            compatible: true,
+            reason: None,
+        }
+    } else {
+        PluginCompatibility {
+            requirement: Some(req.clone()),
+            current: current.clone(),
+            compatible: false,
+            reason: Some(format!("requires relaycraft {}, current {}", req, current)),
+        }
+    }
+}
+
 fn load_plugin(path: &Path) -> Option<PluginInfo> {
     let yaml_path = path.join("plugin.yaml");
     let yml_path = path.join("plugin.yml");
@@ -127,10 +190,12 @@ fn load_plugin(path: &Path) -> Option<PluginInfo> {
         }
     };
 
+    let compatibility = check_compatibility(&manifest);
     Some(PluginInfo {
         manifest,
         path: path.to_string_lossy().to_string(),
         enabled: false,
+        compatibility,
     })
 }
 
@@ -387,7 +452,7 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::config::PluginManifest;
+    use std::collections::HashMap;
     use tempfile::TempDir;
 
     fn create_mock_plugin(dir: &Path, id: &str, name: &str) {
@@ -474,5 +539,66 @@ mod tests {
 
         let path = resolve_plugin_path(plugins_dir, "correct-id").unwrap();
         assert!(path.ends_with("weird-name"));
+    }
+
+    fn mock_manifest_with_engines(engines: Option<HashMap<String, String>>) -> PluginManifest {
+        PluginManifest {
+            id: "compat-test".to_string(),
+            name: "Compat Test".to_string(),
+            version: "1.0.0".to_string(),
+            description: None,
+            author: None,
+            icon: None,
+            homepage: None,
+            license: None,
+            min_app_version: None,
+            engines,
+            entry: None,
+            capabilities: None,
+            permissions: None,
+            settings_schema: None,
+            locales: None,
+            r#type: "plugin".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_compatibility_no_requirement_is_compatible() {
+        let compat = check_compatibility(&mock_manifest_with_engines(None));
+        assert!(compat.compatible);
+        assert_eq!(compat.requirement, None);
+        assert_eq!(compat.reason, None);
+        assert_eq!(compat.current, env!("CARGO_PKG_VERSION"));
+    }
+
+    #[test]
+    fn test_compatibility_satisfied_range() {
+        let mut engines = HashMap::new();
+        engines.insert("relaycraft".to_string(), ">=1.0.0".to_string());
+        let compat = check_compatibility(&mock_manifest_with_engines(Some(engines)));
+        assert!(compat.compatible);
+        assert_eq!(compat.requirement.as_deref(), Some(">=1.0.0"));
+        assert_eq!(compat.reason, None);
+    }
+
+    #[test]
+    fn test_compatibility_unsatisfied_range() {
+        let mut engines = HashMap::new();
+        engines.insert("relaycraft".to_string(), ">=2.0.0".to_string());
+        let compat = check_compatibility(&mock_manifest_with_engines(Some(engines)));
+        assert!(!compat.compatible);
+        let reason = compat.reason.expect("incompatible must carry a reason");
+        assert!(reason.contains(">=2.0.0"));
+        assert!(reason.contains(env!("CARGO_PKG_VERSION")));
+    }
+
+    #[test]
+    fn test_compatibility_invalid_range_is_fail_closed() {
+        let mut engines = HashMap::new();
+        engines.insert("relaycraft".to_string(), ">=".to_string());
+        let compat = check_compatibility(&mock_manifest_with_engines(Some(engines)));
+        assert!(!compat.compatible);
+        let reason = compat.reason.expect("invalid range must carry a reason");
+        assert!(reason.contains("invalid version requirement"));
     }
 }

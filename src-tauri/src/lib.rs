@@ -238,6 +238,7 @@ pub fn run() {
         })
         .manage(StartupWarnings { config_was_reset })
         .manage(plugins::PluginCache::default())
+        .manage(plugins::stats::PluginCallStats::default())
         .manage(mcp::McpState::default())
         .setup(move |app| {
             // Delegate window setup to common::window (handles macOS vibrancy and cross-platform decor)
@@ -381,6 +382,7 @@ pub fn run() {
             plugins::market::plugin_market_load_cache,
             plugins::bridge::plugin_call,
             plugins::registry::get_plugin_api_contract,
+            plugins::stats::get_plugin_call_stats,
             common::utils::check_regex_match,
             common::utils::get_system_info,
             traffic::replay_request,

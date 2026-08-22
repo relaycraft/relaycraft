@@ -560,6 +560,43 @@
     "api_error": "插件 API 加载失败: {{pluginId}}",
     "browse_market": "浏览市场",
     "confirm_uninstall": "确定要卸载此插件吗？",
+    "contract": {
+      "domain": {
+        "host": "宿主域",
+        "hostDesc": "引擎无关的宿主能力（存储、运行时信息、AI、统计、外发 HTTP）。",
+        "engine": "引擎域",
+        "engineDesc": "由当前代理引擎实现的能力，API 形状保持稳定，引擎升级时仅替换实现层。"
+      }
+    },
+    "detail": {
+      "open": "详情",
+      "overview": "概览",
+      "version": "版本",
+      "author": "作者",
+      "homepage": "主页",
+      "path": "安装路径",
+      "compatibilitySection": "兼容性",
+      "compatible": "兼容",
+      "currentVersion": "当前版本",
+      "requirement": "版本要求",
+      "noRequirement": "未声明",
+      "permissionsSection": "权限",
+      "noPermissions": "未声明权限",
+      "unknownPermission": "该插件声明了一个当前版本应用无法识别的权限。",
+      "unlocksApis": "解锁 API",
+      "runtimeSection": "运行状态",
+      "statusLoaded": "已加载",
+      "statusError": "加载失败",
+      "statusUnknown": "未加载",
+      "scriptLoadError": "插件脚本加载失败",
+      "apiCalls": "API 调用（本会话）",
+      "noCalls": "暂无调用记录",
+      "statsUnavailable": "调用统计不可用",
+      "colApi": "API",
+      "colCalls": "调用",
+      "colDenied": "拒绝",
+      "colLast": "最近调用"
+    },
     "disable": "禁用",
     "empty": {
       "desc": "将插件放置在数据目录的 plugins 文件夹中",
@@ -587,6 +624,12 @@
     "guide": {
       "desc": "插件可以动态扩展核心功能。启用包含 Python 逻辑的插件后，请<span>重启代理引擎</span>以使更改生效。",
       "title": "插件管理说明"
+    },
+    "incompatible": {
+      "badge": "不兼容",
+      "toggleDisabled": "此插件与当前应用版本不兼容，无法启用。",
+      "loadSkippedTitle": "插件不兼容",
+      "loadSkipped": "插件 \"{{name}}\" 与当前应用版本不兼容，已跳过加载。{{reason}}"
     },
     "install_local": "从文件安装",
     "installing": "正在安装...",
@@ -621,6 +664,57 @@
       "uninstall_failed_title": "卸载失败",
       "uninstall_success_msg": "插件 \"{{name}}\" 已成功卸载。",
       "uninstall_success_title": "插件已卸载"
+    },
+    "permissions": {
+      "risk": {
+        "low": "低风险",
+        "medium": "中风险",
+        "high": "高风险"
+      },
+      "proxy_read": {
+        "label": "读取代理状态",
+        "desc": "允许插件读取代理运行状态与已激活的脚本列表。"
+      },
+      "proxy_write": {
+        "label": "控制代理",
+        "desc": "允许插件修改代理行为与流量处理，属于高敏感能力，请仅授予可信插件。"
+      },
+      "fs_read_logs": {
+        "label": "读取应用日志",
+        "desc": "允许插件读取应用日志文件，日志中可能包含请求地址等敏感信息。"
+      },
+      "network_outbound": {
+        "label": "外发网络请求",
+        "desc": "允许插件经由宿主发起任意外部网络请求，可用于向第三方服务发送数据。"
+      },
+      "ai_chat": {
+        "label": "AI 对话",
+        "desc": "允许插件调用已配置的 AI 模型进行对话补全，会消耗你的 API 额度并产生费用。"
+      },
+      "stats_read": {
+        "label": "读取系统统计",
+        "desc": "允许插件读取进程 CPU、内存与运行时长等性能统计。"
+      },
+      "rules_write": {
+        "label": "修改代理规则",
+        "desc": "允许插件创建、修改或删除代理规则（如 Map Local、重定向、重写等）。"
+      },
+      "rules_read": {
+        "label": "读取代理规则",
+        "desc": "允许插件读取现有代理规则列表与详情。"
+      },
+      "traffic_read": {
+        "label": "读取流量",
+        "desc": "允许插件读取已捕获的请求与响应流量内容，可能包含敏感数据。"
+      },
+      "storage_read": {
+        "label": "读取插件存储",
+        "desc": "允许插件读取其自身命名空间下的键值存储。"
+      },
+      "storage_write": {
+        "label": "写入插件存储",
+        "desc": "允许插件修改或清空其自身命名空间下的键值存储。"
+      }
     },
     "redesign": {
       "homepage": "项目主页"

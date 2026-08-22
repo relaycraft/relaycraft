@@ -6,6 +6,7 @@ use crate::logging;
 use crate::plugins::registry::{
     check_permission, find_command, resolve_alias, unregistered_command_error,
 };
+use crate::plugins::stats::PluginCallStats;
 use crate::plugins::{resolve_plugin_path, PluginCache};
 use serde::Deserialize;
 use tauri::{AppHandle, Manager};
@@ -84,8 +85,16 @@ pub async fn plugin_call(
     }
 
     // 5. Permission Gatekeeper — table-driven via the registry spec.
+    // Both outcomes are counted in the per-session call stats, keyed by the
+    // canonical command name so aliases merge.
+    let canonical = resolve_alias(spec);
     let permissions = plugin.manifest.permissions.as_deref().unwrap_or(&[]);
-    check_permission(resolve_alias(spec), permissions)?;
+    let stats = app.state::<PluginCallStats>();
+    if let Err(denial) = check_permission(canonical, permissions) {
+        stats.record(&payload.plugin_id, canonical.command, true);
+        return Err(denial);
+    }
+    stats.record(&payload.plugin_id, canonical.command, false);
 
     // 6. Dispatch to the domain handler.
     match spec.command {

@@ -5,6 +5,7 @@ import {
   Archive,
   Code,
   ExternalLink,
+  Info,
   Package,
   Power,
   RefreshCw,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { formatError } from "../../lib/logger";
 import { usePluginSettingsStore } from "../../stores/pluginSettingsStore";
 import { usePluginStore } from "../../stores/pluginStore";
 import { useProxyStore } from "../../stores/proxyStore";
@@ -23,7 +26,9 @@ import { useUIStore } from "../../stores/uiStore";
 import type { PluginInfo } from "../../types/plugin";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
+import { Tooltip } from "../common/Tooltip";
 import { PluginSettingsRenderer } from "../plugins/PluginSettingsRenderer";
+import { PluginDetailModal } from "./PluginDetailModal";
 import { SettingsSection } from "./SettingsLayout";
 
 const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
@@ -33,8 +38,20 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
 
   // Settings Logic
   const [showSettings, setShowSettings] = React.useState(false);
+  const [showDetail, setShowDetail] = React.useState(false);
   const { schemas, settings, loadSchema, loadSettings, saveSettings } = usePluginSettingsStore();
   const hasSettings = !!plugin.manifest.capabilities?.ui?.settings_schema;
+
+  const incompatible = plugin.compatibility ? !plugin.compatibility.compatible : false;
+
+  const handleToggle = async () => {
+    try {
+      await togglePlugin(plugin.manifest.id, !plugin.enabled);
+    } catch (error) {
+      // e.g. host-side refusal to enable an incompatible plugin
+      toast.error(formatError(error));
+    }
+  };
 
   const isPython = !!plugin.manifest.capabilities?.logic?.entry || !!plugin.manifest.entry?.python;
   // Updated isUI logic: includes i18n-only plugins (language packs) as UI
@@ -91,6 +108,11 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
               <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/60">
                 v{plugin.manifest.version}
               </span>
+              {incompatible && (
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/50 border border-border/40">
+                  {t("plugins.incompatible.badge")}
+                </span>
+              )}
               {plugin.enabled && (
                 <span className="flex items-center gap-1 text-xs font-bold text-green-500 uppercase tracking-widest ml-1">
                   <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
@@ -101,6 +123,14 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
 
             {/* Action Buttons - Horizontal Row */}
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowDetail(true)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                title={t("plugins.detail.open")}
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+
               {hasSettings && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
@@ -115,17 +145,28 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
                 </button>
               )}
 
-              <button
-                onClick={() => togglePlugin(plugin.manifest.id, !plugin.enabled)}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                  plugin.enabled
-                    ? "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-                title={plugin.enabled ? t("plugins.disable") : t("plugins.enable")}
-              >
-                <Power className={`w-3.5 h-3.5 ${plugin.enabled ? "text-green-500" : ""}`} />
-              </button>
+              {incompatible ? (
+                <Tooltip
+                  content={plugin.compatibility?.reason || t("plugins.incompatible.toggleDisabled")}
+                  multiline
+                >
+                  <button
+                    disabled
+                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-muted/50 text-muted-foreground opacity-40 cursor-not-allowed"
+                    title={plugin.compatibility?.reason || t("plugins.incompatible.toggleDisabled")}
+                  >
+                    <Power className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
+              ) : (
+                <button
+                  onClick={handleToggle}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  title={plugin.enabled ? t("plugins.disable") : t("plugins.enable")}
+                >
+                  <Power className={`w-3.5 h-3.5 ${plugin.enabled ? "text-green-500" : ""}`} />
+                </button>
+              )}
 
               <button
                 onClick={() => {
@@ -216,6 +257,12 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PluginDetailModal
+        pluginId={plugin.manifest.id}
+        open={showDetail}
+        onClose={() => setShowDetail(false)}
+      />
     </div>
   );
 };

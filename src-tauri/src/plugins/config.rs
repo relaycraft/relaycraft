@@ -75,9 +75,24 @@ pub struct PluginEntry {
     pub python: Option<String>,
 }
 
+/// Compatibility of a plugin manifest against the current app version,
+/// derived from `engines.relaycraft` (SemVer range). Field names stay
+/// snake_case — the frontend consumes them verbatim.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginCompatibility {
+    /// Raw `engines.relaycraft` range, if declared.
+    pub requirement: Option<String>,
+    /// Current app version (`CARGO_PKG_VERSION`).
+    pub current: String,
+    pub compatible: bool,
+    /// Why the plugin is incompatible (or the range invalid), if applicable.
+    pub reason: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
     pub manifest: PluginManifest,
     pub path: String,
     pub enabled: bool,
+    pub compatibility: PluginCompatibility,
 }

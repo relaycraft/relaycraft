@@ -69,10 +69,25 @@ export type PluginPermission =
   | "storage:write" // Modify plugin storage entries
   | string; // Future proofing
 
+/**
+ * Compatibility verdict computed host-side from `manifest.engines.relaycraft`.
+ * Field names match Rust's serde snake_case serialization.
+ */
+export interface PluginCompatibility {
+  /** Raw `engines.relaycraft` range, e.g. ">=1.0.0"; null when not declared. */
+  requirement: string | null;
+  /** Current app version the requirement was checked against. */
+  current: string;
+  compatible: boolean;
+  /** Explanation when incompatible (or when the range failed to parse). */
+  reason: string | null;
+}
+
 export interface PluginInfo {
   manifest: PluginManifest;
   path: string;
   enabled: boolean;
+  compatibility?: PluginCompatibility;
 }
 
 // Re-export specific types from stores to keep types consolidated for API consumers

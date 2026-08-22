@@ -560,6 +560,43 @@
     "api_error": "Failed to load API for plugin: {{pluginId}}",
     "browse_market": "Browse Market",
     "confirm_uninstall": "Are you sure you want to uninstall this plugin?",
+    "contract": {
+      "domain": {
+        "host": "Host Domain",
+        "hostDesc": "Engine-independent host capabilities (storage, runtime info, AI, stats, outbound HTTP).",
+        "engine": "Engine Domain",
+        "engineDesc": "Capabilities backed by the current proxy engine. The API shape stays stable; only the implementation layer is swapped when the engine changes."
+      }
+    },
+    "detail": {
+      "open": "Details",
+      "overview": "Overview",
+      "version": "Version",
+      "author": "Author",
+      "homepage": "Homepage",
+      "path": "Install Path",
+      "compatibilitySection": "Compatibility",
+      "compatible": "Compatible",
+      "currentVersion": "Current version",
+      "requirement": "Requirement",
+      "noRequirement": "Not declared",
+      "permissionsSection": "Permissions",
+      "noPermissions": "No permissions declared",
+      "unknownPermission": "This plugin declares a permission not recognized by this app version.",
+      "unlocksApis": "Unlocks APIs",
+      "runtimeSection": "Runtime",
+      "statusLoaded": "Loaded",
+      "statusError": "Load Failed",
+      "statusUnknown": "Not loaded",
+      "scriptLoadError": "Plugin script failed to load",
+      "apiCalls": "API Calls (this session)",
+      "noCalls": "No calls recorded",
+      "statsUnavailable": "Call stats unavailable",
+      "colApi": "API",
+      "colCalls": "Calls",
+      "colDenied": "Denied",
+      "colLast": "Last called"
+    },
     "disable": "Disable",
     "empty": {
       "desc": "Place plugins in the 'plugins' folder in data directory",
@@ -587,6 +624,12 @@
     "guide": {
       "desc": "Plugins extend core functionality. After enabling plugins with Python logic, please <span>restart proxy engine</span> to make changes take effect.",
       "title": "Plugin Management"
+    },
+    "incompatible": {
+      "badge": "Incompatible",
+      "toggleDisabled": "This plugin is incompatible with the current app version and cannot be enabled.",
+      "loadSkippedTitle": "Incompatible Plugin",
+      "loadSkipped": "Plugin \"{{name}}\" is incompatible with the current app version and was skipped. {{reason}}"
     },
     "install_local": "Install from File",
     "installing": "Installing...",
@@ -621,6 +664,57 @@
       "uninstall_failed_title": "Uninstall Failed",
       "uninstall_success_msg": "Plugin \"{{name}}\" has been successfully uninstalled.",
       "uninstall_success_title": "Plugin Uninstalled"
+    },
+    "permissions": {
+      "risk": {
+        "low": "Low Risk",
+        "medium": "Medium Risk",
+        "high": "High Risk"
+      },
+      "proxy_read": {
+        "label": "Read Proxy Status",
+        "desc": "Allows the plugin to read proxy status and the list of active scripts."
+      },
+      "proxy_write": {
+        "label": "Control Proxy",
+        "desc": "Allows the plugin to modify proxy behavior and traffic processing. Highly sensitive — grant only to trusted plugins."
+      },
+      "fs_read_logs": {
+        "label": "Read App Logs",
+        "desc": "Allows the plugin to read application log files, which may contain sensitive information such as request URLs."
+      },
+      "network_outbound": {
+        "label": "Outbound Network",
+        "desc": "Allows the plugin to make arbitrary external network requests through the host, which can send data to third-party services."
+      },
+      "ai_chat": {
+        "label": "AI Chat",
+        "desc": "Allows the plugin to call configured AI models for chat completion, consuming your API quota and incurring costs."
+      },
+      "stats_read": {
+        "label": "Read System Stats",
+        "desc": "Allows the plugin to read process CPU, memory, and uptime statistics."
+      },
+      "rules_write": {
+        "label": "Modify Proxy Rules",
+        "desc": "Allows the plugin to create, modify, or delete proxy rules (Map Local, redirects, rewrites, etc.)."
+      },
+      "rules_read": {
+        "label": "Read Proxy Rules",
+        "desc": "Allows the plugin to read the list and details of existing proxy rules."
+      },
+      "traffic_read": {
+        "label": "Read Traffic",
+        "desc": "Allows the plugin to read captured request and response traffic, which may contain sensitive data."
+      },
+      "storage_read": {
+        "label": "Read Plugin Storage",
+        "desc": "Allows the plugin to read key-value entries in its own namespace."
+      },
+      "storage_write": {
+        "label": "Write Plugin Storage",
+        "desc": "Allows the plugin to modify or clear key-value entries in its own namespace."
+      }
     },
     "redesign": {
       "homepage": "Homepage"

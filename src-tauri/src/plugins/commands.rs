@@ -24,6 +24,33 @@ pub async fn toggle_plugin(id: String, enabled: bool, _app: AppHandle) -> Result
     let mut config = config::load_config().unwrap_or_default();
 
     if enabled {
+        // Re-check compatibility against the on-disk manifest before enabling,
+        // so the UI toggle cannot bypass the engines.relaycraft gate.
+        let app_dir = config::get_data_dir()?;
+        let plugins_dir = app_dir.join("plugins");
+        let plugins = discover_plugins(&plugins_dir, &config.enabled_plugins);
+        let plugin = plugins
+            .iter()
+            .find(|p| p.manifest.id == id)
+            .ok_or_else(|| format!("Plugin not found: {}", id))?;
+        if !plugin.compatibility.compatible {
+            let reason = plugin
+                .compatibility
+                .reason
+                .clone()
+                .unwrap_or_else(|| "unknown reason".to_string());
+            let message = format!("Plugin is incompatible with this app version: {}", reason);
+            log::warn!(
+                "[Plugins] Refused to enable incompatible plugin {}: {}",
+                id,
+                reason
+            );
+            let _ = logging::write_domain_log(
+                "audit",
+                &format!("Refused to enable incompatible Plugin {}: {}", id, reason),
+            );
+            return Err(message);
+        }
         if !config.enabled_plugins.contains(&id) {
             config.enabled_plugins.push(id.clone());
         }

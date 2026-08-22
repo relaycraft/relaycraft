@@ -59,9 +59,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/common/T
 import { Textarea } from "../components/common/Textarea";
 import { Tooltip } from "../components/common/Tooltip";
 import i18n from "../i18n";
-import { Logger } from "../lib/logger";
+import { formatError, Logger } from "../lib/logger";
+import { useNotificationStore } from "../stores/notificationStore";
 import { usePluginContextMenuStore } from "../stores/pluginContextMenuStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
+import { usePluginRuntimeStore } from "../stores/pluginRuntimeStore";
 import { usePluginSlotStore } from "../stores/pluginSlotStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useThemeStore } from "../stores/themeStore";
@@ -207,6 +209,11 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
     } catch(e) {
         console.error("[PluginLoader] Plugin execution error:", e);
         scopedApi.ui.toast("Plugin Error: " + (e.message || String(e)), "error");
+        // Record the failure so the host can attribute it to this load attempt
+        // (script.onload fires after synchronous execution, so it alone cannot
+        // distinguish a clean load from an IIFE throw).
+        globalThis.__PLUGIN_LAST_ERROR = globalThis.__PLUGIN_LAST_ERROR || {};
+        globalThis.__PLUGIN_LAST_ERROR[pluginId] = (e && e.message) ? e.message : String(e);
     }
 })();`;
 
@@ -218,11 +225,21 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
       script.src = blobUrl;
       script.onload = () => {
         URL.revokeObjectURL(blobUrl);
+        const lastError = (window as any).__PLUGIN_LAST_ERROR?.[plugin.manifest.id];
+        if (lastError) {
+          delete (window as any).__PLUGIN_LAST_ERROR[plugin.manifest.id];
+          usePluginRuntimeStore.getState().markError(plugin.manifest.id, String(lastError));
+        } else {
+          usePluginRuntimeStore.getState().markLoaded(plugin.manifest.id);
+        }
         resolve();
       };
       script.onerror = (e) => {
         URL.revokeObjectURL(blobUrl);
         Logger.error(`Plugin script load error for ${plugin.manifest.id}:`, e);
+        usePluginRuntimeStore
+          .getState()
+          .markError(plugin.manifest.id, i18n.t("plugins.detail.scriptLoadError"));
         resolve(); // resolve so other plugins still load
       };
       document.head.appendChild(script);
@@ -231,6 +248,7 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
     Logger.debug(`Successfully loaded UI for plugin: ${plugin.manifest.id}`);
   } catch (error) {
     Logger.error(`Failed to load UI for plugin ${plugin.manifest.id}:`, error);
+    usePluginRuntimeStore.getState().markError(plugin.manifest.id, formatError(error));
   }
 }
 
@@ -349,6 +367,8 @@ export function unloadPluginUI(pluginId: string) {
     script.remove();
   }
 
+  usePluginRuntimeStore.getState().clear(pluginId);
+
   usePluginSlotStore.getState().unregisterPluginComponents(pluginId);
   usePluginPageStore.getState().unregisterPluginPages(pluginId);
   usePluginContextMenuStore.getState().unregisterPlugin(pluginId);
@@ -375,6 +395,30 @@ export async function initPlugins() {
     const enabledPlugins = plugins.filter((p) => p.enabled);
 
     for (const plugin of enabledPlugins) {
+      // Skip plugins that no longer satisfy the host version requirement
+      // (e.g. after an app upgrade) and surface a warning instead.
+      if (plugin.compatibility && !plugin.compatibility.compatible) {
+        const reason = plugin.compatibility.reason || plugin.compatibility.requirement || "";
+        Logger.warn(
+          `Skipping incompatible plugin ${plugin.manifest.id}: ${reason || "incompatible"}`,
+        );
+        usePluginRuntimeStore
+          .getState()
+          .markError(plugin.manifest.id, reason || i18n.t("plugins.incompatible.badge"));
+        useNotificationStore.getState().addNotification({
+          title: i18n.t("plugins.incompatible.loadSkippedTitle"),
+          message: i18n.t("plugins.incompatible.loadSkipped", {
+            name: plugin.manifest.name,
+            reason,
+          }),
+          type: "warning",
+          category: "plugin",
+          priority: "high",
+          source: `Plugin: ${plugin.manifest.name}`,
+          metadata: { pluginId: plugin.manifest.id },
+        });
+        continue;
+      }
       await loadPluginUI(plugin, true); // Silent on startup
     }
   } catch (error: any) {
