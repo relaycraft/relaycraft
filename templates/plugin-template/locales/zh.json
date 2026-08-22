@@ -1,0 +1,13 @@
+{
+  "page": {
+    "title": "模板插件"
+  },
+  "greeting": "来自你的第一个 RelayCraft 插件的问候！",
+  "counter": {
+    "label": "持久化计数器",
+    "hint": "通过 api.storage 存储，重启应用后仍然保留。",
+    "increment": "加一",
+    "reset": "重置",
+    "saved": "计数已保存：{{value}}"
+  }
+}

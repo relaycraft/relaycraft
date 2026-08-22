@@ -1,0 +1,13 @@
+{
+  "page": {
+    "title": "Template Plugin"
+  },
+  "greeting": "Hello from your first RelayCraft plugin!",
+  "counter": {
+    "label": "Persisted counter",
+    "hint": "Stored via api.storage — survives app restarts.",
+    "increment": "Increment",
+    "reset": "Reset",
+    "saved": "Counter saved: {{value}}"
+  }
+}

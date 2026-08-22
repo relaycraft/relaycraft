@@ -1,0 +1,20 @@
+id: com.relaycraft.plugins.template
+name: Template Plugin
+version: 0.1.0
+description: Minimal RelayCraft plugin template — a page, a persisted counter, i18n, and toasts.
+author: RelayCraft
+license: MIT
+icon: icon.svg
+engines:
+  relaycraft: ">=1.4.0"
+capabilities:
+  ui:
+    entry: index.js
+  i18n:
+    namespace: template
+    locales:
+      en: locales/en.json
+      zh: locales/zh.json
+permissions:
+  - storage:read
+  - storage:write

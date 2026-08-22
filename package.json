@@ -23,6 +23,7 @@
     "dev:tauri": "RELAYCRAFT_DEV=1 pnpm tauri dev --config '{\"productName\": \"RelayCraft Dev\", \"identifier\": \"com.relaycraft.app.dev\", \"proxy_port\": 9091}'",
     "build": "pnpm gen:licenses && tsc && vite build",
     "check:i18n": "node scripts/check-i18n.js",
+    "validate:plugin": "node scripts/validate-plugin-manifest.mjs",
     "preview": "vite preview",
     "tauri": "python engine-core/build.py --sync && tauri",
     "test": "vitest",
