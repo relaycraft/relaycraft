@@ -77,8 +77,8 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({
     setCallStats(null);
     setStatsError(false);
     getPluginApiContract()
-      .then((specs) => {
-        if (!cancelled) setContract(specs);
+      .then((contract) => {
+        if (!cancelled) setContract(contract.commands);
       })
       .catch(() => {
         if (!cancelled) setStatsError(true);

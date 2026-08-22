@@ -36,6 +36,38 @@ pub struct BridgeCommandSpec {
     pub alias_of: Option<&'static str>,
 }
 
+/// Declarative spec for a host-emitted event that plugins may subscribe to
+/// via `api.events.on(eventName, callback)`.
+///
+/// Together with `BRIDGE_COMMANDS`, `PLUGIN_EVENTS` makes the event channel
+/// part of the plugin contract: an `app.emit` event visible to plugins must
+/// be registered here; unregistered events are not guaranteed to be stable.
+#[derive(Debug, Clone, Serialize)]
+pub struct PluginEventSpec {
+    /// Event name as emitted by the host, e.g. "rules-changed".
+    pub event: &'static str,
+    /// API domain (host vs engine).
+    pub domain: ApiDomain,
+    /// Human-readable description of the event payload.
+    pub payload: &'static str,
+    /// What the event means and when it is emitted.
+    pub description: &'static str,
+}
+
+const fn event(
+    event: &'static str,
+    domain: ApiDomain,
+    payload: &'static str,
+    description: &'static str,
+) -> PluginEventSpec {
+    PluginEventSpec {
+        event,
+        domain,
+        payload,
+        description,
+    }
+}
+
 const fn spec(
     command: &'static str,
     domain: ApiDomain,
@@ -188,6 +220,43 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
     ),
 ];
 
+/// All host-emitted events a plugin may subscribe to, the single source of
+/// truth for the plugin event contract alongside `BRIDGE_COMMANDS`.
+pub const PLUGIN_EVENTS: &[PluginEventSpec] = &[
+    // ── engine domain ────────────────────────────────────────────────────────
+    event(
+        "rules-changed",
+        ApiDomain::Engine,
+        "empty (notification only)",
+        "Emitted when the active rule set changes; refetch rules to observe the new state.",
+    ),
+    event(
+        "proxy-engine-crashed",
+        ApiDomain::Engine,
+        "string (error message)",
+        "Emitted when the proxy engine process crashes.",
+    ),
+    // ── host domain ──────────────────────────────────────────────────────────
+    event(
+        "mcp-activity",
+        ApiDomain::Host,
+        "object (MCP activity record)",
+        "Emitted when an MCP tool call is handled by the host.",
+    ),
+    event(
+        "plugin-installed-from-file",
+        ApiDomain::Host,
+        "string (plugin id)",
+        "Emitted when a plugin is successfully installed from a local file.",
+    ),
+    event(
+        "plugin-install-failed-from-file",
+        ApiDomain::Host,
+        "string (error message)",
+        "Emitted when installing a plugin from a local file fails.",
+    ),
+];
+
 /// Look up a command spec by name. Unregistered commands return `None`.
 pub fn find_command(command: &str) -> Option<&'static BridgeCommandSpec> {
     BRIDGE_COMMANDS.iter().find(|spec| spec.command == command)
@@ -224,12 +293,15 @@ pub fn unregistered_command_error(command: &str) -> String {
     )
 }
 
-/// `get_plugin_api_contract` Tauri command: returns the full bridge command
-/// registry as JSON. Contract metadata for the host UI itself — no plugin
-/// permission required.
+/// `get_plugin_api_contract` Tauri command: returns the full plugin API
+/// contract as `{ "commands": [...], "events": [...] }`. Contract metadata
+/// for the host UI itself — no plugin permission required.
 #[tauri::command]
 pub fn get_plugin_api_contract() -> serde_json::Value {
-    serde_json::to_value(BRIDGE_COMMANDS).unwrap_or_else(|_| serde_json::Value::Array(vec![]))
+    serde_json::json!({
+        "commands": BRIDGE_COMMANDS,
+        "events": PLUGIN_EVENTS,
+    })
 }
 
 #[cfg(test)]
@@ -395,7 +467,9 @@ mod tests {
     #[test]
     fn contract_command_serializes_to_json() {
         let value = get_plugin_api_contract();
-        let entries = value.as_array().expect("contract is a JSON array");
+        let entries = value["commands"]
+            .as_array()
+            .expect("contract commands is a JSON array");
         assert_eq!(entries.len(), BRIDGE_COMMANDS.len());
         let first = entries
             .iter()
@@ -412,5 +486,51 @@ mod tests {
         // Option fields are skipped when None.
         assert!(host.get("permission").is_none());
         assert!(host.get("alias_of").is_none());
+    }
+
+    #[test]
+    fn event_names_are_unique() {
+        let mut seen = std::collections::HashSet::new();
+        for spec in PLUGIN_EVENTS {
+            assert!(
+                seen.insert(spec.event),
+                "duplicate plugin event: {}",
+                spec.event
+            );
+        }
+    }
+
+    #[test]
+    fn event_domains_are_valid() {
+        // ApiDomain is an exhaustive enum, so validity means it serializes to
+        // one of the two contract values.
+        for spec in PLUGIN_EVENTS {
+            let value = serde_json::to_value(spec).unwrap();
+            let domain = value["domain"].as_str().unwrap();
+            assert!(
+                domain == "host" || domain == "engine",
+                "event {} has invalid domain {}",
+                spec.event,
+                domain
+            );
+        }
+    }
+
+    #[test]
+    fn contract_serializes_with_commands_and_events_keys() {
+        let value = get_plugin_api_contract();
+        let object = value.as_object().expect("contract is a JSON object");
+        assert!(object.contains_key("commands"));
+        assert!(object.contains_key("events"));
+        assert_eq!(object.len(), 2);
+        let events = value["events"].as_array().unwrap();
+        assert_eq!(events.len(), PLUGIN_EVENTS.len());
+        let rules_changed = events
+            .iter()
+            .find(|e| e["event"] == "rules-changed")
+            .unwrap();
+        assert_eq!(rules_changed["domain"], "engine");
+        assert!(rules_changed["payload"].is_string());
+        assert!(rules_changed["description"].is_string());
     }
 }

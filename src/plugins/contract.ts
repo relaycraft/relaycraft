@@ -26,14 +26,34 @@ export interface BridgeCommandSpec {
 }
 
 /**
- * Fetch the full bridge command registry from the host.
+ * Declarative spec for a host-emitted event that plugins may subscribe to
+ * via `api.events.on`.
+ */
+export interface PluginEventSpec {
+  /** Event name as emitted by the host, e.g. "rules-changed". */
+  event: string;
+  domain: ApiDomain;
+  /** Human-readable description of the event payload. */
+  payload: string;
+  /** What the event means and when it is emitted. */
+  description: string;
+}
+
+/** Full plugin API contract: bridge commands plus subscribable host events. */
+export interface PluginApiContract {
+  commands: BridgeCommandSpec[];
+  events: PluginEventSpec[];
+}
+
+/**
+ * Fetch the full plugin API contract from the host.
  * Result is memoized for the lifetime of the renderer process.
  */
-let cachedContract: Promise<BridgeCommandSpec[]> | null = null;
+let cachedContract: Promise<PluginApiContract> | null = null;
 
-export function getPluginApiContract(): Promise<BridgeCommandSpec[]> {
+export function getPluginApiContract(): Promise<PluginApiContract> {
   if (!cachedContract) {
-    cachedContract = invoke<BridgeCommandSpec[]>("get_plugin_api_contract");
+    cachedContract = invoke<PluginApiContract>("get_plugin_api_contract");
   }
   return cachedContract;
 }

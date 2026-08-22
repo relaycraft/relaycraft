@@ -289,6 +289,21 @@ chars. Each plugin only sees its own namespace.
 | `log.info(message, context?)` / `log.warn(...)` / `log.error(message, errorObj?)` | Write to the app log, tagged with your plugin id; visible in the log viewer. | — |
 | `events.on(eventName, callback) → () => void` | Subscribe to Tauri events emitted by the host or other plugins; returns an unlisten function. | — |
 
+#### Subscribable host events
+
+The host emits the following events that plugins may subscribe to. They are
+registered in `PLUGIN_EVENTS` in `src-tauri/src/plugins/registry.rs`, which is
+the single source of truth for the event contract; events not registered there
+are not guaranteed to be stable.
+
+| Event | Domain | Payload | Description |
+| --- | --- | --- | --- |
+| `rules-changed` | engine | empty (notification only) | Emitted when the active rule set changes; refetch rules to observe the new state. |
+| `proxy-engine-crashed` | engine | string (error message) | Emitted when the proxy engine process crashes. |
+| `mcp-activity` | host | object (MCP activity record) | Emitted when an MCP tool call is handled by the host. |
+| `plugin-installed-from-file` | host | string (plugin id) | Emitted when a plugin is successfully installed from a local file. |
+| `plugin-install-failed-from-file` | host | string (error message) | Emitted when installing a plugin from a local file fails. |
+
 ### host
 
 | Signature | Description | Permission |

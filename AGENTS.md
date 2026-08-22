@@ -41,6 +41,11 @@ If instructions conflict, follow the higher-priority item and explain the confli
   never reword them. Host-domain commands (`bridge/host.rs`) must not depend
   on the proxy engine; engine-domain commands live in `bridge/engine.rs`, and
   an engine swap (2.0) only replaces that layer's implementation.
+- Plugin event contract: host-emitted events a plugin may subscribe to via
+  `api.events.on` must be registered in `PLUGIN_EVENTS` in
+  `src-tauri/src/plugins/registry.rs`. When adding an `app.emit` for a
+  plugin-visible event, register it there at the same time; unregistered
+  events are not part of the contract and are not guaranteed to be stable.
 
 ## 4) Execution Contract for AI Agents
 
