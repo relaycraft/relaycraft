@@ -10,6 +10,9 @@ interface AlertDialogState {
   onConfirm: () => void;
   onCancel: () => void;
   customIcon?: React.ReactNode;
+  /** When set, the dialog renders a checkbox (e.g. "also delete data"). */
+  checkboxLabel?: string;
+  checkboxChecked?: boolean;
 }
 
 export type TabType =
@@ -61,11 +64,16 @@ interface UIStore {
     confirmLabel?: string;
     cancelLabel?: string;
     variant?: "danger" | "warning" | "info" | "success";
-    onConfirm: () => void;
+    onConfirm: (checkboxChecked: boolean) => void;
     onCancel?: () => void;
     customIcon?: React.ReactNode;
+    /** Renders an optional checkbox below the message; the confirm callback
+     * receives its checked state. Defaults to unchecked. */
+    checkboxLabel?: string;
+    checkboxDefaultChecked?: boolean;
   }) => void;
   closeConfirm: () => void;
+  setConfirmCheckbox: (checked: boolean) => void;
   draftScriptPrompt: string | null;
   setDraftScriptPrompt: (prompt: string | null) => void;
   draftRulePrompt: string | null;
@@ -142,7 +150,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
         cancelLabel: options.cancelLabel || "",
         variant: options.variant || "info",
         onConfirm: () => {
-          options.onConfirm();
+          options.onConfirm(get().alertDialog.checkboxChecked ?? false);
           get().closeConfirm();
         },
         onCancel: () => {
@@ -150,12 +158,24 @@ export const useUIStore = create<UIStore>((set, get) => ({
           get().closeConfirm();
         },
         customIcon: options.customIcon,
+        checkboxLabel: options.checkboxLabel,
+        checkboxChecked: options.checkboxDefaultChecked ?? false,
       },
     });
   },
   closeConfirm: () => {
     set((state) => ({
-      alertDialog: { ...state.alertDialog, isOpen: false },
+      alertDialog: {
+        ...state.alertDialog,
+        isOpen: false,
+        checkboxLabel: undefined,
+        checkboxChecked: false,
+      },
+    }));
+  },
+  setConfirmCheckbox: (checked) => {
+    set((state) => ({
+      alertDialog: { ...state.alertDialog, checkboxChecked: checked },
     }));
   },
   draftScriptPrompt: null,

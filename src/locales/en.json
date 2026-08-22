@@ -560,6 +560,7 @@
     "api_error": "Failed to load API for plugin: {{pluginId}}",
     "browse_market": "Browse Market",
     "confirm_uninstall": "Are you sure you want to uninstall this plugin?",
+    "confirm_uninstall_remove_data": "Also delete all data stored by this plugin (cannot be undone)",
     "contract": {
       "domain": {
         "host": "Host Domain",
@@ -613,6 +614,11 @@
       "generic": "Error: {{error}}",
       "help_text": "Please check your network connection or try again later.",
       "install_failed": "Installation Failed",
+      "installStage": {
+        "archive": "Failed to extract the plugin archive",
+        "filesystem": "Filesystem operation failed",
+        "manifest": "Plugin manifest validation failed"
+      },
       "invalid_format_msg": "plugin.json format is incorrect or contains syntax errors. Please check the plugin package integrity.\n\nDetails: {{error}}",
       "invalid_format_title": "Invalid Plugin Format",
       "invalid_pkg_msg": "plugin.json contains trailing characters or format errors. This may not be a valid RelayCraft plugin package.\n\nTip: Ensure you selected a .rcplugin or .zip file containing a valid plugin.json.",

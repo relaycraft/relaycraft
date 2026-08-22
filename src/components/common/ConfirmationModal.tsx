@@ -20,6 +20,10 @@ interface ConfirmationModalProps {
   isLoading?: boolean;
   className?: string;
   customIcon?: React.ReactNode;
+  /** Renders a checkbox below the message when set. */
+  checkboxLabel?: string;
+  checkboxChecked?: boolean;
+  onCheckboxChange?: (checked: boolean) => void;
 }
 
 const variantStyles: Record<
@@ -70,6 +74,9 @@ export function ConfirmationModal({
   isLoading,
   className,
   customIcon,
+  checkboxLabel,
+  checkboxChecked,
+  onCheckboxChange,
 }: ConfirmationModalProps) {
   const { t } = useTranslation();
   const style = variantStyles[variant];
@@ -131,6 +138,17 @@ export function ConfirmationModal({
             <p className="text-ui text-muted-foreground leading-relaxed whitespace-pre-line">
               {message}
             </p>
+            {checkboxLabel && (
+              <label className="mt-3 flex items-center gap-2 cursor-pointer select-none text-ui text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={checkboxChecked ?? false}
+                  onChange={(e) => onCheckboxChange?.(e.target.checked)}
+                  className="w-4 h-4 rounded border-border/60 accent-primary"
+                />
+                <span>{checkboxLabel}</span>
+              </label>
+            )}
           </div>
         </div>
 

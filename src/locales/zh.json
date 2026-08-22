@@ -560,6 +560,7 @@
     "api_error": "插件 API 加载失败: {{pluginId}}",
     "browse_market": "浏览市场",
     "confirm_uninstall": "确定要卸载此插件吗？",
+    "confirm_uninstall_remove_data": "同时删除该插件的全部数据（不可恢复）",
     "contract": {
       "domain": {
         "host": "宿主域",
@@ -613,6 +614,11 @@
       "generic": "错误: {{error}}",
       "help_text": "请检查网络连接或稍后重试。",
       "install_failed": "安装失败",
+      "installStage": {
+        "archive": "插件包解压失败",
+        "filesystem": "文件系统操作失败",
+        "manifest": "插件清单校验失败"
+      },
       "invalid_format_msg": "plugin.json 文件格式错误或包含语法错误。请检查插件包的完整性。\n\n详细信息: {{error}}",
       "invalid_format_title": "插件格式无效",
       "invalid_pkg_msg": "plugin.json 文件包含多余的字符或格式错误。这可能不是一个有效的 RelayCraft 插件包。\n\n请确保您选择的是 .rcplugin 或包含正确 plugin.json 的 .zip 文件。",

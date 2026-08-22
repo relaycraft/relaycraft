@@ -389,6 +389,13 @@ pnpm validate:plugin templates/plugin-template
 
 Run it in CI on your plugin repo to keep releases clean.
 
+The host runs the same validation again at install time
+(`install_plugin_from_zip`): required `id`/`name`/`version`, reverse-domain
+id shape, SemVer version, `permissions` restricted to the same known set as
+the CLI, and — after staging extraction — `capabilities.ui.entry` must point
+to a file inside the package. Failures abort the install with a stage-tagged
+error (`[manifest]` / `[archive]` / `[filesystem]`).
+
 ---
 
 ## 7. Debugging

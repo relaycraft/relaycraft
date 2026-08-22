@@ -51,7 +51,18 @@ interface PluginStore {
   fetchCachedMarketPlugins: (type: "plugin" | "theme") => Promise<void>;
   installPlugin: (url: string) => Promise<void>;
   installPluginLocal: (path: string) => Promise<void>;
-  uninstallPlugin: (id: string) => Promise<void>;
+  uninstallPlugin: (id: string, options?: { removeData?: boolean }) => Promise<void>;
+}
+
+/**
+ * Map a host-side stage-tagged install error ("[manifest] ...", "[archive] ...",
+ * "[filesystem] ...") to a localized stage label followed by the raw message.
+ * Returns null when the error carries no stage prefix.
+ */
+function stageAwareInstallMessage(errorMessage: string): string | null {
+  const match = errorMessage.match(/^\[(manifest|archive|filesystem)\]/);
+  if (!match) return null;
+  return `${t(`plugins.errors.installStage.${match[1]}`)}\n${errorMessage}`;
 }
 
 export const usePluginStore = create<PluginStore>((set, get) => ({
@@ -215,8 +226,11 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       const errorMessage = formatError(error);
 
       // Extract meaningful error message
+      const staged = stageAwareInstallMessage(errorMessage);
       let displayMessage = t("plugins.errors.install_failed");
-      if (errorMessage.includes("Failed to start download")) {
+      if (staged) {
+        displayMessage = staged;
+      } else if (errorMessage.includes("Failed to start download")) {
         displayMessage = t("plugins.errors.download_failed");
       } else if (errorMessage.includes("timeout")) {
         displayMessage = t("plugins.errors.timeout");
@@ -283,8 +297,13 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       let title = i18n.t("plugins.errors.install_failed");
       let message = errorMessage;
 
+      // Host-side stage-tagged errors take precedence over generic matching.
+      const staged = stageAwareInstallMessage(errorMessage);
+
       // Parse common error types for better UX
-      if (errorMessage.includes("Invalid plugin.json")) {
+      if (staged) {
+        message = staged;
+      } else if (errorMessage.includes("Invalid plugin.json")) {
         title = i18n.t("plugins.errors.invalid_format_title");
         message = i18n.t("plugins.errors.invalid_format_msg", {
           error: errorMessage,
@@ -315,7 +334,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
     }
   },
 
-  uninstallPlugin: async (id: string) => {
+  uninstallPlugin: async (id: string, options?: { removeData?: boolean }) => {
     try {
       Logger.debug(`[PluginStore] Uninstalling plugin ${id}...`);
       // First unload if running
@@ -326,7 +345,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
         await get().togglePlugin(id, false);
       }
 
-      await invoke("uninstall_plugin", { id });
+      await invoke("uninstall_plugin", { id, removeData: options?.removeData ?? false });
       await get().fetchPlugins();
 
       // 添加成功通知

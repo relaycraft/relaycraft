@@ -2,7 +2,7 @@ import { useUIStore } from "../../stores/uiStore";
 import { ConfirmationModal } from "./ConfirmationModal";
 
 export function AlertDialog() {
-  const { alertDialog, closeConfirm } = useUIStore();
+  const { alertDialog, closeConfirm, setConfirmCheckbox } = useUIStore();
   const {
     isOpen,
     title,
@@ -13,6 +13,8 @@ export function AlertDialog() {
     onConfirm,
     onCancel,
     customIcon,
+    checkboxLabel,
+    checkboxChecked,
   } = alertDialog;
 
   return (
@@ -27,6 +29,9 @@ export function AlertDialog() {
       variant={variant}
       onCancel={onCancel}
       customIcon={customIcon}
+      checkboxLabel={checkboxLabel}
+      checkboxChecked={checkboxChecked}
+      onCheckboxChange={setConfirmCheckbox}
     />
   );
 }

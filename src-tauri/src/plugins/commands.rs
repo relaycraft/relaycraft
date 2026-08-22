@@ -113,7 +113,11 @@ pub async fn read_plugin_file(
 }
 
 #[tauri::command]
-pub async fn uninstall_plugin(id: String, _app: AppHandle) -> Result<(), String> {
+pub async fn uninstall_plugin(
+    id: String,
+    remove_data: Option<bool>,
+    _app: AppHandle,
+) -> Result<(), String> {
     let app_dir = config::get_data_dir()?;
     let plugins_dir = app_dir.join("plugins");
 
@@ -133,8 +137,26 @@ pub async fn uninstall_plugin(id: String, _app: AppHandle) -> Result<(), String>
             .map_err(|e| format!("Failed to remove plugin directory: {}", e))?;
     }
 
-    log::info!("[Plugins] Uninstalled plugin: {}", id);
-    let _ = logging::write_domain_log("audit", &format!("Uninstalled Plugin: {}", id));
+    // 3. Optionally remove the plugin's KV storage (plugins_data/{id})
+    let remove_data = remove_data.unwrap_or(false);
+    if remove_data {
+        crate::plugins::storage::remove_plugin_data(&app_dir, &id)
+            .map_err(|e| format!("Failed to remove plugin data: {}", e))?;
+    }
+
+    log::info!(
+        "[Plugins] Uninstalled plugin: {} (data {})",
+        id,
+        if remove_data { "removed" } else { "kept" }
+    );
+    let _ = logging::write_domain_log(
+        "audit",
+        &format!(
+            "Uninstalled Plugin: {} (data {})",
+            id,
+            if remove_data { "removed" } else { "kept" }
+        ),
+    );
     Ok(())
 }
 #[tauri::command]

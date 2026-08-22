@@ -33,9 +33,13 @@ fn validate_key(key: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn storage_dir_in(data_dir: &std::path::Path, plugin_id: &str) -> PathBuf {
+    data_dir.join("plugins_data").join(plugin_id)
+}
+
 fn storage_dir(plugin_id: &str) -> Result<PathBuf, String> {
     let data_dir = crate::config::get_data_dir()?;
-    Ok(data_dir.join("plugins_data").join(plugin_id))
+    Ok(storage_dir_in(&data_dir, plugin_id))
 }
 
 /// Read a key. Returns `None` when the key does not exist.
@@ -98,7 +102,14 @@ pub async fn list(plugin_id: &str, prefix: Option<&str>) -> Result<Vec<String>, 
 
 /// Remove all stored data for this plugin (used on uninstall or user reset).
 pub async fn clear(plugin_id: &str) -> Result<(), String> {
-    let dir = storage_dir(plugin_id)?;
+    let data_dir = crate::config::get_data_dir()?;
+    remove_plugin_data(&data_dir, plugin_id)
+}
+
+/// Remove the entire `{data_dir}/plugins_data/{plugin_id}` directory.
+/// Idempotent: succeeds silently when the plugin has no stored data.
+pub fn remove_plugin_data(data_dir: &std::path::Path, plugin_id: &str) -> Result<(), String> {
+    let dir = storage_dir_in(data_dir, plugin_id);
     if dir.exists() {
         std::fs::remove_dir_all(&dir).map_err(|e| e.to_string())?;
     }
@@ -107,7 +118,7 @@ pub async fn clear(plugin_id: &str) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::validate_key;
+    use super::{remove_plugin_data, validate_key};
 
     #[test]
     fn valid_keys_pass() {
@@ -123,5 +134,26 @@ mod tests {
         assert!(validate_key("a:b").is_err());
         assert!(validate_key("a b").is_err());
         assert!(validate_key(&"x".repeat(129)).is_err());
+    }
+
+    #[test]
+    fn remove_plugin_data_deletes_existing_directory() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let data_dir = temp.path();
+        let plugin_dir = data_dir.join("plugins_data").join("com.example.test");
+        std::fs::create_dir_all(&plugin_dir).unwrap();
+        std::fs::write(plugin_dir.join("key.json"), "{}").unwrap();
+
+        remove_plugin_data(data_dir, "com.example.test").unwrap();
+        assert!(!plugin_dir.exists());
+    }
+
+    #[test]
+    fn remove_plugin_data_is_idempotent_for_missing_directory() {
+        let temp = tempfile::TempDir::new().unwrap();
+        // No plugins_data directory at all — must succeed silently.
+        remove_plugin_data(temp.path(), "com.example.absent").unwrap();
+        // Twice for good measure.
+        remove_plugin_data(temp.path(), "com.example.absent").unwrap();
     }
 }

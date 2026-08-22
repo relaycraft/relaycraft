@@ -147,6 +147,149 @@ pub fn check_compatibility(manifest: &PluginManifest) -> PluginCompatibility {
     }
 }
 
+/// Permissions a plugin manifest may declare. Keep in sync with
+/// `KNOWN_PERMISSIONS` in `registry.rs` tests, `PluginPermission` in
+/// `src/types/plugin.ts`, and `scripts/validate-plugin-manifest.mjs`.
+pub(crate) const KNOWN_PERMISSIONS: &[&str] = &[
+    "proxy:read",
+    "proxy:write",
+    "fs:read_logs",
+    "network:outbound",
+    "ai:chat",
+    "stats:read",
+    "rules:write",
+    "rules:read",
+    "traffic:read",
+    "storage:read",
+    "storage:write",
+];
+
+/// Lenient reverse-domain id: at least two dot-separated segments, first
+/// segment starts with a letter, segments contain [A-Za-z0-9_-].
+/// Mirrors ID_PATTERN in `scripts/validate-plugin-manifest.mjs`.
+fn is_valid_plugin_id(id: &str) -> bool {
+    let mut segments = id.split('.');
+    let first = match segments.next() {
+        Some(segment) => segment,
+        None => return false,
+    };
+    let valid_segment = |s: &str| {
+        !s.is_empty()
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    };
+    if !first
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_alphabetic())
+        || !valid_segment(first)
+    {
+        return false;
+    }
+    let mut count = 1;
+    for segment in segments {
+        if !valid_segment(segment) {
+            return false;
+        }
+        count += 1;
+    }
+    count >= 2
+}
+
+/// SemVer shape: MAJOR.MINOR.PATCH with optional `-prerelease` / `+build`.
+/// Mirrors SEMVER_PATTERN in `scripts/validate-plugin-manifest.mjs`.
+fn is_valid_semver_shape(version: &str) -> bool {
+    let valid_suffix = |s: &str| {
+        !s.is_empty()
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-')
+    };
+    let head = match version.split_once('+') {
+        Some((head, build)) => {
+            if !valid_suffix(build) {
+                return false;
+            }
+            head
+        }
+        None => version,
+    };
+    let core = match head.split_once('-') {
+        Some((core, prerelease)) => {
+            if !valid_suffix(prerelease) {
+                return false;
+            }
+            core
+        }
+        None => head,
+    };
+    let parts: Vec<&str> = core.split('.').collect();
+    parts.len() == 3
+        && parts
+            .iter()
+            .all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit()))
+}
+
+/// Validate a plugin manifest at install time (theme manifests are not
+/// covered). Rules mirror `scripts/validate-plugin-manifest.mjs`.
+/// All errors carry the `[manifest]` stage prefix so the frontend can
+/// classify them.
+pub fn validate_plugin_manifest(manifest: &PluginManifest) -> Result<(), String> {
+    let id = manifest.id.trim();
+    if id.is_empty() {
+        return Err("[manifest] missing required field \"id\"".to_string());
+    }
+    if !is_valid_plugin_id(id) {
+        return Err(format!(
+            "[manifest] id \"{}\" is not a valid reverse-domain id (expected something like \"com.example.plugin\")",
+            manifest.id
+        ));
+    }
+    if manifest.name.trim().is_empty() {
+        return Err("[manifest] missing required field \"name\"".to_string());
+    }
+    let version = manifest.version.trim();
+    if version.is_empty() {
+        return Err("[manifest] missing required field \"version\"".to_string());
+    }
+    if !is_valid_semver_shape(version) {
+        return Err(format!(
+            "[manifest] version \"{}\" is not a valid SemVer string",
+            manifest.version
+        ));
+    }
+    if let Some(permissions) = &manifest.permissions {
+        for permission in permissions {
+            if !KNOWN_PERMISSIONS.contains(&permission.as_str()) {
+                return Err(format!(
+                    "[manifest] unknown permission \"{}\". Valid values: {}",
+                    permission,
+                    KNOWN_PERMISSIONS.join(", ")
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// After extraction to the staging directory, verify that a declared
+/// `capabilities.ui.entry` file actually exists in the staged payload.
+fn validate_staged_ui_entry(staging_dir: &Path, manifest: &PluginManifest) -> Result<(), String> {
+    if let Some(entry) = manifest
+        .capabilities
+        .as_ref()
+        .and_then(|caps| caps.ui.as_ref())
+        .map(|ui| &ui.entry)
+    {
+        if !staging_dir.join(entry).is_file() {
+            return Err(format!(
+                "[manifest] capabilities.ui.entry points to a missing file: {}",
+                entry
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn load_plugin(path: &Path) -> Option<PluginInfo> {
     let yaml_path = path.join("plugin.yaml");
     let yml_path = path.join("plugin.yml");
@@ -286,9 +429,10 @@ pub fn get_enabled_plugin_scripts(plugins_dir: &Path, enabled_ids: &[String]) ->
 /// Returns the installed ID.
 pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String, String> {
     // 1. Open zip
-    let file = fs::File::open(zip_path).map_err(|e| format!("Failed to open zip: {}", e))?;
+    let file =
+        fs::File::open(zip_path).map_err(|e| format!("[archive] Failed to open zip: {}", e))?;
     let mut archive =
-        zip::ZipArchive::new(file).map_err(|e| format!("Invalid zip archive: {}", e))?;
+        zip::ZipArchive::new(file).map_err(|e| format!("[archive] Invalid zip archive: {}", e))?;
 
     // 2. We need to find manifest to know the ID and type
     let mut plugin_manifest_content = String::new();
@@ -297,55 +441,65 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     let mut is_yaml_plugin = false;
 
     for i in 0..archive.len() {
-        let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("[archive] Failed to read zip entry: {}", e))?;
         if file.name().ends_with("plugin.json") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
-                return Err("plugin.json is too large".to_string());
+                return Err("[manifest] plugin.json is too large".to_string());
             }
             file.read_to_string(&mut plugin_manifest_content)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| format!("[manifest] Failed to read plugin.json: {}", e))?;
         } else if file.name().ends_with("plugin.yaml") || file.name().ends_with("plugin.yml") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
-                return Err("plugin.yaml is too large".to_string());
+                return Err("[manifest] plugin.yaml is too large".to_string());
             }
             file.read_to_string(&mut plugin_manifest_content)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| format!("[manifest] Failed to read plugin.yaml: {}", e))?;
             is_yaml_plugin = true;
         } else if file.name().ends_with("theme.yaml") || file.name().ends_with("theme.yml") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
-                return Err("theme manifest is too large".to_string());
+                return Err("[manifest] theme manifest is too large".to_string());
             }
             file.read_to_string(&mut theme_manifest_content)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| format!("[manifest] Failed to read theme manifest: {}", e))?;
             is_theme = true;
         }
     }
 
-    let (id, target_root) = if is_theme {
+    let (id, target_root, plugin_manifest) = if is_theme {
         let manifest: crate::plugins::config::ThemeManifest =
             serde_yaml::from_str(&theme_manifest_content)
-                .map_err(|e| format!("Invalid theme manifest: {}", e))?;
-        (manifest.id, app_dir.join("data").join("themes"))
+                .map_err(|e| format!("[manifest] Invalid theme manifest: {}", e))?;
+        (manifest.id, app_dir.join("data").join("themes"), None)
     } else {
         if plugin_manifest_content.is_empty() {
-            return Err("Plugin zip must contain plugin.json or plugin.yaml".to_string());
+            return Err(
+                "[manifest] Plugin zip must contain plugin.json or plugin.yaml".to_string(),
+            );
         }
         let manifest: crate::plugins::config::PluginManifest = if is_yaml_plugin {
             serde_yaml::from_str(&plugin_manifest_content)
-                .map_err(|e| format!("Invalid plugin.yaml: {}", e))?
+                .map_err(|e| format!("[manifest] Invalid plugin.yaml: {}", e))?
         } else {
             serde_json::from_str(&plugin_manifest_content)
-                .map_err(|e| format!("Invalid plugin.json: {}", e))?
+                .map_err(|e| format!("[manifest] Invalid plugin.json: {}", e))?
         };
-        (manifest.id, app_dir.join("data").join("plugins"))
+        // Manifest contract validation (id / name / version / permissions).
+        // File-level checks (e.g. capabilities.ui.entry) run against the
+        // staging directory after extraction.
+        validate_plugin_manifest(&manifest)?;
+        let id = manifest.id.clone();
+        (id, app_dir.join("data").join("plugins"), Some(manifest))
     };
 
     // Ensure parents exist
     if !target_root.exists() {
-        fs::create_dir_all(&target_root).map_err(|e| e.to_string())?;
+        fs::create_dir_all(&target_root)
+            .map_err(|e| format!("[filesystem] Failed to create plugin directory: {}", e))?;
     }
 
     let target_dir = target_root.join(&id);
@@ -355,9 +509,11 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     // 3. Extract to staging directory first (atomic replace pattern)
     //    Old version stays intact until extraction fully succeeds.
     if staging_dir.exists() {
-        fs::remove_dir_all(&staging_dir).map_err(|e| e.to_string())?;
+        fs::remove_dir_all(&staging_dir)
+            .map_err(|e| format!("[filesystem] Failed to clean staging directory: {}", e))?;
     }
-    fs::create_dir_all(&staging_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&staging_dir)
+        .map_err(|e| format!("[filesystem] Failed to create staging directory: {}", e))?;
 
     // 100 MB total extraction limit to prevent zip-bomb attacks.
     const MAX_EXTRACT_BYTES: u64 = 100 * 1024 * 1024;
@@ -372,18 +528,22 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
     };
 
     for i in 0..archive.len() {
-        let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("[archive] Failed to read zip entry: {}", e))?;
         let outpath = match file.enclosed_name() {
             Some(path) => staging_dir.join(path),
             None => continue,
         };
 
         if (*file.name()).ends_with('/') {
-            fs::create_dir_all(&outpath).map_err(|e| e.to_string())?;
+            fs::create_dir_all(&outpath)
+                .map_err(|e| format!("[filesystem] Failed to create directory: {}", e))?;
         } else {
             if let Some(p) = outpath.parent() {
                 if !p.exists() {
-                    fs::create_dir_all(p).map_err(|e| e.to_string())?;
+                    fs::create_dir_all(p)
+                        .map_err(|e| format!("[filesystem] Failed to create directory: {}", e))?;
                 }
             }
 
@@ -392,10 +552,11 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
             // obviously oversized entries.
             let reported = file.size();
             if total_extracted + reported > MAX_EXTRACT_BYTES {
-                return abort("Plugin archive exceeds 100 MB extraction limit");
+                return abort("[archive] Plugin archive exceeds 100 MB extraction limit");
             }
 
-            let mut outfile = fs::File::create(&outpath).map_err(|e| e.to_string())?;
+            let mut outfile = fs::File::create(&outpath)
+                .map_err(|e| format!("[filesystem] Failed to create file: {}", e))?;
 
             // Chunked copy: enforce the limit during the actual write stream so
             // that a compressed entry whose true size exceeds its reported size
@@ -403,17 +564,29 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
             let mut buf = vec![0u8; CHUNK];
             loop {
                 use std::io::Read;
-                let n = file.read(&mut buf).map_err(|e| e.to_string())?;
+                let n = file
+                    .read(&mut buf)
+                    .map_err(|e| format!("[archive] Failed to read zip entry: {}", e))?;
                 if n == 0 {
                     break;
                 }
                 total_extracted += n as u64;
                 if total_extracted > MAX_EXTRACT_BYTES {
-                    return abort("Plugin archive exceeds 100 MB extraction limit");
+                    return abort("[archive] Plugin archive exceeds 100 MB extraction limit");
                 }
                 use std::io::Write;
-                outfile.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+                outfile
+                    .write_all(&buf[..n])
+                    .map_err(|e| format!("[filesystem] Failed to write file: {}", e))?;
             }
+        }
+    }
+
+    // 3b. Manifest-declared UI entry must exist in the staged payload
+    //     (checked after extraction, before the atomic replace).
+    if let Some(manifest) = &plugin_manifest {
+        if let Err(e) = validate_staged_ui_entry(&staging_dir, manifest) {
+            return abort(&e);
         }
     }
 
@@ -425,7 +598,7 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
         }
         fs::rename(&target_dir, &backup_dir).map_err(|e| {
             let _ = fs::remove_dir_all(&staging_dir);
-            format!("Failed to backup existing plugin: {}", e)
+            format!("[filesystem] Failed to backup existing plugin: {}", e)
         })?;
     }
     fs::rename(&staging_dir, &target_dir).map_err(|e| {
@@ -433,7 +606,7 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
         if backup_dir.exists() {
             let _ = fs::rename(&backup_dir, &target_dir);
         }
-        format!("Failed to activate new plugin version: {}", e)
+        format!("[filesystem] Failed to activate new plugin version: {}", e)
     })?;
     // Clean up backup on success
     if backup_dir.exists() {
@@ -600,5 +773,113 @@ mod tests {
         assert!(!compat.compatible);
         let reason = compat.reason.expect("invalid range must carry a reason");
         assert!(reason.contains("invalid version requirement"));
+    }
+
+    fn mock_valid_manifest() -> PluginManifest {
+        PluginManifest {
+            id: "com.example.test".to_string(),
+            name: "Test Plugin".to_string(),
+            version: "1.0.0".to_string(),
+            description: None,
+            author: None,
+            icon: None,
+            homepage: None,
+            license: None,
+            min_app_version: None,
+            engines: None,
+            entry: None,
+            capabilities: None,
+            permissions: None,
+            settings_schema: None,
+            locales: None,
+            r#type: "plugin".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_validate_manifest_valid_passes() {
+        let mut manifest = mock_valid_manifest();
+        assert!(validate_plugin_manifest(&manifest).is_ok());
+
+        manifest.version = "0.2.1-beta.1+build.5".to_string();
+        manifest.permissions = Some(vec!["proxy:read".to_string(), "storage:write".to_string()]);
+        assert!(validate_plugin_manifest(&manifest).is_ok());
+    }
+
+    #[test]
+    fn test_validate_manifest_missing_name() {
+        let mut manifest = mock_valid_manifest();
+        manifest.name = "  ".to_string();
+        let err = validate_plugin_manifest(&manifest).unwrap_err();
+        assert!(err.starts_with("[manifest]"), "got: {}", err);
+        assert!(err.contains("name"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_validate_manifest_bad_id() {
+        for bad_id in ["", "plugin", "1com.example", "com..example", "com/example"] {
+            let mut manifest = mock_valid_manifest();
+            manifest.id = bad_id.to_string();
+            let err = validate_plugin_manifest(&manifest).unwrap_err();
+            assert!(
+                err.starts_with("[manifest]"),
+                "id {:?} should fail with [manifest] prefix, got: {}",
+                bad_id,
+                err
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_manifest_bad_version() {
+        for bad_version in ["", "1.0", "v1.0.0", "1.0.0.0", "1.x.0"] {
+            let mut manifest = mock_valid_manifest();
+            manifest.version = bad_version.to_string();
+            let err = validate_plugin_manifest(&manifest).unwrap_err();
+            assert!(
+                err.starts_with("[manifest]"),
+                "version {:?} should fail with [manifest] prefix, got: {}",
+                bad_version,
+                err
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_manifest_unknown_permission() {
+        let mut manifest = mock_valid_manifest();
+        manifest.permissions = Some(vec!["traffic:read".to_string(), "root:all".to_string()]);
+        let err = validate_plugin_manifest(&manifest).unwrap_err();
+        assert!(err.starts_with("[manifest]"), "got: {}", err);
+        assert!(err.contains("root:all"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_validate_staged_ui_entry() {
+        let temp = TempDir::new().unwrap();
+        let staging = temp.path();
+
+        let mut manifest = mock_valid_manifest();
+        manifest.capabilities = Some(crate::plugins::config::PluginCapabilities {
+            ui: Some(crate::plugins::config::PluginUICapability {
+                entry: "index.js".to_string(),
+                settings_schema: None,
+            }),
+            logic: None,
+            i18n: None,
+        });
+
+        // Missing entry file → error with [manifest] prefix
+        let err = validate_staged_ui_entry(staging, &manifest).unwrap_err();
+        assert!(err.starts_with("[manifest]"), "got: {}", err);
+        assert!(err.contains("index.js"), "got: {}", err);
+
+        // Entry file present → ok
+        fs::write(staging.join("index.js"), "console.log(1)").unwrap();
+        assert!(validate_staged_ui_entry(staging, &manifest).is_ok());
+
+        // No UI capability declared → always ok
+        manifest.capabilities = None;
+        assert!(validate_staged_ui_entry(staging, &manifest).is_ok());
     }
 }

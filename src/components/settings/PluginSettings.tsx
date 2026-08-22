@@ -174,7 +174,8 @@ const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
                     title: t("plugins.uninstall"),
                     message: t("plugins.confirm_uninstall"),
                     variant: "danger",
-                    onConfirm: () => uninstallPlugin(plugin.manifest.id),
+                    checkboxLabel: t("plugins.confirm_uninstall_remove_data"),
+                    onConfirm: (removeData) => uninstallPlugin(plugin.manifest.id, { removeData }),
                   });
                 }}
                 className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-muted/30 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
