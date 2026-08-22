@@ -32,6 +32,15 @@ If instructions conflict, follow the higher-priority item and explain the confli
 - Flow interception/modification logic belongs to engine layer, not duplicated in host UI/backend.
 - Flow persistence submodules under `engine-core/addons/core` must use
   `addons.core.flowdb.*` import paths.
+- Plugin bridge contract: `src-tauri/src/plugins/registry.rs` is the single
+  source of truth for all `plugin_call` bridge commands. Every new bridge
+  command must be registered there with a spec (domain / permission /
+  api_surface / audited / alias_of) and registered in the dispatch match in
+  `src-tauri/src/plugins/bridge/mod.rs`. Permission-gate and rejection error
+  messages are part of the contract (the frontend matches on them verbatim) —
+  never reword them. Host-domain commands (`bridge/host.rs`) must not depend
+  on the proxy engine; engine-domain commands live in `bridge/engine.rs`, and
+  an engine swap (2.0) only replaces that layer's implementation.
 
 ## 4) Execution Contract for AI Agents
 
@@ -63,6 +72,8 @@ If full validation is not run, explicitly report what was skipped.
 - Prefer root-cause diagnosis over arbitrary caps or band-aids when fixing performance or long-running lag.
 - Prefer minimal UI scope: fix the specific surface; do not globally restyle shared modals/components unless asked.
 - Prefer simpler, industry-common first scopes for protocol features over over-engineered v1 designs.
+- Prefer product-domain language over generic infra jargon (e.g. avoid bare「网关」; frame share/reverse as sharing a composed local environment / environment entry).
+- Ship working capability first, then polish UI/UX, then deepen AI assistance—do not block core function on polish.
 - Rule actions have distinct semantics: Map Local = short-circuit with local content (owns file mode for large/static content); rewrite_body = modify the upstream response. Do not add file mode to rewrite_body; route "serve local file" needs to Map Local.
 
 ## 8) Learned Workspace Facts

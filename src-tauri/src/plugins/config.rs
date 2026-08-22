@@ -11,7 +11,11 @@ pub struct PluginManifest {
     pub icon: Option<String>,
     pub homepage: Option<String>,
     pub license: Option<String>,
+    /// Deprecated: use `engines.relaycraft` (SemVer range) instead.
+    /// Kept for backward compatibility with older manifests.
     pub min_app_version: Option<String>,
+    /// Engine compatibility ranges, e.g. `{ "relaycraft": ">=0.9.0" }`.
+    pub engines: Option<HashMap<String, String>>,
     pub entry: Option<PluginEntry>, // Legacy support
     pub capabilities: Option<PluginCapabilities>,
     pub permissions: Option<Vec<String>>,

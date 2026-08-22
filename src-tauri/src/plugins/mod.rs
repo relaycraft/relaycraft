@@ -2,6 +2,7 @@ pub mod bridge;
 pub mod commands;
 pub mod config;
 pub mod market;
+pub mod registry;
 pub mod storage;
 
 use crate::plugins::config::PluginInfo;
@@ -403,6 +404,7 @@ mod tests {
             homepage: None,
             license: None,
             min_app_version: None,
+            engines: None,
             entry: None,
             capabilities: None,
             permissions: None,
@@ -456,6 +458,7 @@ mod tests {
             homepage: None,
             license: None,
             min_app_version: None,
+            engines: None,
             entry: None,
             capabilities: None,
             permissions: None,

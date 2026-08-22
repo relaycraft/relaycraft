@@ -380,6 +380,7 @@ pub fn run() {
             plugins::market::plugin_market_install,
             plugins::market::plugin_market_load_cache,
             plugins::bridge::plugin_call,
+            plugins::registry::get_plugin_api_contract,
             common::utils::check_regex_match,
             common::utils::get_system_info,
             traffic::replay_request,

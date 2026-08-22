@@ -12,6 +12,8 @@ export interface PluginManifest {
   locales?: Record<string, { name?: string; description?: string }>;
 
   // Compatibility
+  // Authoritative compatibility contract (supersedes the legacy Rust-side
+  // `min_app_version` field, which is deprecated).
   engines?: {
     relaycraft?: string; // SemVer range e.g. ">=0.9.0"
     node?: string;
@@ -26,6 +28,8 @@ export interface PluginManifest {
       entry: string; // path to entry.js
     };
     // Domain B: Traffic Processing
+    // Reserved field: declares engine-side traffic processing capability.
+    // The current engine does not execute it; it takes effect with the 2.0 engine.
     logic?: {
       entry: string; // path to main.py
     };
@@ -255,6 +259,14 @@ export interface SlotOptions {
 }
 
 export interface PluginAPI {
+  // Stability tiers (bridge commands are registered in
+  // `src-tauri/src/plugins/registry.rs`, the single source of truth):
+  // - frontend-local (host-stable): i18n / theme / ui / settings / log / events
+  //   never cross the bridge; they are implemented in this renderer.
+  // - host services (host-stable): ai / stats / http / storage / host bridge
+  //   to engine-independent host capabilities.
+  // - engine-backed (stable shape, engine-swappable): proxy / traffic / rules
+  //   keep their API shape in 2.0; only the host-side implementation changes.
   i18n: {
     t: (key: string, options?: any) => string;
     language: string;
@@ -322,7 +334,8 @@ export interface PluginAPI {
   /**
    * Plugin-scoped key-value storage persisted to disk.
    * Keys must match [a-zA-Z0-9-_], max 128 chars.
-   * No permission required — each plugin only accesses its own namespace.
+   * Requires `storage:read` (get/list) / `storage:write` (set/delete/clear)
+   * permissions in the plugin manifest. Each plugin only accesses its own namespace.
    */
   storage: {
     get: (key: string) => Promise<string | null>;
