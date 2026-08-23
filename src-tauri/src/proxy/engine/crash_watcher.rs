@@ -8,7 +8,7 @@ use tauri::{AppHandle, Emitter};
 use super::EngineInner;
 
 pub(super) fn spawn_crash_watcher(inner: Arc<EngineInner>, app: AppHandle) {
-    std::thread::Builder::new()
+    if let Err(e) = std::thread::Builder::new()
         .name("rc-crash-watcher".into())
         .spawn(move || {
             loop {
@@ -55,5 +55,13 @@ pub(super) fn spawn_crash_watcher(inner: Arc<EngineInner>, app: AppHandle) {
                 }
             }
         })
-        .ok();
+    {
+        // A failed spawn means engine crash detection is silently off — make
+        // it loud in the logs instead of swallowing it with `.ok()`.
+        log::error!("Failed to spawn crash watcher thread: {}", e);
+        let _ = logging::write_domain_log(
+            "crash",
+            &format!("Failed to spawn crash watcher thread: {}", e),
+        );
+    }
 }

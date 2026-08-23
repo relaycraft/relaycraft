@@ -2,9 +2,20 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::panic;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Mutex};
 use std::thread;
+
+/// Max size of a single domain log file before it is rotated.
+const MAX_LOG_FILE_BYTES: u64 = 10 * 1024 * 1024; // 10 MB
+/// Rotated generations kept per log file (X.log.1 .. X.log.N).
+const MAX_ROTATED_GENERATIONS: u32 = 3;
+/// Bounded queue between log producers and the writer thread. Logs may be
+/// dropped under pressure; they must never block callers or grow memory.
+const LOG_CHANNEL_CAPACITY: usize = 10_000;
+/// Cap for the panic-hook message appended to crash.log.
+const MAX_PANIC_MESSAGE_BYTES: usize = 64 * 1024;
 
 // Log entry structure
 struct LogEntry {
@@ -13,10 +24,9 @@ struct LogEntry {
     timestamp: String,
 }
 
-lazy_static::lazy_static! {
-    static ref LOG_TX: Mutex<Option<mpsc::Sender<LogEntry>>> = Mutex::new(None);
-    static ref LOG_DIR_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
-}
+static LOG_TX: Mutex<Option<mpsc::SyncSender<LogEntry>>> = Mutex::new(None);
+static LOG_DIR_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
+static DROPPED_LOG_COUNT: AtomicU64 = AtomicU64::new(0);
 
 /// Initialize the log directory and start the background logger thread
 pub fn init_log_dir(path: PathBuf) {
@@ -25,8 +35,9 @@ pub fn init_log_dir(path: PathBuf) {
         *dir = Some(path.clone());
     }
 
-    // Create channel
-    let (tx, rx) = mpsc::channel::<LogEntry>();
+    // Create bounded channel: when full, producers drop the new entry
+    // (see write_domain_log) instead of blocking or growing memory.
+    let (tx, rx) = mpsc::sync_channel::<LogEntry>(LOG_CHANNEL_CAPACITY);
 
     // Store sender
     if let Ok(mut global_tx) = LOG_TX.lock() {
@@ -41,7 +52,9 @@ pub fn init_log_dir(path: PathBuf) {
     if let Err(e) = thread::Builder::new()
         .name("rc-log-writer".into())
         .spawn(move || {
-            let mut file_cache: HashMap<String, File> = HashMap::new();
+            // Cached file handles plus the current size of each file, so the
+            // size-based rotation check below costs no extra syscalls.
+            let mut file_cache: HashMap<String, (File, u64)> = HashMap::new();
             let log_dir = path.join("logs");
 
             if !log_dir.exists() {
@@ -61,29 +74,6 @@ pub fn init_log_dir(path: PathBuf) {
                 let file_path = log_dir.join(filename);
                 let file_key = filename.to_string();
 
-                // Get or open file handle
-                let file = match file_cache.entry(file_key) {
-                    std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
-                    std::collections::hash_map::Entry::Vacant(e) => {
-                        let result = OpenOptions::new()
-                            .create(true)
-                            .append(true)
-                            .open(&file_path)
-                            .or_else(|_| File::create(&file_path));
-                        match result {
-                            Ok(f) => e.insert(f),
-                            Err(err) => {
-                                eprintln!(
-                                    "Failed to open log file {}: {}",
-                                    file_path.display(),
-                                    err
-                                );
-                                continue;
-                            }
-                        }
-                    }
-                };
-
                 // Standardize prefixing
                 let domain_prefix = match entry.domain.as_str() {
                     "audit" => "[AUDIT]",
@@ -100,15 +90,93 @@ pub fn init_log_dir(path: PathBuf) {
                         entry.message
                     };
 
-                if let Err(e) = writeln!(file, "[{}] {}", entry.timestamp, final_message) {
+                let line = format!("[{}] {}\n", entry.timestamp, final_message);
+
+                // Rotate before writing when this line would push the file past
+                // the size cap. Rotation produces X.log.N files, which the
+                // startup cleanup_old_logs pass then garbage-collects.
+                let current_size = match file_cache.get(&file_key) {
+                    Some((_, size)) => *size,
+                    None => std::fs::metadata(&file_path).map(|m| m.len()).unwrap_or(0),
+                };
+                if current_size > 0 && current_size + line.len() as u64 > MAX_LOG_FILE_BYTES {
+                    // Close the handle before renaming the file underneath it.
+                    file_cache.remove(&file_key);
+                    if let Err(e) = rotate_log_file(&file_path, MAX_ROTATED_GENERATIONS) {
+                        eprintln!("Failed to rotate log file {}: {}", file_path.display(), e);
+                    }
+                }
+
+                // Get or open file handle
+                let (file, size) = match file_cache.entry(file_key) {
+                    std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+                    std::collections::hash_map::Entry::Vacant(e) => {
+                        let result = OpenOptions::new()
+                            .create(true)
+                            .append(true)
+                            .open(&file_path)
+                            .or_else(|_| File::create(&file_path));
+                        match result {
+                            Ok(f) => {
+                                let size = f.metadata().map(|m| m.len()).unwrap_or(0);
+                                e.insert((f, size))
+                            }
+                            Err(err) => {
+                                eprintln!(
+                                    "Failed to open log file {}: {}",
+                                    file_path.display(),
+                                    err
+                                );
+                                continue;
+                            }
+                        }
+                    }
+                };
+
+                if let Err(e) = file.write_all(line.as_bytes()) {
                     eprintln!("Failed to write log: {}", e);
                     // If write fails, try to reopen next time
+                } else {
+                    *size += line.len() as u64;
                 }
             }
         })
     {
         eprintln!("Failed to spawn log writer thread: {}", e);
     }
+}
+
+/// Rotate `path` to `path.1`, shifting existing generations up
+/// (`.1`→`.2`, ...); the oldest generation beyond `max_generations` is
+/// deleted. No-op when `path` does not exist.
+fn rotate_log_file(path: &Path, max_generations: u32) -> std::io::Result<()> {
+    if max_generations == 0 {
+        if path.exists() {
+            std::fs::remove_file(path)?;
+        }
+        return Ok(());
+    }
+    let oldest = rotated_path(path, max_generations);
+    if oldest.exists() {
+        std::fs::remove_file(&oldest)?;
+    }
+    for gen in (1..max_generations).rev() {
+        let from = rotated_path(path, gen);
+        if from.exists() {
+            std::fs::rename(&from, rotated_path(path, gen + 1))?;
+        }
+    }
+    if path.exists() {
+        std::fs::rename(path, rotated_path(path, 1))?;
+    }
+    Ok(())
+}
+
+/// `engine.log` + generation 2 → `engine.log.2`
+fn rotated_path(path: &Path, generation: u32) -> PathBuf {
+    let mut name = path.as_os_str().to_owned();
+    name.push(format!(".{}", generation));
+    PathBuf::from(name)
 }
 
 /// Clean up old log files on startup
@@ -119,7 +187,9 @@ fn cleanup_old_logs(log_dir: &std::path::Path) {
     }
 
     // ONLY process these known log file types - whitelist approach for safety
-    const KNOWN_LOG_TYPES: &[&str] = &["audit", "script", "plugin", "crash", "engine", "app"];
+    const KNOWN_LOG_TYPES: &[&str] = &[
+        "audit", "script", "plugin", "crash", "engine", "app", "custom",
+    ];
 
     const MAX_FILES_PER_TYPE: usize = 5; // Keep 5 most recent files per log type
 
@@ -177,11 +247,21 @@ fn cleanup_old_logs(log_dir: &std::path::Path) {
 /// Setup panic hook to log crashes to crash.log
 pub fn setup_panic_hook() {
     panic::set_hook(Box::new(|info| {
-        let msg = format!(
+        let mut msg = format!(
             "{}\nBacktrace: {:?}\n",
             info,
             std::backtrace::Backtrace::capture()
         );
+        // Cap the appended payload so a pathological backtrace cannot blow up
+        // crash.log in a single write.
+        if msg.len() > MAX_PANIC_MESSAGE_BYTES {
+            let mut end = MAX_PANIC_MESSAGE_BYTES;
+            while !msg.is_char_boundary(end) {
+                end -= 1;
+            }
+            msg.truncate(end);
+            msg.push_str("\n[truncated]\n");
+        }
         eprintln!("{}", msg); // Always print to stderr
 
         // Direct file write for panics
@@ -205,17 +285,39 @@ pub fn setup_panic_hook() {
     }));
 }
 
-/// Queue a message to be written to a specialized domain log file
+/// Queue a message to be written to a specialized domain log file.
+///
+/// The queue is bounded: when full (e.g. the writer thread is stalled on a
+/// slow/full disk), the new entry is dropped and counted rather than
+/// blocking the caller or growing memory. Logs are best-effort.
 pub fn write_domain_log(domain: &str, message: &str) -> std::io::Result<()> {
     if let Ok(guard) = LOG_TX.lock() {
         if let Some(tx) = &*guard {
             let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            let _ = tx.send(LogEntry {
+            let entry = LogEntry {
                 domain: domain.to_string(),
                 message: message.to_string(),
                 timestamp,
-            });
-            return Ok(());
+            };
+            return match tx.try_send(entry) {
+                Ok(()) => Ok(()),
+                Err(mpsc::TrySendError::Full(_)) => {
+                    let dropped = DROPPED_LOG_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
+                    // Log occasionally so a stalled writer is visible without
+                    // flooding stderr.
+                    if dropped == 1 || dropped % 1000 == 0 {
+                        eprintln!(
+                            "[Logging] writer queue full; dropped {} log entries so far",
+                            dropped
+                        );
+                    }
+                    Ok(())
+                }
+                Err(mpsc::TrySendError::Disconnected(_)) => Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "Log writer thread is gone",
+                )),
+            };
         }
     }
     // Fallback if logger not initialized
@@ -306,4 +408,73 @@ fn read_last_n_lines(path: &std::path::Path, n: usize) -> std::io::Result<Vec<St
 
     let start = all_lines.len().saturating_sub(n);
     Ok(all_lines[start..].to_vec())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rotate_shifts_generations_and_deletes_oldest() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let log = temp.path().join("engine.log");
+        std::fs::write(&log, "current").unwrap();
+        std::fs::write(rotated_path(&log, 1), "gen1").unwrap();
+        std::fs::write(rotated_path(&log, 2), "gen2").unwrap();
+        std::fs::write(rotated_path(&log, 3), "gen3").unwrap();
+
+        rotate_log_file(&log, 3).unwrap();
+
+        assert!(!log.exists());
+        assert_eq!(
+            std::fs::read_to_string(rotated_path(&log, 1)).unwrap(),
+            "current"
+        );
+        assert_eq!(
+            std::fs::read_to_string(rotated_path(&log, 2)).unwrap(),
+            "gen1"
+        );
+        assert_eq!(
+            std::fs::read_to_string(rotated_path(&log, 3)).unwrap(),
+            "gen2"
+        );
+        assert!(!rotated_path(&log, 4).exists());
+    }
+
+    #[test]
+    fn rotate_fills_gaps_when_generations_are_missing() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let log = temp.path().join("audit.log");
+        std::fs::write(&log, "current").unwrap();
+        // Only .2 exists — .1 missing must not break the shift.
+        std::fs::write(rotated_path(&log, 2), "gen2").unwrap();
+
+        rotate_log_file(&log, 3).unwrap();
+
+        assert!(!log.exists());
+        assert_eq!(
+            std::fs::read_to_string(rotated_path(&log, 1)).unwrap(),
+            "current"
+        );
+        assert!(!rotated_path(&log, 2).exists());
+        assert_eq!(
+            std::fs::read_to_string(rotated_path(&log, 3)).unwrap(),
+            "gen2"
+        );
+    }
+
+    #[test]
+    fn rotate_is_noop_when_file_is_missing() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let log = temp.path().join("missing.log");
+        rotate_log_file(&log, 3).unwrap();
+        assert!(!log.exists());
+        assert!(!rotated_path(&log, 1).exists());
+    }
+
+    #[test]
+    fn rotated_path_appends_generation_suffix() {
+        let log = Path::new("/tmp/engine.log");
+        assert_eq!(rotated_path(log, 1), PathBuf::from("/tmp/engine.log.1"));
+    }
 }

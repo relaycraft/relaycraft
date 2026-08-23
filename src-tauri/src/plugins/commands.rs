@@ -1,3 +1,4 @@
+use crate::common::sync::lock_unpoisoned;
 use crate::config;
 use crate::logging;
 use crate::plugins::{config::PluginInfo, discover_plugins, PluginCache};
@@ -13,7 +14,7 @@ pub async fn get_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, String> {
 
     // Update cache
     let cache = app.state::<PluginCache>();
-    let mut cached = cache.plugins.lock().expect("plugin cache lock poisoned");
+    let mut cached = lock_unpoisoned(&cache.plugins);
     *cached = plugins.clone();
 
     Ok(plugins)

@@ -1,4 +1,5 @@
 use crate::common::error::ToTauriError;
+use crate::common::sync::lock_unpoisoned;
 use crate::proxy::process::ProxyState;
 
 #[derive(serde::Serialize)]
@@ -14,13 +15,12 @@ pub struct ProcessStats {
 pub async fn get_process_stats(
     state: tauri::State<'_, ProxyState>,
 ) -> Result<ProcessStats, String> {
-    let mut sys = state
-        .system
-        .lock()
-        .expect("proxy system state lock poisoned");
+    // Lock order convention: system → networks → last_rx → last_tx →
+    // last_update. Always acquire in this order; never in reverse.
+    let mut sys = lock_unpoisoned(&state.system);
 
     // Refresh network stats
-    let mut networks = state.networks.lock().expect("network data lock poisoned");
+    let mut networks = lock_unpoisoned(&state.networks);
     networks.refresh(false);
 
     let mut current_rx = 0;
@@ -31,9 +31,9 @@ pub async fn get_process_stats(
         current_tx += data.transmitted();
     }
 
-    let mut last_rx_lock = state.last_rx.lock().expect("last_rx lock poisoned");
-    let mut last_tx_lock = state.last_tx.lock().expect("last_tx lock poisoned");
-    let mut last_update_lock = state.last_update.lock().expect("last_update lock poisoned");
+    let mut last_rx_lock = lock_unpoisoned(&state.last_rx);
+    let mut last_tx_lock = lock_unpoisoned(&state.last_tx);
+    let mut last_update_lock = lock_unpoisoned(&state.last_update);
 
     let now = std::time::Instant::now();
     let elapsed = now.duration_since(*last_update_lock).as_secs_f64();

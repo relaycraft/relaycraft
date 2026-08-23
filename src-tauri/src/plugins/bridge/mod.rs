@@ -1,6 +1,7 @@
 mod engine;
 mod host;
 
+use crate::common::sync::lock_unpoisoned;
 use crate::config;
 use crate::logging;
 use crate::plugins::registry::{
@@ -44,7 +45,7 @@ pub async fn plugin_call(
     // 2. Get plugin manifest from cache (populate if empty)
     let cache = app.state::<PluginCache>();
     let plugin = {
-        let cached = cache.plugins.lock().expect("plugin cache lock poisoned");
+        let cached = lock_unpoisoned(&cache.plugins);
 
         // Try to find in cache
         if let Some(p) = cached.iter().find(|p| p.manifest.id == payload.plugin_id) {
@@ -63,7 +64,7 @@ pub async fn plugin_call(
                 .clone();
 
             // Update cache
-            let mut cached = cache.plugins.lock().expect("plugin cache lock poisoned");
+            let mut cached = lock_unpoisoned(&cache.plugins);
             *cached = plugins;
 
             plugin

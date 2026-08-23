@@ -6,7 +6,6 @@ pub mod process;
 pub use engine::*;
 pub use monitor::*;
 pub use process::*;
-// pub use paths::*;
 
 use crate::common::error::ToTauriError;
 use crate::config;
@@ -20,9 +19,12 @@ pub async fn start_proxy(
     // Load configuration
     let config = config::load_config()?;
 
-    state
-        .engine
-        .start(&app, &config)
+    // engine.start() is synchronous and can block for up to ~120s while it
+    // polls for engine readiness; run it off the async runtime worker.
+    let engine = state.engine.clone();
+    tokio::task::spawn_blocking(move || engine.start(&app, &config))
+        .await
+        .map_err(|e| e.to_string())?
         .map_err(|e| e.to_tauri_error())?;
 
     Ok("Proxy started".to_string())
@@ -30,7 +32,13 @@ pub async fn start_proxy(
 
 #[tauri::command]
 pub async fn stop_proxy(state: tauri::State<'_, ProxyState>) -> Result<String, String> {
-    state.engine.stop().map_err(|e| e.to_tauri_error())?;
+    // engine.stop() blocks while waiting for process teardown; keep it off
+    // the async runtime worker.
+    let engine = state.engine.clone();
+    tokio::task::spawn_blocking(move || engine.stop())
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_tauri_error())?;
 
     Ok("Proxy stopped".to_string())
 }
@@ -43,12 +51,17 @@ pub async fn restart_proxy(
     // Load configuration
     let config = config::load_config()?;
 
-    // Stop first, then start (this reloads scripts)
-    state.engine.stop().map_err(|e| e.to_tauri_error())?;
-    state
-        .engine
-        .start(&app, &config)
-        .map_err(|e| e.to_tauri_error())?;
+    // Stop first, then start (this reloads scripts). Both engine calls are
+    // synchronous and potentially long-blocking, so they run off the async
+    // runtime worker.
+    let engine = state.engine.clone();
+    tokio::task::spawn_blocking(move || {
+        engine.stop()?;
+        engine.start(&app, &config)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_tauri_error())?;
 
     Ok("Proxy restarted".to_string())
 }
@@ -96,7 +109,8 @@ pub async fn prepare_update_install(
     }
 
     // Give OS process teardown a brief moment before updater writes files.
-    std::thread::sleep(std::time::Duration::from_millis(400));
+    // Async sleep — must not block the runtime worker thread.
+    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
     Ok(())
 }

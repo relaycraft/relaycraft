@@ -1,6 +1,9 @@
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 use std::sync::Mutex;
 
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+use crate::common::sync::lock_unpoisoned;
+
 #[cfg(target_os = "macos")]
 static VIBRANCY_VIEW: Mutex<Option<usize>> = Mutex::new(None);
 
@@ -47,7 +50,7 @@ fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     unsafe {
         if effect == "none" {
             // If none, we make sure to just remove the visual effect or hide it
-            if let Some(view_ptr) = *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") {
+            if let Some(view_ptr) = *lock_unpoisoned(&VIBRANCY_VIEW) {
                 let view = &*(view_ptr as *const NSVisualEffectView);
                 view.setHidden(true);
             }
@@ -60,7 +63,7 @@ fn set_macos_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
             return;
         }
 
-        if let Some(view_ptr) = *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") {
+        if let Some(view_ptr) = *lock_unpoisoned(&VIBRANCY_VIEW) {
             let view = &*(view_ptr as *const NSVisualEffectView);
             view.setHidden(false); // Ensure it's visible again
 
@@ -130,7 +133,7 @@ fn setup_macos_window(window: &tauri::WebviewWindow) {
             visual_effect_view.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
 
             let view_ptr = (&*visual_effect_view as *const NSVisualEffectView) as usize;
-            *VIBRANCY_VIEW.lock().expect("vibrancy view lock poisoned") = Some(view_ptr);
+            *lock_unpoisoned(&VIBRANCY_VIEW) = Some(view_ptr);
 
             ns_window.setOpaque(false);
             ns_window.setBackgroundColor(Some(&NSColor::clearColor()));
@@ -159,10 +162,7 @@ fn setup_windows_linux_window(window: &tauri::WebviewWindow) {
 fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
     use window_vibrancy::{apply_acrylic, apply_mica, clear_vibrancy};
 
-    let current = WINDOWS_CURRENT_EFFECT
-        .lock()
-        .expect("windows effect lock poisoned")
-        .clone();
+    let current = lock_unpoisoned(&WINDOWS_CURRENT_EFFECT).clone();
 
     // Skip entirely if same effect is already applied.
     // This prevents redundant DWM recomposition (a common source of flicker and
@@ -208,9 +208,7 @@ fn set_windows_vibrancy(window: &tauri::WebviewWindow, effect: &str) {
         }
     }
 
-    *WINDOWS_CURRENT_EFFECT
-        .lock()
-        .expect("windows effect lock poisoned") = Some(effect.to_string());
+    *lock_unpoisoned(&WINDOWS_CURRENT_EFFECT) = Some(effect.to_string());
 }
 
 #[tauri::command]

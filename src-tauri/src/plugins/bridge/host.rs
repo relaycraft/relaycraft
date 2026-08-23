@@ -4,6 +4,8 @@
 use serde::Deserialize;
 use tauri::{AppHandle, Manager};
 
+use crate::common::sync::lock_unpoisoned;
+
 #[derive(Debug, Deserialize)]
 struct PluginAIMessageObject {
     role: String,
@@ -109,7 +111,7 @@ pub async fn host_get_runtime(app: &AppHandle) -> Result<serde_json::Value, Stri
     let proxy_status = crate::proxy::get_proxy_status(app.state()).await?;
     let mcp_state = app.state::<crate::mcp::McpState>();
     let mcp_running = mcp_state.running.load(std::sync::atomic::Ordering::Relaxed);
-    let mcp_port = *mcp_state.port.lock().expect("mcp port lock poisoned");
+    let mcp_port = *lock_unpoisoned(&mcp_state.port);
 
     Ok(serde_json::json!({
         "proxyPort": config.proxy_port,

@@ -4,6 +4,7 @@
 //! both allowed calls and permission denials — keyed by
 //! `(plugin_id, canonical_command)`. Not persisted; resets on app restart.
 
+use crate::common::sync::lock_unpoisoned;
 use crate::plugins::registry::{find_command, resolve_alias};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -40,7 +41,7 @@ impl PluginCallStats {
     /// Record one gated call. `command` must be the canonical command name
     /// (after `registry::resolve_alias`).
     pub fn record(&self, plugin_id: &str, command: &str, denied: bool) {
-        let mut stats = self.inner.lock().expect("plugin call stats lock poisoned");
+        let mut stats = lock_unpoisoned(&self.inner);
         let entry = stats
             .entry((plugin_id.to_string(), command.to_string()))
             .or_default();
@@ -54,7 +55,7 @@ impl PluginCallStats {
 
     /// Snapshot all counters, sorted for a stable UI presentation.
     pub fn snapshot(&self) -> Vec<PluginCallStatRow> {
-        let stats = self.inner.lock().expect("plugin call stats lock poisoned");
+        let stats = lock_unpoisoned(&self.inner);
         let mut rows: Vec<PluginCallStatRow> = stats
             .iter()
             .map(|((plugin_id, command), stat)| PluginCallStatRow {
