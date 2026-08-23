@@ -82,14 +82,17 @@ pub fn check_port_available(port: u16) -> bool {
 }
 
 /// Prepare updater installation by aggressively releasing engine file locks.
-/// On Windows, this force-kills known engine executables as a fallback.
+/// Force-kills leftover engine processes as a fallback, matched by the exact
+/// resolved engine binary path so unrelated processes are never touched.
 #[tauri::command]
-pub async fn prepare_update_install(state: tauri::State<'_, ProxyState>) -> Result<(), String> {
+pub async fn prepare_update_install(
+    app: AppHandle,
+    state: tauri::State<'_, ProxyState>,
+) -> Result<(), String> {
     let _ = state.engine.terminate();
 
-    #[cfg(target_os = "windows")]
-    {
-        crate::common::process::kill_known_engine_processes();
+    if let Ok(engine_path) = paths::get_engine_path(&app) {
+        crate::common::process::kill_engine_processes_by_path(&engine_path);
     }
 
     // Give OS process teardown a brief moment before updater writes files.

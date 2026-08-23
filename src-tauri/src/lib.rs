@@ -272,10 +272,14 @@ pub fn run() {
                 let _ = certificate::ensure_ca_exists(&cert_dir);
             }
 
-            // Kill stale engine processes
+            // Kill stale engine processes left by crashed sessions (exact
+            // path match — name-based matching would kill unrelated apps).
+            if let Ok(engine_path) = proxy::paths::get_engine_path(app.handle()) {
+                common::process::kill_engine_processes_by_path(&engine_path);
+            }
+
             #[cfg(target_os = "windows")]
             {
-                common::process::kill_known_engine_processes();
                 common::jump_list::reset_jump_list();
             }
 
@@ -421,17 +425,20 @@ pub fn run() {
                     let _ = state.engine.terminate();
                     log::info!("Child process stopped via engine abstraction");
                 }
-                // Force kill remaining engine processes as fallback
-                #[cfg(target_os = "windows")]
-                {
-                    common::process::kill_known_engine_processes();
-                }
-
-                #[cfg(target_os = "macos")]
-                {
-                    use std::process::Command;
-                    let _ = Command::new("pkill").args(&["-f", "engine"]).output();
-                    let _ = Command::new("pkill").args(&["-f", "mitmdump"]).output();
+                // Force kill leftover engine processes as fallback, matching
+                // only our own engine binary by its resolved full path —
+                // name-based pkill/taskkill matching would kill unrelated
+                // third-party processes (other apps' engine sidecars, etc.).
+                match proxy::paths::get_engine_path(app_handle) {
+                    Ok(engine_path) => {
+                        common::process::kill_engine_processes_by_path(&engine_path);
+                    }
+                    Err(e) => {
+                        log::warn!(
+                            "Engine path unresolved at exit, skipping fallback kill: {}",
+                            e
+                        );
+                    }
                 }
 
                 log::info!("Cleanup complete");
