@@ -99,7 +99,7 @@ export const TrafficListItem = memo(
 
         {/* ID Column */}
         <div
-          className="text-micro text-right font-mono text-muted-foreground/60 select-none mr-0.5"
+          className="text-tiny text-right font-mono text-muted-foreground/70 select-none mr-0.5"
           style={{ minWidth: idColWidth, maxWidth: idColWidth }}
         >
           {seq}

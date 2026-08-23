@@ -228,7 +228,7 @@ export function StatusBar() {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="relaycraft-popup traffic-path-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
+                className="relaycraft-popup traffic-path-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-(--z-sticky) shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
               >
                 <TrafficPathPanel model={trafficPathModel} />
               </motion.div>
@@ -266,7 +266,7 @@ export function StatusBar() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="relaycraft-popup breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
+                    className="relaycraft-popup breakpoint-manager-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[400px] z-(--z-sticky) shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl"
                   >
                     <BreakpointManager variant="minimal" />
                   </motion.div>
@@ -307,7 +307,7 @@ export function StatusBar() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="relaycraft-popup mcp-timeline-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 h-[400px] z-[60] shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl flex"
+                    className="relaycraft-popup mcp-timeline-container absolute bottom-full mb-3 left-1/2 -translate-x-1/2 h-[400px] z-(--z-sticky) shadow-2xl rounded-2xl overflow-hidden border border-border/40 bg-background/95 backdrop-blur-xl flex"
                   >
                     <McpActivityTimeline />
                   </motion.div>

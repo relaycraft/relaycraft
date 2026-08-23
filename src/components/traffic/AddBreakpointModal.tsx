@@ -89,7 +89,7 @@ export function AddBreakpointModal({
             placeholder={t("breakpoint.pattern_placeholder", "e.g. api.example.com")}
             className="font-mono text-ui h-8.5 bg-muted/20 border-border/50 focus:bg-background transition-all"
           />
-          <p className="text-micro text-muted-foreground/50 px-1">
+          <p className="text-tiny text-muted-foreground/70 px-1">
             {t("breakpoint.pattern_hint", "Enter domain, path, or full URL to match")}
           </p>
         </div>

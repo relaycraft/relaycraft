@@ -123,16 +123,10 @@
   --color-popover: #161b22;
   --color-popover-foreground: #ffffff;
   --color-border: rgba(255, 255, 255, 0.08);
-
-  /* Semantic Theme Variables */
-  --color-success: #10b981;
-  /* Emerald-500 */
-  --color-warning: #f59e0b;
-  /* Amber-500 */
-  --color-destructive: #f43f5e;
-  /* Rose-500 */
-  --color-info: #3b82f6;
-  /* Blue-500 */
+  --color-input: rgba(12, 14, 22, 0.58);
+  /* Input fields - matches themeStore dark value */
+  --color-ring: #3b82f6;
+  /* Focus ring - matches themeStore dark value */
 
   /* Rule Type Specific Colors */
   --color-rule-script: #818cf8;
@@ -152,6 +146,12 @@
   --color-rule-breakpoint: #ef4444;
   /* Red-500 */
 
+  --color-method-get: #3b82f6;
+  /* Blue-500 */
+  --color-method-post: #10b981;
+  /* Emerald-500 */
+  --color-method-put: #f59e0b;
+  /* Amber-500 */
   --color-method-delete: #f43f5e;
 
   /* Surface & Glass Effects */
@@ -177,6 +177,10 @@
   /* 10px - Minimum technical size (smaller than xs) */
   --text-tiny: 0.6875rem;
   /* 11px - Between micro and xs */
+  --text-caption: 0.75rem;
+  /* 12px - Caption labels */
+  --text-small: 0.8125rem;
+  /* 13px - Small UI text */
   --text-ui: 0.8125rem;
   /* 13px - Between xs and sm, main UI baseline */
 
@@ -185,6 +189,19 @@
   /* Default: Comfortable */
 
   --shadow-premium: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+
+  /*
+   * Z-index ladder - keeps overlay stacking order consistent.
+   * Relative order matters:
+   * dropdown < sticky < overlay < drawer < modal < modal-nested < tooltip.
+   */
+  --z-dropdown: 50;
+  --z-sticky: 60;
+  --z-overlay: 80;
+  --z-drawer: 90;
+  --z-modal: 100;
+  --z-modal-nested: 110;
+  --z-tooltip: 200;
 }
 
 /* High-DPI (2K/4K) Premium Visual Enhancements */

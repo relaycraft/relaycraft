@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { cloneElement, isValidElement, type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface TooltipProps {
@@ -49,18 +49,27 @@ export function Tooltip({
     setIsVisible(true);
   };
 
+  // a11y: icon-only trigger buttons get an accessible name from the tooltip
+  // text. Existing aria-labels are never overwritten; non-string content is skipped.
+  const trigger =
+    typeof content === "string" &&
+    isValidElement<{ "aria-label"?: string }>(children) &&
+    !children.props["aria-label"]
+      ? cloneElement(children, { "aria-label": content })
+      : children;
+
   return (
     <div
       className={`relative flex items-center ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setIsVisible(false)}
     >
-      {children}
+      {trigger}
       {isVisible &&
         createPortal(
           <div
             data-relaycraft-tooltip
-            className={`relaycraft-popup fixed z-[9999] px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
+            className={`relaycraft-popup fixed z-(--z-tooltip) px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
               multiline ? "whitespace-pre-wrap break-all max-w-[320px]" : "whitespace-nowrap"
             }`}
             style={{

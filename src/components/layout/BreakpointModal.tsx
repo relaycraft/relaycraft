@@ -169,6 +169,9 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
     });
   };
 
+  // Intentionally NOT common/Modal: the card tracks the mouse to render a radial
+  // glow effect behind the content, which the shared Modal surface does not support.
+  // Still uses the z-index ladder (--z-modal) to stay consistent with other modals.
   return createPortal(
     <AnimatePresence>
       <motion.div
@@ -176,7 +179,7 @@ export function BreakpointModal({ flows, onClose, onResume }: BreakpointModalPro
         initial="hidden"
         animate="visible"
         exit="exit"
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]"
+        className="fixed inset-0 z-(--z-modal) flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       >
         <motion.div

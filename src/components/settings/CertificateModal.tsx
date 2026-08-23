@@ -297,6 +297,11 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                     </div>
                   </div>
 
+                  {/*
+                    Full-screen QR preview intentionally stays a custom nested overlay instead of
+                    common/Modal: it is a transient lightbox layered ABOVE the parent modal
+                    (--z-modal-nested), with no header/body structure to reuse.
+                  */}
                   {createPortal(
                     <AnimatePresence>
                       {qrOpen && (
@@ -305,7 +310,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                          className="fixed inset-0 z-(--z-modal-nested) flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             setQrOpen(false);

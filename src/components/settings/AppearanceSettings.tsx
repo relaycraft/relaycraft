@@ -195,7 +195,9 @@ export const AppearanceSettings: React.FC = () => {
         </SettingsRow>
       </SettingsSection>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog
+          Intentionally NOT common/Modal: this is a lightweight inline confirm inside the
+          settings page (no portal/animation shell needed); it keeps its local z-50 layer. */}
       {themeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-[1px]">
           <div className="bg-popover border border-border rounded-xl shadow-lg p-6 max-w-sm w-full space-y-4 animate-in fade-in zoom-in-95 duration-200">

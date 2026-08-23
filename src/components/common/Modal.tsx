@@ -7,13 +7,21 @@ import { cn } from "../../lib/utils";
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: ReactNode;
   className?: string;
   /** Overrides the body wrapper classes (e.g. for tabs/custom scroll layouts). */
   bodyClassName?: string;
   icon?: ReactNode;
+  /** Optional subtitle rendered under the title; caller owns its styling. */
+  subtitle?: ReactNode;
+  /** Fully replaces the default title/icon block (e.g. command-palette input row). */
+  headerContent?: ReactNode;
   headerActions?: ReactNode;
+  /** Hides the header close button (e.g. palettes dismissed via backdrop/Escape). */
+  hideCloseButton?: boolean;
+  /** "top" renders a command-palette style panel near the top instead of centered. */
+  align?: "center" | "top";
   /** When true, backdrop click, Escape, and header close are disabled (e.g. during a blocking operation). */
   preventDismiss?: boolean;
   /** Native tooltip / aria-label when `preventDismiss` is true (e.g. why the window cannot be closed). */
@@ -28,7 +36,11 @@ export function Modal({
   className = "max-w-lg",
   bodyClassName = "p-4 overflow-y-auto custom-scrollbar",
   icon,
+  subtitle,
+  headerContent,
   headerActions,
+  hideCloseButton = false,
+  align = "center",
   preventDismiss = false,
   preventDismissHint,
 }: ModalProps) {
@@ -79,7 +91,11 @@ export function Modal({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 isolate">
+        <div
+          className={`fixed inset-0 z-(--z-modal) flex justify-center p-4 isolate ${
+            align === "top" ? "items-start pt-[15vh]" : "items-center"
+          }`}
+        >
           {/* Backdrop */}
           <motion.div
             variants={backdropVariants}
@@ -104,29 +120,38 @@ export function Modal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-muted/5 shrink-0">
-              <div className="flex items-center gap-2">
-                {icon && <div className="flex-shrink-0">{icon}</div>}
-                <h3 className="text-sm font-bold text-foreground/90 tracking-tight">{title}</h3>
-              </div>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 bg-muted/5 shrink-0">
+              {headerContent ?? (
+                <div className="flex items-center gap-2 min-w-0">
+                  {icon && <div className="flex-shrink-0">{icon}</div>}
+                  <div className="flex flex-col min-w-0">
+                    <h3 className="text-sm font-bold text-foreground/90 tracking-tight">{title}</h3>
+                    {subtitle}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 shrink-0">
                 {headerActions}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={preventDismiss}
-                  aria-disabled={preventDismiss}
-                  aria-label={preventDismiss && preventDismissHint ? preventDismissHint : undefined}
-                  title={preventDismiss && preventDismissHint ? preventDismissHint : undefined}
-                  className={cn(
-                    "p-1 text-muted-foreground/60 rounded-lg transition-all",
-                    preventDismiss
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:text-foreground hover:bg-muted/50",
-                  )}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {!hideCloseButton && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={preventDismiss}
+                    aria-disabled={preventDismiss}
+                    aria-label={
+                      preventDismiss && preventDismissHint ? preventDismissHint : undefined
+                    }
+                    title={preventDismiss && preventDismissHint ? preventDismissHint : undefined}
+                    className={cn(
+                      "p-1 text-muted-foreground/60 rounded-lg transition-all",
+                      preventDismiss
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:text-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 

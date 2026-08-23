@@ -76,7 +76,7 @@ export function NotificationCenter() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed top-10 bottom-7 left-0 right-0 bg-background/20 backdrop-blur-[1px] z-[80]"
+            className="fixed top-10 bottom-7 left-0 right-0 bg-background/20 backdrop-blur-[1px] z-(--z-overlay)"
           />
 
           {/* Panel */}
@@ -86,7 +86,7 @@ export function NotificationCenter() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relaycraft-dialog fixed top-10 right-0 bottom-7 w-[380px] bg-card/95 backdrop-blur-2xl border-l border-border/40 shadow-2xl z-[90] flex flex-col"
+            className="relaycraft-dialog fixed top-10 right-0 bottom-7 w-[380px] bg-card/95 backdrop-blur-2xl border-l border-border/40 shadow-2xl z-(--z-drawer) flex flex-col"
           >
             {/* Header */}
             <div className="h-14 px-4 border-b border-border/40 flex items-center justify-between bg-muted/10">
