@@ -13,18 +13,6 @@ vi.mock("../lib/traffic", () => ({
   getBackendPort: vi.fn(() => 9091),
 }));
 
-// Mock sessionStore since trafficStore uses it for `clearAll`
-vi.mock("./sessionStore", () => ({
-  useSessionStore: {
-    getState: () => ({
-      showSessionId: "session-1",
-      dbSessions: [{ id: "session-1", is_active: 1 }],
-      fetchDbSessions: vi.fn(),
-      deleteDbSession: vi.fn(),
-    }),
-  },
-}));
-
 describe("trafficStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();

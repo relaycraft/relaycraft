@@ -10,6 +10,8 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   className?: string;
+  /** Overrides the body wrapper classes (e.g. for tabs/custom scroll layouts). */
+  bodyClassName?: string;
   icon?: ReactNode;
   headerActions?: ReactNode;
   /** When true, backdrop click, Escape, and header close are disabled (e.g. during a blocking operation). */
@@ -24,6 +26,7 @@ export function Modal({
   title,
   children,
   className = "max-w-lg",
+  bodyClassName = "p-4 overflow-y-auto custom-scrollbar",
   icon,
   headerActions,
   preventDismiss = false,
@@ -128,7 +131,7 @@ export function Modal({
             </div>
 
             {/* Body */}
-            <div className="p-4 overflow-y-auto custom-scrollbar">{children}</div>
+            <div className={bodyClassName}>{children}</div>
           </motion.div>
         </div>
       )}

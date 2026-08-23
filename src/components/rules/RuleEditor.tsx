@@ -149,7 +149,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
             size="icon"
             onClick={handleClose}
             className="h-8 w-8"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </Button>

@@ -16,6 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_SCRIPT_TEMPLATE } from "../../lib/constants";
+import { Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { getUniqueName } from "../../lib/utils";
 import { useProxyStore } from "../../stores/proxyStore";
@@ -94,7 +95,7 @@ export function ScriptManager() {
         try {
           await deleteScript(name);
         } catch (error) {
-          console.error(error);
+          Logger.error("Failed to delete script:", error);
         }
       },
     });
@@ -134,7 +135,7 @@ export function ScriptManager() {
     try {
       await renameScript(editingScriptId, targetName);
     } catch (error) {
-      console.error("Rename failed", error);
+      Logger.error("Rename failed", error);
     } finally {
       setEditingScriptId(null);
     }
@@ -145,7 +146,7 @@ export function ScriptManager() {
     try {
       await restartProxy();
     } catch (error) {
-      console.error("Restart failed", error);
+      Logger.error("Restart failed", error);
     } finally {
       setRestarting(false);
     }

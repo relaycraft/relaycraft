@@ -1,10 +1,10 @@
-import { invoke } from "@tauri-apps/api/core";
 import { AlertTriangle, Code, Copy, RotateCcw, Send, Terminal, Workflow } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateCurlCommand } from "../../../lib/curl";
+import { Logger } from "../../../lib/logger";
 import { notify } from "../../../lib/notify";
-import { fetchFlowDetail } from "../../../lib/traffic";
+import { fetchFlowDetail, replayRequest } from "../../../lib/traffic";
 import { useComposerStore } from "../../../stores/composerStore";
 import {
   type TrafficFlowSummary,
@@ -14,7 +14,7 @@ import { useRuleStore } from "../../../stores/ruleStore";
 import { useTrafficStore } from "../../../stores/trafficStore";
 import { useUIStore } from "../../../stores/uiStore";
 import type { Flow, FlowIndex } from "../../../types";
-import { getHeaderValue, harToLegacyHeaders } from "../../../types";
+import { getHeaderValue } from "../../../types";
 import type { ContextMenuItem } from "../../common/ContextMenu";
 
 // Type for the modal state callback
@@ -76,7 +76,7 @@ export function useTrafficContextMenu() {
         const flow = await fetchFlowDetail(index.id);
         setMenuTargetFlow(flow);
       } catch (error) {
-        console.error("Failed to load flow detail for context menu:", error);
+        Logger.error("Failed to load flow detail for context menu:", error);
         setMenuTargetFlow(null);
       } finally {
         setIsLoadingDetail(false);
@@ -206,14 +206,7 @@ export function useTrafficContextMenu() {
                 onClick: async () => {
                   if (!menuTargetFlow) return;
                   try {
-                    await invoke("replay_request", {
-                      req: {
-                        method: menuTargetFlow.request.method,
-                        url: menuTargetFlow.request.url,
-                        headers: harToLegacyHeaders(menuTargetFlow.request.headers),
-                        body: menuTargetFlow.request.postData?.text || null,
-                      },
-                    });
+                    await replayRequest(menuTargetFlow.request);
                     notify.success(t("traffic.replay_success"), { toastOnly: true });
                   } catch (_error) {
                     notify.error(t("traffic.replay_failed"));

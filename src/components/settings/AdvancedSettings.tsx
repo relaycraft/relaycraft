@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FolderOpen, RefreshCcw, Trash2 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useUIStore } from "../../stores/uiStore";
@@ -188,7 +189,9 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
             variant="ghost"
             size="sm"
             className="h-8 gap-2 text-xs font-medium"
-            onClick={() => invoke("open_config_dir").catch(console.error)}
+            onClick={() =>
+              invoke("open_config_dir").catch((e) => Logger.error("Failed to open config dir:", e))
+            }
           >
             <FolderOpen className="w-3.5 h-3.5" />
             {t("common.open")}
@@ -202,7 +205,9 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
             variant="ghost"
             size="sm"
             className="h-8 gap-2 text-xs font-medium"
-            onClick={() => invoke("open_data_dir").catch(console.error)}
+            onClick={() =>
+              invoke("open_data_dir").catch((e) => Logger.error("Failed to open data dir:", e))
+            }
           >
             <FolderOpen className="w-3.5 h-3.5" />
             {t("common.open")}
@@ -216,7 +221,9 @@ export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
             variant="ghost"
             size="sm"
             className="h-8 gap-2 text-xs font-medium"
-            onClick={() => invoke("open_logs_dir").catch(console.error)}
+            onClick={() =>
+              invoke("open_logs_dir").catch((e) => Logger.error("Failed to open logs dir:", e))
+            }
           >
             <FolderOpen className="w-3.5 h-3.5" />
             {t("common.open")}

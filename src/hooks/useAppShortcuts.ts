@@ -1,18 +1,19 @@
-import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "../hooks/useNavigate";
 import { notify } from "../lib/notify";
+import { replayRequest } from "../lib/traffic";
 import { useComposerStore } from "../stores/composerStore";
 import { usePluginPageStore } from "../stores/pluginPageStore";
 import { useProxyStore } from "../stores/proxyStore";
+import { useSessionStore } from "../stores/sessionStore";
 import { useTrafficStore } from "../stores/trafficStore";
 import { useUIStore } from "../stores/uiStore";
 
 export function useAppShortcuts() {
   const { t } = useTranslation();
   const selectedFlow = useTrafficStore((s) => s.selectedFlow);
-  const clearFlows = useTrafficStore((s) => s.clearFlows);
+  const clearSession = useSessionStore((s) => s.clearSession);
   const running = useProxyStore((s) => s.running);
   const startProxy = useProxyStore((s) => s.startProxy);
   const stopProxy = useProxyStore((s) => s.stopProxy);
@@ -21,10 +22,6 @@ export function useAppShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      // Ignore if input/textarea is focused (except for specific global shortcuts that should override)
-      // const target = e.target as HTMLElement;
-      // const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
       // Global: Command Center (Cmd+K) - Already handled in CommandCenter.tsx
@@ -72,7 +69,7 @@ export function useAppShortcuts() {
       // Global: Clear Requests (Cmd + L)
       if (isCmdOrCtrl && e.key.toLowerCase() === "l") {
         e.preventDefault();
-        clearFlows();
+        clearSession();
         notify.success(t("traffic.list_cleared"), { toastOnly: true });
         return;
       }
@@ -115,19 +112,7 @@ export function useAppShortcuts() {
               return;
             }
             try {
-              // Convert HarHeader[] to Record<string, string> for replay
-              const headersRecord: Record<string, string> = {};
-              for (const h of selectedFlow.request.headers) {
-                headersRecord[h.name] = h.value;
-              }
-              await invoke("replay_request", {
-                req: {
-                  method: selectedFlow.request.method,
-                  url: selectedFlow.request.url,
-                  headers: headersRecord,
-                  body: selectedFlow.request.postData?.text || null,
-                },
-              });
+              await replayRequest(selectedFlow.request);
               notify.success(t("traffic.replay_success"), { toastOnly: true });
             } catch (_error) {
               notify.error(t("traffic.replay_failed"));
@@ -155,5 +140,5 @@ export function useAppShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedFlow, running, activeTab, t, clearFlows, startProxy, stopProxy, navigate]); // Dependencies updated
+  }, [selectedFlow, running, activeTab, t, clearSession, startProxy, stopProxy, navigate]); // Dependencies updated
 }

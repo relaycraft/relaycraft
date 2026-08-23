@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
 import { cn } from "../../lib/utils";
 import { Button } from "../common/Button";
 import { CopyButton } from "../common/CopyButton";
@@ -59,7 +60,7 @@ export function CertificateSettings() {
         setIsInstalled(installed);
         if (path) setCertPath(path);
       } catch (err) {
-        console.error(err);
+        Logger.error("Failed to load certificate info:", err);
         if (!silent)
           setError(typeof err === "string" ? err : `${t("common.loading")} ${t("common.failed")}`);
       } finally {
@@ -80,7 +81,7 @@ export function CertificateSettings() {
       await fn();
       await loadCertInfo(false); // Reload with skeleton to show "refreshing" feeling
     } catch (err) {
-      console.error(err);
+      Logger.error("Certificate action failed:", err);
       const errorMsg = typeof err === "string" ? err : `${action} ${t("common.failed")}`;
 
       // Special handling for macOS manual step requirement
@@ -105,7 +106,7 @@ export function CertificateSettings() {
     try {
       await invoke("open_cert_dir");
     } catch (err) {
-      console.error(err);
+      Logger.error("Failed to open cert dir:", err);
     }
   };
 

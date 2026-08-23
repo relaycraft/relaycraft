@@ -8,7 +8,6 @@
 import { create } from "zustand";
 import { fetchFlowDetail } from "../lib/traffic";
 import type { Flow, FlowIndex } from "../types";
-import { useSessionStore } from "./sessionStore";
 
 // ==================== Type Definitions ====================
 
@@ -60,12 +59,6 @@ interface TrafficStore {
 
   /** Clear local state only (for switching sessions) */
   clearLocal: () => void;
-
-  /** Clear all data (local + remote) */
-  clearAll: (sessionId?: string) => void;
-
-  /** Alias for clearAll (legacy compatibility) */
-  clearFlows: () => void;
 
   /** Get flow IDs (for compatibility) */
   getFlowIds: () => string[];
@@ -236,14 +229,6 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
       interceptedFlows: new Map(),
       selectedFlow: null,
     });
-  },
-
-  clearAll: async (sessionId?: string) => {
-    await useSessionStore.getState().clearSession(sessionId);
-  },
-
-  clearFlows: () => {
-    get().clearAll();
   },
 
   getFlowIds: () => {

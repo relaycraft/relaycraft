@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
 import { useUIStore } from "../../stores/uiStore";
 import { AISettingsPanel } from "../ai/AISettingsPanel";
 import { AboutSettings } from "./AboutSettings";
@@ -43,7 +44,7 @@ export function SettingsView() {
   React.useEffect(() => {
     invoke("get_system_info")
       .then((info: any) => setSystemInfo(info))
-      .catch(console.error);
+      .catch((e) => Logger.error("Failed to get system info:", e));
   }, []);
 
   const tabs = [

@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AI_PROVIDERS } from "../../lib/ai/providers";
+import { Logger } from "../../lib/logger";
 import { useAIStore } from "../../stores/aiStore";
 import { Tooltip } from "../common/Tooltip";
 import {
@@ -105,7 +106,7 @@ export function AISettingsPanel() {
     try {
       await saveSettings(localSettings);
     } catch (error) {
-      console.error("Save error:", error);
+      Logger.error("Save error:", error);
       alert(
         t("ai.connection.save") +
           " Failed: " +
@@ -132,7 +133,7 @@ export function AISettingsPanel() {
       }
       await probeCapabilities();
     } catch (error) {
-      console.error("Connection test failed:", error);
+      Logger.error("Connection test failed:", error);
     }
   };
   const hasAnyCapabilityIcon =
@@ -167,7 +168,7 @@ export function AISettingsPanel() {
             try {
               await saveSettings(newSettings);
             } catch (e) {
-              console.error("Failed to save AI enable status", e);
+              Logger.error("Failed to save AI enable status", e);
             }
           }}
         />

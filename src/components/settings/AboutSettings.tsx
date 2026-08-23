@@ -3,6 +3,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { Globe, Shield } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { formatError, Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { Button } from "../common/Button";
 import { GitHubMark } from "../common/icons/GitHubMark";
@@ -70,7 +71,7 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
       await payload.download();
       await relaunchRef.current();
     } catch (error) {
-      console.error("Installation failed:", error);
+      Logger.error("Installation failed:", error);
       try {
         await invoke("restart_proxy");
       } catch (_) {}
@@ -137,8 +138,8 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
                     }, 2000);
                   }
                 } catch (e) {
-                  console.error("Update check failed:", e);
-                  const errorMsg = e instanceof Error ? e.message : String(e);
+                  Logger.error("Update check failed:", e);
+                  const errorMsg = formatError(e);
                   notify.error(`${t("settings.about.error_fetch")}\n${errorMsg}`);
                   btn.innerText = t("settings.about.check_failed");
                   setTimeout(() => {
@@ -167,7 +168,9 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
             className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
             onClick={async () => {
               const { openUrl } = await import("@tauri-apps/plugin-opener");
-              openUrl("https://www.relaycraft.dev").catch(console.error);
+              openUrl("https://www.relaycraft.dev").catch((e) =>
+                Logger.error("Failed to open URL:", e),
+              );
             }}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -184,7 +187,9 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
             className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
             onClick={async () => {
               const { openUrl } = await import("@tauri-apps/plugin-opener");
-              openUrl("https://github.com/relaycraft/relaycraft").catch(console.error);
+              openUrl("https://github.com/relaycraft/relaycraft").catch((e) =>
+                Logger.error("Failed to open URL:", e),
+              );
             }}
           >
             <GitHubMark className="w-3.5 h-3.5" />
@@ -201,7 +206,9 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
             className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
             onClick={async () => {
               const { openUrl } = await import("@tauri-apps/plugin-opener");
-              openUrl("https://github.com/mitmproxy/mitmproxy").catch(console.error);
+              openUrl("https://github.com/mitmproxy/mitmproxy").catch((e) =>
+                Logger.error("Failed to open URL:", e),
+              );
             }}
           >
             <GitHubMark className="w-3.5 h-3.5" />
@@ -221,8 +228,8 @@ export function AboutSettings({ systemInfo }: AboutSettingsProps) {
             className="h-8 gap-2 text-xs font-medium text-primary/80 hover:text-primary"
             onClick={async () => {
               const { openUrl } = await import("@tauri-apps/plugin-opener");
-              openUrl("https://github.com/relaycraft/relaycraft/blob/main/LICENSE").catch(
-                console.error,
+              openUrl("https://github.com/relaycraft/relaycraft/blob/main/LICENSE").catch((e) =>
+                Logger.error("Failed to open URL:", e),
               );
             }}
           >

@@ -24,6 +24,9 @@ export interface AppConfig {
   enable_vibrancy: boolean;
   disable_gpu_acceleration: boolean;
   ai_config?: any;
+  // Returned by the backend (serde default); optional for configs written by
+  // older versions. Read by proxyStore cert-warning flows.
+  cert_warning_ignored?: boolean;
   // Optional so that configs written by older versions (which lack this field)
   // deserialise without error. Rust's #[serde(default)] ensures the backend
   // always returns it, but defensive UI code should use `?? { enabled: false, port: 7090 }`.

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
 import licensesData from "../../assets/licenses.json";
+import { Logger } from "../../lib/logger";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
 
@@ -149,7 +150,9 @@ export function LicensesModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                     if (url.startsWith("git://"))
                                       url = url.replace(/^git:\/\//, "https://");
                                     import("@tauri-apps/plugin-opener").then(({ openUrl }) => {
-                                      openUrl(url).catch(console.error);
+                                      openUrl(url).catch((e) =>
+                                        Logger.error("Failed to open URL:", e),
+                                      );
                                     });
                                   }}
                                 >

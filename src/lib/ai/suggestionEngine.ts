@@ -71,7 +71,7 @@ class SuggestionEngineRegistry {
       frequencies[action] = (frequencies[action] || 0) + 1;
       localStorage.setItem(this.FREQUENCY_KEY, JSON.stringify(frequencies));
     } catch (e) {
-      console.error("Failed to record command usage", e);
+      Logger.error("Failed to record command usage", e);
     }
   }
 

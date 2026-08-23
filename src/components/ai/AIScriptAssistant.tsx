@@ -155,7 +155,7 @@ export function AIScriptAssistant({
             }
           } catch (toolError) {
             fallbackDetail = "tool_error";
-            console.warn(
+            Logger.warn(
               "Script function-calling failed, fallback to legacy stream extraction",
               toolError,
             );

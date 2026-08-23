@@ -3,7 +3,7 @@
  * truncation, sanitization, and hashing.
  */
 
-import type { Rule } from "../../../types/rules";
+import type { Rule, RuleAction } from "../../../types/rules";
 
 export const truncate = (val: string, limit: number = 200): string => {
   if (!val || val.length <= limit) return val;
@@ -26,19 +26,20 @@ export const summarizeRule = (rule: Rule): { match: string; action: string } => 
     .map((action) => {
       switch (action.type) {
         case "map_local":
-          return `Map Local -> ${(action as any).localPath || "Manual"}`;
+          return `Map Local -> ${action.localPath || "Manual"}`;
         case "map_remote":
-          return `Map Remote -> ${(action as any).targetUrl}`;
+          return `Map Remote -> ${action.targetUrl}`;
         case "block_request":
           return "Block";
         case "rewrite_body":
-          return `Rewrite Body (${(action as any).target})`;
+          return `Rewrite Body (${action.target})`;
         case "rewrite_header":
-          return `Rewrite Header (${(action as any).target})`;
+          // RewriteHeaderAction has no `target` field; keep the legacy summary shape.
+          return `Rewrite Header (${(action as { target?: string }).target})`;
         case "throttle":
           return "Throttle";
         default:
-          return (action as any).type;
+          return (action as RuleAction).type;
       }
     })
     .join(", ");

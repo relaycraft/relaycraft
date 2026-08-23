@@ -2,6 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { exit } from "@tauri-apps/plugin-process";
 import { useMemo } from "react";
+import { Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useTrafficStore } from "../../stores/trafficStore";
@@ -40,7 +41,7 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
       // Remove from intercepted flows after successful resume
       useTrafficStore.getState().updateInterceptedFlow(flowId, null);
     } catch (e) {
-      console.error("Failed to resume breakpoint", e);
+      Logger.error("Failed to resume breakpoint", e);
       notify.error(`Failed to resume breakpoint: ${e}`);
     }
   };

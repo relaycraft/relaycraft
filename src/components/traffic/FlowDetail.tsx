@@ -1,4 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -26,6 +25,8 @@ import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
 import { getReadableUrlPreview, resolveFlowRequestUrl } from "../../lib/flowUrl";
+import { formatError, Logger } from "../../lib/logger";
+import { replayRequest } from "../../lib/traffic";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -224,8 +225,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
         0,
       ); // Force 0 temp for analysis precision
     } catch (error) {
-      console.error("AI Analysis failed", error);
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      Logger.error("AI Analysis failed", error);
+      const errorMsg = formatError(error);
       let userDisplayMsg = errorMsg;
 
       if (errorMsg.includes("401") || errorMsg.includes("auth") || errorMsg.includes("key")) {
@@ -245,18 +246,11 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     setReplaying(true);
     try {
       await Promise.all([
-        invoke("replay_request", {
-          req: {
-            method: flow.request.method,
-            url: flow.request.url,
-            headers: harToLegacyHeaders(flow.request.headers),
-            body: flow.request.postData?.text || null,
-          },
-        }),
+        replayRequest(flow.request),
         new Promise((resolve) => setTimeout(resolve, 800)),
       ]);
     } catch (error) {
-      console.error("Replay failed", error);
+      Logger.error("Replay failed", error);
     } finally {
       setReplaying(false);
     }
@@ -364,7 +358,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             <button
               onClick={onClose}
               className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-              aria-label="Close"
+              aria-label={t("common.close")}
             >
               <X className="w-4 h-4" />
             </button>

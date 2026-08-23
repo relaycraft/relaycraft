@@ -1,6 +1,7 @@
 import { RotateCw, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatError } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { wsInjectFrame } from "../../lib/traffic";
 import type { RcWebSocketFrame } from "../../types";
@@ -57,7 +58,7 @@ export function WsResendDrawer({ isOpen, onClose, flowId, frame }: WsResendDrawe
       });
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = formatError(err);
       notify.error(`${t("traffic.websocket.resend_failed")}: ${message}`);
     } finally {
       setIsSending(false);

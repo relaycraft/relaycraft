@@ -26,6 +26,7 @@ import { useAppInit } from "./hooks/useAppInit";
 import { useAppShortcuts } from "./hooks/useAppShortcuts";
 import { useGlobalScrollbar } from "./hooks/useGlobalScrollbar";
 import { DEFAULT_SCRIPT_TEMPLATE } from "./lib/constants";
+import { formatError, Logger } from "./lib/logger";
 // Libs
 import { notify } from "./lib/notify";
 import { getUniqueName } from "./lib/utils";
@@ -36,7 +37,6 @@ import { useScriptStore } from "./stores/scriptStore";
 // Stores
 import { useSessionStore } from "./stores/sessionStore";
 import { useSettingsStore } from "./stores/settingsStore";
-import { useTrafficStore } from "./stores/trafficStore";
 import { useUIStore } from "./stores/uiStore";
 
 // Styles
@@ -143,7 +143,7 @@ const TrafficActionButtons = () => {
           <Button
             variant="ghost"
             size="icon-xs"
-            onClick={() => useTrafficStore.getState().clearFlows()}
+            onClick={() => useSessionStore.getState().clearSession()}
             className="h-7 w-7 text-muted-foreground/80 hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 rounded-md border border-border/20 shadow-sm transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -202,8 +202,8 @@ function App() {
         });
       }
     } catch (error) {
-      console.error("Error toggling proxy:", error);
-      notify.error(String(error), t("common.error"));
+      Logger.error("Error toggling proxy:", error);
+      notify.error(formatError(error), t("common.error"));
     } finally {
       requestAnimationFrame(() => {
         setLoading(false);
@@ -237,8 +237,8 @@ function App() {
         }
       }
     } catch (error) {
-      console.error("Error exporting rules:", error);
-      notify.error(String(error), t("common.error"));
+      Logger.error("Error exporting rules:", error);
+      notify.error(formatError(error), t("common.error"));
     }
   };
 

@@ -1,6 +1,7 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../../../lib/logger";
 import { Button } from "../../../common/Button";
 import { Editor } from "../../../common/Editor";
 import { Input } from "../../../common/Input";
@@ -46,7 +47,7 @@ export function ActionMapLocal({
         onChangeLocalPath(selected);
       }
     } catch (error) {
-      console.error("Failed to open file dialog:", error);
+      Logger.error("Failed to open file dialog:", error);
     }
   };
 

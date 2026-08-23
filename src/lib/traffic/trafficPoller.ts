@@ -9,7 +9,7 @@ import { useNotificationStore } from "../../stores/notificationStore";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import type { FlowIndex } from "../../types";
-import { Logger } from "../logger";
+import { formatError, Logger } from "../logger";
 import { fetchFlowDetail } from "./flowService";
 import { getBackendPort } from "./portState";
 
@@ -140,7 +140,7 @@ export async function pollTraffic(): Promise<void> {
       Logger.error(`Polling error: ${response.status}`);
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorMsg = formatError(error);
     if (!(errorMsg.includes("Load Failed") || errorMsg.includes("Connection refused"))) {
       Logger.error("Traffic Poll Failed:", {
         error: errorMsg,

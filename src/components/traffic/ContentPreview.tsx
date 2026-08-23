@@ -10,6 +10,7 @@ import {
   getExtensionFromHeaders,
   getFilenameFromUrl,
 } from "../../lib/contentUtils";
+import { Logger } from "../../lib/logger";
 import type { HarHeader } from "../../types";
 import { getHeaderValue } from "../../types";
 import { CodeBlock } from "../common/CodeBlock";
@@ -170,7 +171,7 @@ export function ContentPreview({ content, encoding, headers, url }: ContentPrevi
         await writeTextFile(filePath, content);
       }
     } catch (error) {
-      console.error("Failed to save file:", error);
+      Logger.error("Failed to save file:", error);
     }
   };
 

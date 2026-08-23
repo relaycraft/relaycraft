@@ -2,6 +2,7 @@ import { AnimatePresence } from "framer-motion";
 import { Check, FileText, Loader2, Plus, RotateCcw, Save, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { cn } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
@@ -86,7 +87,7 @@ addons = [Addon()]
           const code = await getScriptContent(scriptName);
           setContent(code || DefaultTemplate);
         } catch (error) {
-          console.error("Failed to load script", error);
+          Logger.error("Failed to load script", error);
           setContent(DefaultTemplate);
         } finally {
           setLoading(false);
@@ -130,7 +131,7 @@ addons = [Addon()]
       try {
         await renameScript(scriptName, newName);
       } catch (error) {
-        console.error("Failed to rename script:", error);
+        Logger.error("Failed to rename script:", error);
       }
     } else if (draftScript) {
       if (

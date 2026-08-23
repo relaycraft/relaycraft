@@ -4,6 +4,7 @@ import { FileJson, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useUIStore } from "../../stores/uiStore";
@@ -97,7 +98,7 @@ export function ImportRuleModal() {
         }
       }
     } catch (err) {
-      console.error(err);
+      Logger.error("Failed to read file", err);
       notify.error("Failed to read file", t("common.error"));
     }
   };

@@ -239,7 +239,7 @@ export function MatchConfig({
                             newHeaders[index].key = e.target.value;
                             onChangeHeaders(newHeaders);
                           }}
-                          placeholder="Key"
+                          placeholder={t("rules.editor.match.headers.key_placeholder")}
                           className="h-8 py-1 px-2 text-xs placeholder:text-xs font-mono w-full"
                         />
                       </div>
@@ -273,7 +273,7 @@ export function MatchConfig({
                             newHeaders[index].value = e.target.value;
                             onChangeHeaders(newHeaders);
                           }}
-                          placeholder="Value"
+                          placeholder={t("rules.editor.match.headers.value_placeholder")}
                           className="h-8 py-1 px-2 text-xs placeholder:text-xs w-full"
                         />
                       </div>

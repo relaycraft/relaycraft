@@ -146,10 +146,6 @@ export function SessionSwitcher() {
 
   const hasHistoricalSessions = dbSessions.some((s) => s.is_active === 0);
 
-  // if (dbSessions.length <= 1) {
-  //   return null;
-  // }
-
   const toggleDropdown = () => {
     if (!isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();

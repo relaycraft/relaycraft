@@ -450,10 +450,12 @@
   },
   "header_editor": {
     "add": "添加操作",
+    "key_placeholder": "Header 名",
     "op_add": "增加",
     "op_remove": "删除",
     "op_set": "设置",
-    "title": "Header 操作列表"
+    "title": "Header 操作列表",
+    "value_placeholder": "值"
   },
   "log_viewer": {
     "app_logs": "系统日志",
@@ -873,7 +875,9 @@
       "match": {
         "headers": {
           "add": "添加条件",
-          "label": "Header 匹配"
+          "key_placeholder": "键名",
+          "label": "Header 匹配",
+          "value_placeholder": "值"
         },
         "label": "匹配规则",
         "test": {

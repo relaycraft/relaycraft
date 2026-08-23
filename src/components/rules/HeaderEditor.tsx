@@ -46,7 +46,7 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
               type="text"
               value={op.key}
               onChange={(e) => updateOperation(index, "key", e.target.value)}
-              placeholder="Header Key"
+              placeholder={t("header_editor.key_placeholder")}
               className="font-mono text-xs h-8 placeholder:text-xs w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
             />
 
@@ -66,7 +66,7 @@ export function HeaderEditor({ operations, onChange, label }: HeaderEditorProps)
                 type="text"
                 value={op.value || ""}
                 onChange={(e) => updateOperation(index, "value", e.target.value)}
-                placeholder="Value"
+                placeholder={t("header_editor.value_placeholder")}
                 className="font-mono text-xs h-8 placeholder:text-xs w-full bg-muted/20 border-border/40 focus:bg-background transition-colors"
               />
             ) : (

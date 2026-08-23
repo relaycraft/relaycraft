@@ -8,13 +8,15 @@ import {
   Monitor,
   ShieldCheck,
   Smartphone,
-  X,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
+import type { AppConfig } from "../../stores/settingsStore";
 import { CopyButton } from "../common/CopyButton";
+import { Modal } from "../common/Modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 
 interface CertificateModalProps {
@@ -34,7 +36,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
     try {
       const [ip, config, path] = await Promise.all([
         invoke<string>("get_local_ip").catch(() => "127.0.0.1"),
-        invoke<any>("load_config").catch(() => ({})),
+        invoke<AppConfig>("load_config").catch(() => null),
         invoke<string>("get_cert_path").catch(() => null),
       ]);
 
@@ -42,7 +44,7 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
       if (config?.proxy_port) setProxyPort(config.proxy_port);
       if (path) setCertPath(path);
     } catch (err) {
-      console.error(err);
+      Logger.error("Failed to load certificate context:", err);
     }
   }, []);
 
@@ -75,346 +77,319 @@ export function CertificateModal({ isOpen, onClose }: CertificateModalProps) {
     </span>,
   ];
 
-  return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/25 backdrop-blur-[1px]"
-      onClick={onClose}
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t("cert.manual.guides.title")}
+      icon={<ShieldCheck className="w-4 h-4 text-primary" />}
+      className="max-w-3xl h-[85vh] max-h-[650px]"
+      bodyClassName="flex-1 flex flex-col min-h-0 p-0 bg-card"
     >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="w-full max-w-3xl max-h-[650px] h-[85vh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Compact Header */}
-        <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-muted/40 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold tracking-tight flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              {t("cert.manual.guides.title")}
-            </h2>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-muted/80 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-          >
-            <X className="w-4 h-4" />
-          </button>
+      <Tabs defaultValue="desktop" className="flex-1 flex flex-col h-full">
+        <div className="flex-none px-5 pt-4 pb-2">
+          <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-lg h-auto border border-border/40">
+            <TabsTrigger
+              value="desktop"
+              className="rounded-md py-2 text-xs font-bold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Monitor className="w-3.5 h-3.5" />
+                {t("cert.manual.tabs.desktop")}
+              </div>
+            </TabsTrigger>
+            <TabsTrigger
+              value="mobile"
+              className="rounded-md py-2 text-xs font-bold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Smartphone className="w-3.5 h-3.5" />
+                {t("cert.manual.tabs.mobile")}
+              </div>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0 bg-card">
-          <Tabs defaultValue="desktop" className="flex-1 flex flex-col h-full">
-            <div className="flex-none px-5 pt-4 pb-2">
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-lg h-auto border border-border/40">
-                <TabsTrigger
-                  value="desktop"
-                  className="rounded-md py-2 text-xs font-bold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Monitor className="w-3.5 h-3.5" />
-                    {t("cert.manual.tabs.desktop")}
-                  </div>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="mobile"
-                  className="rounded-md py-2 text-xs font-bold data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Smartphone className="w-3.5 h-3.5" />
-                    {t("cert.manual.tabs.mobile")}
-                  </div>
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        <div className="flex-1 overflow-y-auto px-5 pb-8 scrollbar-thin scrollbar-thumb-border/40 scrollbar-track-transparent">
+          <TabsContent value="desktop" className="mt-0 h-full">
+            <Tabs defaultValue={isMacOS ? "macos" : "windows"} className="flex flex-col h-full">
+              <div className="flex-none mb-4 flex justify-start sticky top-0 bg-card z-10 py-2">
+                <TabsList className="bg-muted/30 p-0.5 border border-border/40 w-fit h-auto gap-0.5 rounded-lg">
+                  <TabsTrigger
+                    value="windows"
+                    className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
+                  >
+                    {t("cert.manual.desktop.windows")}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="macos"
+                    className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
+                  >
+                    {t("cert.manual.desktop.macos")}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="linux"
+                    className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
+                  >
+                    {t("cert.manual.desktop.linux")}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-            <div className="flex-1 overflow-y-auto px-5 pb-8 scrollbar-thin scrollbar-thumb-border/40 scrollbar-track-transparent">
-              <TabsContent value="desktop" className="mt-0 h-full">
-                <Tabs defaultValue={isMacOS ? "macos" : "windows"} className="flex flex-col h-full">
-                  <div className="flex-none mb-4 flex justify-start sticky top-0 bg-card z-10 py-2">
-                    <TabsList className="bg-muted/30 p-0.5 border border-border/40 w-fit h-auto gap-0.5 rounded-lg">
-                      <TabsTrigger
-                        value="windows"
-                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
-                      >
-                        {t("cert.manual.desktop.windows")}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="macos"
-                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
-                      >
-                        {t("cert.manual.desktop.macos")}
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="linux"
-                        className="px-4 py-1.5 rounded-md text-ui font-medium transition-all"
-                      >
-                        {t("cert.manual.desktop.linux")}
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  <div className="flex-1">
-                    <TabsContent value="windows" className="mt-0">
-                      <Stepper steps={windowsSteps} />
-                    </TabsContent>
-                    <TabsContent value="macos" className="mt-0">
-                      <div className="space-y-5">
-                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
-                          <div className="flex items-start gap-3">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                              <h4 className="text-xs font-bold text-amber-600">
-                                {t("cert.manual.guides.macos_sequoia_hint_title")}
-                              </h4>
-                              <p className="text-xs text-muted-foreground leading-relaxed">
-                                <span
-                                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
-                                  dangerouslySetInnerHTML={{
-                                    __html: t("cert.manual.guides.macos_sequoia_hint_desc"),
-                                  }}
-                                />
-                              </p>
-                            </div>
-                          </div>
+              <div className="flex-1">
+                <TabsContent value="windows" className="mt-0">
+                  <Stepper steps={windowsSteps} />
+                </TabsContent>
+                <TabsContent value="macos" className="mt-0">
+                  <div className="space-y-5">
+                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-bold text-amber-600">
+                            {t("cert.manual.guides.macos_sequoia_hint_title")}
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            <span
+                              // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted localized string with basic formatting
+                              dangerouslySetInnerHTML={{
+                                __html: t("cert.manual.guides.macos_sequoia_hint_desc"),
+                              }}
+                            />
+                          </p>
                         </div>
+                      </div>
+                    </div>
 
-                        <Stepper steps={macosSteps} />
+                    <Stepper steps={macosSteps} />
 
-                        <div className="pt-4 border-t border-border/40">
-                          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                            {t("cert.manual.guides.terminal_hint")}
+                    <div className="pt-4 border-t border-border/40">
+                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        {t("cert.manual.guides.terminal_hint")}
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 ring-1 ring-border/20 shadow-sm">
+                        <div className="font-mono text-xs text-foreground/85 break-all pr-8 leading-relaxed">
+                          sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k
+                          /Library/Keychains/System.keychain "
+                          {certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"
+                        </div>
+                        <div className="absolute right-2 top-2">
+                          <CopyButton
+                            text={`sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k /Library/Keychains/System.keychain "${certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"`}
+                            className="p-1.5 bg-background/70 hover:bg-background text-foreground rounded transition-all border border-border/40 active:scale-95"
+                            label={t("cert.manual.guides.terminal_copy")}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="linux" className="mt-0">
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {[
+                        {
+                          id: "debian",
+                          label: t("cert.manual.guides.linux_debian"),
+                          cmd: t("cert.manual.guides.linux_debian_cmd"),
+                        },
+                        {
+                          id: "fedora",
+                          label: t("cert.manual.guides.linux_fedora"),
+                          cmd: t("cert.manual.guides.linux_fedora_cmd"),
+                        },
+                        {
+                          id: "arch",
+                          label: t("cert.manual.guides.linux_arch"),
+                          cmd: t("cert.manual.guides.linux_arch_cmd"),
+                        },
+                      ].map((distro) => (
+                        <div key={distro.id} className="space-y-1.5">
+                          <div className="text-xs font-bold text-muted-foreground uppercase px-1">
+                            {distro.label}
                           </div>
-                          <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 ring-1 ring-border/20 shadow-sm">
+                          <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 shadow-sm">
                             <div className="font-mono text-xs text-foreground/85 break-all pr-8 leading-relaxed">
-                              sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k
-                              /Library/Keychains/System.keychain "
-                              {certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"
+                              {distro.cmd.replace(
+                                "{{path}}",
+                                certPath || "~/relaycraft-ca-cert.pem",
+                              )}
                             </div>
                             <div className="absolute right-2 top-2">
                               <CopyButton
-                                text={`sudo security add-trusted-cert -d -r trustRoot -p ssl -p basic -k /Library/Keychains/System.keychain "${certPath || "~/.mitmproxy/mitmproxy-ca-cert.pem"}"`}
+                                text={distro.cmd.replace(
+                                  "{{path}}",
+                                  certPath || "~/relaycraft-ca-cert.pem",
+                                )}
                                 className="p-1.5 bg-background/70 hover:bg-background text-foreground rounded transition-all border border-border/40 active:scale-95"
-                                label={t("cert.manual.guides.terminal_copy")}
+                                label={t("common.copy")}
                               />
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="linux" className="mt-0">
-                      <div className="space-y-4">
-                        <div className="space-y-3">
-                          {[
-                            {
-                              id: "debian",
-                              label: t("cert.manual.guides.linux_debian"),
-                              cmd: t("cert.manual.guides.linux_debian_cmd"),
-                            },
-                            {
-                              id: "fedora",
-                              label: t("cert.manual.guides.linux_fedora"),
-                              cmd: t("cert.manual.guides.linux_fedora_cmd"),
-                            },
-                            {
-                              id: "arch",
-                              label: t("cert.manual.guides.linux_arch"),
-                              cmd: t("cert.manual.guides.linux_arch_cmd"),
-                            },
-                          ].map((distro) => (
-                            <div key={distro.id} className="space-y-1.5">
-                              <div className="text-xs font-bold text-muted-foreground uppercase px-1">
-                                {distro.label}
-                              </div>
-                              <div className="bg-muted/30 rounded-lg p-3 group relative border border-border/40 shadow-sm">
-                                <div className="font-mono text-xs text-foreground/85 break-all pr-8 leading-relaxed">
-                                  {distro.cmd.replace(
-                                    "{{path}}",
-                                    certPath || "~/relaycraft-ca-cert.pem",
-                                  )}
-                                </div>
-                                <div className="absolute right-2 top-2">
-                                  <CopyButton
-                                    text={distro.cmd.replace(
-                                      "{{path}}",
-                                      certPath || "~/relaycraft-ca-cert.pem",
-                                    )}
-                                    className="p-1.5 bg-background/70 hover:bg-background text-foreground rounded transition-all border border-border/40 active:scale-95"
-                                    label={t("common.copy")}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </TabsContent>
+                      ))}
+                    </div>
                   </div>
-                </Tabs>
-              </TabsContent>
+                </TabsContent>
+              </div>
+            </Tabs>
+          </TabsContent>
 
-              <TabsContent value="mobile" className="mt-0 h-full">
-                <div className="space-y-6 pb-12">
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
-                      <Globe className="w-3.5 h-3.5 text-primary" />
-                      {t("cert.manual.guides.mobile_step1")}
-                    </h3>
-                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 relative overflow-hidden group">
-                      <p className="text-xs text-muted-foreground leading-relaxed mb-3 max-w-lg font-medium">
-                        {t("cert.manual.guides.mobile_step1_desc")}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10">
-                          <div className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-tight">
-                            {t("cert.manual.guides.mobile_wifi_config")}
-                          </div>
-                          <div className="font-mono text-xs flex items-center justify-between">
-                            <span className="text-muted-foreground">
-                              {t("cert.info.ip")}{" "}
-                              <span className="select-all text-primary font-bold">{localIp}</span>
-                            </span>
-                            <span className="text-muted-foreground">
-                              {t("cert.info.port")}{" "}
-                              <span className="text-primary font-bold">{proxyPort}</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 hover:border-primary/30 transition-colors">
-                          <div className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-tight">
-                            {t("cert.manual.guides.mobile_browser_access")}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <a
-                              href="http://relay.guide"
-                              target="_blank"
-                              className="flex-1 font-mono text-xs text-primary font-bold hover:underline flex items-center gap-1.5 group/link min-w-0"
-                              rel="noopener"
-                            >
-                              <span className="truncate">http://relay.guide</span>
-                              <ExternalLink className="w-3 h-3 shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                            </a>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setQrOpen(true);
-                              }}
-                              className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
-                              title={t("common.show_qr", { defaultValue: "Show QR Code" })}
-                            >
-                              <QRCodeSVG
-                                value="http://relay.guide"
-                                size={20}
-                                level="M"
-                                bgColor="transparent"
-                                fgColor="currentColor"
-                                className="text-foreground/70"
-                              />
-                            </button>
-                          </div>
-                        </div>
+          <TabsContent value="mobile" className="mt-0 h-full">
+            <div className="space-y-6 pb-12">
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
+                  <Globe className="w-3.5 h-3.5 text-primary" />
+                  {t("cert.manual.guides.mobile_step1")}
+                </h3>
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 relative overflow-hidden group">
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3 max-w-lg font-medium">
+                    {t("cert.manual.guides.mobile_step1_desc")}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10">
+                      <div className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-tight">
+                        {t("cert.manual.guides.mobile_wifi_config")}
                       </div>
+                      <div className="font-mono text-xs flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {t("cert.info.ip")}{" "}
+                          <span className="select-all text-primary font-bold">{localIp}</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          {t("cert.info.port")}{" "}
+                          <span className="text-primary font-bold">{proxyPort}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-background/80 rounded-lg p-3 border border-border/50 shadow-sm relative z-10 hover:border-primary/30 transition-colors">
+                      <div className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-tight">
+                        {t("cert.manual.guides.mobile_browser_access")}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href="http://relay.guide"
+                          target="_blank"
+                          className="flex-1 font-mono text-xs text-primary font-bold hover:underline flex items-center gap-1.5 group/link min-w-0"
+                          rel="noopener"
+                        >
+                          <span className="truncate">http://relay.guide</span>
+                          <ExternalLink className="w-3 h-3 shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                        </a>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQrOpen(true);
+                          }}
+                          className="flex-shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-md border border-border/20 transition-colors"
+                          title={t("common.show_qr", { defaultValue: "Show QR Code" })}
+                        >
+                          <QRCodeSVG
+                            value="http://relay.guide"
+                            size={20}
+                            level="M"
+                            bgColor="transparent"
+                            fgColor="currentColor"
+                            className="text-foreground/70"
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
-                      {createPortal(
-                        <AnimatePresence>
-                          {qrOpen && (
-                            <motion.div
-                              key="qr-overlay"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setQrOpen(false);
-                              }}
-                            >
-                              <motion.div
-                                initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                                className="bg-white p-6 rounded-2xl shadow-2xl relative flex flex-col items-center"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <QRCodeSVG
-                                  value="http://relay.guide"
-                                  size={200}
-                                  level="M"
-                                  bgColor="#ffffff"
-                                  fgColor="#0b0c0f"
-                                />
-                              </motion.div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>,
-                        document.body,
+                  {createPortal(
+                    <AnimatePresence>
+                      {qrOpen && (
+                        <motion.div
+                          key="qr-overlay"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQrOpen(false);
+                          }}
+                        >
+                          <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                            className="bg-white p-6 rounded-2xl shadow-2xl relative flex flex-col items-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <QRCodeSVG
+                              value="http://relay.guide"
+                              size={200}
+                              level="M"
+                              bgColor="#ffffff"
+                              fgColor="#0b0c0f"
+                            />
+                          </motion.div>
+                        </motion.div>
                       )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pb-4">
-                    <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
-                      <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-                      {t("cert.manual.guides.mobile_step2")}
-                    </h3>
-
-                    <Tabs defaultValue="ios" className="w-full">
-                      <TabsList className="bg-muted/20 p-0.5 border border-border/40 w-fit justify-start h-auto gap-0.5 rounded-lg mb-3">
-                        <TabsTrigger
-                          value="ios"
-                          className="px-4 py-1 rounded-md text-xs font-medium transition-all"
-                        >
-                          iOS / iPadOS
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="android"
-                          className="px-4 py-1 rounded-md text-xs font-medium transition-all"
-                        >
-                          Android
-                        </TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="ios" className="mt-0">
-                        <Stepper steps={iosSteps} />
-                      </TabsContent>
-                      <TabsContent value="android" className="mt-0">
-                        <Stepper steps={androidSteps} />
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-
-                  {/* Troubleshooting New Section */}
-                  <div className="pt-2">
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                      <div className="flex items-center gap-2 text-amber-600 mb-2">
-                        <Info className="w-3.5 h-3.5" />
-                        <h4 className="text-ui font-bold uppercase tracking-tight">
-                          {t("cert.manual.guides.mobile_troubleshooting_title")}
-                        </h4>
-                      </div>
-                      <ul className="space-y-2">
-                        <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
-                          <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
-                          {t("cert.manual.guides.mobile_troubleshooting_ios_trust")}
-                        </li>
-                        <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
-                          <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
-                          {t("cert.manual.guides.mobile_troubleshooting_app_pinning")}
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                    </AnimatePresence>,
+                    document.body,
+                  )}
                 </div>
-              </TabsContent>
+              </div>
+
+              <div className="space-y-3 pb-4">
+                <h3 className="text-xs font-bold flex items-center gap-2 text-foreground">
+                  <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+                  {t("cert.manual.guides.mobile_step2")}
+                </h3>
+
+                <Tabs defaultValue="ios" className="w-full">
+                  <TabsList className="bg-muted/20 p-0.5 border border-border/40 w-fit justify-start h-auto gap-0.5 rounded-lg mb-3">
+                    <TabsTrigger
+                      value="ios"
+                      className="px-4 py-1 rounded-md text-xs font-medium transition-all"
+                    >
+                      iOS / iPadOS
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="android"
+                      className="px-4 py-1 rounded-md text-xs font-medium transition-all"
+                    >
+                      Android
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="ios" className="mt-0">
+                    <Stepper steps={iosSteps} />
+                  </TabsContent>
+                  <TabsContent value="android" className="mt-0">
+                    <Stepper steps={androidSteps} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Troubleshooting New Section */}
+              <div className="pt-2">
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-amber-600 mb-2">
+                    <Info className="w-3.5 h-3.5" />
+                    <h4 className="text-ui font-bold uppercase tracking-tight">
+                      {t("cert.manual.guides.mobile_troubleshooting_title")}
+                    </h4>
+                  </div>
+                  <ul className="space-y-2">
+                    <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
+                      <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
+                      {t("cert.manual.guides.mobile_troubleshooting_ios_trust")}
+                    </li>
+                    <li className="flex gap-2 items-start text-xs text-muted-foreground leading-relaxed">
+                      <div className="w-1 h-1 rounded-full bg-amber-500/40 mt-1.5 shrink-0" />
+                      {t("cert.manual.guides.mobile_troubleshooting_app_pinning")}
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
-          </Tabs>
+          </TabsContent>
         </div>
-      </motion.div>
-    </motion.div>,
-    document.body,
+      </Tabs>
+    </Modal>
   );
 }
 

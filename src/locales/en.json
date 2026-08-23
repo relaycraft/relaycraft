@@ -450,10 +450,12 @@
   },
   "header_editor": {
     "add": "Add Operation",
+    "key_placeholder": "Header Key",
     "op_add": "Add",
     "op_remove": "Remove",
     "op_set": "Set",
-    "title": "Header Operations"
+    "title": "Header Operations",
+    "value_placeholder": "Value"
   },
   "log_viewer": {
     "app_logs": "System Log",
@@ -873,7 +875,9 @@
       "match": {
         "headers": {
           "add": "Add Condition",
-          "label": "Header Matching"
+          "key_placeholder": "Key",
+          "label": "Header Matching",
+          "value_placeholder": "Value"
         },
         "label": "Match Label",
         "test": {

@@ -1,6 +1,7 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Logger } from "../../lib/logger";
 import { cn } from "../../lib/utils";
 import { Tooltip } from "./Tooltip";
 
@@ -36,7 +37,7 @@ export function CopyButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      Logger.error("Failed to copy:", err);
     }
   };
 

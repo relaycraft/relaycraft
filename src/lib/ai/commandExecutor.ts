@@ -4,6 +4,7 @@ import { useComposerStore } from "../../stores/composerStore";
 import { useProxyStore } from "../../stores/proxyStore";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useScriptStore } from "../../stores/scriptStore";
+import { useSessionStore } from "../../stores/sessionStore";
 import { useTrafficStore } from "../../stores/trafficStore";
 import { type TabType, useUIStore } from "../../stores/uiStore";
 import type { RuleType } from "../../types/rules";
@@ -125,7 +126,7 @@ export async function executeCommandAction({
       break;
     }
     case "CLEAR_TRAFFIC":
-      useTrafficStore.getState().clearFlows();
+      useSessionStore.getState().clearSession();
       setIsOpen(false);
       break;
     case "FILTER_TRAFFIC": {

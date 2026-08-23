@@ -236,10 +236,10 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
   fetchThemes: async () => {
     try {
-      const discovered = await invoke<any[]>("get_themes");
+      const discovered = await invoke<Omit<Theme, "pluginId">[]>("get_themes");
       set((state) => {
         const builtIn = state.themes.filter((t) => t.pluginId === "system");
-        const custom = discovered.map((t: any) => ({
+        const custom: Theme[] = discovered.map((t) => ({
           id: t.id,
           name: t.name,
           type: t.type,

@@ -56,7 +56,7 @@ export const usePluginSettingsStore = create<PluginSettingsState>()(
         try {
           // Use local state (handled by persist middleware automatically)
           // Sync with backend via invoke if available
-          const backendConfig = await invoke<any>("get_plugin_config", {
+          const backendConfig = await invoke<Record<string, any>>("get_plugin_config", {
             pluginId,
           }).catch(() => null);
 

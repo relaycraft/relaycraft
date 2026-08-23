@@ -1,4 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -14,6 +13,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { parseCurl } from "../../lib/curlParser";
+import { replayRequest } from "../../lib/traffic";
 import { cn } from "../../lib/utils";
 import { useComposerStore } from "../../stores/composerStore";
 import { Button } from "../common/Button";
@@ -28,16 +28,6 @@ import { Tooltip } from "../common/Tooltip";
 import { ContentPreview } from "../traffic/ContentPreview";
 import { BodyFormEditor } from "./BodyFormEditor";
 import { HeaderListEditor } from "./HeaderListEditor";
-
-// Define the response type from the backend
-interface ReplayResponse {
-  status: number;
-  headers: Record<string, string>;
-  body: string;
-  encoding: "text" | "base64";
-  truncated: boolean;
-  totalBytes: number;
-}
 
 export function ComposerView() {
   const { t } = useTranslation();
@@ -83,15 +73,15 @@ export function ComposerView() {
     setSending(true);
     setResult(null);
     try {
-      const headerMap: Record<string, string> = {};
-      headers.forEach((h) => {
-        if (h.enabled && h.key) headerMap[h.key] = h.value;
-      });
-
       // Add minimum delay to show feedback
       const [response] = await Promise.all([
-        invoke<ReplayResponse>("replay_request", {
-          req: { method, url, headers: headerMap, body: body || null },
+        replayRequest({
+          method,
+          url,
+          headers: headers
+            .filter((h) => h.enabled && h.key)
+            .map((h) => ({ name: h.key, value: h.value })),
+          postData: body ? { text: body } : null,
         }),
         new Promise((resolve) => setTimeout(resolve, 600)),
       ]);

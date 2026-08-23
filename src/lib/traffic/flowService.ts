@@ -7,7 +7,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import i18n from "../../i18n";
 import { useRuleStore } from "../../stores/ruleStore";
-import type { Flow, RcMatchedHit, SsePollResponse, WsResendRequest } from "../../types";
+import type { Flow, HarHeader, RcMatchedHit, SsePollResponse, WsResendRequest } from "../../types";
+import { harToLegacyHeaders } from "../../types";
 import { Logger } from "../logger";
 import { getBackendPort } from "./portState";
 
@@ -82,6 +83,40 @@ export async function fetchSseEvents(
     Logger.error("Error fetching SSE events:", error);
     return null;
   }
+}
+
+/** Response returned by the `replay_request` backend command. */
+export interface ReplayResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+  encoding: "text" | "base64";
+  truncated: boolean;
+  totalBytes: number;
+}
+
+/** Minimal request shape accepted by the `replay_request` backend command. */
+export interface ReplayRequestInput {
+  method: string;
+  url: string;
+  headers: HarHeader[];
+  postData?: { text?: string } | null;
+}
+
+/**
+ * Replay a request through the engine (`replay_request`).
+ * Shared by FlowDetail, the traffic context menu, keyboard shortcuts and Composer;
+ * handles the HAR header array -> record conversion in one place.
+ */
+export async function replayRequest(request: ReplayRequestInput): Promise<ReplayResponse> {
+  return invoke<ReplayResponse>("replay_request", {
+    req: {
+      method: request.method,
+      url: request.url,
+      headers: harToLegacyHeaders(request.headers),
+      body: request.postData?.text || null,
+    },
+  });
 }
 
 function processFlowHits(flow: any): Flow {

@@ -142,7 +142,8 @@ export function getRuleConflicts(
           "throttle",
           "block_request",
         ].includes(a.type) &&
-        (!(a as any).target || (a as any).target === "request"),
+        // Only rewrite_body carries a `target`; everything else is request-scoped.
+        (a.type !== "rewrite_body" || !a.target || a.target === "request"),
     );
 
     if (hasRequestAction) {
@@ -155,10 +156,10 @@ export function getRuleConflicts(
     }
 
     if (!conflicts[rule.id]) {
+      // Only rewrite_body is target-scoped; rewrite_header/throttle never carry
+      // target === "response", so the type list collapses to rewrite_body.
       const hasResponseAction = actions.some(
-        (a) =>
-          ["rewrite_header", "rewrite_body", "throttle"].includes(a.type) &&
-          (a as any).target === "response",
+        (a) => a.type === "rewrite_body" && a.target === "response",
       );
 
       if (hasResponseAction) {

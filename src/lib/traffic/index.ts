@@ -23,7 +23,15 @@ import {
   startPollInterval,
 } from "./trafficPoller";
 
-export { fetchFlowDetail, fetchSseEvents, searchFlowContent, wsInjectFrame } from "./flowService";
+export {
+  fetchFlowDetail,
+  fetchSseEvents,
+  type ReplayRequestInput,
+  type ReplayResponse,
+  replayRequest,
+  searchFlowContent,
+  wsInjectFrame,
+} from "./flowService";
 export { getBackendPort } from "./portState";
 export { createNewSession, resetSessionFlag, setPollTimestamp };
 

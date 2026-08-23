@@ -238,7 +238,7 @@ export function AIRuleAssistant({
       } catch (toolError) {
         // Keep backward compatibility: if structured mode fails, continue with legacy parsing path.
         fallbackDetail = "tool_error";
-        console.warn("Rule function-calling failed, fallback to legacy stream mode", toolError);
+        Logger.warn("Rule function-calling failed, fallback to legacy stream mode", toolError);
         trackAIToolPath({
           feature: "rule_assistant_generate",
           outcome: "tool_error",

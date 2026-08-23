@@ -203,7 +203,6 @@ export async function loadPluginUI(plugin: PluginInfo, silent: boolean = false) 
     const RelayCraft = { api: scopedApi, components: components, icons: icons };
     globalThis.RelayCraft = RelayCraft;
     globalThis.ProxyPilot = RelayCraft;
-    console.log('[PluginLoader] Initialized API for ' + pluginId);
     try {
         ${content}
     } catch(e) {
@@ -325,7 +324,7 @@ async function loadPluginLocales(
       Logger.error(`[PluginLoader] Failed to load locale ${langCode} for ${pluginId}:`, e);
       // Only toast error if it's the CURRENT language failing
       if (langCode === currentLang) {
-        toast.error(`Lang Load Failed (${langCode}): ${e.message || String(e)}`);
+        toast.error(`Lang Load Failed (${langCode}): ${formatError(e)}`);
       }
     }
   }

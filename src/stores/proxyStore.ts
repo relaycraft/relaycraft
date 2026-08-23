@@ -5,6 +5,7 @@ import { notifyProxyEvent } from "../lib/proxyNotifications";
 import { notifyScriptLoadIssues, resetScriptLoadAlertDedupe } from "../lib/scriptLoadAlerts";
 import { finalPollAndStop, startTrafficMonitor, stopTrafficMonitor } from "../lib/traffic";
 import { useScriptStore } from "./scriptStore";
+import type { AppConfig } from "./settingsStore";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -296,7 +297,7 @@ export const useProxyStore = create<ProxyStore>((set) => ({
 
   setCertWarningIgnored: async (ignored: boolean) => {
     try {
-      const config = await invoke<any>("load_config");
+      const config = await invoke<AppConfig>("load_config");
       config.cert_warning_ignored = ignored;
       await invoke("save_config", { config });
       set({ certWarningIgnored: ignored });

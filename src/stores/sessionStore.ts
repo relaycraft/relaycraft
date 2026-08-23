@@ -559,6 +559,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
   closeSession: () => {
     set({ currentSession: null });
-    useTrafficStore.getState().clearFlows();
+    get().clearSession();
   },
 }));
