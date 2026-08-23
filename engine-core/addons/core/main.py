@@ -152,10 +152,18 @@ class CoreAddon:
             if host == "relay.guide":
                 return True
 
-            if "/_relay" in path or path == "/cert" or path in ("/cert.pem", "/cert.crt"):
+            is_localhost = host in ["127.0.0.1", "localhost", "::1"]
+
+            # The engine's internal API is only ever reached via loopback (or
+            # the relay.guide alias handled above). An external site whose URL
+            # path merely contains /_relay is regular traffic and must not be
+            # treated as internal.
+            if "/_relay" in path and is_localhost:
                 return True
 
-            is_localhost = host in ["127.0.0.1", "localhost", "::1"]
+            if path == "/cert" or path in ("/cert.pem", "/cert.crt"):
+                return True
+
             current_port = ctx.options.listen_port if (hasattr(ctx, "options") and hasattr(ctx.options, "listen_port")) else 9090
             is_proxy_port = port == current_port
 

@@ -45,6 +45,21 @@ from .http_handlers import (
 )
 
 
+# Hosts on which the engine serves its own internal API (/_relay). Only
+# traffic to these hosts may be treated as internal — an external site whose
+# URL path happens to contain "/_relay" is regular traffic and must still be
+# captured.
+ENGINE_INTERNAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "relay.guide"})
+
+
+def is_engine_internal_host(host: Optional[str]) -> bool:
+    """Whether `host` is one the engine serves its internal API on."""
+    try:
+        return (host or "").lower() in ENGINE_INTERNAL_HOSTS
+    except Exception:
+        return False
+
+
 class TrafficMonitor:
     """Converts mitmproxy flows to HAR-compatible format with SQLite persistence."""
 
@@ -683,8 +698,15 @@ class TrafficMonitor:
 
     def handle_response(self, flow: http.HTTPFlow) -> None:
         """Capture flows on response."""
-        if flow.request.path.startswith("/_relay"):
-            return
+        try:
+            # Only skip the engine's own internal API (loopback/relay.guide);
+            # external traffic whose path contains /_relay must be captured.
+            if flow.request.path.startswith("/_relay") and is_engine_internal_host(
+                getattr(flow.request, "host", None)
+            ):
+                return
+        except Exception as e:
+            self.logger.debug(f"Internal-request check failed, capturing flow: {e}")
         flow_data = self.process_flow(flow)
         if flow_data:
             self._store_flow(flow_data)
