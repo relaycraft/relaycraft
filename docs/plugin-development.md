@@ -271,7 +271,9 @@ The API is organized by **stability tier** (mirrors the bridge registry in
 
 Plugin-scoped key-value storage persisted to disk under
 `{appData}/plugins_data/{pluginId}/`. Keys must match `[a-zA-Z0-9-_]`, max 128
-chars. Each plugin only sees its own namespace.
+chars. Each plugin only sees its own namespace. Quotas apply per plugin: a
+single value may be at most 1 MB, at most 1000 keys, and 50 MB total —
+writes beyond a quota fail with a `Storage quota exceeded` error.
 
 | Signature | Description | Permission |
 | --- | --- | --- |

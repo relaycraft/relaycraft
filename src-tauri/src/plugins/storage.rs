@@ -10,6 +10,12 @@
 use std::path::PathBuf;
 
 const MAX_KEY_LEN: usize = 128;
+/// Per-value size limit: 1 MB.
+const MAX_VALUE_BYTES: usize = 1024 * 1024;
+/// Per-plugin key count limit.
+const MAX_KEYS_PER_PLUGIN: usize = 1000;
+/// Per-plugin total storage limit: 50 MB.
+const MAX_TOTAL_BYTES_PER_PLUGIN: u64 = 50 * 1024 * 1024;
 
 /// Validate storage key: only ASCII alphanumeric, `-`, and `_` are allowed.
 /// Returns an error rather than silently sanitizing to prevent two different keys
@@ -61,8 +67,53 @@ pub async fn get(plugin_id: &str, key: &str) -> Result<Option<String>, String> {
 pub async fn set(plugin_id: &str, key: &str, value: String) -> Result<(), String> {
     validate_key(key)?;
     let dir = storage_dir(plugin_id)?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    std::fs::write(dir.join(format!("{}.json", key)), value).map_err(|e| e.to_string())
+    set_in(&dir, key, &value)
+}
+
+/// Write `key` under an explicit storage directory. Separated from `set` so
+/// quota behavior can be tested against a temp dir.
+fn set_in(dir: &std::path::Path, key: &str, value: &str) -> Result<(), String> {
+    if value.len() > MAX_VALUE_BYTES {
+        return Err(format!(
+            "Storage quota exceeded: value is {} bytes, limit is {} bytes (1 MB) per key",
+            value.len(),
+            MAX_VALUE_BYTES
+        ));
+    }
+
+    std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    let target_file = dir.join(format!("{}.json", key));
+
+    // Snapshot current usage for the quota checks.
+    let mut key_count = 0usize;
+    let mut total_bytes = 0u64;
+    for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())?.flatten() {
+        if entry.file_name().to_string_lossy().ends_with(".json") {
+            key_count += 1;
+            total_bytes += entry.metadata().map(|m| m.len()).unwrap_or(0);
+        }
+    }
+    let old_value_len = std::fs::metadata(&target_file)
+        .map(|m| m.len())
+        .unwrap_or(0);
+    let replacing = target_file.exists();
+
+    if !replacing && key_count >= MAX_KEYS_PER_PLUGIN {
+        return Err(format!(
+            "Storage quota exceeded: plugin already has {} keys (limit {})",
+            key_count, MAX_KEYS_PER_PLUGIN
+        ));
+    }
+
+    let new_total = total_bytes - old_value_len + value.len() as u64;
+    if new_total > MAX_TOTAL_BYTES_PER_PLUGIN {
+        return Err(format!(
+            "Storage quota exceeded: plugin storage would grow to {} bytes (currently {} bytes, limit {} bytes / 50 MB)",
+            new_total, total_bytes, MAX_TOTAL_BYTES_PER_PLUGIN
+        ));
+    }
+
+    std::fs::write(target_file, value).map_err(|e| e.to_string())
 }
 
 /// Delete a single key. Silently succeeds when the key does not exist.
@@ -118,7 +169,9 @@ pub fn remove_plugin_data(data_dir: &std::path::Path, plugin_id: &str) -> Result
 
 #[cfg(test)]
 mod tests {
-    use super::{remove_plugin_data, validate_key};
+    use super::{
+        remove_plugin_data, set_in, validate_key, MAX_KEYS_PER_PLUGIN, MAX_TOTAL_BYTES_PER_PLUGIN,
+    };
 
     #[test]
     fn valid_keys_pass() {
@@ -134,6 +187,61 @@ mod tests {
         assert!(validate_key("a:b").is_err());
         assert!(validate_key("a b").is_err());
         assert!(validate_key(&"x".repeat(129)).is_err());
+    }
+
+    #[test]
+    fn set_rejects_value_over_1mb() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dir = temp.path();
+        let value = "x".repeat(1024 * 1024 + 1);
+        let err = set_in(dir, "big", &value).unwrap_err();
+        assert!(err.contains("quota exceeded"), "got: {}", err);
+        assert!(err.contains("1 MB"), "got: {}", err);
+        assert!(!dir.join("big.json").exists());
+
+        // Exactly 1 MB is allowed.
+        let ok_value = "x".repeat(1024 * 1024);
+        set_in(dir, "big", &ok_value).unwrap();
+    }
+
+    #[test]
+    fn set_rejects_beyond_key_count_limit() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dir = temp.path();
+        for i in 0..MAX_KEYS_PER_PLUGIN {
+            std::fs::write(dir.join(format!("key-{}.json", i)), "{}").unwrap();
+        }
+
+        // A new key beyond the limit is rejected with usage + limit in the message.
+        let err = set_in(dir, "one-more", "{}").unwrap_err();
+        assert!(err.contains("quota exceeded"), "got: {}", err);
+        assert!(
+            err.contains(&MAX_KEYS_PER_PLUGIN.to_string()),
+            "got: {}",
+            err
+        );
+        assert!(!dir.join("one-more.json").exists());
+
+        // Overwriting an existing key stays allowed at the limit.
+        set_in(dir, "key-0", "{\"updated\":true}").unwrap();
+    }
+
+    #[test]
+    fn set_rejects_beyond_total_size_limit() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dir = temp.path();
+        // Pre-fill just under the 50 MB cap with a sparse file.
+        let big = std::fs::File::create(dir.join("big.json")).unwrap();
+        big.set_len(MAX_TOTAL_BYTES_PER_PLUGIN - 100).unwrap();
+
+        let err = set_in(dir, "extra", &"x".repeat(1024)).unwrap_err();
+        assert!(err.contains("quota exceeded"), "got: {}", err);
+        assert!(err.contains("50 MB"), "got: {}", err);
+        assert!(!dir.join("extra.json").exists());
+
+        // Shrinking the large key frees budget and succeeds.
+        set_in(dir, "big", "{}").unwrap();
+        set_in(dir, "extra", &"x".repeat(1024)).unwrap();
     }
 
     #[test]
