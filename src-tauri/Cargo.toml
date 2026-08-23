@@ -33,16 +33,14 @@ dirs = "6.0.0"
 sysinfo = "0.39"
 regex = "1"
 libc = "0.2"
-lazy_static = "1.4"
 log = "0.4"
-simplelog = "0.12"
 chrono = "0.4"
 reqwest = { version = "0.13.3", features = ["json", "gzip", "brotli", "deflate", "stream"] }
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
 url = "2"
 tauri-plugin-fs = "2.4.5"
-tokio = { version = "1", features = ["process", "rt-multi-thread", "net", "sync"] }
+tokio = { version = "1", features = ["process", "rt-multi-thread", "net", "sync", "time"] }
 axum = { version = "0.8", features = [] }
 tower-http = { version = "0.7", features = ["cors"] }
 tauri-plugin-process = "2"

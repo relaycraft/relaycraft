@@ -24,12 +24,6 @@ impl Default for PluginCache {
     }
 }
 
-/// Refresh the plugin cache by scanning the filesystem
-pub fn refresh_plugin_cache(plugins_dir: &Path, enabled_ids: &[String]) -> Vec<PluginInfo> {
-    let plugins = discover_plugins(plugins_dir, enabled_ids);
-    plugins
-}
-
 pub fn discover_plugins(plugins_dir: &Path, enabled_ids: &[String]) -> Vec<PluginInfo> {
     let mut plugins = Vec::new();
 
