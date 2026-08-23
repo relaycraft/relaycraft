@@ -33,17 +33,15 @@ function formatDateTime(timestamp: number): string {
 
 export function SessionSwitcher() {
   const { t } = useTranslation();
-  const { showConfirm } = useUIStore();
-  const {
-    dbSessions,
-    showSessionId,
-    loadingSessions,
-    fetchDbSessions,
-    switchDbSession,
-    deleteDbSession,
-    deleteAllDbSessions,
-  } = useSessionStore();
-  const { active: isProxyActive } = useProxyStore();
+  const showConfirm = useUIStore((state) => state.showConfirm);
+  const dbSessions = useSessionStore((state) => state.dbSessions);
+  const showSessionId = useSessionStore((state) => state.showSessionId);
+  const loadingSessions = useSessionStore((state) => state.loadingSessions);
+  const fetchDbSessions = useSessionStore((state) => state.fetchDbSessions);
+  const switchDbSession = useSessionStore((state) => state.switchDbSession);
+  const deleteDbSession = useSessionStore((state) => state.deleteDbSession);
+  const deleteAllDbSessions = useSessionStore((state) => state.deleteAllDbSessions);
+  const isProxyActive = useProxyStore((state) => state.active);
 
   const [isOpen, setIsOpen] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);

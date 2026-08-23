@@ -46,10 +46,12 @@ export function AIRuleAssistant({
   setIsDirty,
 }: AIRuleAssistantProps) {
   const { t } = useTranslation();
-  const { settings: aiSettings } = useAIStore();
-  const { saveScript, toggleScript } = useScriptStore();
-  const { updateRule } = useRuleStore();
-  const { draftRulePrompt, setDraftRulePrompt } = useUIStore();
+  const aiSettings = useAIStore((state) => state.settings);
+  const saveScript = useScriptStore((state) => state.saveScript);
+  const toggleScript = useScriptStore((state) => state.toggleScript);
+  const updateRule = useRuleStore((state) => state.updateRule);
+  const draftRulePrompt = useUIStore((state) => state.draftRulePrompt);
+  const setDraftRulePrompt = useUIStore((state) => state.setDraftRulePrompt);
 
   const [mode, setMode] = useState<"ai" | "yaml" | "script">(() => {
     if (initialMode === "ai" && !aiSettings.enabled) return "yaml";

@@ -9,7 +9,9 @@ interface BreakpointManagerProps {
 
 export function BreakpointManager({ variant = "default" }: BreakpointManagerProps) {
   const { t } = useTranslation();
-  const { breakpoints, removeBreakpoint, clearBreakpoints } = useBreakpointStore();
+  const breakpoints = useBreakpointStore((state) => state.breakpoints);
+  const removeBreakpoint = useBreakpointStore((state) => state.removeBreakpoint);
+  const clearBreakpoints = useBreakpointStore((state) => state.clearBreakpoints);
 
   const handleRemove = async (id: string) => {
     await removeBreakpoint(id);

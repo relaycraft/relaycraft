@@ -5,9 +5,12 @@ import { SettingsRow, SettingsSection, SettingsSelect, SettingsToggle } from "./
 
 export function GeneralSettings() {
   const { t } = useTranslation();
-  const { availableLanguages } = useUIStore();
-  const { config, updateLanguage, updateAlwaysOnTop, updateConfirmExit, updateAutoStartProxy } =
-    useSettingsStore();
+  const availableLanguages = useUIStore((state) => state.availableLanguages);
+  const config = useSettingsStore((state) => state.config);
+  const updateLanguage = useSettingsStore((state) => state.updateLanguage);
+  const updateAlwaysOnTop = useSettingsStore((state) => state.updateAlwaysOnTop);
+  const updateConfirmExit = useSettingsStore((state) => state.updateConfirmExit);
+  const updateAutoStartProxy = useSettingsStore((state) => state.updateAutoStartProxy);
 
   return (
     <SettingsSection title={t("settings.general.title")}>

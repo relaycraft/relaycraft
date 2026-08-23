@@ -42,10 +42,15 @@ import { AIMarkdown } from "./AIMarkdown";
 export function CommandCenter() {
   const { t } = useTranslation();
   const { getSuggestions } = useSuggestionEngine();
-  const { isOpen, setIsOpen, input, setInput, addHistory, suggestions, setSuggestions } =
-    useCommandStore();
-  const { setActiveTab } = useUIStore();
-  const { settings: aiSettings } = useAIStore();
+  const isOpen = useCommandStore((state) => state.isOpen);
+  const setIsOpen = useCommandStore((state) => state.setIsOpen);
+  const input = useCommandStore((state) => state.input);
+  const setInput = useCommandStore((state) => state.setInput);
+  const addHistory = useCommandStore((state) => state.addHistory);
+  const suggestions = useCommandStore((state) => state.suggestions);
+  const setSuggestions = useCommandStore((state) => state.setSuggestions);
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const aiSettings = useAIStore((state) => state.settings);
   const [executing, setExecuting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const pluginPages = usePluginPageStore((state) => state.pages);

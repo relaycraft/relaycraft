@@ -33,13 +33,18 @@ import { SettingsSection } from "./SettingsLayout";
 
 const PluginCard: React.FC<{ plugin: PluginInfo }> = ({ plugin }) => {
   const { t, i18n } = useTranslation();
-  const { togglePlugin, uninstallPlugin } = usePluginStore();
-  const { showConfirm } = useUIStore();
+  const togglePlugin = usePluginStore((state) => state.togglePlugin);
+  const uninstallPlugin = usePluginStore((state) => state.uninstallPlugin);
+  const showConfirm = useUIStore((state) => state.showConfirm);
 
   // Settings Logic
   const [showSettings, setShowSettings] = React.useState(false);
   const [showDetail, setShowDetail] = React.useState(false);
-  const { schemas, settings, loadSchema, loadSettings, saveSettings } = usePluginSettingsStore();
+  const schemas = usePluginSettingsStore((state) => state.schemas);
+  const settings = usePluginSettingsStore((state) => state.settings);
+  const loadSchema = usePluginSettingsStore((state) => state.loadSchema);
+  const loadSettings = usePluginSettingsStore((state) => state.loadSettings);
+  const saveSettings = usePluginSettingsStore((state) => state.saveSettings);
   const hasSettings = !!plugin.manifest.capabilities?.ui?.settings_schema;
 
   const incompatible = plugin.compatibility ? !plugin.compatibility.compatible : false;
@@ -275,7 +280,8 @@ export const PluginSettings: React.FC = () => {
   const fetchPlugins = usePluginStore((state) => state.fetchPlugins);
   const installPluginLocal = usePluginStore((state) => state.installPluginLocal);
   const setMarketOpen = useUIStore((state) => state.setMarketOpen);
-  const { running, restartProxy } = useProxyStore();
+  const running = useProxyStore((state) => state.running);
+  const restartProxy = useProxyStore((state) => state.restartProxy);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showLoading, setShowLoading] = React.useState(false);
   const [restarting, setRestarting] = React.useState(false);

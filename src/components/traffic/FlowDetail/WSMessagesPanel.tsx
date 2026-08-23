@@ -1,12 +1,15 @@
 import { motion } from "framer-motion";
 import { Activity, ArrowDown, ArrowUp, RefreshCw, RotateCw, Wifi } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
-import type { RcWebSocketFrame } from "../../../types";
+import { useTrafficStore } from "../../../stores/trafficStore";
+import type { Flow, RcWebSocketFrame } from "../../../types";
 import { CopyButton } from "../../common/CopyButton";
 import { Input } from "../../common/Input";
 import { TabsContent } from "../../common/Tabs";
 import { Tooltip } from "../../common/Tooltip";
+import { useWSRefresh } from "./WSRefresh.hooks";
 
 const WS_MAX_PREVIEW_CHARS = 2000;
 
@@ -14,43 +17,65 @@ export type WsDirectionFilter = "all" | "client" | "server";
 
 interface WSMessagesPanelProps {
   t: (key: string, options?: Record<string, unknown>) => string;
-  frameCount: number;
-  rawFrameCount: number;
-  filteredFrames: RcWebSocketFrame[];
-  wsAutoScroll: boolean;
-  wsAutoRefresh: boolean;
-  wsKeywordFilter: string;
-  wsDirectionFilter: WsDirectionFilter;
-  wsListRef: React.RefObject<VirtuosoHandle | null>;
-  setWsAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
-  setWsAutoRefresh: React.Dispatch<React.SetStateAction<boolean>>;
-  setWsKeywordFilter: React.Dispatch<React.SetStateAction<string>>;
-  setWsDirectionFilter: React.Dispatch<React.SetStateAction<WsDirectionFilter>>;
+  flow: Flow;
+  /** Currently active FlowDetail tab; panel stays mounted (state preserved) but hidden unless "messages". */
+  activeTab: string;
   onResendFrame: (frame: RcWebSocketFrame) => void;
 }
 
-export function WSMessagesPanel({
-  t,
-  frameCount,
-  rawFrameCount,
-  filteredFrames,
-  wsAutoScroll,
-  wsAutoRefresh,
-  wsKeywordFilter,
-  wsDirectionFilter,
-  wsListRef,
-  setWsAutoScroll,
-  setWsAutoRefresh,
-  setWsKeywordFilter,
-  setWsDirectionFilter,
-  onResendFrame,
-}: WSMessagesPanelProps) {
+export function WSMessagesPanel({ t, flow, activeTab, onResendFrame }: WSMessagesPanelProps) {
+  const hidden = activeTab !== "messages";
+  const [wsAutoScroll, setWsAutoScroll] = useState<boolean>(true);
+  const [wsAutoRefresh, setWsAutoRefresh] = useState<boolean>(true);
+  const [wsDirectionFilter, setWsDirectionFilter] = useState<WsDirectionFilter>("all");
+  const [wsKeywordFilter, setWsKeywordFilter] = useState("");
+  const wsListRef = useRef<VirtuosoHandle | null>(null);
+  const wsRefreshInFlightRef = useRef(false);
+
+  const frameCount = flow._rc.websocketFrameCount || 0;
+  const wsFrames = flow._rc.websocketFrames ?? [];
+  const rawFrameCount = wsFrames.length;
+
+  const filteredFrames = useMemo(() => {
+    const keyword = wsKeywordFilter.trim().toLowerCase();
+    return wsFrames.filter((frame) => {
+      if (wsDirectionFilter === "client" && !frame.fromClient) return false;
+      if (wsDirectionFilter === "server" && frame.fromClient) return false;
+      if (!keyword) return true;
+      return frame.content.toLowerCase().includes(keyword);
+    });
+  }, [wsFrames, wsDirectionFilter, wsKeywordFilter]);
+
+  const refreshCurrentFlow = useCallback(async () => {
+    if (wsRefreshInFlightRef.current) return;
+    wsRefreshInFlightRef.current = true;
+    try {
+      const { loadDetail, selectedFlow } = useTrafficStore.getState();
+      if (!selectedFlow) return;
+      const refreshedFlow = await loadDetail(selectedFlow.id, true);
+      if (refreshedFlow) {
+        useTrafficStore.setState({ selectedFlow: refreshedFlow });
+      }
+    } finally {
+      wsRefreshInFlightRef.current = false;
+    }
+  }, []);
+
+  // Panel stays mounted across tab switches; the hook gates on activeTab so
+  // refresh only runs while the "messages" tab is visible (unchanged behavior).
+  useWSRefresh({
+    activeTab,
+    isWebsocket: flow._rc.isWebsocket,
+    autoRefresh: wsAutoRefresh,
+    refresh: refreshCurrentFlow,
+  });
+
   return (
     <TabsContent
       value="messages"
       key="messages"
       forceMount
-      className="mt-0 flex-1 flex flex-col overflow-hidden p-2"
+      className={`mt-0 flex-1 flex-col overflow-hidden p-2${hidden ? " hidden" : " flex"}`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.99 }}

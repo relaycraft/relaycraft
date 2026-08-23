@@ -33,7 +33,10 @@ interface UseRuleEditorProps {
 
 export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
   const { t } = useTranslation();
-  const { addRule, updateRule, setIsEditorDirty, ruleGroups } = useRuleStore();
+  const addRule = useRuleStore((state) => state.addRule);
+  const updateRule = useRuleStore((state) => state.updateRule);
+  const setIsEditorDirty = useRuleStore((state) => state.setIsEditorDirty);
+  const ruleGroups = useRuleStore((state) => state.ruleGroups);
 
   // --- Initial Reference for Dirty Check ---
   const [initialRule, setInitialRule] = useState<Partial<Rule> | null>(rule);

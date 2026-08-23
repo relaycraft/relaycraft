@@ -2,7 +2,9 @@ import { useUIStore } from "../../stores/uiStore";
 import { ConfirmationModal } from "./ConfirmationModal";
 
 export function AlertDialog() {
-  const { alertDialog, closeConfirm, setConfirmCheckbox } = useUIStore();
+  const alertDialog = useUIStore((state) => state.alertDialog);
+  const closeConfirm = useUIStore((state) => state.closeConfirm);
+  const setConfirmCheckbox = useUIStore((state) => state.setConfirmCheckbox);
   const {
     isOpen,
     title,

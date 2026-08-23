@@ -10,20 +10,20 @@ import { SettingsInput, SettingsRow, SettingsSection, SettingsToggle } from "./S
 
 export function NetworkSettings() {
   const { t } = useTranslation();
-  const {
-    config,
-    loading,
-    updateProxyPort,
-    updateSslInsecure,
-    updateUpstreamProxy,
-    updateShareConfig,
-    testingUpstream,
-    upstreamStatus,
-    testUpstreamConnectivity,
-    resetUpstreamStatus,
-  } = useSettingsStore();
+  const config = useSettingsStore((state) => state.config);
+  const loading = useSettingsStore((state) => state.loading);
+  const updateProxyPort = useSettingsStore((state) => state.updateProxyPort);
+  const updateSslInsecure = useSettingsStore((state) => state.updateSslInsecure);
+  const updateUpstreamProxy = useSettingsStore((state) => state.updateUpstreamProxy);
+  const updateShareConfig = useSettingsStore((state) => state.updateShareConfig);
+  const testingUpstream = useSettingsStore((state) => state.testingUpstream);
+  const upstreamStatus = useSettingsStore((state) => state.upstreamStatus);
+  const testUpstreamConnectivity = useSettingsStore((state) => state.testUpstreamConnectivity);
+  const resetUpstreamStatus = useSettingsStore((state) => state.resetUpstreamStatus);
 
-  const { running, restartProxy, ipAddress } = useProxyStore();
+  const running = useProxyStore((state) => state.running);
+  const restartProxy = useProxyStore((state) => state.restartProxy);
+  const ipAddress = useProxyStore((state) => state.ipAddress);
 
   const share = config.share ?? {
     enabled: false,

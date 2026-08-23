@@ -120,7 +120,8 @@ const createPremiumTheme = (
 };
 
 export const Editor = (props: any) => {
-  const { activeThemeId, themes } = useThemeStore();
+  const activeThemeId = useThemeStore((state) => state.activeThemeId);
+  const themes = useThemeStore((state) => state.themes);
   const theme = useMemo(() => themes.find((t) => t.id === activeThemeId), [activeThemeId, themes]);
   const isDark = theme?.type !== "light";
 
@@ -200,7 +201,8 @@ export const Editor = (props: any) => {
 };
 
 export const DiffEditor = (props: any) => {
-  const { activeThemeId, themes } = useThemeStore();
+  const activeThemeId = useThemeStore((state) => state.activeThemeId);
+  const themes = useThemeStore((state) => state.themes);
   const theme = useMemo(() => themes.find((t) => t.id === activeThemeId), [activeThemeId, themes]);
   const isDark = theme?.type !== "light";
 

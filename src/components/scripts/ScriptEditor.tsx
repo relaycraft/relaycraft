@@ -20,9 +20,12 @@ interface ScriptEditorProps {
 }
 
 export function ScriptEditor({ scriptName, onSave }: ScriptEditorProps) {
-  const { getScriptContent, saveScript, renameScript, draftScript, setDraftScript } =
-    useScriptStore();
-  const { draftScriptPrompt } = useUIStore();
+  const getScriptContent = useScriptStore((state) => state.getScriptContent);
+  const saveScript = useScriptStore((state) => state.saveScript);
+  const renameScript = useScriptStore((state) => state.renameScript);
+  const draftScript = useScriptStore((state) => state.draftScript);
+  const setDraftScript = useScriptStore((state) => state.setDraftScript);
+  const draftScriptPrompt = useUIStore((state) => state.draftScriptPrompt);
   const { t } = useTranslation();
   const [content, setContent] = useState<string>("");
 
@@ -35,10 +38,11 @@ export function ScriptEditor({ scriptName, onSave }: ScriptEditorProps) {
   const [saved, setSaved] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const editorViewRef = useRef<any>(null);
-  const { settings: aiSettings } = useAIStore();
+  const aiSettings = useAIStore((state) => state.settings);
 
   // Auto-AI Trigger from global command center
-  const { draftScriptCode, setDraftScriptCode } = useUIStore();
+  const draftScriptCode = useUIStore((state) => state.draftScriptCode);
+  const setDraftScriptCode = useUIStore((state) => state.setDraftScriptCode);
 
   // Template
   const DefaultTemplate = `"""

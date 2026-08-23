@@ -22,7 +22,7 @@ export function AddBreakpointModal({
   initialMethod: _initialMethod = "GET",
 }: AddBreakpointModalProps) {
   const { t } = useTranslation();
-  const { addBreakpoint } = useBreakpointStore();
+  const addBreakpoint = useBreakpointStore((state) => state.addBreakpoint);
 
   // Parse initial URL to suggest pattern
   const getUrlSuggestion = useCallback((url: string) => {

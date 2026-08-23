@@ -24,10 +24,16 @@ interface AdvancedSettingsProps {
 
 export function AdvancedSettings({ systemInfo }: AdvancedSettingsProps) {
   const { t } = useTranslation();
-  const { config, loading, updateVerboseLogging, updateDisableGpuAcceleration } =
-    useSettingsStore();
-  const { resetDatabase, loadingSessions } = useSessionStore();
-  const { setLogViewerOpen, showConfirm } = useUIStore();
+  const config = useSettingsStore((state) => state.config);
+  const loading = useSettingsStore((state) => state.loading);
+  const updateVerboseLogging = useSettingsStore((state) => state.updateVerboseLogging);
+  const updateDisableGpuAcceleration = useSettingsStore(
+    (state) => state.updateDisableGpuAcceleration,
+  );
+  const resetDatabase = useSessionStore((state) => state.resetDatabase);
+  const loadingSessions = useSessionStore((state) => state.loadingSessions);
+  const setLogViewerOpen = useUIStore((state) => state.setLogViewerOpen);
+  const showConfirm = useUIStore((state) => state.showConfirm);
 
   const [resetting, setResetting] = React.useState(false);
 

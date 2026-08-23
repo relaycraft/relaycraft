@@ -175,7 +175,9 @@ function App() {
   // Proxy Control State
   const [loading, setLoading] = useState(false);
   const toggleLock = useRef(false);
-  const { active, startProxy, stopProxy } = useProxyStore();
+  const active = useProxyStore((state) => state.active);
+  const startProxy = useProxyStore((state) => state.startProxy);
+  const stopProxy = useProxyStore((state) => state.stopProxy);
 
   // Header Logic State
   const activeTab = useUIStore((state) => state.activeTab);

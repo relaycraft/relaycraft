@@ -25,10 +25,10 @@ interface RuleEditorProps {
 
 export function RuleEditor({ rule, onClose }: RuleEditorProps) {
   const { t } = useTranslation();
-  const { setActiveTab } = useUIStore();
-  const { selectScript } = useScriptStore();
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const selectScript = useScriptStore((state) => state.selectScript);
 
-  const { draftRulePrompt } = useUIStore();
+  const draftRulePrompt = useUIStore((state) => state.draftRulePrompt);
 
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [, setAssistantDirty] = useState(false);

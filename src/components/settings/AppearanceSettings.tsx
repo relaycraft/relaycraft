@@ -12,10 +12,15 @@ import { ThemeThumbnail } from "./ThemeThumbnail";
 
 export const AppearanceSettings: React.FC = () => {
   const { t } = useTranslation();
-  const { themes, activeThemeId, themeMode, setThemeMode, setTheme, fetchThemes, deleteTheme } =
-    useThemeStore();
-  const { installPluginLocal } = usePluginStore();
-  const { setMarketOpen } = useUIStore();
+  const themes = useThemeStore((state) => state.themes);
+  const activeThemeId = useThemeStore((state) => state.activeThemeId);
+  const themeMode = useThemeStore((state) => state.themeMode);
+  const setThemeMode = useThemeStore((state) => state.setThemeMode);
+  const setTheme = useThemeStore((state) => state.setTheme);
+  const fetchThemes = useThemeStore((state) => state.fetchThemes);
+  const deleteTheme = useThemeStore((state) => state.deleteTheme);
+  const installPluginLocal = usePluginStore((state) => state.installPluginLocal);
+  const setMarketOpen = useUIStore((state) => state.setMarketOpen);
   const displayDensity = useSettingsStore((s) => s.config.display_density);
   const enableVibrancy = useSettingsStore((s) => s.config.enable_vibrancy);
   const updateDisplayDensity = useSettingsStore((s) => s.updateDisplayDensity);

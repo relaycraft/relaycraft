@@ -37,7 +37,8 @@ interface SystemInfo {
 
 export function SettingsView() {
   const { t } = useTranslation();
-  const { settingsTab, setSettingsTab } = useUIStore();
+  const settingsTab = useUIStore((state) => state.settingsTab);
+  const setSettingsTab = useUIStore((state) => state.setSettingsTab);
 
   const [systemInfo, setSystemInfo] = React.useState<SystemInfo | null>(null);
 

@@ -37,19 +37,21 @@ const compareVersions = (v1: string, v2: string) => {
 
 export const MarketView: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { marketOpen, setMarketOpen, marketType } = useUIStore();
-  const {
-    marketPlugins,
-    themeMarketPlugins,
-    fetchMarketPlugins,
-    fetchCachedMarketPlugins,
-    isFetchingMarket,
-    installPlugin,
-    installingPluginUrl,
-    plugins: installedPlugins,
-  } = usePluginStore();
+  const marketOpen = useUIStore((state) => state.marketOpen);
+  const setMarketOpen = useUIStore((state) => state.setMarketOpen);
+  const marketType = useUIStore((state) => state.marketType);
+  const marketPlugins = usePluginStore((state) => state.marketPlugins);
+  const themeMarketPlugins = usePluginStore((state) => state.themeMarketPlugins);
+  const fetchMarketPlugins = usePluginStore((state) => state.fetchMarketPlugins);
+  const fetchCachedMarketPlugins = usePluginStore((state) => state.fetchCachedMarketPlugins);
+  const isFetchingMarket = usePluginStore((state) => state.isFetchingMarket);
+  const installPlugin = usePluginStore((state) => state.installPlugin);
+  const installingPluginUrl = usePluginStore((state) => state.installingPluginUrl);
+  const installedPlugins = usePluginStore((state) => state.plugins);
 
-  const { themes: installedThemes, activeThemeId, setTheme } = useThemeStore();
+  const installedThemes = useThemeStore((state) => state.themes);
+  const activeThemeId = useThemeStore((state) => state.activeThemeId);
+  const setTheme = useThemeStore((state) => state.setTheme);
 
   const [searchQuery, setSearchQuery] = useState("");
 

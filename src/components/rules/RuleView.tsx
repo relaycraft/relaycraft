@@ -13,23 +13,21 @@ import { RuleList } from "./RuleList";
 
 export function RuleView() {
   const { t } = useTranslation();
-  const {
-    rules,
-    groups,
-    addGroup,
-    selectedRule,
-    selectRule,
-    loadRules,
-    draftRule,
-    setDraftRule,
-    searchQuery,
-    isEditorDirty,
-    setIsEditorDirty,
-    ruleGroups,
-    loadErrors,
-    clearLoadErrors,
-  } = useRuleStore();
-  const { showConfirm } = useUIStore();
+  const rules = useRuleStore((state) => state.rules);
+  const groups = useRuleStore((state) => state.groups);
+  const addGroup = useRuleStore((state) => state.addGroup);
+  const selectedRule = useRuleStore((state) => state.selectedRule);
+  const selectRule = useRuleStore((state) => state.selectRule);
+  const loadRules = useRuleStore((state) => state.loadRules);
+  const draftRule = useRuleStore((state) => state.draftRule);
+  const setDraftRule = useRuleStore((state) => state.setDraftRule);
+  const searchQuery = useRuleStore((state) => state.searchQuery);
+  const isEditorDirty = useRuleStore((state) => state.isEditorDirty);
+  const setIsEditorDirty = useRuleStore((state) => state.setIsEditorDirty);
+  const ruleGroups = useRuleStore((state) => state.ruleGroups);
+  const loadErrors = useRuleStore((state) => state.loadErrors);
+  const clearLoadErrors = useRuleStore((state) => state.clearLoadErrors);
+  const showConfirm = useUIStore((state) => state.showConfirm);
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {

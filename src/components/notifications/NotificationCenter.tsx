@@ -8,20 +8,18 @@ import { Tooltip } from "../common/Tooltip";
 import { NotificationItemCard } from "./NotificationItemCard";
 
 export function NotificationCenter() {
-  const {
-    isOpen,
-    setIsOpen,
-    notifications,
-    getFilteredNotifications,
-    markAllAsRead,
-    clearAll,
-    markAsRead,
-    removeNotification,
-    dnd,
-    toggleDnd,
-    searchQuery,
-    setSearchQuery,
-  } = useNotificationStore();
+  const isOpen = useNotificationStore((state) => state.isOpen);
+  const setIsOpen = useNotificationStore((state) => state.setIsOpen);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const getFilteredNotifications = useNotificationStore((state) => state.getFilteredNotifications);
+  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const clearAll = useNotificationStore((state) => state.clearAll);
+  const markAsRead = useNotificationStore((state) => state.markAsRead);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
+  const dnd = useNotificationStore((state) => state.dnd);
+  const toggleDnd = useNotificationStore((state) => state.toggleDnd);
+  const searchQuery = useNotificationStore((state) => state.searchQuery);
+  const setSearchQuery = useNotificationStore((state) => state.setSearchQuery);
 
   const { t } = useTranslation();
   const panelRef = useRef<HTMLDivElement>(null);

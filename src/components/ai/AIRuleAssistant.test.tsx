@@ -7,9 +7,12 @@ const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStor
     const chatCompletionWithTools = vi.fn();
     const chatCompletionStream = vi.fn();
     const useAIStoreMock = Object.assign(
-      () => ({
-        settings: { enabled: true },
-      }),
+      (selector?: (state: any) => any) => {
+        const state = {
+          settings: { enabled: true },
+        };
+        return selector ? selector(state) : state;
+      },
       {
         getState: () => ({
           chatCompletionWithTools,
@@ -18,10 +21,13 @@ const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStor
       },
     );
 
-    const useUIStoreMock = () => ({
-      draftRulePrompt: null,
-      setDraftRulePrompt: vi.fn(),
-    });
+    const useUIStoreMock = (selector?: (state: any) => any) => {
+      const state = {
+        draftRulePrompt: null,
+        setDraftRulePrompt: vi.fn(),
+      };
+      return selector ? selector(state) : state;
+    };
     (useUIStoreMock as any).getState = () => ({
       showConfirm: vi.fn(),
       setActiveTab: vi.fn(),
@@ -41,16 +47,22 @@ vi.mock("../../stores/uiStore", () => ({
 }));
 
 vi.mock("../../stores/scriptStore", () => ({
-  useScriptStore: () => ({
-    saveScript: vi.fn(),
-    toggleScript: vi.fn(),
-  }),
+  useScriptStore: (selector?: (state: any) => any) => {
+    const state = {
+      saveScript: vi.fn(),
+      toggleScript: vi.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock("../../stores/ruleStore", () => ({
-  useRuleStore: () => ({
-    updateRule: vi.fn(),
-  }),
+  useRuleStore: (selector?: (state: any) => any) => {
+    const state = {
+      updateRule: vi.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock("../../lib/ai/context", () => ({

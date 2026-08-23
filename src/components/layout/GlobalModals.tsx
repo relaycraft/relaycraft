@@ -28,7 +28,8 @@ export function GlobalModals({ showExitModal, setShowExitModal }: GlobalModalsPr
     [interceptedFlowsMap],
   );
 
-  const { logViewerOpen, setLogViewerOpen } = useUIStore();
+  const logViewerOpen = useUIStore((state) => state.logViewerOpen);
+  const setLogViewerOpen = useUIStore((state) => state.setLogViewerOpen);
 
   const handleResumeBreakpoint = async (flowId: string, modifications: any) => {
     try {

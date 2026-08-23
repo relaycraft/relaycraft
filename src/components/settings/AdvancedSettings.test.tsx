@@ -36,7 +36,8 @@ const { settingsState, useSettingsStoreMock } = vi.hoisted(() => {
     updateDisableGpuAcceleration: vi.fn(),
   };
 
-  const useSettingsStoreMock = () => settingsState;
+  const useSettingsStoreMock = (selector?: (state: any) => any) =>
+    selector ? selector(settingsState) : settingsState;
 
   return {
     settingsState,
@@ -49,9 +50,13 @@ vi.mock("../../stores/settingsStore", () => ({
 }));
 
 vi.mock("../../stores/uiStore", () => ({
-  useUIStore: () => ({
-    setLogViewerOpen: vi.fn(),
-  }),
+  useUIStore: (selector?: (state: any) => any) => {
+    const state = {
+      setLogViewerOpen: vi.fn(),
+      showConfirm: vi.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock("react-i18next", async (importOriginal) => {

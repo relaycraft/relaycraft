@@ -17,9 +17,8 @@ import {
   X,
 } from "lucide-react";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { VirtuosoHandle } from "react-virtuoso";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
@@ -37,7 +36,6 @@ import {
 } from "../../lib/utils";
 import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
-import { useTrafficStore } from "../../stores/trafficStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Flow, RcWebSocketFrame } from "../../types";
 import { harToLegacyHeaders } from "../../types";
@@ -47,9 +45,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Tooltip } from "../common/Tooltip";
 import { BodyView } from "./BodyView";
 import { SSEPanel } from "./FlowDetail/SSEPanel";
-import { useSSEPanel } from "./FlowDetail/SSEPanel.hooks";
-import { WSMessagesPanel, type WsDirectionFilter } from "./FlowDetail/WSMessagesPanel";
-import { useWSRefresh } from "./FlowDetail/WSRefresh.hooks";
+import { WSMessagesPanel } from "./FlowDetail/WSMessagesPanel";
 import { HeadersView } from "./HeadersView";
 import { WsResendDrawer } from "./WsResendDrawer";
 
@@ -61,38 +57,15 @@ interface FlowDetailProps {
 export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const { t } = useTranslation();
   const isMac = useUIStore((state) => state.isMac);
-  const { settings: aiSettings } = useAIStore();
+  const aiSettings = useAIStore((state) => state.settings);
   const [activeTab, setActiveTab] = useState("request");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [replaying, setReplaying] = useState(false);
   const isSse = !!flow._rc?.isSse;
-  const [sseAutoScroll, setSseAutoScroll] = useState<boolean>(true);
-  const [sseAutoRefresh, setSseAutoRefresh] = useState<boolean>(true);
-  const [sseKeywordFilter, setSseKeywordFilter] = useState("");
-  const [wsAutoScroll, setWsAutoScroll] = useState<boolean>(true);
-  const [wsAutoRefresh, setWsAutoRefresh] = useState<boolean>(true);
-  const [wsDirectionFilter, setWsDirectionFilter] = useState<WsDirectionFilter>("all");
-  const [wsKeywordFilter, setWsKeywordFilter] = useState("");
-  const [expandedSseIds, setExpandedSseIds] = useState<Record<string, boolean>>({});
   const [resendFrame, setResendFrame] = useState<RcWebSocketFrame | null>(null);
   const lastFlowIdRef = useRef<string>("");
-  const sseListRef = useRef<VirtuosoHandle | null>(null);
-  const wsListRef = useRef<VirtuosoHandle | null>(null);
-  const wsRefreshInFlightRef = useRef(false);
-  const initialSseEvents = useMemo(
-    () => (isSse && Array.isArray(flow._rc?.sseEvents) ? flow._rc.sseEvents : []),
-    [isSse, flow._rc?.sseEvents],
-  );
-  const { sseEvents, sseStreamOpen, sseDroppedCount, filteredSseEvents } = useSSEPanel({
-    flowId: flow.id,
-    isSse,
-    initialEvents: initialSseEvents,
-    initialStreamOpen: !!flow._rc?.sseStreamOpen,
-    autoRefresh: sseAutoRefresh,
-    keywordFilter: sseKeywordFilter,
-  });
   const resolvedUrl = resolveFlowRequestUrl(flow.request) || t("traffic.url_unavailable");
   const resolvedUrlPreview = getReadableUrlPreview(resolvedUrl);
 
@@ -125,51 +98,10 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
     const flowChanged = lastFlowIdRef.current !== currentFlowId;
     lastFlowIdRef.current = currentFlowId;
 
-    setSseAutoScroll(true);
-    setSseAutoRefresh(true);
-    setWsAutoScroll(true);
-    setWsAutoRefresh(true);
     if (flowChanged) {
-      setSseKeywordFilter("");
-      setWsDirectionFilter("all");
-      setWsKeywordFilter("");
       setResendFrame(null);
     }
-    setExpandedSseIds({});
   }, [flow.id]);
-
-  const refreshCurrentFlow = useCallback(async () => {
-    if (wsRefreshInFlightRef.current) return;
-    wsRefreshInFlightRef.current = true;
-    try {
-      const { loadDetail, selectedFlow } = useTrafficStore.getState();
-      if (!selectedFlow) return;
-      const refreshedFlow = await loadDetail(selectedFlow.id, true);
-      if (refreshedFlow) {
-        useTrafficStore.setState({ selectedFlow: refreshedFlow });
-      }
-    } finally {
-      wsRefreshInFlightRef.current = false;
-    }
-  }, []);
-
-  useWSRefresh({
-    activeTab,
-    isWebsocket: flow._rc.isWebsocket,
-    autoRefresh: wsAutoRefresh,
-    refresh: refreshCurrentFlow,
-  });
-
-  const wsFrames = flow._rc.websocketFrames ?? [];
-  const filteredWsFrames = useMemo(() => {
-    const keyword = wsKeywordFilter.trim().toLowerCase();
-    return wsFrames.filter((frame) => {
-      if (wsDirectionFilter === "client" && !frame.fromClient) return false;
-      if (wsDirectionFilter === "server" && frame.fromClient) return false;
-      if (!keyword) return true;
-      return frame.content.toLowerCase().includes(keyword);
-    });
-  }, [wsFrames, wsDirectionFilter, wsKeywordFilter]);
 
   const handleAIAnalysis = async () => {
     if (analyzing) return;
@@ -715,43 +647,17 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
               </TabsContent>
             )}
 
-            {activeTab === "messages" && flow._rc.isWebsocket && (
+            {flow._rc.isWebsocket && (
               <WSMessagesPanel
+                key={flow.id}
                 t={t}
-                frameCount={flow._rc.websocketFrameCount || 0}
-                rawFrameCount={flow._rc.websocketFrames?.length ?? 0}
-                filteredFrames={filteredWsFrames}
-                wsAutoScroll={wsAutoScroll}
-                wsAutoRefresh={wsAutoRefresh}
-                wsKeywordFilter={wsKeywordFilter}
-                wsDirectionFilter={wsDirectionFilter}
-                wsListRef={wsListRef}
-                setWsAutoScroll={setWsAutoScroll}
-                setWsAutoRefresh={setWsAutoRefresh}
-                setWsKeywordFilter={setWsKeywordFilter}
-                setWsDirectionFilter={setWsDirectionFilter}
+                flow={flow}
+                activeTab={activeTab}
                 onResendFrame={setResendFrame}
               />
             )}
 
-            {activeTab === "sse" && isSse && (
-              <SSEPanel
-                t={t}
-                sseStreamOpen={sseStreamOpen}
-                sseEvents={sseEvents}
-                sseDroppedCount={sseDroppedCount}
-                sseAutoScroll={sseAutoScroll}
-                sseAutoRefresh={sseAutoRefresh}
-                sseKeywordFilter={sseKeywordFilter}
-                filteredSseEvents={filteredSseEvents}
-                expandedSseIds={expandedSseIds}
-                sseListRef={sseListRef}
-                setSseAutoScroll={setSseAutoScroll}
-                setSseAutoRefresh={setSseAutoRefresh}
-                setSseKeywordFilter={setSseKeywordFilter}
-                setExpandedSseIds={setExpandedSseIds}
-              />
-            )}
+            {isSse && <SSEPanel key={flow.id} t={t} flow={flow} hidden={activeTab !== "sse"} />}
           </AnimatePresence>
         </div>
       </Tabs>

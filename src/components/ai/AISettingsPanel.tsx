@@ -26,19 +26,17 @@ import {
 
 export function AISettingsPanel() {
   const { t } = useTranslation();
-  const {
-    settings,
-    loading,
-    testingConnection,
-    connectionStatus,
-    loadSettings,
-    loadProfiles,
-    saveSettings,
-    probeCapabilities,
-    connectionMessage,
-    profiles,
-    capabilityProbe,
-  } = useAIStore();
+  const settings = useAIStore((state) => state.settings);
+  const loading = useAIStore((state) => state.loading);
+  const testingConnection = useAIStore((state) => state.testingConnection);
+  const connectionStatus = useAIStore((state) => state.connectionStatus);
+  const loadSettings = useAIStore((state) => state.loadSettings);
+  const loadProfiles = useAIStore((state) => state.loadProfiles);
+  const saveSettings = useAIStore((state) => state.saveSettings);
+  const probeCapabilities = useAIStore((state) => state.probeCapabilities);
+  const connectionMessage = useAIStore((state) => state.connectionMessage);
+  const profiles = useAIStore((state) => state.profiles);
+  const capabilityProbe = useAIStore((state) => state.capabilityProbe);
 
   const [localSettings, setLocalSettings] = useState(settings);
   const [showApiKey, setShowApiKey] = useState(false);

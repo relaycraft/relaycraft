@@ -8,13 +8,19 @@ const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStor
     const chatCompletionWithTools = vi.fn();
     const chatCompletionStream = vi.fn();
     const abortChat = vi.fn();
-    const useAIStoreMock = () => ({
-      chatCompletionStream,
-      chatCompletionWithTools,
-      abortChat,
-      settings: { enabled: true },
-    });
-    const useUIStoreMock = () => ({});
+    const useAIStoreMock = (selector?: (state: any) => any) => {
+      const state = {
+        chatCompletionStream,
+        chatCompletionWithTools,
+        abortChat,
+        settings: { enabled: true },
+      };
+      return selector ? selector(state) : state;
+    };
+    const useUIStoreMock = (selector?: (state: any) => any) => {
+      const state = {};
+      return selector ? selector(state) : state;
+    };
     (useUIStoreMock as any).getState = () => ({ activeTab: "traffic" });
     return {
       chatCompletionWithTools,

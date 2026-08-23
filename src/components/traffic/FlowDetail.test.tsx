@@ -23,9 +23,12 @@ const {
   };
 
   const useAIStoreMock = Object.assign(
-    () => ({
-      settings: { enabled: true },
-    }),
+    (selector?: (state: any) => any) => {
+      const state = {
+        settings: { enabled: true },
+      };
+      return selector ? selector(state) : state;
+    },
     {
       getState: () => ({
         chatCompletionStream,

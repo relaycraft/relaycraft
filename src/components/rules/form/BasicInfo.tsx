@@ -53,8 +53,10 @@ export function BasicInfo({
   context,
 }: BasicInfoProps) {
   const { t } = useTranslation();
-  const { groups } = useRuleStore();
-  const { chatCompletionStream, chatCompletionWithTools, settings: aiSettings } = useAIStore();
+  const groups = useRuleStore((state) => state.groups);
+  const chatCompletionStream = useAIStore((state) => state.chatCompletionStream);
+  const chatCompletionWithTools = useAIStore((state) => state.chatCompletionWithTools);
+  const aiSettings = useAIStore((state) => state.settings);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 

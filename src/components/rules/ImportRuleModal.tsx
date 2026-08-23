@@ -13,8 +13,9 @@ import { Modal } from "../common/Modal";
 
 export function ImportRuleModal() {
   const { t } = useTranslation();
-  const { importBundle } = useRuleStore();
-  const { importModalOpen, setImportModalOpen } = useUIStore();
+  const importBundle = useRuleStore((state) => state.importBundle);
+  const importModalOpen = useUIStore((state) => state.importModalOpen);
+  const setImportModalOpen = useUIStore((state) => state.setImportModalOpen);
   const [jsonText, setJsonText] = useState("");
 
   // ... (logic remains same)

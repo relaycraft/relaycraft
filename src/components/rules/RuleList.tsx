@@ -33,8 +33,11 @@ interface RuleListProps {
 }
 
 export function RuleList({ rules, onEdit, conflicts = {}, selectedRuleId }: RuleListProps) {
-  const { toggleRule, deleteRule, rules: allRules, moveRule } = useRuleStore();
-  const { showConfirm } = useUIStore();
+  const toggleRule = useRuleStore((state) => state.toggleRule);
+  const deleteRule = useRuleStore((state) => state.deleteRule);
+  const allRules = useRuleStore((state) => state.rules);
+  const moveRule = useRuleStore((state) => state.moveRule);
+  const showConfirm = useUIStore((state) => state.showConfirm);
   const { t } = useTranslation();
 
   const getRuleIcon = (type: RuleType) => {

@@ -13,7 +13,8 @@ interface McpStatus {
 
 export function McpSettings() {
   const { t } = useTranslation();
-  const { config, updateMcpConfig } = useSettingsStore();
+  const config = useSettingsStore((state) => state.config);
+  const updateMcpConfig = useSettingsStore((state) => state.updateMcpConfig);
   const mcp = config.mcp_config ?? { enabled: false, port: 7090 };
 
   const [status, setStatus] = React.useState<McpStatus>({ running: false, port: mcp.port });

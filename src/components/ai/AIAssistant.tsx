@@ -43,12 +43,10 @@ export function AIAssistant({
   align = "right",
 }: AIAssistantProps) {
   const { t } = useTranslation();
-  const {
-    chatCompletionStream,
-    chatCompletionWithTools,
-    abortChat,
-    settings: aiSettings,
-  } = useAIStore();
+  const chatCompletionStream = useAIStore((state) => state.chatCompletionStream);
+  const chatCompletionWithTools = useAIStore((state) => state.chatCompletionWithTools);
+  const abortChat = useAIStore((state) => state.abortChat);
+  const aiSettings = useAIStore((state) => state.settings);
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);

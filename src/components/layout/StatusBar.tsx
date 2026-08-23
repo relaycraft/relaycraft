@@ -55,7 +55,10 @@ export function StatusBar() {
     [port, running, active, shareConfig, upstreamProxy, rules, ruleGroupsList, ruleGroupMap],
   );
   const { t } = useTranslation();
-  const { isOpen, setIsOpen, unreadCount, dnd } = useNotificationStore();
+  const isOpen = useNotificationStore((state) => state.isOpen);
+  const setIsOpen = useNotificationStore((state) => state.setIsOpen);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const dnd = useNotificationStore((state) => state.dnd);
   const unread = unreadCount();
 
   // Plugin Slots

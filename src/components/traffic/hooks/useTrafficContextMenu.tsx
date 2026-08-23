@@ -27,9 +27,10 @@ export type BreakpointModalState = {
 export function useTrafficContextMenu() {
   const { t } = useTranslation();
   const isMac = useUIStore((state) => state.isMac);
-  const { setDraftRule } = useRuleStore();
-  const { setActiveTab } = useUIStore();
-  const { selectFlow, indices } = useTrafficStore();
+  const setDraftRule = useRuleStore((state) => state.setDraftRule);
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const selectFlow = useTrafficStore((state) => state.selectFlow);
+  const indices = useTrafficStore((state) => state.indices);
   // State for breakpoint modal
   const [breakpointModal, setBreakpointModal] = useState<BreakpointModalState>({
     isOpen: false,

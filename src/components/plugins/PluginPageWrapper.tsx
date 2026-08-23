@@ -13,8 +13,8 @@ export const PluginPageWrapper: React.FC<PluginPageWrapperProps> = ({
   pluginId,
   component: Component,
 }) => {
-  const { config } = useSettingsStore();
-  const { themeMode } = useThemeStore();
+  const config = useSettingsStore((state) => state.config);
+  const themeMode = useThemeStore((state) => state.themeMode);
   const { t, i18n } = useTranslation();
 
   // Retrieve the scoped API for this plugin

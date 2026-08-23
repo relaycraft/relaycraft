@@ -31,23 +31,21 @@ import { HeaderListEditor } from "./HeaderListEditor";
 
 export function ComposerView() {
   const { t } = useTranslation();
-  const {
-    method,
-    setMethod,
-    url,
-    setUrl,
-    headers,
-    setHeaders,
-    body,
-    setBody,
-    bodyType,
-    setBodyType,
-    bodyFormData,
-    setBodyFormData,
-    lastResponse,
-    setLastResponse,
-    reset,
-  } = useComposerStore();
+  const method = useComposerStore((state) => state.method);
+  const setMethod = useComposerStore((state) => state.setMethod);
+  const url = useComposerStore((state) => state.url);
+  const setUrl = useComposerStore((state) => state.setUrl);
+  const headers = useComposerStore((state) => state.headers);
+  const setHeaders = useComposerStore((state) => state.setHeaders);
+  const body = useComposerStore((state) => state.body);
+  const setBody = useComposerStore((state) => state.setBody);
+  const bodyType = useComposerStore((state) => state.bodyType);
+  const setBodyType = useComposerStore((state) => state.setBodyType);
+  const bodyFormData = useComposerStore((state) => state.bodyFormData);
+  const setBodyFormData = useComposerStore((state) => state.setBodyFormData);
+  const lastResponse = useComposerStore((state) => state.lastResponse);
+  const setLastResponse = useComposerStore((state) => state.setLastResponse);
+  const reset = useComposerStore((state) => state.reset);
 
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{

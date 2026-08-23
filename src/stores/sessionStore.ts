@@ -3,9 +3,9 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import i18next from "i18next";
 import { create } from "zustand";
-import { startImportPolling } from "../hooks/useImportPolling";
 import { Logger } from "../lib/logger";
 import { notify } from "../lib/notify";
+import { startImportPolling } from "../lib/session/importPolling";
 import { setPollTimestamp } from "../lib/traffic";
 import type { Session, SessionMetadata } from "../types/session";
 import { useSettingsStore } from "./settingsStore";
@@ -387,6 +387,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             await get().fetchDbSessions();
 
             startImportPolling(
+              useSessionStore.getState,
               session_id,
               i18next.t("session.import_complete"),
               i18next.t("session.import_failed"),
@@ -507,6 +508,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
             Logger.info(`Imported HAR into new session: ${session_id}`);
 
             startImportPolling(
+              useSessionStore.getState,
               session_id,
               i18next.t("session.import_har_success"),
               i18next.t("session.import_har_failed"),

@@ -52,8 +52,10 @@ const {
     restartProxy: vi.fn().mockResolvedValue(undefined),
   };
 
-  const useSettingsStoreMock = () => settingsState;
-  const useProxyStoreMock = () => proxyState;
+  const useSettingsStoreMock = (selector?: (state: any) => any) =>
+    selector ? selector(settingsState) : settingsState;
+  const useProxyStoreMock = (selector?: (state: any) => any) =>
+    selector ? selector(proxyState) : proxyState;
 
   return {
     settingsState,

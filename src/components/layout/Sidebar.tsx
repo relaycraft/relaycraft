@@ -17,7 +17,7 @@ interface SidebarProps {
 
 export function Sidebar({ isMacOS }: SidebarProps) {
   const { t } = useTranslation();
-  const { activeTab } = useUIStore();
+  const activeTab = useUIStore((state) => state.activeTab);
   const { navigate } = useNavigate();
   const pluginPages = usePluginPageStore((state) => state.pages);
 

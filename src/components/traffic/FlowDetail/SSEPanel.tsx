@@ -1,55 +1,51 @@
 import { motion } from "framer-motion";
 import { Activity, ChevronDown, ChevronUp, RefreshCw, Wifi } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import type { VirtuosoHandle } from "react-virtuoso";
 import { Virtuoso } from "react-virtuoso";
-import type { SseEvent } from "../../../types";
+import type { Flow } from "../../../types";
 import { CopyButton } from "../../common/CopyButton";
 import { Input } from "../../common/Input";
 import { TabsContent } from "../../common/Tabs";
 import { Tooltip } from "../../common/Tooltip";
+import { useSSEPanel } from "./SSEPanel.hooks";
 
 const SSE_MAX_PREVIEW_CHARS = 2000;
 const SSE_ID_PREVIEW_CHARS = 96;
 
 interface SSEPanelProps {
   t: (key: string, options?: Record<string, unknown>) => string;
-  sseStreamOpen: boolean;
-  sseEvents: SseEvent[];
-  sseDroppedCount: number;
-  sseAutoScroll: boolean;
-  sseAutoRefresh: boolean;
-  sseKeywordFilter: string;
-  filteredSseEvents: SseEvent[];
-  expandedSseIds: Record<string, boolean>;
-  sseListRef: React.RefObject<VirtuosoHandle | null>;
-  setSseAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
-  setSseAutoRefresh: React.Dispatch<React.SetStateAction<boolean>>;
-  setSseKeywordFilter: React.Dispatch<React.SetStateAction<string>>;
-  setExpandedSseIds: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  flow: Flow;
+  /** Keep mounted (polling + filter state preserved) but visually hidden. */
+  hidden?: boolean;
 }
 
-export function SSEPanel({
-  t,
-  sseStreamOpen,
-  sseEvents,
-  sseDroppedCount,
-  sseAutoScroll,
-  sseAutoRefresh,
-  sseKeywordFilter,
-  filteredSseEvents,
-  expandedSseIds,
-  sseListRef,
-  setSseAutoScroll,
-  setSseAutoRefresh,
-  setSseKeywordFilter,
-  setExpandedSseIds,
-}: SSEPanelProps) {
+export function SSEPanel({ t, flow, hidden = false }: SSEPanelProps) {
+  const isSse = !!flow._rc?.isSse;
+  const [sseAutoScroll, setSseAutoScroll] = useState<boolean>(true);
+  const [sseAutoRefresh, setSseAutoRefresh] = useState<boolean>(true);
+  const [sseKeywordFilter, setSseKeywordFilter] = useState("");
+  const [expandedSseIds, setExpandedSseIds] = useState<Record<string, boolean>>({});
+  const sseListRef = useRef<VirtuosoHandle | null>(null);
+  const initialSseEvents = useMemo(
+    () => (isSse && Array.isArray(flow._rc?.sseEvents) ? flow._rc.sseEvents : []),
+    [isSse, flow._rc?.sseEvents],
+  );
+  const { sseEvents, sseStreamOpen, sseDroppedCount, filteredSseEvents } = useSSEPanel({
+    flowId: flow.id,
+    isSse,
+    initialEvents: initialSseEvents,
+    initialStreamOpen: !!flow._rc?.sseStreamOpen,
+    autoRefresh: sseAutoRefresh,
+    keywordFilter: sseKeywordFilter,
+  });
+
   return (
     <TabsContent
       value="sse"
       key="sse"
       forceMount
-      className="mt-0 flex-1 flex flex-col overflow-hidden p-2"
+      className={`mt-0 flex-1 flex-col overflow-hidden p-2${hidden ? " hidden" : " flex"}`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.99 }}

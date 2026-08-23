@@ -10,8 +10,10 @@ import { Modal } from "../common/Modal";
 import { Textarea } from "../common/Textarea";
 
 export function SaveSessionModal() {
-  const { saveSessionModalOpen, setSaveSessionModalOpen } = useUIStore();
-  const { saveSession, loading } = useSessionStore();
+  const saveSessionModalOpen = useUIStore((state) => state.saveSessionModalOpen);
+  const setSaveSessionModalOpen = useUIStore((state) => state.setSaveSessionModalOpen);
+  const saveSession = useSessionStore((state) => state.saveSession);
+  const loading = useSessionStore((state) => state.loading);
   const { t } = useTranslation();
 
   const [name, setName] = useState("");

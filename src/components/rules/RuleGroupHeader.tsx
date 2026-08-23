@@ -22,9 +22,13 @@ interface RuleGroupHeaderProps {
 
 export function RuleGroupHeader({ group, ruleCount }: RuleGroupHeaderProps) {
   const { t } = useTranslation();
-  const { toggleGroup, toggleGroupCollapse, deleteGroup, updateGroup, moveGroup, groups } =
-    useRuleStore();
-  const { showConfirm } = useUIStore();
+  const toggleGroup = useRuleStore((state) => state.toggleGroup);
+  const toggleGroupCollapse = useRuleStore((state) => state.toggleGroupCollapse);
+  const deleteGroup = useRuleStore((state) => state.deleteGroup);
+  const updateGroup = useRuleStore((state) => state.updateGroup);
+  const moveGroup = useRuleStore((state) => state.moveGroup);
+  const groups = useRuleStore((state) => state.groups);
+  const showConfirm = useUIStore((state) => state.showConfirm);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
 

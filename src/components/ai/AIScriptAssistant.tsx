@@ -66,7 +66,8 @@ export function AIScriptAssistant({
   initialPrompt,
 }: AIScriptAssistantProps) {
   const { t } = useTranslation();
-  const { draftScriptPrompt, setDraftScriptPrompt } = useUIStore();
+  const draftScriptPrompt = useUIStore((state) => state.draftScriptPrompt);
+  const setDraftScriptPrompt = useUIStore((state) => state.setDraftScriptPrompt);
 
   const [prompt, setPrompt] = useState(initialPrompt || draftScriptPrompt || "");
   const [explanation, setExplanation] = useState("");
