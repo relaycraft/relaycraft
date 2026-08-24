@@ -20,6 +20,35 @@ def headers_to_har(headers: Any) -> List[Dict[str, str]]:
     return result
 
 
+def optional_headers_to_har(headers: Any) -> List[Dict[str, str]]:
+    """Convert mitmproxy Headers to HAR, including empty/missing trailers."""
+    if not headers:
+        return []
+    try:
+        return headers_to_har(headers)
+    except Exception:
+        return []
+
+
+def header_value(headers: Any, name: str) -> str:
+    """Return the first header value matching `name` (case-insensitive)."""
+    if not headers:
+        return ""
+    target = name.lower()
+    try:
+        for key, value in headers.fields:
+            if safe_decode(key).lower() == target:
+                return safe_decode(value)
+    except Exception:
+        try:
+            for key, value in headers.items():
+                if str(key).lower() == target:
+                    return str(value)
+        except Exception:
+            return ""
+    return ""
+
+
 def cookies_to_har(cookies: Any) -> List[Dict[str, Any]]:
     result = []
     for name, value in cookies.fields:

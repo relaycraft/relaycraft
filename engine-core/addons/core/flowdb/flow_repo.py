@@ -276,6 +276,15 @@ def store_flows_batch(db, flows: List[Dict], session_id: str, batch_size: int = 
     return stored
 
 
+def _index_content_type(req: Dict, res: Dict, flow_data: Dict) -> str:
+    """Prefer gRPC request MIME when the HTTP response is not gRPC (e.g. 403 HTML)."""
+    res_mime = (res.get("content") or {}).get("mimeType", "") or flow_data.get("contentType", "") or ""
+    req_mime = (req.get("postData") or {}).get("mimeType", "") or ""
+    if "grpc" in req_mime.lower() and "grpc" not in res_mime.lower():
+        return req_mime
+    return res_mime
+
+
 def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
     """Extract index fields from flow data."""
     from decimal import Decimal
@@ -301,7 +310,7 @@ def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
         "path": parsed_url.get("path") or flow_data.get("path", ""),
         "status": to_float(res.get("status"), 0),
         "http_version": req.get("httpVersion", "") or flow_data.get("httpVersion", ""),
-        "content_type": (res.get("content") or {}).get("mimeType", "") or flow_data.get("contentType", ""),
+        "content_type": _index_content_type(req, res, flow_data),
         "started_datetime": flow_data.get("startedDateTime", ""),
         "time": to_float(flow_data.get("time"), 0),
         "size": to_float(

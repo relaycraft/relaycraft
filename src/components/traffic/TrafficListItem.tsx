@@ -9,6 +9,7 @@ import {
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { getReadableUrlPreview } from "../../lib/flowUrl";
+import { formatGrpcListTitle, isGrpcMime } from "../../lib/grpc";
 import { getAppIcon } from "../../lib/sourceIcons";
 import {
   formatProtocol,
@@ -55,9 +56,11 @@ export const TrafficListItem = memo(
       index.clientIp === "localhost";
 
     const httpVersion = index.httpVersion || "HTTP/1.1";
-    const displayUrlPreview = getReadableUrlPreview(
-      index.url || `${index.host || ""}${index.path || ""}`,
-    );
+    const rawUrl = index.url || `${index.host || ""}${index.path || ""}`;
+    const grpcListTitle = isGrpcMime(index.contentType)
+      ? formatGrpcListTitle(rawUrl, index.host)
+      : null;
+    const displayUrlPreview = grpcListTitle || getReadableUrlPreview(rawUrl);
 
     // Deduplicate hits while preserving script/breakpoint/rule distinctions.
     // For breakpoints, merge request/response phase into one indicator.
@@ -146,13 +149,15 @@ export const TrafficListItem = memo(
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <div className="text-xs font-mono font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors flex-1">
-              {displayUrlPreview || t("traffic.url_unavailable")}
-            </div>
+            <Tooltip content={rawUrl} side="bottom" className="flex-1 min-w-0">
+              <div className="text-xs font-mono font-semibold truncate text-foreground/90 group-hover:text-primary transition-colors">
+                {displayUrlPreview || t("traffic.url_unavailable")}
+              </div>
+            </Tooltip>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 overflow-hidden">
             <span
-              className={`px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider ${getHttpStatusCodeClass(index.status)}`}
+              className={`shrink-0 px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider ${getHttpStatusCodeClass(index.status)}`}
             >
               {isError ? (
                 <Tooltip content={t("traffic.status.failed")} side="bottom">
@@ -168,7 +173,7 @@ export const TrafficListItem = memo(
             </span>
             <span>•</span>
             <span
-              className={`font-mono text-tiny px-1 rounded-sm border ${getProtocolColor(httpVersion)}`}
+              className={`shrink-0 font-mono text-tiny px-1 rounded-sm border ${getProtocolColor(httpVersion)}`}
             >
               {formatProtocol(httpVersion)}
             </span>
@@ -178,6 +183,16 @@ export const TrafficListItem = memo(
                 <Tooltip content={t("traffic.sse.events")} side="bottom">
                   <span className="px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider bg-violet-500/10 text-violet-600 dark:text-violet-300 border-violet-500/20">
                     SSE
+                  </span>
+                </Tooltip>
+              </>
+            )}
+            {isGrpcMime(index.contentType) && (
+              <>
+                <span>•</span>
+                <Tooltip content={t("traffic.grpc.tooltip")} side="bottom">
+                  <span className="shrink-0 px-1.5 py-0 rounded-sm border text-micro font-semibold tracking-wider bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30">
+                    {t("traffic.grpc.badge")}
                   </span>
                 </Tooltip>
               </>

@@ -28,8 +28,10 @@ from .utils import setup_logging
 from .flow_database import FlowDatabase
 from .har_converters import (
     cookies_to_har,
+    header_value,
     headers_to_har,
     normalize_har_entries,
+    optional_headers_to_har,
     query_to_har,
     safe_decode,
 )
@@ -112,6 +114,7 @@ class TrafficMonitor:
             "image/", "video/", "audio/",
             "application/octet-stream", "application/pdf",
             "application/zip", "application/x-protobuf",
+            "application/grpc", "application/grpc+",
             "application/x-tar", "application/gzip",
             "font/"
         ]
@@ -323,11 +326,8 @@ class TrafficMonitor:
                     paused_at = self.debug_mgr.intercepted_flows[flow.id]["phase"]
 
             # ========== Content Type & SSE ==========
-            content_type = None
-            for h in flow.response.headers.fields if flow.response else []:
-                if h[0].lower() == b'content-type':
-                    content_type = safe_decode(h[1])
-                    break
+            req_content_type = header_value(flow.request.headers, "content-type")
+            content_type = header_value(flow.response.headers, "content-type") if flow.response else ""
             sse = self._build_sse_data(flow, content_type)
 
             # ========== Error Handling ==========
@@ -387,8 +387,10 @@ class TrafficMonitor:
                     "cookies": cookies_to_har(flow.request.cookies),
                     "queryString": query_to_har(flow.request.query),
                     "postData": {
-                        "mimeType": content_type or "text/plain",
+                        "mimeType": req_content_type
+                        or ("application/octet-stream" if req_enc == "base64" else "text/plain"),
                         "text": req_body,
+                        "encoding": req_enc,
                     } if req_body else None,
                     "bodySize": len(flow.request.content) if flow.request.content else 0,
                     "headersSize": -1,
@@ -442,6 +444,12 @@ class TrafficMonitor:
                         "phase": paused_at,
                     },
                     "bodyTruncated": req_truncated or res_truncated,
+                    "trailers": optional_headers_to_har(
+                        getattr(flow.response, "trailers", None) if flow.response else None
+                    ),
+                    "requestTrailers": optional_headers_to_har(
+                        getattr(flow.request, "trailers", None)
+                    ),
                 },
 
                 "msg_ts": flow.metadata.get("_relaycraft_msg_ts", time.time()),

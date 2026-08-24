@@ -442,6 +442,39 @@
       "response_body": "Response body",
       "response_headers": "Response Headers"
     },
+    "grpc": {
+      "badge": "gRPC",
+      "status": "{{code}} {{name}}",
+      "status_tooltip_with_message": "{{meaning}}\n{{message}}",
+      "status_codes": {
+        "0": "OK",
+        "1": "Cancelled",
+        "2": "Unknown error",
+        "3": "Invalid argument",
+        "4": "Deadline exceeded",
+        "5": "Not found",
+        "6": "Already exists",
+        "7": "Permission denied",
+        "8": "Resource exhausted",
+        "9": "Failed precondition",
+        "10": "Aborted",
+        "11": "Out of range",
+        "12": "Unimplemented",
+        "13": "Internal error",
+        "14": "Unavailable",
+        "15": "Data loss",
+        "16": "Unauthenticated",
+        "unknown": "Unknown status"
+      },
+      "rpc": "RPC",
+      "trailers": "Trailers",
+      "message_n": "Message {{n}}",
+      "compressed": "Compressed (not decoded)",
+      "truncated": "Truncated frame",
+      "heuristic_note": "Decoded without .proto (field numbers only)",
+      "empty": "No gRPC messages",
+      "raw": "JSON"
+    },
     "tabs": {
       "messages": "Messages",
       "request": "Request",
@@ -1375,6 +1408,10 @@
       "filter_placeholder": "Filter SSE data...",
       "clear_filter": "Clear",
       "no_match": "No SSE events match current filter"
+    },
+    "grpc": {
+      "badge": "gRPC",
+      "tooltip": "gRPC request"
     }
   },
   "init": {

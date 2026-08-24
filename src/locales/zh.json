@@ -442,6 +442,39 @@
       "response_body": "响应体",
       "response_headers": "响应头"
     },
+    "grpc": {
+      "badge": "gRPC",
+      "status": "{{code}} {{name}}",
+      "status_tooltip_with_message": "{{meaning}}\n{{message}}",
+      "status_codes": {
+        "0": "成功",
+        "1": "已取消",
+        "2": "未知错误",
+        "3": "参数无效",
+        "4": "超过截止时间",
+        "5": "未找到",
+        "6": "已存在",
+        "7": "权限被拒绝",
+        "8": "资源耗尽",
+        "9": "前置条件失败",
+        "10": "已中止",
+        "11": "超出范围",
+        "12": "未实现",
+        "13": "内部错误",
+        "14": "服务不可用",
+        "15": "数据丢失",
+        "16": "未认证",
+        "unknown": "未知状态"
+      },
+      "rpc": "调用",
+      "trailers": "Trailers",
+      "message_n": "消息 {{n}}",
+      "compressed": "已压缩（未解码）",
+      "truncated": "帧不完整",
+      "heuristic_note": "无 .proto，仅按字段号启发式解码",
+      "empty": "没有 gRPC 消息",
+      "raw": "JSON"
+    },
     "tabs": {
       "messages": "消息",
       "request": "请求",
@@ -1375,6 +1408,10 @@
       "filter_placeholder": "过滤 SSE 数据...",
       "clear_filter": "清除",
       "no_match": "没有匹配当前过滤条件的 SSE 事件"
+    },
+    "grpc": {
+      "badge": "gRPC",
+      "tooltip": "gRPC 请求"
     }
   },
   "init": {

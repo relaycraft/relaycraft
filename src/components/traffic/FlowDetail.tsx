@@ -24,6 +24,7 @@ import { getAILanguageInfo } from "../../lib/ai/lang";
 import { FLOW_ANALYSIS_SYSTEM_PROMPT } from "../../lib/ai/prompts";
 import { generateCurlCommand } from "../../lib/curl";
 import { getReadableUrlPreview, resolveFlowRequestUrl } from "../../lib/flowUrl";
+import { getGrpcStatus, isGrpcFlow, isGrpcMime, parseGrpcPath } from "../../lib/grpc";
 import { formatError, Logger } from "../../lib/logger";
 import { replayRequest } from "../../lib/traffic";
 import {
@@ -38,7 +39,7 @@ import { useAIStore } from "../../stores/aiStore";
 import { useComposerStore } from "../../stores/composerStore";
 import { useUIStore } from "../../stores/uiStore";
 import type { Flow, RcWebSocketFrame } from "../../types";
-import { harToLegacyHeaders } from "../../types";
+import { getHeaderValue, harToLegacyHeaders } from "../../types";
 import { AIMarkdown } from "../ai/AIMarkdown";
 import { CopyButton } from "../common/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
@@ -46,8 +47,15 @@ import { Tooltip } from "../common/Tooltip";
 import { BodyView } from "./BodyView";
 import { SSEPanel } from "./FlowDetail/SSEPanel";
 import { WSMessagesPanel } from "./FlowDetail/WSMessagesPanel";
+import { GrpcPanel } from "./GrpcPanel";
 import { HeadersView } from "./HeadersView";
 import { WsResendDrawer } from "./WsResendDrawer";
+
+function harBodyEncoding(encoding?: string): "text" | "base64" | undefined {
+  if (encoding === "base64" || encoding === "base64url") return "base64";
+  if (encoding === "text") return "text";
+  return encoding ? "text" : undefined;
+}
 
 interface FlowDetailProps {
   flow: Flow;
@@ -64,6 +72,15 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [replaying, setReplaying] = useState(false);
   const isSse = !!flow._rc?.isSse;
+  const grpc = isGrpcFlow(flow);
+  const grpcStatus = grpc ? getGrpcStatus(flow) : null;
+  const grpcPath = grpc ? parseGrpcPath(flow.request.url) : null;
+  const requestIsGrpc = isGrpcMime(
+    flow.request.postData?.mimeType || getHeaderValue(flow.request.headers, "content-type"),
+  );
+  const responseIsGrpc = isGrpcMime(
+    flow.response.content?.mimeType || getHeaderValue(flow.response.headers, "content-type"),
+  );
   const [resendFrame, setResendFrame] = useState<RcWebSocketFrame | null>(null);
   const lastFlowIdRef = useRef<string>("");
   const resolvedUrl = resolveFlowRequestUrl(flow.request) || t("traffic.url_unavailable");
@@ -199,8 +216,8 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
       {/* Header - Glassy Sub-surface */}
       <div className="flex flex-col p-4 border-b border-subtle bg-muted/20 flex-shrink-0 gap-3">
         {/* Row 1: Status & Actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             {flow.request.httpVersion && (
               <span
                 className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider uppercase ${getProtocolColor(flow.request.httpVersion)}`}
@@ -220,6 +237,42 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 {flow.response.status || t("traffic.status.pending")}
               </span>
             )}
+            {grpc && (
+              <span className="px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30">
+                {t("flow.grpc.badge")}
+              </span>
+            )}
+            {grpcStatus && (
+              <Tooltip
+                multiline
+                side="bottom"
+                content={
+                  grpcStatus.message
+                    ? t("flow.grpc.status_tooltip_with_message", {
+                        meaning: t(`flow.grpc.status_codes.${grpcStatus.code}`, {
+                          defaultValue: t("flow.grpc.status_codes.unknown"),
+                        }),
+                        message: grpcStatus.message,
+                      })
+                    : t(`flow.grpc.status_codes.${grpcStatus.code}`, {
+                        defaultValue: t("flow.grpc.status_codes.unknown"),
+                      })
+                }
+              >
+                <span
+                  className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider ${
+                    grpcStatus.code === 0
+                      ? getHttpStatusCodeClass(200)
+                      : getHttpStatusCodeClass(500)
+                  }`}
+                >
+                  {t("flow.grpc.status", {
+                    code: grpcStatus.code,
+                    name: grpcStatus.name,
+                  })}
+                </span>
+              </Tooltip>
+            )}
             {!!flow.time && (
               <span
                 className={`px-1.5 py-0.5 rounded text-micro font-semibold font-mono border tracking-wider transition-colors ${getDurationBadgeClass(flow.time)}`}
@@ -229,7 +282,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {aiSettings.enabled && (
               <Tooltip content={t("flow.analysis.title")}>
                 <button
@@ -299,28 +352,44 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
 
         {/* Row 2: URL & Matched Rules */}
         <div className="space-y-3">
-          <div className="flex items-center group/url w-full overflow-hidden relative">
-            <Tooltip content={resolvedUrl} side="bottom" className="flex-1 min-w-0">
-              <p className="text-xs font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight bg-muted/20 px-2 py-1 rounded-md border border-subtle">
-                {resolvedUrlPreview || t("traffic.url_unavailable")}
-              </p>
-            </Tooltip>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/url:opacity-100 transition-opacity flex-shrink-0 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 py-1">
-              <CopyButton
-                text={resolvedUrl}
-                label={t("traffic.context_menu.copy_url")}
-                showLabel={false}
-                className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"
-                tooltipSide="left"
-              />
-              <CopyButton
-                text={generateCurlCommand(flow)}
-                label={t("traffic.context_menu.copy_curl")}
-                showLabel={false}
-                className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"
-                tooltipSide="left"
-              />
+          <div className="flex flex-col min-w-0 w-full rounded-md border border-subtle bg-muted/20 overflow-hidden">
+            <div className="flex items-center group/url w-full overflow-hidden relative">
+              <Tooltip content={resolvedUrl} side="bottom" className="flex-1 min-w-0">
+                <p className="text-xs font-mono truncate text-foreground/90 select-all pr-4 leading-relaxed tracking-tight px-2 py-1">
+                  {resolvedUrlPreview || t("traffic.url_unavailable")}
+                </p>
+              </Tooltip>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/url:opacity-100 transition-opacity flex-shrink-0 bg-gradient-to-l from-card via-card/95 to-transparent pl-8 py-1">
+                <CopyButton
+                  text={resolvedUrl}
+                  label={t("traffic.context_menu.copy_url")}
+                  showLabel={false}
+                  className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"
+                  tooltipSide="left"
+                />
+                <CopyButton
+                  text={generateCurlCommand(flow)}
+                  label={t("traffic.context_menu.copy_curl")}
+                  showLabel={false}
+                  className="h-7 w-7 hover:bg-muted/50 rounded-lg text-muted-foreground hover:text-foreground"
+                  tooltipSide="left"
+                />
+              </div>
             </div>
+            {grpcPath && (
+              <div className="flex items-center gap-2 min-w-0 px-2 py-1 border-t border-subtle">
+                <span className="text-micro font-semibold tracking-wider text-violet-600 dark:text-violet-300 shrink-0">
+                  {t("flow.grpc.rpc")}
+                </span>
+                <span
+                  className="text-xs font-mono truncate min-w-0"
+                  title={`${grpcPath.service}/${grpcPath.method}`}
+                >
+                  <span className="text-muted-foreground">{grpcPath.service}/</span>
+                  <span className="text-foreground">{grpcPath.method}</span>
+                </span>
+              </div>
+            )}
           </div>
 
           {flow._rc.hits && flow._rc.hits.length > 0 && (
@@ -595,11 +664,21 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                         {t("flow.sections.request_body")}
                       </h3>
                     </div>
-                    <BodyView
-                      content={flow.request.postData?.text || undefined}
-                      encoding={flow.request.postData?.text ? "text" : undefined}
-                      headers={flow.request.headers}
-                    />
+                    {requestIsGrpc ? (
+                      <GrpcPanel
+                        content={flow.request.postData?.text}
+                        encoding={flow.request.postData?.encoding}
+                      />
+                    ) : (
+                      <BodyView
+                        content={flow.request.postData?.text || undefined}
+                        encoding={
+                          harBodyEncoding(flow.request.postData?.encoding) ??
+                          (flow.request.postData?.text ? "text" : undefined)
+                        }
+                        headers={flow.request.headers}
+                      />
+                    )}
                   </div>
                 </motion.div>
               </TabsContent>
@@ -627,21 +706,38 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                     </div>
                     <HeadersView headers={flow.response.headers} />
                   </div>
+                  {(flow._rc.trailers?.length ?? 0) > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {t("flow.grpc.trailers")}
+                        </h3>
+                      </div>
+                      <HeadersView headers={flow._rc.trailers ?? []} />
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("flow.sections.response_body")}
                       </h3>
                     </div>
-                    <BodyView
-                      content={flow.response.content.text || undefined}
-                      encoding={
-                        flow.response.content.encoding === "base64url"
-                          ? "base64"
-                          : flow.response.content.encoding
-                      }
-                      headers={flow.response.headers}
-                    />
+                    {responseIsGrpc ? (
+                      <GrpcPanel
+                        content={flow.response.content.text}
+                        encoding={flow.response.content.encoding}
+                      />
+                    ) : (
+                      <BodyView
+                        content={flow.response.content.text || undefined}
+                        encoding={
+                          flow.response.content.encoding === "base64url"
+                            ? "base64"
+                            : flow.response.content.encoding
+                        }
+                        headers={flow.response.headers}
+                      />
+                    )}
                   </div>
                 </motion.div>
               </TabsContent>

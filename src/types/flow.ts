@@ -51,6 +51,8 @@ export interface HarQueryString {
 export interface HarPostData {
   mimeType: string;
   text?: string;
+  /** RelayCraft extension: how `text` is encoded. HAR 1.2 has no postData.encoding. */
+  encoding?: "text" | "base64" | "base64url";
   params?: Array<{
     name: string;
     value?: string;
@@ -256,6 +258,10 @@ export interface RcExtension {
 
   // 标记
   bodyTruncated: boolean;
+
+  /** HTTP/2 (or HTTP/1) response trailers. Generic, not gRPC-specific. */
+  trailers?: HarHeader[];
+  requestTrailers?: HarHeader[];
 
   // 未来扩展预留
   [key: string]: unknown;

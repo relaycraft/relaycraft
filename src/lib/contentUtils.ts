@@ -40,6 +40,7 @@ export function detectContentType(
     contentTypeValue.includes("application/octet-stream") ||
     contentTypeValue.includes("application/zip") ||
     contentTypeValue.includes("application/pdf") ||
+    contentTypeValue.includes("application/grpc") ||
     contentTypeValue.includes("font/") ||
     contentTypeValue.includes("audio/") ||
     contentTypeValue.includes("video/")
