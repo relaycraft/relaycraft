@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Mutex};
 use std::thread;
+use std::time::Duration;
 
 /// Max size of a single domain log file before it is rotated.
 const MAX_LOG_FILE_BYTES: u64 = 10 * 1024 * 1024; // 10 MB
@@ -299,6 +300,35 @@ pub fn write_domain_log(domain: &str, message: &str) -> std::io::Result<()> {
                 message: message.to_string(),
                 timestamp,
             };
+            // Audit must not be silently dropped: retry try_send for a short
+            // window. Other domains stay best-effort.
+            if domain == "audit" {
+                let deadline = std::time::Instant::now() + Duration::from_secs(2);
+                let mut pending = entry;
+                loop {
+                    match tx.try_send(pending) {
+                        Ok(()) => return Ok(()),
+                        Err(mpsc::TrySendError::Disconnected(_)) => {
+                            return Err(std::io::Error::new(
+                                std::io::ErrorKind::BrokenPipe,
+                                "Log writer thread is gone",
+                            ));
+                        }
+                        Err(mpsc::TrySendError::Full(returned)) => {
+                            if std::time::Instant::now() >= deadline {
+                                DROPPED_LOG_COUNT.fetch_add(1, Ordering::Relaxed);
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::TimedOut,
+                                    "Audit log writer queue full",
+                                ));
+                            }
+                            pending = returned;
+                            thread::sleep(Duration::from_millis(10));
+                        }
+                    }
+                }
+            }
+
             return match tx.try_send(entry) {
                 Ok(()) => Ok(()),
                 Err(mpsc::TrySendError::Full(_)) => {

@@ -7,7 +7,9 @@
 //! Layout on disk:
 //!   {data_dir}/plugins_data/{plugin_id}/{key}.json
 
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
 
 const MAX_KEY_LEN: usize = 128;
 /// Per-value size limit: 1 MB.
@@ -70,9 +72,22 @@ pub async fn set(plugin_id: &str, key: &str, value: String) -> Result<(), String
     set_in(&dir, key, &value)
 }
 
+fn dir_lock(dir: &Path) -> Arc<Mutex<()>> {
+    static LOCKS: OnceLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> = OnceLock::new();
+    let map = LOCKS.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut guard = map.lock().unwrap_or_else(|e| e.into_inner());
+    guard
+        .entry(dir.to_path_buf())
+        .or_insert_with(|| Arc::new(Mutex::new(())))
+        .clone()
+}
+
 /// Write `key` under an explicit storage directory. Separated from `set` so
 /// quota behavior can be tested against a temp dir.
-fn set_in(dir: &std::path::Path, key: &str, value: &str) -> Result<(), String> {
+fn set_in(dir: &Path, key: &str, value: &str) -> Result<(), String> {
+    let lock = dir_lock(dir);
+    let _serial = lock.lock().unwrap_or_else(|e| e.into_inner());
+
     if value.len() > MAX_VALUE_BYTES {
         return Err(format!(
             "Storage quota exceeded: value is {} bytes, limit is {} bytes (1 MB) per key",
@@ -224,6 +239,28 @@ mod tests {
 
         // Overwriting an existing key stays allowed at the limit.
         set_in(dir, "key-0", "{\"updated\":true}").unwrap();
+    }
+
+    #[test]
+    fn concurrent_sets_serialize_quota_check() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let dir = temp.path().to_path_buf();
+        // Leave 80 bytes of headroom under the 50 MB cap.
+        let big = std::fs::File::create(dir.join("big.json")).unwrap();
+        big.set_len(MAX_TOTAL_BYTES_PER_PLUGIN - 80).unwrap();
+
+        let dir_a = dir.clone();
+        let dir_b = dir.clone();
+        let a = std::thread::spawn(move || set_in(&dir_a, "extra-a", &"x".repeat(80)));
+        let b = std::thread::spawn(move || set_in(&dir_b, "extra-b", &"x".repeat(80)));
+        let ra = a.join().expect("thread a");
+        let rb = b.join().expect("thread b");
+
+        let successes = [&ra, &rb].iter().filter(|r| r.is_ok()).count();
+        assert_eq!(successes, 1, "a={ra:?} b={rb:?}");
+        let extras = usize::from(dir.join("extra-a.json").exists())
+            + usize::from(dir.join("extra-b.json").exists());
+        assert_eq!(extras, 1);
     }
 
     #[test]

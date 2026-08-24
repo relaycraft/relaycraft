@@ -146,6 +146,32 @@ try {
   } catch (_e) {}
 }
 
+const LICENSE_OVERRIDES = {
+  "mitmproxy-rs": {
+    license: "MIT",
+    repository: "https://github.com/mitmproxy/mitmproxy-rs",
+  },
+  mitmproxy_rs: {
+    license: "MIT",
+    repository: "https://github.com/mitmproxy/mitmproxy-rs",
+  },
+};
+
+for (const item of licenses) {
+  const override = LICENSE_OVERRIDES[item.name];
+  if (!override) continue;
+  if (!item.license || item.license === "UNKNOWN" || item.license === "Unknown") {
+    item.license = override.license;
+  }
+  if (
+    !item.repository ||
+    item.repository === "UNKNOWN" ||
+    item.repository === "N/A"
+  ) {
+    item.repository = override.repository;
+  }
+}
+
 // Sort alphabetically by name
 licenses.sort((a, b) => a.name.localeCompare(b.name));
 

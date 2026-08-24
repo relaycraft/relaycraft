@@ -79,10 +79,12 @@ pub async fn plugin_call(
     // calls are still audited. Use plugin name for clarity.
     if spec.audited {
         let plugin_name = &plugin.manifest.name;
-        let _ = logging::write_domain_log(
+        if let Err(e) = logging::write_domain_log(
             "audit",
             &format!("[PluginBridge] {} called {}", plugin_name, payload.command),
-        );
+        ) {
+            log::warn!("Failed to write plugin audit log: {e}");
+        }
     }
 
     // 5. Permission Gatekeeper — table-driven via the registry spec.

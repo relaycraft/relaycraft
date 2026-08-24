@@ -3041,8 +3041,8 @@
     "ecosystem": "Python",
     "name": "mitmproxy_rs",
     "version": "0.12.11",
-    "license": "UNKNOWN",
-    "repository": "UNKNOWN"
+    "license": "MIT",
+    "repository": "https://github.com/mitmproxy/mitmproxy-rs"
   },
   {
     "ecosystem": "Python",

@@ -267,6 +267,10 @@ impl ProxyEngine for MitmproxyEngine {
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
+        #[cfg(unix)]
+        {
+            crate::common::process::detach_child_session(&mut cmd);
+        }
 
         log::info!("Proxy engine spawning at: {:?}", engine_path);
         let mut child = cmd.spawn()?;
@@ -394,7 +398,7 @@ impl ProxyEngine for MitmproxyEngine {
             }
             #[cfg(not(target_os = "windows"))]
             {
-                let _ = child.kill();
+                crate::common::process::terminate_pid(child.id());
             }
             let _ = child.wait();
         }
@@ -449,7 +453,7 @@ impl ProxyEngine for MitmproxyEngine {
             }
             #[cfg(not(target_os = "windows"))]
             {
-                let _ = child.kill();
+                crate::common::process::terminate_pid(child.id());
             }
             // Wait for killed process to exit
             let _ = child.wait();

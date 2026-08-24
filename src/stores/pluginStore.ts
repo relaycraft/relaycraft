@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import i18n from "../i18n";
 import { formatError, Logger } from "../lib/logger";
+import { stageAwareInstallMessage } from "../lib/pluginInstallError";
 import { loadPluginUI, unloadPluginUI } from "../plugins/pluginLoader";
 import type { PluginInfo } from "../types/plugin";
 import { useNotificationStore } from "./notificationStore";
@@ -52,17 +53,6 @@ interface PluginStore {
   installPlugin: (url: string) => Promise<void>;
   installPluginLocal: (path: string) => Promise<void>;
   uninstallPlugin: (id: string, options?: { removeData?: boolean }) => Promise<void>;
-}
-
-/**
- * Map a host-side stage-tagged install error ("[manifest] ...", "[archive] ...",
- * "[filesystem] ...") to a localized stage label followed by the raw message.
- * Returns null when the error carries no stage prefix.
- */
-function stageAwareInstallMessage(errorMessage: string): string | null {
-  const match = errorMessage.match(/^\[(manifest|archive|filesystem)\]/);
-  if (!match) return null;
-  return `${t(`plugins.errors.installStage.${match[1]}`)}\n${errorMessage}`;
 }
 
 export const usePluginStore = create<PluginStore>((set, get) => ({
@@ -226,7 +216,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       const errorMessage = formatError(error);
 
       // Extract meaningful error message
-      const staged = stageAwareInstallMessage(errorMessage);
+      const staged = stageAwareInstallMessage(errorMessage, t);
       let displayMessage = t("plugins.errors.install_failed");
       if (staged) {
         displayMessage = staged;
@@ -298,7 +288,7 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       let message = errorMessage;
 
       // Host-side stage-tagged errors take precedence over generic matching.
-      const staged = stageAwareInstallMessage(errorMessage);
+      const staged = stageAwareInstallMessage(errorMessage, t);
 
       // Parse common error types for better UX
       if (staged) {
