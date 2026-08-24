@@ -1,5 +1,23 @@
 # Changelog
 
+# [1.5.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.2...v1.5.0) (2026-08-24)
+
+### Bug Fixes
+
+* **engine:** only treat loopback /_relay requests as internal ([3beaf50](https://github-relaycraft/relaycraft/relaycraft/commit/3beaf5039827216c4f04575255b4eef365c6841b))
+* **proxy:** kill only our own engine processes during cleanup ([071e840](https://github-relaycraft/relaycraft/relaycraft/commit/071e8407b9288ad839576d4f2f792c78293c5b86))
+* **runtime:** harden engine cleanup, plugin quota, and audit logs ([b77e2fe](https://github-relaycraft/relaycraft/relaycraft/commit/b77e2fed62545412c2fbd3a2490ec156f61f0e1a))
+* **runtime:** harden logging and concurrency paths ([e1da4ef](https://github-relaycraft/relaycraft/relaycraft/commit/e1da4ef2ce83efea20073842fab70f3209e7b4a2))
+* **ui:** repair theme tokens, layering, and contrast issues ([9afe645](https://github-relaycraft/relaycraft/relaycraft/commit/9afe6450ffbc29d4861e15a0af6ff3e6da1ee994))
+
+### Features
+
+* **plugins:** add permission, compatibility and runtime visibility ([67c2a8d](https://github-relaycraft/relaycraft/relaycraft/commit/67c2a8da62b485236739a86f5216a029537fcf45))
+* **plugins:** enforce storage quotas ([b8584a6](https://github-relaycraft/relaycraft/relaycraft/commit/b8584a68b35654369e654ed906b42acc21cad455))
+* **plugins:** register subscribable host events in the contract registry ([7704761](https://github-relaycraft/relaycraft/relaycraft/commit/77047615fcd77f782477a0c15a3008d1458c2cd2))
+* **plugins:** validate manifests at install and clean up data on uninstall ([e005a3f](https://github-relaycraft/relaycraft/relaycraft/commit/e005a3f8c200ea498df5eb363295990b1471bab1))
+* **traffic:** inspect captured gRPC unary calls ([ca732bb](https://github-relaycraft/relaycraft/relaycraft/commit/ca732bb8b6d19cbfd58dadd59138bdc9a1393c59))
+
 ## [1.4.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.1...v1.4.2) (2026-08-16)
 
 ### Bug Fixes
