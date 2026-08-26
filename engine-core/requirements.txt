@@ -3,7 +3,7 @@ websockets==17.0.1
 jsonpath-ng==1.8.0
 h11==0.16.0
 requests==2.34.2
-pyinstaller==6.22.0
+pyinstaller==6.22.2
 beautifulsoup4==4.15.0
 PyYAML==6.0.3
 ijson==3.5.1
