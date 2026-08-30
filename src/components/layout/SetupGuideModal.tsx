@@ -45,7 +45,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left: General Info */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <div className="bg-primary/5 rounded-xl p-3 border border-primary/10">
             <p className="text-xs font-black text-primary/70 uppercase tracking-widest">
               {t("setup_guide.current_proxy")}
@@ -96,7 +96,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
         </div>
 
         {/* Right: Mobile Info */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="flex items-center gap-2 pb-2 border-b border-border/30">
             <Smartphone className="w-3.5 h-3.5 text-muted-foreground/70" />
             <h3 className="font-black text-xs uppercase tracking-wider">
@@ -109,7 +109,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
             <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-bold text-primary mt-0.5">
               1
             </div>
-            <span>
+            <span className="min-w-0">
               <span className="font-bold">{t("setup_guide.install_cert_step1")}</span>
               <p
                 className="mt-1 text-ui text-muted-foreground/70 leading-relaxed"
@@ -129,7 +129,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
             <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-bold text-primary mt-0.5">
               2
             </div>
-            <span className="flex-1">
+            <span className="flex-1 min-w-0">
               <span className="font-bold">{t("setup_guide.install_cert_step2")}</span>
               <p className="mt-1 text-ui text-muted-foreground/70 leading-relaxed">
                 {t("setup_guide.install_cert_step2_desc")}
@@ -170,7 +170,7 @@ export function SetupGuideModal({ isOpen, onClose }: SetupGuideProps) {
             <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-[10px] font-bold text-green-500 mt-0.5">
               3
             </div>
-            <span className="flex-1">
+            <span className="flex-1 min-w-0">
               <span className="font-bold">{t("setup_guide.test_connection")}</span>
               <p className="mt-1 text-ui text-muted-foreground/70 leading-relaxed">
                 {t("setup_guide.test_connection_desc")}
