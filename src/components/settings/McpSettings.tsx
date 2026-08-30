@@ -4,7 +4,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { Button } from "../common/Button";
+import { SegmentedControl } from "../common/SegmentedControl";
 import { SettingsInput, SettingsRow, SettingsSection, SettingsToggle } from "./SettingsLayout";
+
+type McpConfigFormat = "cursor" | "opencode";
 
 interface McpStatus {
   running: boolean;
@@ -20,6 +23,7 @@ export function McpSettings() {
   const [status, setStatus] = React.useState<McpStatus>({ running: false, port: mcp.port });
   const [portInput, setPortInput] = React.useState(String(mcp.port));
   const [copied, setCopied] = React.useState(false);
+  const [format, setFormat] = React.useState<McpConfigFormat>("cursor");
   const [token, setToken] = React.useState("");
 
   // Fetch the Bearer token once on mount
@@ -69,21 +73,43 @@ export function McpSettings() {
     if (port !== mcp.port) updateMcpConfig({ ...mcp, port });
   };
 
-  const configSnippet = JSON.stringify(
-    {
-      mcpServers: {
-        relaycraft: {
-          type: "http",
-          url: `http://localhost:${status.port}/mcp`,
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "Bearer <token>",
+  const serverUrl = `http://localhost:${status.port}/mcp`;
+  const authHeader = token ? `Bearer ${token}` : "Bearer <token>";
+
+  const configSnippet =
+    format === "opencode"
+      ? JSON.stringify(
+          {
+            $schema: "https://opencode.ai/config.json",
+            mcp: {
+              relaycraft: {
+                type: "remote",
+                url: serverUrl,
+                headers: {
+                  Authorization: authHeader,
+                },
+                enabled: true,
+              },
+            },
           },
-        },
-      },
-    },
-    null,
-    2,
-  );
+          null,
+          2,
+        )
+      : JSON.stringify(
+          {
+            mcpServers: {
+              relaycraft: {
+                type: "http",
+                url: serverUrl,
+                headers: {
+                  Authorization: authHeader,
+                },
+              },
+            },
+          },
+          null,
+          2,
+        );
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(configSnippet);
@@ -132,33 +158,46 @@ export function McpSettings() {
         </div>
       </SettingsSection>
 
-      {/* Config snippet for pasting into Claude Desktop / Cursor */}
+      {/* Config snippet for pasting into Claude Desktop / Cursor / opencode */}
       <SettingsSection
         title={t("mcp.config_snippet")}
         action={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 text-xs font-medium"
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-green-500" />
-                <span className="text-green-500">{t("mcp.copied")}</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                {t("mcp.copy_config")}
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <SegmentedControl
+              name="mcp-config-format"
+              value={format}
+              onChange={(v) => setFormat(v as McpConfigFormat)}
+              options={[
+                { value: "cursor", label: t("mcp.format_cursor") },
+                { value: "opencode", label: t("mcp.format_opencode") },
+              ]}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs font-medium"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-500" />
+                  <span className="text-green-500">{t("mcp.copied")}</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  {t("mcp.copy_config")}
+                </>
+              )}
+            </Button>
+          </div>
         }
       >
         <div className="px-4 py-3 space-y-2">
           <p className="text-xs text-muted-foreground/70 leading-relaxed">
-            {t("mcp.config_snippet_desc")}
+            {format === "opencode"
+              ? t("mcp.config_snippet_desc_opencode")
+              : t("mcp.config_snippet_desc")}
           </p>
           <pre className="text-xs font-mono bg-muted/40 border border-border/40 rounded-lg p-3 overflow-x-auto leading-relaxed text-foreground/80 select-all">
             {configSnippet}

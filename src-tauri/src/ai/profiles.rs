@@ -30,7 +30,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "OpenAI".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.openai.com/v1".to_string(),
-            default_model: "gpt-5-mini".to_string(),
+            default_model: "gpt-5.6-luna".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -44,7 +44,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "OpenRouter".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://openrouter.ai/api/v1".to_string(),
-            default_model: "google/gemini-3-flash-preview".to_string(),
+            default_model: "google/gemini-3.7-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -58,7 +58,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "DeepSeek".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.deepseek.com/v1".to_string(),
-            default_model: "deepseek-chat".to_string(),
+            default_model: "deepseek-v4-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -72,7 +72,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "SiliconFlow".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.siliconflow.cn/v1".to_string(),
-            default_model: "Qwen/Qwen2.5-7B-Instruct".to_string(),
+            default_model: "deepseek-ai/DeepSeek-V4-Pro".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -86,7 +86,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Groq".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.groq.com/openai/v1".to_string(),
-            default_model: "llama-3.3-70b-versatile".to_string(),
+            default_model: "openai/gpt-oss-120b".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -100,7 +100,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Alibaba China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
-            default_model: "qwen3.6-plus".to_string(),
+            default_model: "qwen3.8-max".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -114,7 +114,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Alibaba Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1".to_string(),
-            default_model: "qwen3.6-plus".to_string(),
+            default_model: "qwen3.8-max".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -128,7 +128,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Moonshot China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.moonshot.cn/v1".to_string(),
-            default_model: "kimi-k2.5".to_string(),
+            default_model: "kimi-k3".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -142,7 +142,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Moonshot Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.moonshot.ai/v1".to_string(),
-            default_model: "kimi-k2.5".to_string(),
+            default_model: "kimi-k3".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -156,7 +156,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "MiniMax China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.minimaxi.com/v1".to_string(),
-            default_model: "MiniMax-M2.7".to_string(),
+            default_model: "MiniMax-M3".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -170,7 +170,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "MiniMax Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.minimax.io/v1".to_string(),
-            default_model: "MiniMax-M2.7".to_string(),
+            default_model: "MiniMax-M3".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -184,7 +184,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Zhipu China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://open.bigmodel.cn/api/paas/v4".to_string(),
-            default_model: "glm-5.1".to_string(),
+            default_model: "glm-5.3-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -198,7 +198,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Zhipu Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.z.ai/api/paas/v4".to_string(),
-            default_model: "glm-5.1".to_string(),
+            default_model: "glm-5.3-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,

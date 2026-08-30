@@ -71,7 +71,7 @@ impl Default for AIConfig {
             adapter_mode: Some("openai_compatible".to_string()),
             custom_endpoint: None,
             api_key: String::new(),
-            model: "gpt-5-mini".to_string(),
+            model: "gpt-5.6-luna".to_string(),
             max_tokens: 4096,
             temperature: 0.7,
             enable_caching: true,
@@ -125,7 +125,7 @@ mod tests {
         assert!(!config.enabled);
         assert_eq!(config.provider, "openai");
         assert_eq!(config.profile_id.as_deref(), Some("openai-default"));
-        assert_eq!(config.model, "gpt-5-mini");
+        assert_eq!(config.model, "gpt-5.6-luna");
         assert_eq!(config.max_tokens, 4096);
         assert!(config.enable_caching);
     }

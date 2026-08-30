@@ -47,7 +47,7 @@ export function SegmentedControl({
                 transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
               />
             )}
-            <span className="relative">{option.label}</span>
+            <span className="relative whitespace-nowrap">{option.label}</span>
           </button>
         );
       })}

@@ -319,7 +319,7 @@ export function AISettingsPanel() {
                 type="text"
                 value={localSettings.model}
                 onChange={(e) => setLocalSettings({ ...localSettings, model: e.target.value })}
-                placeholder="gpt-5-mini"
+                placeholder="gpt-5.6-luna"
               />
               {preferredDefaultModel && (
                 <button
