@@ -212,11 +212,19 @@ export function McpActivityTimeline() {
             />
           </div>
           {filteredActivities.length > 0 && (
-            <span className="truncate ml-4 flex-1 text-right">
-              {t("mcp.timeline.last_action", "Last: {{action}}", {
+            <Tooltip
+              content={t("mcp.timeline.last_action", "Last: {{action}}", {
                 action: formatActivityText(filteredActivities[0]),
               })}
-            </span>
+              side="bottom"
+              className="flex-1 min-w-0 ml-4"
+            >
+              <span className="truncate w-full text-right">
+                {t("mcp.timeline.last_action", "Last: {{action}}", {
+                  action: formatActivityText(filteredActivities[0]),
+                })}
+              </span>
+            </Tooltip>
           )}
         </div>
       </div>
