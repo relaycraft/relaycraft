@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.5.0...v1.5.1) (2026-09-08)
+
+### Bug Fixes
+
+* **ui:** prevent horizontal overflow in setup guide modal ([dca5ce6](https://github-relaycraft/relaycraft/relaycraft/commit/dca5ce657c16a08961928729769e0ab66403792c))
+* **ui:** show tooltip for truncated latest activity in AI timeline ([2075549](https://github-relaycraft/relaycraft/relaycraft/commit/207554988657230b72385ac06c6fe97ce8301246))
+
+### Features
+
+* **ai:** refresh default models across providers ([82aa019](https://github-relaycraft/relaycraft/relaycraft/commit/82aa01975cc2435fa8a883cfb64472eb23b2b3ec))
+
 # [1.5.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.4.2...v1.5.0) (2026-08-24)
 
 ### Bug Fixes
