@@ -29,7 +29,7 @@ serde_json = "1"
 serde_yaml = "0.9"
 semver = "1"
 local-ip-address = "0.6"
-dirs = "6.0.0"
+dirs = "7.0.0"
 sysinfo = "0.39"
 regex = "1"
 libc = "0.2"
@@ -59,7 +59,7 @@ window-vibrancy = "0.8.0"
 
 [dev-dependencies]
 tempfile = "3"
-rstest = "0.26"
+rstest = "0.27"
 pem = "4.0.0"
 
 [target.'cfg(windows)'.dependencies]
