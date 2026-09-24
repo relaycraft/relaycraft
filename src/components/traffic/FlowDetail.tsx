@@ -45,6 +45,7 @@ import { CopyButton } from "../common/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../common/Tabs";
 import { Tooltip } from "../common/Tooltip";
 import { BodyView } from "./BodyView";
+import { DiagnosticPackageActions } from "./DiagnosticPackageActions";
 import { SSEPanel } from "./FlowDetail/SSEPanel";
 import { WSMessagesPanel } from "./FlowDetail/WSMessagesPanel";
 import { GrpcPanel } from "./GrpcPanel";
@@ -340,6 +341,7 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
                 </Tooltip>
               </>
             )}
+            <DiagnosticPackageActions flow={flow} />
             <button
               onClick={onClose}
               className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"

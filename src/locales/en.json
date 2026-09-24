@@ -430,6 +430,29 @@
       "summary_title": "AI Summary",
       "title": "AI Analysis"
     },
+    "diagnostic": {
+      "export_btn": "Export Diagnostic",
+      "open_btn": "Open Diagnostic Package",
+      "export_title": "Export Diagnostic Package",
+      "view_title": "Diagnostic Package",
+      "desc": "Metadata only — no URL, headers, cookies or bodies are included.",
+      "note_label": "Note (optional)",
+      "note_placeholder": "Add a note for the recipient…",
+      "note_warning": "The note is saved verbatim — do not include tokens, credentials or other secrets.",
+      "preview_label": "Exact file content",
+      "save": "Save to File…",
+      "saved": "Diagnostic package saved",
+      "fetch_failed": "Could not fetch the latest flow detail — export cancelled",
+      "view_only": "Read-only preview; imported content is never executed or applied.",
+      "errors": {
+        "no_flow": "No flow selected",
+        "unsupported_flow": "WebSocket/SSE flows are not supported",
+        "note_too_long": "Note is too long",
+        "file_too_large": "File is too large",
+        "invalid_json": "File is not valid JSON",
+        "invalid_package": "Not a valid diagnostic package"
+      }
+    },
     "map_local": {
       "fallback_hint": "Automatically fell back to remote response",
       "file_not_found": "Local File Missing"

@@ -430,6 +430,29 @@
       "summary_title": "AI 摘要",
       "title": "AI 智能分析"
     },
+    "diagnostic": {
+      "export_btn": "导出诊断包",
+      "open_btn": "打开诊断包",
+      "export_title": "导出诊断包",
+      "view_title": "诊断包",
+      "desc": "仅包含请求方法、状态码与协议等元数据，不含 URL、请求头、Cookie 或正文。",
+      "note_label": "备注（可选）",
+      "note_placeholder": "给接收者留一句说明…",
+      "note_warning": "备注会原样写入文件——请勿包含令牌、凭据等敏感信息。",
+      "preview_label": "将写入的确切内容",
+      "save": "保存到文件…",
+      "saved": "诊断包已保存",
+      "fetch_failed": "无法获取最新流量详情，已取消导出",
+      "view_only": "只读预览；导入的内容不会被执行或应用。",
+      "errors": {
+        "no_flow": "未选择流量",
+        "unsupported_flow": "WebSocket/SSE 流量不支持导出诊断包",
+        "note_too_long": "备注过长",
+        "file_too_large": "文件过大",
+        "invalid_json": "文件不是合法 JSON",
+        "invalid_package": "不是有效的诊断包文件"
+      }
+    },
     "map_local": {
       "fallback_hint": "已自动回退至远程响应",
       "file_not_found": "本地文件缺失"
