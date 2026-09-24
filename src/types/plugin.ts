@@ -256,6 +256,23 @@ export interface PluginRule {
   groupId: string | null;
 }
 
+/**
+ * Narrow view of a plugin-owned manual Map Local mock, returned by
+ * rules.getOwnMock. Shaped to round-trip through rules.createMock —
+ * internal rule fields (groups, metadata, match internals) are not exposed.
+ */
+export interface PluginOwnedMock {
+  ruleId: string;
+  name: string;
+  urlPattern: string;
+  method?: string;
+  responseBody: string;
+  statusCode: number;
+  contentType: string;
+  responseHeaders: Record<string, string>;
+  enabled: boolean;
+}
+
 // ── Host runtime type ─────────────────────────────────────────────────────────
 
 export interface HostRuntime {
@@ -396,6 +413,15 @@ export interface PluginAPI {
      * Requires `rules:write` permission.
      */
     disableMock: (ruleId: string) => Promise<void>;
+    /**
+     * Read one of this plugin's own manual Map Local mock rules for
+     * edit/recover. Only works for rules whose `source` is `plugin:<yourId>`
+     * with a single manual map_local action; user-owned rules, other
+     * plugins' rules, non-Map-Local rules, and file-backed mocks are
+     * rejected. Audited — the response may contain sensitive body content.
+     * Requires `rules:write` permission.
+     */
+    getOwnMock: (ruleId: string) => Promise<PluginOwnedMock>;
   };
   /**
    * Access captured traffic flows from the proxy engine.

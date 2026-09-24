@@ -226,6 +226,14 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
         true,
         None,
     ),
+    spec(
+        "rules_get_own_mock",
+        ApiDomain::Engine,
+        Some("rules:write"),
+        "rules.getOwnMock",
+        true,
+        None,
+    ),
 ];
 
 /// All host-emitted events a plugin may subscribe to, the single source of
@@ -472,7 +480,11 @@ mod tests {
             .collect();
         assert_eq!(
             audited,
-            ["ai_chat_completion", "rules_disable_mock"],
+            [
+                "ai_chat_completion",
+                "rules_disable_mock",
+                "rules_get_own_mock"
+            ],
             "audited command set drifted — review whether the new command needs audit logging"
         );
     }

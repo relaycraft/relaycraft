@@ -654,12 +654,205 @@ pub async fn rules_disable_mock(
     Ok(serde_json::Value::Null)
 }
 
+// ── rules.getOwnMock ─────────────────────────────────────────────────────
+
+/// Narrow view of a plugin-owned Map Local mock, shaped so it can round-trip
+/// through `rules.createMock`. Internal rule JSON, group paths, metadata and
+/// other rules are never exposed.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnedMockData {
+    rule_id: String,
+    name: String,
+    url_pattern: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    method: Option<String>,
+    response_body: String,
+    status_code: u16,
+    content_type: String,
+    response_headers: std::collections::HashMap<String, String>,
+    enabled: bool,
+}
+
+/// Read exactly one plugin-owned manual Map Local rule in `storage` and
+/// return the narrow `OwnedMockData`. All validation happens before the
+/// response is built; failures expose nothing beyond the error string.
+fn get_plugin_own_mock(
+    storage: &crate::rules::storage::RuleStorage,
+    plugin_id: &str,
+    rule_id: &str,
+) -> Result<OwnedMockData, String> {
+    use crate::rules::model::{RuleAction, RuleType};
+
+    if rule_id.is_empty() {
+        return Err("Invalid Args: 'ruleId' must be a non-empty string".to_string());
+    }
+
+    let plugin_source = format!("plugin:{}", plugin_id);
+    let loaded = storage.load_all().map_err(|e| e.to_string())?;
+    let matches: Vec<_> = loaded
+        .rules
+        .iter()
+        .filter(|entry| entry.rule.id == rule_id)
+        .collect();
+    let entry = match matches.as_slice() {
+        [] => return Err(format!("Host Error: mock rule '{}' not found", rule_id)),
+        [entry] => entry,
+        _ => {
+            return Err(format!(
+                "Host Error: ambiguous duplicate rule id '{}'",
+                rule_id
+            ))
+        }
+    };
+
+    let rule = &entry.rule;
+    if rule.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(plugin_source.as_str()) {
+        return Err(
+            "Security Violation: Cannot read mock rule owned by another source".to_string(),
+        );
+    }
+    if rule.r#type != RuleType::MapLocal {
+        return Err("Only map_local mock rules can be read via rules.getOwnMock".to_string());
+    }
+    let action = match rule.actions.as_slice() {
+        [RuleAction::MapLocal(action)] => action,
+        _ => {
+            return Err(
+                "Only rules with a single map_local action can be read via rules.getOwnMock"
+                    .to_string(),
+            )
+        }
+    };
+    // File-backed map_local content cannot round-trip through createMock.
+    if action.source.as_deref() != Some("manual") || action.local_path.is_some() {
+        return Err("Only manual map_local mocks can be read via rules.getOwnMock".to_string());
+    }
+
+    // Match scope must be exactly what createMock emits: one wildcard url
+    // atom plus at most one equals method atom. Extra atoms, response
+    // matchers, keyed/inverted atoms, other atom types or match modes, and
+    // a non-default stop_on_match cannot round-trip and would silently
+    // broaden the mock on re-save.
+    if rule.execution.stop_on_match.is_some() {
+        return Err("Mock rule has a non-default stop_on_match".to_string());
+    }
+    if !rule.match_config.response.is_empty() {
+        return Err("Mock rule has response match atoms".to_string());
+    }
+    let mut url_pattern: Option<String> = None;
+    let mut method: Option<String> = None;
+    for atom in &rule.match_config.request {
+        if atom.key.is_some() || atom.invert.unwrap_or(false) {
+            return Err("Mock rule has a keyed or inverted match atom".to_string());
+        }
+        let string_value = || {
+            atom.value
+                .as_ref()
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+                .ok_or_else(|| format!("Mock rule {} atom value is not a string", atom.atom_type))
+        };
+        match (atom.atom_type.as_str(), atom.match_type.as_str()) {
+            ("url", "wildcard") => {
+                if url_pattern.is_some() {
+                    return Err("Mock rule has duplicate url atoms".to_string());
+                }
+                url_pattern = Some(string_value()?);
+            }
+            ("method", "equals") => {
+                if method.is_some() {
+                    return Err("Mock rule has duplicate method atoms".to_string());
+                }
+                method = Some(string_value()?);
+            }
+            _ => {
+                return Err(format!(
+                    "Mock rule has unsupported match atom {}:{}",
+                    atom.atom_type, atom.match_type
+                ))
+            }
+        }
+    }
+    let url_pattern =
+        url_pattern.ok_or_else(|| "Mock rule is missing a url match atom".to_string())?;
+
+    let status_code = action.status_code.unwrap_or(200);
+    if !(100..=599).contains(&status_code) || status_code > u16::MAX as u32 {
+        return Err(format!("Mock rule has invalid status code {status_code}"));
+    }
+
+    let mut response_headers = std::collections::HashMap::new();
+    if let Some(headers) = &action.headers {
+        if !headers.request.is_empty() {
+            // Request-side header ops cannot round-trip via createMock.
+            return Err("Mock rule has request header operations".to_string());
+        }
+        for op in &headers.response {
+            if op.operation != "set" {
+                return Err("Mock rule has non-'set' response header operations".to_string());
+            }
+            if op.key.trim().is_empty() {
+                return Err("Mock rule has an empty response header key".to_string());
+            }
+            if op.key.eq_ignore_ascii_case("content-type") {
+                // createMock never emits a content-type op — dropping it
+                // would silently change the mock's response headers.
+                return Err("Mock rule has a content-type header operation".to_string());
+            }
+            let Some(value) = &op.value else {
+                return Err("Mock rule has a 'set' header operation without value".to_string());
+            };
+            if response_headers
+                .keys()
+                .any(|k: &String| k.eq_ignore_ascii_case(&op.key))
+            {
+                return Err(format!("Mock rule has duplicate header key '{}'", op.key));
+            }
+            response_headers.insert(op.key.clone(), value.clone());
+        }
+    }
+
+    Ok(OwnedMockData {
+        rule_id: rule.id.clone(),
+        name: rule.name.clone(),
+        url_pattern,
+        method,
+        response_body: action.content.clone().unwrap_or_default(),
+        status_code: status_code as u16,
+        content_type: action
+            .content_type
+            .clone()
+            .unwrap_or_else(|| "application/json".to_string()),
+        response_headers,
+        enabled: rule.execution.enabled,
+    })
+}
+
+pub async fn rules_get_own_mock(
+    plugin_id: &str,
+    args: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct GetOwnMockArgs {
+        rule_id: String,
+    }
+
+    let args: GetOwnMockArgs = serde_json::from_value(args)
+        .map_err(|e| format!("Invalid rules_get_own_mock args: {e}"))?;
+    let rule_id = args.rule_id.trim();
+
+    let storage = crate::rules::storage::RuleStorage::from_config().map_err(|e| e.to_string())?;
+    let mock = get_plugin_own_mock(&storage, plugin_id, rule_id)?;
+    serde_json::to_value(mock).map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::rules::model::{
-        MapLocalAction, MatchAtom, Rule, RuleAction, RuleExecution, RuleMatchConfig, RuleMetadata,
-        RuleType,
+        HeaderConfig, HeaderOperation, MapLocalAction, MatchAtom, Rule, RuleAction, RuleExecution,
+        RuleMatchConfig, RuleMetadata, RuleType,
     };
     use crate::rules::storage::RuleStorage;
     use tempfile::TempDir;
@@ -818,5 +1011,335 @@ mod tests {
         let loaded = storage.load_all().unwrap();
         assert_eq!(loaded.rules.len(), 2);
         assert!(loaded.rules.iter().all(|e| e.rule.execution.enabled));
+    }
+
+    // ── rules.getOwnMock ─────────────────────────────────────────────────
+
+    fn owned_mock(id: &str, source: Option<&str>, enabled: bool) -> Rule {
+        let mut rule = mock_rule(id, source, enabled);
+        rule.match_config.request.push(MatchAtom {
+            atom_type: "method".to_string(),
+            match_type: "equals".to_string(),
+            key: None,
+            value: Some(serde_json::json!("POST")),
+            invert: None,
+        });
+        if let RuleAction::MapLocal(action) = &mut rule.actions[0] {
+            action.status_code = Some(201);
+            action.content_type = Some("text/plain".to_string());
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![HeaderOperation {
+                    operation: "set".to_string(),
+                    key: "X-Mock".to_string(),
+                    value: Some("yes".to_string()),
+                }],
+            });
+        }
+        rule
+    }
+
+    #[test]
+    fn reads_own_mock_with_roundtrip_fields() {
+        let (_temp, storage) = temp_storage();
+        storage
+            .save(&owned_mock("m1", Some("plugin:plug-a"), true), Some("grp"))
+            .unwrap();
+
+        let mock = get_plugin_own_mock(&storage, "plug-a", "m1").unwrap();
+        assert_eq!(mock.rule_id, "m1");
+        assert_eq!(mock.name, "rule-m1");
+        assert_eq!(mock.url_pattern, "https://example.com/api");
+        assert_eq!(mock.method.as_deref(), Some("POST"));
+        assert_eq!(mock.response_body, "{\"ok\":true}");
+        assert_eq!(mock.status_code, 201);
+        assert_eq!(mock.content_type, "text/plain");
+        assert!(mock.enabled);
+        assert_eq!(mock.response_headers.len(), 1);
+        assert_eq!(mock.response_headers.get("X-Mock").unwrap(), "yes");
+
+        // Serialized shape is the narrow whitelist only — no group path,
+        // metadata/source, or internal rule fields.
+        let value = serde_json::to_value(&mock).unwrap();
+        let keys: Vec<&str> = value
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(|k| k.as_str())
+            .collect();
+        for key in &keys {
+            assert!(
+                [
+                    "ruleId",
+                    "name",
+                    "urlPattern",
+                    "method",
+                    "responseBody",
+                    "statusCode",
+                    "contentType",
+                    "responseHeaders",
+                    "enabled"
+                ]
+                .contains(key),
+                "unexpected key in getOwnMock response: {key}"
+            );
+        }
+        assert!(!value.to_string().contains("plugin:"));
+        assert!(!value.to_string().contains("grp"));
+    }
+
+    #[test]
+    fn reads_own_disabled_mock_and_defaults() {
+        let (_temp, storage) = temp_storage();
+        let mut rule = owned_mock("m2", Some("plugin:plug-a"), false);
+        if let RuleAction::MapLocal(action) = &mut rule.actions[0] {
+            action.status_code = None;
+            action.content_type = None;
+            action.content = None;
+            action.headers = None;
+        }
+        rule.match_config
+            .request
+            .retain(|a| a.atom_type != "method");
+        storage.save(&rule, None).unwrap();
+
+        let mock = get_plugin_own_mock(&storage, "plug-a", "m2").unwrap();
+        assert!(!mock.enabled);
+        assert_eq!(mock.status_code, 200);
+        assert_eq!(mock.content_type, "application/json");
+        assert_eq!(mock.response_body, "");
+        assert_eq!(mock.method, None);
+        assert!(mock.response_headers.is_empty());
+    }
+
+    #[test]
+    fn rejects_read_of_foreign_or_user_rules() {
+        let (_temp, storage) = temp_storage();
+        storage
+            .save(&owned_mock("m1", Some("plugin:plug-b"), true), None)
+            .unwrap();
+        storage
+            .save(&owned_mock("m2", Some("user"), true), None)
+            .unwrap();
+        storage.save(&owned_mock("m3", None, true), None).unwrap();
+
+        assert!(get_plugin_own_mock(&storage, "plug-a", "m1").is_err());
+        assert!(get_plugin_own_mock(&storage, "plug-a", "m2").is_err());
+        assert!(get_plugin_own_mock(&storage, "plug-a", "m3").is_err());
+    }
+
+    #[test]
+    fn rejects_read_of_non_map_local_and_file_backed_mock() {
+        let (_temp, storage) = temp_storage();
+        storage
+            .save(&block_rule("b1", Some("plugin:plug-a")), None)
+            .unwrap();
+
+        let mut file_rule = mock_rule("f1", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut file_rule.actions[0] {
+            action.source = Some("file".to_string());
+            action.local_path = Some("/tmp/x.json".to_string());
+        }
+        storage.save(&file_rule, None).unwrap();
+
+        assert!(get_plugin_own_mock(&storage, "plug-a", "b1").is_err());
+        assert!(get_plugin_own_mock(&storage, "plug-a", "f1").is_err());
+    }
+
+    #[test]
+    fn rejects_read_of_unknown_duplicate_and_empty_ids() {
+        let (_temp, storage) = temp_storage();
+        let rule = owned_mock("dup", Some("plugin:plug-a"), true);
+        storage.save(&rule, Some("grp-a")).unwrap();
+        let dup_dir = storage.base_dir.join("grp-b");
+        std::fs::create_dir_all(&dup_dir).unwrap();
+        let yaml =
+            serde_yaml::to_string(&crate::rules::storage::RuleFile { rule: rule.clone() }).unwrap();
+        std::fs::write(dup_dir.join("dup.yaml"), yaml).unwrap();
+
+        assert!(get_plugin_own_mock(&storage, "plug-a", "nope").is_err());
+        assert!(get_plugin_own_mock(&storage, "plug-a", "dup").is_err());
+        assert!(get_plugin_own_mock(&storage, "plug-a", "").is_err());
+    }
+
+    #[test]
+    fn rejects_read_of_malformed_mock_details() {
+        let (_temp, storage) = temp_storage();
+
+        // Missing url atom.
+        let mut no_url = mock_rule("n1", Some("plugin:plug-a"), true);
+        no_url.match_config.request.clear();
+        storage.save(&no_url, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n1").is_err());
+
+        // Out-of-range status code.
+        let mut bad_status = mock_rule("n2", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut bad_status.actions[0] {
+            action.status_code = Some(99);
+        }
+        storage.save(&bad_status, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n2").is_err());
+
+        // Non-'set' header op — would silently change behavior if dropped.
+        let mut bad_op = mock_rule("n3", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut bad_op.actions[0] {
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![HeaderOperation {
+                    operation: "remove".to_string(),
+                    key: "X".to_string(),
+                    value: None,
+                }],
+            });
+        }
+        storage.save(&bad_op, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n3").is_err());
+
+        // Duplicate header keys — cannot be represented losslessly.
+        let mut dup_header = mock_rule("n4", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut dup_header.actions[0] {
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![
+                    HeaderOperation {
+                        operation: "set".to_string(),
+                        key: "X-Dup".to_string(),
+                        value: Some("1".to_string()),
+                    },
+                    HeaderOperation {
+                        operation: "set".to_string(),
+                        key: "x-dup".to_string(),
+                        value: Some("2".to_string()),
+                    },
+                ],
+            });
+        }
+        storage.save(&dup_header, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n4").is_err());
+
+        // content-type op — createMock never emits one; dropping it would
+        // silently change the response.
+        let mut ct_op = mock_rule("n5", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut ct_op.actions[0] {
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![HeaderOperation {
+                    operation: "set".to_string(),
+                    key: "Content-Type".to_string(),
+                    value: Some("text/plain".to_string()),
+                }],
+            });
+        }
+        storage.save(&ct_op, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n5").is_err());
+
+        // 'set' op without value — dropping it would lose behavior.
+        let mut no_value = mock_rule("n6", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut no_value.actions[0] {
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![HeaderOperation {
+                    operation: "set".to_string(),
+                    key: "X-Empty".to_string(),
+                    value: None,
+                }],
+            });
+        }
+        storage.save(&no_value, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n6").is_err());
+
+        // Empty header key.
+        let mut empty_key = mock_rule("n7", Some("plugin:plug-a"), true);
+        if let RuleAction::MapLocal(action) = &mut empty_key.actions[0] {
+            action.headers = Some(HeaderConfig {
+                request: vec![],
+                response: vec![HeaderOperation {
+                    operation: "set".to_string(),
+                    key: "  ".to_string(),
+                    value: Some("v".to_string()),
+                }],
+            });
+        }
+        storage.save(&empty_key, None).unwrap();
+        assert!(get_plugin_own_mock(&storage, "plug-a", "n7").is_err());
+    }
+
+    #[test]
+    fn rejects_read_of_non_roundtrippable_match_scope() {
+        let (_temp, storage) = temp_storage();
+        let mut n = 0;
+        let mut plant = |rule: Rule| {
+            n += 1;
+            let mut r = rule;
+            r.id = format!("s{n}");
+            storage.save(&r, None).unwrap();
+            r.id
+        };
+
+        // Extra atom type.
+        let mut extra = mock_rule("x", Some("plugin:plug-a"), true);
+        extra.match_config.request.push(MatchAtom {
+            atom_type: "host".to_string(),
+            match_type: "equals".to_string(),
+            key: None,
+            value: Some(serde_json::json!("example.com")),
+            invert: None,
+        });
+        // Non-wildcard url match mode.
+        let mut regex_url = mock_rule("x", Some("plugin:plug-a"), true);
+        regex_url.match_config.request[0].match_type = "regex".to_string();
+        // Non-equals method match mode.
+        let mut contains_method = mock_rule("x", Some("plugin:plug-a"), true);
+        contains_method.match_config.request.push(MatchAtom {
+            atom_type: "method".to_string(),
+            match_type: "contains".to_string(),
+            key: None,
+            value: Some(serde_json::json!("PO")),
+            invert: None,
+        });
+        // Duplicate url atoms.
+        let mut dup_url = mock_rule("x", Some("plugin:plug-a"), true);
+        dup_url.match_config.request.push(MatchAtom {
+            atom_type: "url".to_string(),
+            match_type: "wildcard".to_string(),
+            key: None,
+            value: Some(serde_json::json!("https://other/x")),
+            invert: None,
+        });
+        // Inverted atom.
+        let mut inverted = mock_rule("x", Some("plugin:plug-a"), true);
+        inverted.match_config.request[0].invert = Some(true);
+        // Keyed atom.
+        let mut keyed = mock_rule("x", Some("plugin:plug-a"), true);
+        keyed.match_config.request[0].key = Some("k".to_string());
+        // Response-side match atoms.
+        let mut resp_match = mock_rule("x", Some("plugin:plug-a"), true);
+        resp_match.match_config.response.push(MatchAtom {
+            atom_type: "status".to_string(),
+            match_type: "equals".to_string(),
+            key: None,
+            value: Some(serde_json::json!(200)),
+            invert: None,
+        });
+        // Non-default stop_on_match.
+        let mut stop = mock_rule("x", Some("plugin:plug-a"), true);
+        stop.execution.stop_on_match = Some(true);
+
+        for rule in [
+            extra,
+            regex_url,
+            contains_method,
+            dup_url,
+            inverted,
+            keyed,
+            resp_match,
+            stop,
+        ] {
+            let id = plant(rule);
+            assert!(
+                get_plugin_own_mock(&storage, "plug-a", &id).is_err(),
+                "expected rejection for {id}"
+            );
+        }
     }
 }

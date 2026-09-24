@@ -333,6 +333,7 @@ are not guaranteed to be stable.
 | `rules.list(filter?) → Promise<PluginRule[]>` | List rules, optionally filtered by `{ enabled?, source?, type? }`. Each item: `{ id, name, type, enabled, priority, urlPattern, source, groupId }`. | `rules:read` |
 | `rules.get(id) → Promise<unknown>` | Get one full rule object by id. | `rules:read` |
 | `rules.disableMock(ruleId) → Promise<void>` | Disable one Map Local mock rule by id. Only works on rules your plugin created (`source` must be `plugin:<yourId>`); user-owned rules, other plugins' rules, and non-Map-Local rules are rejected without modifying anything. Idempotent — disabling an already-disabled rule succeeds without writes. Emits `rules-changed` on an actual disable. | `rules:write` |
+| `rules.getOwnMock(ruleId) → Promise<PluginOwnedMock>` | Read one of your plugin's own manual Map Local mocks for edit/recover: `{ ruleId, name, urlPattern, method?, responseBody, statusCode, contentType, responseHeaders, enabled }` — narrow and round-trippable through `rules.createMock`. Rejects user-owned rules, other plugins' rules, non-Map-Local rules, file-backed mocks, and rules whose details cannot be represented losslessly (non-`set` header ops, duplicate header keys, invalid status). Audited — the response body may contain sensitive content. | `rules:write` |
 
 ---
 

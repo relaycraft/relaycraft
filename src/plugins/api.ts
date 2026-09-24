@@ -22,6 +22,7 @@ import type {
   PluginAIErrorCode,
   PluginAIMessageInput,
   PluginAPI,
+  PluginOwnedMock,
 } from "../types/plugin";
 import { sanitizeNamespace } from "./pluginUtils";
 
@@ -368,6 +369,7 @@ export const createPluginApi = (
       list: (filter?) => scopedInvoke("rules_list", filter ?? {}),
       get: (id) => scopedInvoke("rules_get", { id }),
       disableMock: (ruleId) => scopedInvoke<void>("rules_disable_mock", { ruleId }),
+      getOwnMock: (ruleId) => scopedInvoke<PluginOwnedMock>("rules_get_own_mock", { ruleId }),
     },
     traffic: {
       listFlows: (filter?) => scopedInvoke("traffic_list_flows", filter ?? {}),
