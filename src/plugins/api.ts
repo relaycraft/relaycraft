@@ -367,6 +367,7 @@ export const createPluginApi = (
       createMock: (config: CreateMockConfig) => scopedInvoke<string>("rules_create_mock", config),
       list: (filter?) => scopedInvoke("rules_list", filter ?? {}),
       get: (id) => scopedInvoke("rules_get", { id }),
+      disableMock: (ruleId) => scopedInvoke<void>("rules_disable_mock", { ruleId }),
     },
     traffic: {
       listFlows: (filter?) => scopedInvoke("traffic_list_flows", filter ?? {}),

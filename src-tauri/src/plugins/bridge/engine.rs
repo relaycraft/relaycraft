@@ -572,3 +572,251 @@ pub async fn rules_get(args: &serde_json::Value) -> Result<serde_json::Value, St
 
     Ok(serde_json::to_value(&entry.rule).map_err(|e| e.to_string())?)
 }
+
+// ── rules.disableMock ────────────────────────────────────────────────────
+
+/// Disable exactly one plugin-owned Map Local rule in `storage`.
+///
+/// Returns `true` when the rule was actually disabled, `false` when it was
+/// already disabled (idempotent no-op, no file write). All validation
+/// happens before any write, so rejections never touch the rule store.
+/// Split out so unit tests can drive the storage semantics with a `TempDir`
+/// without a Tauri `AppHandle`.
+fn disable_plugin_mock_rule(
+    storage: &crate::rules::storage::RuleStorage,
+    plugin_id: &str,
+    rule_id: &str,
+) -> Result<bool, String> {
+    if rule_id.is_empty() {
+        return Err("Invalid Args: 'ruleId' must be a non-empty string".to_string());
+    }
+
+    let plugin_source = format!("plugin:{}", plugin_id);
+    let loaded = storage.load_all().map_err(|e| e.to_string())?;
+    let matches: Vec<_> = loaded
+        .rules
+        .iter()
+        .filter(|entry| entry.rule.id == rule_id)
+        .collect();
+    let entry = match matches.as_slice() {
+        [] => return Err(format!("Host Error: mock rule '{}' not found", rule_id)),
+        [entry] => entry,
+        _ => {
+            return Err(format!(
+                "Host Error: ambiguous duplicate rule id '{}'",
+                rule_id
+            ))
+        }
+    };
+
+    let rule = &entry.rule;
+    if rule.metadata.as_ref().and_then(|m| m.source.as_deref()) != Some(plugin_source.as_str()) {
+        return Err(
+            "Security Violation: Cannot disable mock rule owned by another source".to_string(),
+        );
+    }
+    if rule.r#type != crate::rules::model::RuleType::MapLocal {
+        return Err("Only map_local mock rules can be disabled via rules.disableMock".to_string());
+    }
+    if !rule.execution.enabled {
+        return Ok(false);
+    }
+
+    let mut disabled = rule.clone();
+    disabled.execution.enabled = false;
+    storage
+        .save(&disabled, Some(&entry.group_id))
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+pub async fn rules_disable_mock(
+    app: &AppHandle,
+    plugin_id: &str,
+    args: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    #[derive(serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct DisableMockArgs {
+        rule_id: String,
+    }
+
+    let args: DisableMockArgs = serde_json::from_value(args)
+        .map_err(|e| format!("Invalid rules_disable_mock args: {e}"))?;
+    let rule_id = args.rule_id.trim();
+
+    let storage = crate::rules::storage::RuleStorage::from_config().map_err(|e| e.to_string())?;
+    let changed = disable_plugin_mock_rule(&storage, plugin_id, rule_id)?;
+    if changed {
+        // Notify frontend so the Rules panel refreshes immediately.
+        let _ = app.emit("rules-changed", ());
+    }
+    Ok(serde_json::Value::Null)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rules::model::{
+        MapLocalAction, MatchAtom, Rule, RuleAction, RuleExecution, RuleMatchConfig, RuleMetadata,
+        RuleType,
+    };
+    use crate::rules::storage::RuleStorage;
+    use tempfile::TempDir;
+
+    fn temp_storage() -> (TempDir, RuleStorage) {
+        let temp = TempDir::new().unwrap();
+        let storage = RuleStorage::new(temp.path().to_path_buf()).unwrap();
+        (temp, storage)
+    }
+
+    fn mock_rule(id: &str, source: Option<&str>, enabled: bool) -> Rule {
+        Rule {
+            id: id.to_string(),
+            name: format!("rule-{}", id),
+            r#type: RuleType::MapLocal,
+            execution: RuleExecution {
+                enabled,
+                priority: 10,
+                stop_on_match: None,
+            },
+            match_config: RuleMatchConfig {
+                request: vec![MatchAtom {
+                    atom_type: "url".to_string(),
+                    match_type: "wildcard".to_string(),
+                    key: None,
+                    value: Some(serde_json::json!("https://example.com/api")),
+                    invert: None,
+                }],
+                response: vec![],
+            },
+            actions: vec![RuleAction::MapLocal(MapLocalAction {
+                source: Some("manual".to_string()),
+                local_path: None,
+                content: Some("{\"ok\":true}".to_string()),
+                content_type: Some("application/json".to_string()),
+                status_code: Some(200),
+                headers: None,
+            })],
+            tags: None,
+            metadata: source.map(|s| RuleMetadata {
+                source: Some(s.to_string()),
+                ai_intent: None,
+            }),
+        }
+    }
+
+    fn block_rule(id: &str, source: Option<&str>) -> Rule {
+        let mut rule = mock_rule(id, source, true);
+        rule.r#type = RuleType::BlockRequest;
+        rule.actions = vec![RuleAction::BlockRequest];
+        rule
+    }
+
+    #[test]
+    fn disables_own_enabled_mock_and_preserves_group() {
+        let (_temp, storage) = temp_storage();
+        let rule = mock_rule("r1", Some("plugin:plug-a"), true);
+        storage.save(&rule, Some("grp")).unwrap();
+
+        let changed = disable_plugin_mock_rule(&storage, "plug-a", "r1").unwrap();
+        assert!(changed);
+
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 1);
+        let entry = &loaded.rules[0];
+        assert_eq!(entry.group_id, "grp");
+        let r = &entry.rule;
+        assert!(!r.execution.enabled);
+        // Everything else preserved.
+        assert_eq!(r.id, "r1");
+        assert_eq!(r.name, "rule-r1");
+        assert_eq!(r.r#type, RuleType::MapLocal);
+        assert_eq!(
+            r.metadata.as_ref().unwrap().source.as_deref(),
+            Some("plugin:plug-a")
+        );
+        match &r.actions[0] {
+            RuleAction::MapLocal(action) => {
+                assert_eq!(action.content.as_deref(), Some("{\"ok\":true}"));
+                assert_eq!(action.status_code, Some(200));
+            }
+            other => panic!("expected map_local action, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn already_disabled_is_idempotent_noop() {
+        let (_temp, storage) = temp_storage();
+        let rule = mock_rule("r1", Some("plugin:plug-a"), false);
+        storage.save(&rule, Some("grp")).unwrap();
+        let path = storage.base_dir.join("grp").join("r1.yaml");
+        let before = std::fs::read(&path).unwrap();
+
+        let changed = disable_plugin_mock_rule(&storage, "plug-a", "r1").unwrap();
+        assert!(!changed);
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+    }
+
+    #[test]
+    fn rejects_rule_owned_by_another_plugin() {
+        let (_temp, storage) = temp_storage();
+        let rule = mock_rule("r1", Some("plugin:plug-b"), true);
+        storage.save(&rule, None).unwrap();
+
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "r1").is_err());
+        // File untouched.
+        let loaded = storage.load_all().unwrap();
+        assert!(loaded.rules[0].rule.execution.enabled);
+    }
+
+    #[test]
+    fn rejects_user_owned_rule() {
+        let (_temp, storage) = temp_storage();
+        let rule = mock_rule("r1", Some("user"), true);
+        storage.save(&rule, None).unwrap();
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "r1").is_err());
+
+        // No metadata at all counts as user-owned too.
+        let rule = mock_rule("r2", None, true);
+        storage.save(&rule, None).unwrap();
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "r2").is_err());
+    }
+
+    #[test]
+    fn rejects_non_map_local_rule() {
+        let (_temp, storage) = temp_storage();
+        let rule = block_rule("b1", Some("plugin:plug-a"));
+        storage.save(&rule, None).unwrap();
+
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "b1").is_err());
+        let loaded = storage.load_all().unwrap();
+        assert!(loaded.rules[0].rule.execution.enabled);
+    }
+
+    #[test]
+    fn rejects_unknown_and_empty_id() {
+        let (_temp, storage) = temp_storage();
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "nope").is_err());
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "").is_err());
+    }
+
+    #[test]
+    fn rejects_ambiguous_duplicate_ids() {
+        let (_temp, storage) = temp_storage();
+        let rule = mock_rule("dup", Some("plugin:plug-a"), true);
+        storage.save(&rule, Some("grp-a")).unwrap();
+        // Plant a second copy with the same id — `save` would move the file,
+        // so write it directly to simulate a corrupted store.
+        let dup_dir = storage.base_dir.join("grp-b");
+        std::fs::create_dir_all(&dup_dir).unwrap();
+        let yaml =
+            serde_yaml::to_string(&crate::rules::storage::RuleFile { rule: rule.clone() }).unwrap();
+        std::fs::write(dup_dir.join("dup.yaml"), yaml).unwrap();
+
+        assert!(disable_plugin_mock_rule(&storage, "plug-a", "dup").is_err());
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 2);
+        assert!(loaded.rules.iter().all(|e| e.rule.execution.enabled));
+    }
+}

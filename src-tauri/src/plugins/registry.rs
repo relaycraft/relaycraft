@@ -218,6 +218,14 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
         false,
         None,
     ),
+    spec(
+        "rules_disable_mock",
+        ApiDomain::Engine,
+        Some("rules:write"),
+        "rules.disableMock",
+        true,
+        None,
+    ),
 ];
 
 /// All host-emitted events a plugin may subscribe to, the single source of
@@ -456,12 +464,17 @@ mod tests {
     }
 
     #[test]
-    fn ai_chat_completion_is_audited() {
-        let spec = find_command("ai_chat_completion").unwrap();
-        assert!(spec.audited);
-        // Nothing else is audited today.
-        let audited: Vec<_> = BRIDGE_COMMANDS.iter().filter(|s| s.audited).collect();
-        assert_eq!(audited.len(), 1);
+    fn audited_commands_are_the_expected_set() {
+        let audited: Vec<&str> = BRIDGE_COMMANDS
+            .iter()
+            .filter(|s| s.audited)
+            .map(|s| s.command)
+            .collect();
+        assert_eq!(
+            audited,
+            ["ai_chat_completion", "rules_disable_mock"],
+            "audited command set drifted — review whether the new command needs audit logging"
+        );
     }
 
     #[test]

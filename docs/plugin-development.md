@@ -163,7 +163,7 @@ the plugin detail panel.
 | `storage:read` | low | `api.storage.get()`, `api.storage.list()` |
 | `stats:read` | low | `api.stats.getProcessStats()` |
 | `storage:write` | medium | `api.storage.set()`, `api.storage.delete()`, `api.storage.clear()` |
-| `rules:write` | medium | `api.rules.createMock()` |
+| `rules:write` | medium | `api.rules.createMock()`, `api.rules.disableMock()` |
 | `fs:read_logs` | medium | Reserved (no bridge command yet) |
 | `network:outbound` | high | `api.http.send()` |
 | `ai:chat` | high | `api.ai.chat()`, `api.ai.chatStream()` (calls are audit-logged) |
@@ -332,6 +332,7 @@ are not guaranteed to be stable.
 | `rules.createMock(config) → Promise<string>` | Create (or update, via `config.ruleId`) a Map Local mock rule and return its id. `config`: `{ name, urlPattern, responseBody, statusCode?, contentType?, responseHeaders?, method?, ruleId? }`. `metadata.source` is set to `plugin:<yourId>` automatically. | `rules:write` |
 | `rules.list(filter?) → Promise<PluginRule[]>` | List rules, optionally filtered by `{ enabled?, source?, type? }`. Each item: `{ id, name, type, enabled, priority, urlPattern, source, groupId }`. | `rules:read` |
 | `rules.get(id) → Promise<unknown>` | Get one full rule object by id. | `rules:read` |
+| `rules.disableMock(ruleId) → Promise<void>` | Disable one Map Local mock rule by id. Only works on rules your plugin created (`source` must be `plugin:<yourId>`); user-owned rules, other plugins' rules, and non-Map-Local rules are rejected without modifying anything. Idempotent — disabling an already-disabled rule succeeds without writes. Emits `rules-changed` on an actual disable. | `rules:write` |
 
 ---
 

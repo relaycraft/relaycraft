@@ -388,6 +388,14 @@ export interface PluginAPI {
      * Requires `rules:read` permission.
      */
     get: (id: string) => Promise<unknown>;
+    /**
+     * Disable one of this plugin's own Map Local mock rules by ID.
+     * Only works for rules whose `source` is `plugin:<yourId>`; user-owned
+     * rules, other plugins' rules, and non-Map-Local rules are rejected.
+     * Idempotent: disabling an already-disabled rule succeeds without writes.
+     * Requires `rules:write` permission.
+     */
+    disableMock: (ruleId: string) => Promise<void>;
   };
   /**
    * Access captured traffic flows from the proxy engine.

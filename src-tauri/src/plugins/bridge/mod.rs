@@ -122,6 +122,9 @@ pub async fn plugin_call(
         }
         "rules_list" => engine::rules_list(payload.args).await,
         "rules_get" => engine::rules_get(&payload.args).await,
+        "rules_disable_mock" => {
+            engine::rules_disable_mock(&app, &payload.plugin_id, payload.args).await
+        }
         // The registry guarantees every registered command has a dispatch arm.
         _ => Err(unregistered_command_error(&payload.command)),
     }
@@ -150,6 +153,7 @@ mod tests {
         ("rules_create_mock", ApiDomain::Engine),
         ("rules_list", ApiDomain::Engine),
         ("rules_get", ApiDomain::Engine),
+        ("rules_disable_mock", ApiDomain::Engine),
     ];
 
     #[test]
