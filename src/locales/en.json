@@ -991,6 +991,20 @@
     "match_all": "Match All Requests",
     "new": "New Rule",
     "new_group_name": "New Rule Group",
+    "templates": {
+      "btn": "Templates",
+      "title": "Rule Templates",
+      "desc": "Create a disabled starter rule you can review and edit.",
+      "warning": "The example URL is a placeholder — review it before enabling. The rule stays disabled after saving.",
+      "block_request": {
+        "name": "Block URL",
+        "desc": "Block requests that exactly match a URL you set."
+      },
+      "map_local_json": {
+        "name": "Mock JSON Response",
+        "desc": "Return a fixed JSON response for a URL you set."
+      }
+    },
     "summary": {
       "block": "Blocked",
       "manual_mock": "Manual Mock",

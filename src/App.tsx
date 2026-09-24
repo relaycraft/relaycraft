@@ -15,6 +15,7 @@ import { StatusBar } from "./components/layout/StatusBar";
 import { TitleBar } from "./components/layout/TitleBar";
 import { NotificationCenter } from "./components/notifications/NotificationCenter";
 import { PluginPageWrapper } from "./components/plugins/PluginPageWrapper";
+import { RuleTemplatePicker } from "./components/rules/RuleTemplatePicker";
 import { RuleView } from "./components/rules/RuleView";
 import { ScriptManager } from "./components/scripts/ScriptManager";
 import { CertificateSettings } from "./components/settings/CertificateSettings";
@@ -337,6 +338,7 @@ function App() {
                       <Plus className="w-3.5 h-3.5" />
                       {t("rules.new")}
                     </Button>
+                    <RuleTemplatePicker />
 
                     <div className="flex items-center border border-border/40 rounded-lg bg-background/40 p-0.5 shadow-sm">
                       <Tooltip content={t("common.export")} side="bottom">
