@@ -263,55 +263,83 @@ pub async fn rules_create_mock(
 
     // Load existing rules for conflict resolution and priority calculation.
     let storage = crate::rules::storage::RuleStorage::from_config().map_err(|e| e.to_string())?;
-    let mut next_priority: i32 = 10;
     let plugin_source = format!("plugin:{}", plugin_id);
     let new_method = args.method.as_ref().map(|m| m.to_ascii_uppercase());
-    let mut target_group_id: Option<String> = None;
-    let mut rules_to_disable: Vec<(crate::rules::model::Rule, String)> = Vec::new();
-    let mut target_rule_id = rule_id.clone();
-    let mut target_priority: Option<i32> = None;
-    if let Ok(existing) = storage.load_all() {
-        // Compute next priority: max(existing) + 10
-        next_priority = existing
-            .rules
-            .iter()
-            .map(|e| e.rule.execution.priority)
-            .max()
-            .map(|m| m + 10)
-            .unwrap_or(10);
 
-        if let Some(existing_rule_id) = args.rule_id.as_deref() {
-            if let Some(entry) = existing
-                .rules
-                .iter()
-                .find(|entry| entry.rule.id == existing_rule_id)
-            {
-                let existing_rule = &entry.rule;
-                if existing_rule
-                    .metadata
-                    .as_ref()
-                    .and_then(|m| m.source.as_deref())
-                    != Some(&plugin_source)
-                {
-                    return Err(
-                        "Security Violation: Cannot update mock rule owned by another source"
-                            .to_string(),
-                    );
-                }
-                if existing_rule.r#type != crate::rules::model::RuleType::MapLocal {
-                    return Err(
-                        "Only map_local mock rules can be updated via rules.createMock".to_string(),
-                    );
-                }
-                target_group_id = Some(entry.group_id.clone());
-                target_rule_id = existing_rule.id.clone();
-                target_priority = Some(existing_rule.execution.priority);
+    // Preflight: the store must parse cleanly before any write — creating a
+    // mock on top of a partially-corrupt store could orphan state that the
+    // failure rollback below cannot restore.
+    let existing = storage.load_all().map_err(|e| e.to_string())?;
+    if !existing.errors.is_empty() {
+        return Err(format!(
+            "Cannot safely create mock: {} rule file(s) failed to parse",
+            existing.errors.len()
+        ));
+    }
+    {
+        let mut seen = std::collections::HashSet::new();
+        for entry in &existing.rules {
+            if !seen.insert(entry.rule.id.as_str()) {
+                return Err(format!(
+                    "Cannot safely create mock: duplicate rule id {}",
+                    entry.rule.id
+                ));
             }
         }
+    }
 
-        // Auto-disable existing enabled mock rules from the same plugin
-        // whose match scope overlaps with the new rule (same URL + overlapping method scope),
-        // so the new rule takes effect immediately without being shadowed.
+    // Compute next priority: max(existing) + 10
+    let next_priority: i32 = existing
+        .rules
+        .iter()
+        .map(|e| e.rule.execution.priority)
+        .max()
+        .map(|m| m + 10)
+        .unwrap_or(10);
+
+    let mut target_group_id: Option<String> = None;
+    let mut overlaps: Vec<crate::rules::storage::RuleEntry> = Vec::new();
+    let mut previous_target: Option<crate::rules::storage::RuleEntry> = None;
+    let mut target_rule_id = rule_id.clone();
+    let mut target_priority: Option<i32> = None;
+
+    if let Some(existing_rule_id) = args.rule_id.as_deref() {
+        // Exactly one target must exist — duplicates were rejected above.
+        let Some(entry) = existing
+            .rules
+            .iter()
+            .find(|entry| entry.rule.id == existing_rule_id)
+        else {
+            return Err(format!("Mock rule {existing_rule_id} not found"));
+        };
+        let existing_rule = &entry.rule;
+        if existing_rule
+            .metadata
+            .as_ref()
+            .and_then(|m| m.source.as_deref())
+            != Some(&plugin_source)
+        {
+            return Err(
+                "Security Violation: Cannot update mock rule owned by another source".to_string(),
+            );
+        }
+        if existing_rule.r#type != crate::rules::model::RuleType::MapLocal {
+            return Err(
+                "Only map_local mock rules can be updated via rules.createMock".to_string(),
+            );
+        }
+        target_group_id = Some(entry.group_id.clone());
+        target_rule_id = existing_rule.id.clone();
+        target_priority = Some(existing_rule.execution.priority);
+        previous_target = Some(entry.clone());
+    } else if existing.rules.iter().any(|e| e.rule.id == rule_id) {
+        return Err("Cannot safely create mock: generated rule id already exists".to_string());
+    }
+
+    // Auto-disable existing enabled mock rules from the same plugin
+    // whose match scope overlaps with the new rule (same URL + overlapping method scope),
+    // so the new rule takes effect immediately without being shadowed.
+    {
         for entry in &existing.rules {
             let r = &entry.rule;
             if args.rule_id.as_deref() == Some(r.id.as_str()) {
@@ -368,12 +396,10 @@ pub async fn rules_create_mock(
                 (Some(m), Some(set)) => set.contains(m),
             };
             if method_overlaps {
-                let mut disabled = r.clone();
-                disabled.execution.enabled = false;
                 if target_group_id.is_none() {
                     target_group_id = Some(entry.group_id.clone());
                 }
-                rules_to_disable.push((disabled, entry.group_id.clone()));
+                overlaps.push(entry.clone());
             }
         }
     }
@@ -459,20 +485,176 @@ pub async fn rules_create_mock(
         }),
     };
 
-    for (disabled, group_id) in rules_to_disable {
-        storage
-            .save(&disabled, Some(&group_id))
-            .map_err(|e| e.to_string())?;
-    }
+    commit_mock_rule_changes(
+        &storage,
+        &rule,
+        target_group_id.as_deref(),
+        previous_target.as_ref(),
+        &overlaps,
+        &mut |r, group| storage.save(r, group).map_err(|e| e.to_string()),
+    )
+    .map_err(|e| {
+        if e.partial {
+            // On-disk state may be partially applied — let the UI resync
+            // rather than display stale data.
+            let _ = app.emit("rules-changed", ());
+        }
+        e.message
+    })?;
 
-    storage
-        .save(&rule, target_group_id.as_deref())
-        .map_err(|e| e.to_string())?;
-
-    // Notify frontend so the Rules panel refreshes immediately.
+    // Notify frontend so the Rules panel refreshes immediately — only after
+    // every write succeeded.
     let _ = app.emit("rules-changed", ());
 
     Ok(serde_json::to_value(target_rule_id).unwrap())
+}
+
+/// Failure from `commit_mock_rule_changes`. `partial` is true when rollback
+/// could not fully restore the previous on-disk state — the caller should
+/// emit `rules-changed` so the UI resyncs to what actually exists.
+struct MockCommitError {
+    message: String,
+    partial: bool,
+}
+
+/// Remove a just-created target rule file, but only when its bytes are
+/// exactly what this operation would have written — never deletes a
+/// preexisting or foreign file.
+fn remove_staged_target(
+    storage: &crate::rules::storage::RuleStorage,
+    new_rule: &crate::rules::model::Rule,
+    target_group_id: Option<&str>,
+) -> Result<(), String> {
+    // Same group-path sanitization as RuleStorage::save.
+    let group_id = target_group_id.unwrap_or("Default");
+    let safe_path = group_id.replace("..", "").replace(":", "");
+    let file_path = storage
+        .base_dir
+        .join(safe_path)
+        .join(format!("{}.yaml", new_rule.id));
+
+    let expected = serde_yaml::to_string(&crate::rules::storage::RuleFile {
+        rule: new_rule.clone(),
+    })
+    .map_err(|e| e.to_string())?;
+
+    match std::fs::read(&file_path) {
+        Ok(bytes) => {
+            if bytes != expected.as_bytes() {
+                return Err(format!(
+                    "refusing to remove {}: contents differ",
+                    file_path.display()
+                ));
+            }
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => return Err(e.to_string()),
+    }
+    std::fs::remove_file(&file_path).map_err(|e| e.to_string())
+}
+
+/// Best-effort restoration of state changed by `commit_mock_rule_changes`:
+/// re-save already-disabled overlaps, then restore the previous target (or
+/// remove a just-created target). Collects errors instead of failing fast.
+fn rollback_mock_changes(
+    storage: &crate::rules::storage::RuleStorage,
+    new_rule: &crate::rules::model::Rule,
+    target_group_id: Option<&str>,
+    previous_target: Option<&crate::rules::storage::RuleEntry>,
+    changed: &[&crate::rules::storage::RuleEntry],
+) -> Result<(), String> {
+    let mut errors = Vec::new();
+    for entry in changed {
+        if let Err(e) = storage.save(&entry.rule, Some(&entry.group_id)) {
+            errors.push(format!("restore overlap {}: {}", entry.rule.id, e));
+        }
+    }
+    match previous_target {
+        Some(prev) => {
+            if let Err(e) = storage.save(&prev.rule, Some(&prev.group_id)) {
+                errors.push(format!("restore target {}: {}", prev.rule.id, e));
+            }
+        }
+        None => {
+            if let Err(e) = remove_staged_target(storage, new_rule, target_group_id) {
+                errors.push(format!("remove new target: {e}"));
+            }
+        }
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors.join("; "))
+    }
+}
+
+/// Commit a mock create/update plus overlap disabling as an ordered sequence
+/// of atomic single-file saves: target first, then overlaps. Any mid-flight
+/// failure attempts to restore the snapshotted prior state. This is failure
+/// rollback for controlled writes — not crash-safety, and not atomicity
+/// against concurrent writers.
+fn commit_mock_rule_changes(
+    storage: &crate::rules::storage::RuleStorage,
+    new_rule: &crate::rules::model::Rule,
+    target_group_id: Option<&str>,
+    previous_target: Option<&crate::rules::storage::RuleEntry>,
+    overlaps: &[crate::rules::storage::RuleEntry],
+    save_fn: &mut dyn FnMut(&crate::rules::model::Rule, Option<&str>) -> Result<(), String>,
+) -> Result<(), MockCommitError> {
+    // 1) Commit the target first. A failed atomic save should leave the old
+    //    file in place; defensively restore/remove a partially applied
+    //    target in case a later step inside save() failed after persist.
+    if let Err(e) = save_fn(new_rule, target_group_id) {
+        let rollback = match previous_target {
+            Some(prev) => storage
+                .save(&prev.rule, Some(&prev.group_id))
+                .map_err(|e2| e2.to_string()),
+            None => remove_staged_target(storage, new_rule, target_group_id),
+        };
+        return Err(match rollback {
+            Ok(()) => MockCommitError {
+                message: e,
+                partial: false,
+            },
+            Err(rb) => MockCommitError {
+                message: format!("{e}; rollback failed: {rb}"),
+                partial: true,
+            },
+        });
+    }
+
+    // 2) Disable overlaps one by one, tracking what was actually changed.
+    let mut changed: Vec<&crate::rules::storage::RuleEntry> = Vec::new();
+    for entry in overlaps {
+        let mut disabled = entry.rule.clone();
+        disabled.execution.enabled = false;
+        if let Err(e) = save_fn(&disabled, Some(&entry.group_id)) {
+            // The failed save may already have persisted the disabled rule
+            // (RuleStorage::save can fail after persist, e.g. during old-file
+            // cleanup) — include it in the restore set.
+            let mut restore = changed.clone();
+            restore.push(entry);
+            let rollback = rollback_mock_changes(
+                storage,
+                new_rule,
+                target_group_id,
+                previous_target,
+                &restore,
+            );
+            return Err(match rollback {
+                Ok(()) => MockCommitError {
+                    message: e,
+                    partial: false,
+                },
+                Err(rb) => MockCommitError {
+                    message: format!("{e}; rollback failed: {rb}"),
+                    partial: true,
+                },
+            });
+        }
+        changed.push(entry);
+    }
+    Ok(())
 }
 
 // ── rules.list ───────────────────────────────────────────────────────────
@@ -1341,5 +1523,181 @@ mod tests {
                 "expected rejection for {id}"
             );
         }
+    }
+
+    fn rule_entry(rule: &Rule, group_id: &str) -> crate::rules::storage::RuleEntry {
+        crate::rules::storage::RuleEntry {
+            group_id: group_id.to_string(),
+            rule: rule.clone(),
+        }
+    }
+
+    fn read_rule_file(temp: &TempDir, group: &str, id: &str) -> Vec<u8> {
+        std::fs::read(temp.path().join(group).join(format!("{id}.yaml"))).unwrap()
+    }
+
+    #[test]
+    fn commit_leaves_everything_untouched_when_target_save_fails() {
+        let (temp, storage) = temp_storage();
+        let overlap = mock_rule("ov1", Some("plugin:plug-a"), true);
+        storage.save(&overlap, Some("G1")).unwrap();
+        let overlap_bytes = read_rule_file(&temp, "G1", "ov1");
+        let user = block_rule("u1", Some("user"));
+        storage.save(&user, Some("G2")).unwrap();
+        let user_bytes = read_rule_file(&temp, "G2", "u1");
+
+        let new_rule = mock_rule("new1", Some("plugin:plug-a"), true);
+        let overlaps = vec![rule_entry(&overlap, "G1")];
+        let mut saver = |r: &Rule, g: Option<&str>| -> Result<(), String> {
+            if r.id == "new1" {
+                return Err("injected target failure".into());
+            }
+            storage.save(r, g).map_err(|e| e.to_string())
+        };
+        let err =
+            commit_mock_rule_changes(&storage, &new_rule, Some("G1"), None, &overlaps, &mut saver)
+                .unwrap_err();
+        assert!(!err.partial);
+        assert!(err.message.contains("injected target failure"));
+
+        // Overlap never written, no target file, user rule intact.
+        assert_eq!(read_rule_file(&temp, "G1", "ov1"), overlap_bytes);
+        assert!(!temp.path().join("G1").join("new1.yaml").exists());
+        assert_eq!(read_rule_file(&temp, "G2", "u1"), user_bytes);
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 2);
+        assert!(loaded.errors.is_empty());
+    }
+
+    #[test]
+    fn commit_restores_overlaps_and_removes_new_target_on_overlap_failure() {
+        let (temp, storage) = temp_storage();
+        let ov1 = mock_rule("ov1", Some("plugin:plug-a"), true);
+        let ov2 = mock_rule("ov2", Some("plugin:plug-a"), true);
+        storage.save(&ov1, Some("G1")).unwrap();
+        storage.save(&ov2, Some("G2")).unwrap();
+        let ov1_bytes = read_rule_file(&temp, "G1", "ov1");
+        let ov2_bytes = read_rule_file(&temp, "G2", "ov2");
+
+        let new_rule = mock_rule("new1", Some("plugin:plug-a"), true);
+        let overlaps = vec![rule_entry(&ov1, "G1"), rule_entry(&ov2, "G2")];
+        // ov1 disables fine, ov2 fails → rollback must restore ov1 AND
+        // remove the already-created new1 file.
+        let mut saver = |r: &Rule, g: Option<&str>| -> Result<(), String> {
+            if r.id == "ov2" {
+                return Err("injected overlap failure".into());
+            }
+            storage.save(r, g).map_err(|e| e.to_string())
+        };
+        let err =
+            commit_mock_rule_changes(&storage, &new_rule, Some("G1"), None, &overlaps, &mut saver)
+                .unwrap_err();
+        assert!(!err.partial);
+        assert!(err.message.contains("injected overlap failure"));
+
+        assert_eq!(read_rule_file(&temp, "G1", "ov1"), ov1_bytes);
+        assert_eq!(read_rule_file(&temp, "G2", "ov2"), ov2_bytes);
+        assert!(!temp.path().join("G1").join("new1.yaml").exists());
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 2);
+        assert!(loaded.rules.iter().all(|e| e.rule.execution.enabled));
+    }
+
+    #[test]
+    fn commit_restores_overlap_that_failed_after_persist() {
+        let (temp, storage) = temp_storage();
+        let ov1 = mock_rule("ov1", Some("plugin:plug-a"), true);
+        storage.save(&ov1, Some("G1")).unwrap();
+        let ov1_bytes = read_rule_file(&temp, "G1", "ov1");
+
+        let new_rule = mock_rule("new1", Some("plugin:plug-a"), true);
+        let overlaps = vec![rule_entry(&ov1, "G1")];
+        // Simulate a save that persisted the disabled overlap and THEN
+        // failed — RuleStorage::save can do this when old-file cleanup
+        // errors after persist. The overlap must still be restored.
+        let mut saver = |r: &Rule, g: Option<&str>| -> Result<(), String> {
+            storage.save(r, g).map_err(|e| e.to_string())?;
+            if r.id == "ov1" {
+                return Err("injected post-persist failure".into());
+            }
+            Ok(())
+        };
+        let err =
+            commit_mock_rule_changes(&storage, &new_rule, Some("G1"), None, &overlaps, &mut saver)
+                .unwrap_err();
+        assert!(!err.partial);
+        assert!(err.message.contains("injected post-persist failure"));
+
+        // Disabled write rolled back — original bytes and enabled restored;
+        // the just-created target is removed.
+        assert_eq!(read_rule_file(&temp, "G1", "ov1"), ov1_bytes);
+        assert!(!temp.path().join("G1").join("new1.yaml").exists());
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 1);
+        assert!(loaded.rules.iter().all(|e| e.rule.execution.enabled));
+    }
+
+    #[test]
+    fn commit_restores_previous_target_on_overlap_failure_during_update() {
+        let (temp, storage) = temp_storage();
+        let prev = mock_rule("t1", Some("plugin:plug-a"), true);
+        storage.save(&prev, Some("GT")).unwrap();
+        let prev_bytes = read_rule_file(&temp, "GT", "t1");
+        let overlap = mock_rule("ov1", Some("plugin:plug-a"), true);
+        storage.save(&overlap, Some("G1")).unwrap();
+        let ov_bytes = read_rule_file(&temp, "G1", "ov1");
+
+        // Update of t1 (same id, changed content) is committed first, then
+        // the overlap disable fails → the original t1 must be restored.
+        let mut new_rule = prev.clone();
+        new_rule.name = "updated".into();
+        let overlaps = vec![rule_entry(&overlap, "G1")];
+        let previous = rule_entry(&prev, "GT");
+        let mut saver = |r: &Rule, g: Option<&str>| -> Result<(), String> {
+            if r.id == "ov1" {
+                return Err("injected overlap failure".into());
+            }
+            storage.save(r, g).map_err(|e| e.to_string())
+        };
+        let err = commit_mock_rule_changes(
+            &storage,
+            &new_rule,
+            Some("GT"),
+            Some(&previous),
+            &overlaps,
+            &mut saver,
+        )
+        .unwrap_err();
+        assert!(!err.partial);
+
+        assert_eq!(read_rule_file(&temp, "GT", "t1"), prev_bytes);
+        assert_eq!(read_rule_file(&temp, "G1", "ov1"), ov_bytes);
+        let loaded = storage.load_all().unwrap();
+        assert_eq!(loaded.rules.len(), 2);
+    }
+
+    #[test]
+    fn commit_refuses_to_remove_foreign_target_file() {
+        let (temp, storage) = temp_storage();
+        let new_rule = mock_rule("new1", Some("plugin:plug-a"), true);
+        let target_dir = temp.path().join("G1");
+        // Simulate a failed save that left a file whose bytes do NOT match
+        // the staged payload — rollback must refuse to delete it.
+        let mut saver = |r: &Rule, g: Option<&str>| -> Result<(), String> {
+            if r.id == "new1" {
+                std::fs::create_dir_all(&target_dir).unwrap();
+                std::fs::write(target_dir.join("new1.yaml"), b"foreign-bytes").unwrap();
+                return Err("injected target failure".into());
+            }
+            storage.save(r, g).map_err(|e| e.to_string())
+        };
+        let err = commit_mock_rule_changes(&storage, &new_rule, Some("G1"), None, &[], &mut saver)
+            .unwrap_err();
+        assert!(err.partial);
+        assert!(err.message.contains("rollback failed"));
+        assert_eq!(
+            std::fs::read(target_dir.join("new1.yaml")).unwrap(),
+            b"foreign-bytes"
+        );
     }
 }
