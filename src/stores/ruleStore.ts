@@ -462,6 +462,13 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
   exportBundle: () => {
     const state = get();
+    const exportedRuleGroups: Record<string, string> = {};
+    for (const rule of state.rules) {
+      const groupId = state.ruleGroups[rule.id];
+      if (typeof groupId === "string" && groupId) {
+        exportedRuleGroups[rule.id] = groupId;
+      }
+    }
     return JSON.stringify(
       {
         version: "2.0",
@@ -470,6 +477,7 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
         bundle: {
           groups: state.groups,
           rules: state.rules,
+          ruleGroups: exportedRuleGroups,
         },
       },
       null,
@@ -521,7 +529,14 @@ export const useRuleStore = create<RuleStore>((set, get) => ({
 
         // Map or Create Group ID
         let targetGroupId = "Default";
-        const sourceGroupId = (r as any).groupId;
+        // Prefer the bundle's ruleGroups mapping (keyed by the rule's original
+        // id before it is rewritten below), then fall back to the legacy
+        // per-rule groupId field.
+        const bundledGroupId = bundle.ruleGroups?.[r.id];
+        const sourceGroupId =
+          typeof bundledGroupId === "string" && bundledGroupId
+            ? bundledGroupId
+            : (r as any).groupId;
 
         if (sourceGroupId) {
           // Map from explicitly imported groups

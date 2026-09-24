@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Rule, RuleGroup } from "../types/rules";
 import { getRuleConflicts, useRuleStore } from "./ruleStore";
@@ -397,6 +398,123 @@ describe("ruleStore and algorithm logic", () => {
       // Now r1 terminates, so r2 is shadowed.
       expect(conflicts.r2).toBeDefined();
       expect(conflicts.r2.type).toBe("shadowed");
+    });
+  });
+
+  describe("Bundle export/import group attribution", () => {
+    const getSavedRuleEntries = (): { rule: Rule; groupId: string }[] => {
+      const saveCall = vi.mocked(invoke).mock.calls.find(([cmd]) => cmd === "save_all_rules");
+      if (!saveCall) throw new Error("save_all_rules was not invoked");
+      return JSON.parse((saveCall[1] as { rulesJson: string }).rulesJson);
+    };
+
+    it("preserves group attribution on export/import and maps group name conflicts to existing groups", () => {
+      useRuleStore.setState({
+        rules: [createRule("r-alpha", "Alpha", 10), createRule("r-beta", "Beta", 20)],
+        groups: [createGroup("Alpha", 1), createGroup("Beta", 2)],
+        ruleGroups: { "r-alpha": "Alpha", "r-beta": "Beta" },
+      });
+
+      const bundleJson = useRuleStore.getState().exportBundle();
+      const exported = JSON.parse(bundleJson);
+      expect(exported.version).toBe("2.0");
+      expect(exported.bundle.ruleGroups).toEqual({
+        "r-alpha": "Alpha",
+        "r-beta": "Beta",
+      });
+
+      // Import into a store with no rules but a pre-existing group whose
+      // name collides with the exported "Alpha" group under a different id.
+      useRuleStore.setState({
+        rules: [],
+        groups: [{ id: "ExistingAlpha", name: "Alpha", enabled: true, priority: 1 }],
+        ruleGroups: {},
+      });
+      vi.clearAllMocks();
+
+      const result = useRuleStore.getState().importBundle(bundleJson);
+      expect(result.success).toBe(true);
+      expect(result.count).toBe(2);
+
+      const state = useRuleStore.getState();
+      const importedAlpha = state.rules.find((r) => r.name === "Rule r-alpha");
+      const importedBeta = state.rules.find((r) => r.name === "Rule r-beta");
+      expect(importedAlpha).toBeDefined();
+      expect(importedBeta).toBeDefined();
+
+      // "Alpha" from the bundle resolves to the existing group's id.
+      expect(state.ruleGroups[importedAlpha!.id]).toBe("ExistingAlpha");
+      // "Beta" has no conflict and is imported as a new group.
+      expect(state.ruleGroups[importedBeta!.id]).toBe("Beta");
+      expect(state.groups.some((g) => g.id === "Beta" && g.name === "Beta")).toBe(true);
+      // No duplicate "Alpha" group was created.
+      expect(state.groups.filter((g) => g.name === "Alpha").length).toBe(1);
+
+      const saved = getSavedRuleEntries();
+      expect(saved.find((e) => e.rule.id === importedAlpha!.id)?.groupId).toBe("ExistingAlpha");
+      expect(saved.find((e) => e.rule.id === importedBeta!.id)?.groupId).toBe("Beta");
+    });
+
+    it("imports legacy bundles that carry groupId on each rule", () => {
+      const legacyBundle = {
+        version: "2.0",
+        type: "relaycraft-rules-bundle",
+        bundle: {
+          groups: [createGroup("Legacy", 1)],
+          rules: [{ ...createRule("legacy-1", "Legacy", 10), groupId: "Legacy" }],
+        },
+      };
+
+      const result = useRuleStore.getState().importBundle(JSON.stringify(legacyBundle));
+      expect(result.success).toBe(true);
+      expect(result.count).toBe(1);
+
+      const state = useRuleStore.getState();
+      const imported = state.rules.find((r) => r.name === "Rule legacy-1");
+      expect(imported).toBeDefined();
+      expect(state.ruleGroups[imported!.id]).toBe("Legacy");
+
+      const saved = getSavedRuleEntries();
+      expect(saved.find((e) => e.rule.id === imported!.id)?.groupId).toBe("Legacy");
+    });
+
+    it("prefers bundle.ruleGroups over the legacy per-rule groupId", () => {
+      const bundle = {
+        bundle: {
+          groups: [createGroup("NewHome", 1), createGroup("OldHome", 2)],
+          rules: [{ ...createRule("r-pref", "NewHome", 10), groupId: "OldHome" }],
+          ruleGroups: { "r-pref": "NewHome" },
+        },
+      };
+
+      const result = useRuleStore.getState().importBundle(JSON.stringify(bundle));
+      expect(result.success).toBe(true);
+
+      const state = useRuleStore.getState();
+      const imported = state.rules.find((r) => r.name === "Rule r-pref");
+      expect(imported).toBeDefined();
+      expect(state.ruleGroups[imported!.id]).toBe("NewHome");
+    });
+
+    it("falls back to Default when the bundle carries no group attribution", () => {
+      const bundle = {
+        bundle: {
+          groups: [],
+          rules: [createRule("orphan-1", "Default", 10)],
+        },
+      };
+
+      const result = useRuleStore.getState().importBundle(JSON.stringify(bundle));
+      expect(result.success).toBe(true);
+      expect(result.count).toBe(1);
+
+      const state = useRuleStore.getState();
+      const imported = state.rules.find((r) => r.name === "Rule orphan-1");
+      expect(imported).toBeDefined();
+      expect(state.ruleGroups[imported!.id]).toBe("Default");
+
+      const saved = getSavedRuleEntries();
+      expect(saved.find((e) => e.rule.id === imported!.id)?.groupId).toBe("Default");
     });
   });
 });
