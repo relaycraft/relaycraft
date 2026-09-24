@@ -119,21 +119,35 @@ impl RuleStorage {
         let safe_path = group_id.replace("..", "").replace(":", "");
         let target_dir = self.base_dir.join(safe_path);
 
-        if !target_dir.exists() {
-            fs::create_dir_all(&target_dir)?;
-        }
-
-        // Remove old file if it exists elsewhere
-        let file_name = format!("{}.yaml", rule.id);
-        self.remove_old_file(&file_name, &target_dir)?;
-
-        // Serialize and write
+        // Serialize BEFORE touching any existing file: a failure here must
+        // not destroy the previously stored version of this rule.
         let rule_file = RuleFile { rule: rule.clone() };
         let yaml_content = serde_yaml::to_string(&rule_file)
             .map_err(|e| RuleError::Serialization(e.to_string()))?;
 
+        if !target_dir.exists() {
+            fs::create_dir_all(&target_dir)?;
+        }
+
+        let file_name = format!("{}.yaml", rule.id);
         let file_path = target_dir.join(&file_name);
-        fs::write(&file_path, yaml_content)?;
+
+        // Stage the YAML in the target directory (same filesystem), fsync,
+        // then atomically rename into place — a failed persist leaves the
+        // previous file untouched rather than truncated. The temp name has
+        // no `.yaml` extension, so load_all/export_zip never pick up staged
+        // artifacts.
+        let mut temp = tempfile::NamedTempFile::new_in(&target_dir)?;
+        temp.write_all(yaml_content.as_bytes())?;
+        temp.as_file().sync_all()?;
+        temp.persist(&file_path)
+            .map_err(|e| RuleError::Io(e.error))?;
+
+        // Remove the old file only after the replacement is in place. A
+        // group move can briefly leave the rule in both groups if the
+        // process dies between persist and cleanup — this is a single-file
+        // atomic save, not a multi-file transaction.
+        self.remove_old_file(&file_name, &target_dir)?;
 
         log::info!("Saved rule {} to {:?}", rule.id, file_path);
         Ok(())
@@ -449,6 +463,98 @@ mod tests {
         let response = storage.load_all().unwrap();
         assert_eq!(response.rules.len(), 1);
         assert_eq!(response.rules[0].rule.id, "test-rule");
+    }
+
+    fn make_rule(id: &str, name: &str) -> Rule {
+        Rule {
+            id: id.into(),
+            name: name.into(),
+            r#type: RuleType::BlockRequest,
+            execution: RuleExecution {
+                enabled: true,
+                priority: 1,
+                stop_on_match: None,
+            },
+            match_config: RuleMatchConfig {
+                request: vec![],
+                response: vec![],
+            },
+            actions: vec![RuleAction::BlockRequest],
+            tags: None,
+            metadata: None,
+        }
+    }
+
+    #[test]
+    fn test_save_update_same_id_no_duplicate() {
+        let temp = TempDir::new().unwrap();
+        let storage = RuleStorage::new(temp.path().to_path_buf()).unwrap();
+
+        let mut rule = make_rule("r1", "R1");
+        storage.save(&rule, None).unwrap();
+        rule.name = "R1-updated".into();
+        storage.save(&rule, None).unwrap();
+
+        let response = storage.load_all().unwrap();
+        assert_eq!(response.rules.len(), 1);
+        assert_eq!(response.rules[0].rule.name, "R1-updated");
+    }
+
+    #[test]
+    fn test_save_move_group_removes_old_file_after_persist() {
+        let temp = TempDir::new().unwrap();
+        let storage = RuleStorage::new(temp.path().to_path_buf()).unwrap();
+
+        let rule = make_rule("r1", "R1");
+        storage.save(&rule, Some("GroupA")).unwrap();
+        assert!(temp.path().join("GroupA").join("r1.yaml").exists());
+
+        storage.save(&rule, Some("GroupB")).unwrap();
+
+        // New file persisted AND old file removed.
+        assert!(!temp.path().join("GroupA").join("r1.yaml").exists());
+        assert!(temp.path().join("GroupB").join("r1.yaml").exists());
+        let response = storage.load_all().unwrap();
+        assert_eq!(response.rules.len(), 1);
+        assert_eq!(response.rules[0].group_id, "GroupB");
+    }
+
+    #[test]
+    fn test_failed_persist_keeps_existing_file_and_no_temp_left() {
+        let temp = TempDir::new().unwrap();
+        let storage = RuleStorage::new(temp.path().to_path_buf()).unwrap();
+
+        let rule = make_rule("r1", "R1");
+        storage.save(&rule, Some("GroupA")).unwrap();
+        let old_path = temp.path().join("GroupA").join("r1.yaml");
+        let old_content = fs::read_to_string(&old_path).unwrap();
+
+        // Block the persist target in GroupB with a directory of the same
+        // name — renaming a file onto a directory fails on unix and Windows
+        // alike, without chmod tricks.
+        let blocked_dir = temp.path().join("GroupB").join("r1.yaml");
+        fs::create_dir_all(&blocked_dir).unwrap();
+
+        let mut renamed = rule.clone();
+        renamed.name = "changed".into();
+        assert!(storage.save(&renamed, Some("GroupB")).is_err());
+
+        // The old file must be intact — the previous implementation removed
+        // it BEFORE writing, losing the rule on any write failure.
+        assert_eq!(fs::read_to_string(&old_path).unwrap(), old_content);
+
+        // No stray staged temp file in GroupB — only the blocker dir remains.
+        let entries: Vec<_> = fs::read_dir(temp.path().join("GroupB"))
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .collect();
+        assert_eq!(entries, vec![blocked_dir]);
+
+        // Storage still loads exactly the original rule.
+        let response = storage.load_all().unwrap();
+        assert_eq!(response.rules.len(), 1);
+        assert_eq!(response.rules[0].rule.name, "R1");
+        assert_eq!(response.rules[0].group_id, "GroupA");
     }
 
     #[test]
