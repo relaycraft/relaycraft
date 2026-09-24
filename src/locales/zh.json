@@ -981,10 +981,16 @@
     "import": {
       "action": "导入",
       "desc": "支持单个规则 JSON 或完整备份包",
+      "failed": "导入失败",
+      "file_filter": "规则文件（JSON/ZIP）",
+      "invalid_format": "无效的规则格式，请使用有效的 Bundle 或单条规则 JSON",
+      "invalid_json": "JSON 解析失败",
       "placeholder": "在此粘贴 JSON 内容...",
+      "read_failed": "读取文件失败",
       "select": "选择文件...",
       "success": "成功导入 {{count}} 条规则和分组！",
-      "title": "导入规则"
+      "title": "导入规则",
+      "unsupported_format": "不支持的文件类型，请选择 .json 或 .zip 文件"
     },
     "import_zip_extracting": "正在解压...",
     "import_zip_success": "成功导入 {{count}} 条规则",

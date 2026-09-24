@@ -981,10 +981,16 @@
     "import": {
       "action": "Import",
       "desc": "Support single rule JSON or full backup Bundle",
+      "failed": "Import failed",
+      "file_filter": "Rule Files (JSON/ZIP)",
+      "invalid_format": "Invalid rule format. Please use a valid Bundle or Single Rule JSON.",
+      "invalid_json": "JSON parse failed",
       "placeholder": "Paste JSON content here...",
+      "read_failed": "Failed to read file",
       "select": "Select File...",
       "success": "Successfully imported {{count}} rules and groups!",
-      "title": "Import Rules"
+      "title": "Import Rules",
+      "unsupported_format": "Unsupported file type. Please select a .json or .zip file."
     },
     "import_zip_extracting": "Extracting...",
     "import_zip_success": "Successfully imported {{count}} rules",

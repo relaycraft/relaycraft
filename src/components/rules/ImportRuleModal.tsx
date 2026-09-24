@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Logger } from "../../lib/logger";
 import { notify } from "../../lib/notify";
+import { detectRuleImportSource, prepareJsonRuleImport } from "../../lib/rules/importSource";
 import { useRuleStore } from "../../stores/ruleStore";
 import { useUIStore } from "../../stores/uiStore";
 import { Button } from "../common/Button";
@@ -18,48 +19,26 @@ export function ImportRuleModal() {
   const setImportModalOpen = useUIStore((state) => state.setImportModalOpen);
   const [jsonText, setJsonText] = useState("");
 
-  // ... (logic remains same)
-
   const handleImport = () => {
-    try {
-      const data = JSON.parse(jsonText);
+    // Normalize through the import-source seam; invalid input leaves the
+    // modal open and the store untouched so the user can fix the payload.
+    const prepared = prepareJsonRuleImport(jsonText);
+    if (prepared.status !== "ok") {
+      const message =
+        prepared.reason === "invalid_json"
+          ? t("rules.import.invalid_json")
+          : t("rules.import.invalid_format");
+      notify.error(message, t("common.error"));
+      return;
+    }
 
-      // MODE A: Smart Bundle Import (Groups + Rules)
-      if (data.bundle || (data.rules && Array.isArray(data.rules))) {
-        const result = importBundle(jsonText);
-        if (result.success) {
-          notify.success(t("rules.import.success", { count: result.count }), t("sidebar.rules"));
-          setImportModalOpen(false);
-          setJsonText("");
-        } else {
-          throw new Error(result.error);
-        }
-        return;
-      }
-
-      // MODE B: Single Rule Legacy Import
-      // Support single rule object by wrapping it in a bundle
-      if (data.match && data.actions) {
-        const bundle = { rules: [data], groups: [] };
-        const result = importBundle(JSON.stringify(bundle));
-        if (result.success) {
-          notify.success(t("rules.import.success", { count: result.count }), t("sidebar.rules"));
-          setImportModalOpen(false);
-          setJsonText("");
-        } else {
-          throw new Error(result.error);
-        }
-        return;
-      }
-
-      notify.error(
-        "Invalid rule format. Please use a valid Bundle or Single Rule JSON.",
-        t("common.error"),
-      );
+    const result = importBundle(prepared.payload);
+    if (result.success) {
+      notify.success(t("rules.import.success", { count: result.count }), t("sidebar.rules"));
       setImportModalOpen(false);
       setJsonText("");
-    } catch (e: any) {
-      notify.error(e.message || "JSON Parse Failed", t("common.error"));
+    } else {
+      notify.error(result.error || t("rules.import.invalid_format"), t("common.error"));
     }
   };
 
@@ -68,14 +47,19 @@ export function ImportRuleModal() {
       const path = await open({
         filters: [
           {
-            name: "Rule Files (JSON/ZIP)",
+            name: t("rules.import.file_filter"),
             extensions: ["json", "zip"],
           },
         ],
       });
 
       if (path) {
-        if (path.toLowerCase().endsWith(".zip")) {
+        const source = detectRuleImportSource(path);
+        if (source.status === "unsupported") {
+          notify.error(t("rules.import.unsupported_format"), t("common.error"));
+          return;
+        }
+        if (source.sourceId === "legacy-zip") {
           const loadingId = toast.loading(t("rules.import_zip_extracting"));
           try {
             const result = await useRuleStore.getState().importRulesZip(path);
@@ -87,11 +71,11 @@ export function ImportRuleModal() {
               );
               setImportModalOpen(false);
             } else {
-              notify.error(result.error || "Import Failed", t("common.error"));
+              notify.error(result.error || t("rules.import.failed"), t("common.error"));
             }
           } catch (e: any) {
             toast.dismiss(loadingId);
-            notify.error(e.message, t("common.error"));
+            notify.error(e.message || t("rules.import.failed"), t("common.error"));
           }
         } else {
           const content = await readTextFile(path);
@@ -100,7 +84,7 @@ export function ImportRuleModal() {
       }
     } catch (err) {
       Logger.error("Failed to read file", err);
-      notify.error("Failed to read file", t("common.error"));
+      notify.error(t("rules.import.read_failed"), t("common.error"));
     }
   };
 
