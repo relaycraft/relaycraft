@@ -1,8 +1,9 @@
 # 1.6 Sharing, Migration & Templates: implementation plan
 
-Status: proposed scope and delivery gates (2026-10). This document describes
+Status: staged delivery and remaining gates (2026-10). This document describes
 RelayCraft product work, not RelayCore's engine roadmap. An item is not shipped
-merely because its API or data type exists.
+merely because its API or data type exists. Third-party rule converters are
+deferred; the near-term migration work is an import-source processing seam.
 
 ## Outcome and scope
 
@@ -33,9 +34,11 @@ There are three different artifacts; do not silently treat them as equivalent:
   internal representation into a stable public template format.
 - Session HAR import/export exists but is backed by `/_relay/*` in the Python
   engine. Normal HAR export is not a sanitized share package.
-- Plugin `rules.createMock` already supplies a stable host-visible API; the
-  official API Workbench uses it. `capabilities.logic.entry` is reserved, not
-  an engine-side plugin execution surface today.
+- Plugin `rules.createMock` supplies a host-visible API; API Workbench uses it.
+  The host now exposes owner-checked `rules.disableMock` for plugins, and the
+  official plugin offers that action on supported hosts. Neither command
+  creates an independent Mock listener. `capabilities.logic.entry` is
+  reserved, not an engine-side plugin execution surface today.
 - Current scripts are mitmproxy Python. RelayCore scripts use Deno/V8.
   RelayCore's reverse + forward multi-listener, full HAR fidelity and
   script/rule behavior must be proven on the wire before promising parity.
@@ -69,60 +72,62 @@ pre-existing rules/groups; UI reports precisely what was and was not applied.
 The staging and group-file replacement strategy requires a separate design
 review before implementation.
 
-### 2. Common-tool migration
+### 2. Import-source processing seam (third-party conversion deferred)
 
-Start with HAR as the traffic interchange route already supported by the app.
-Do not confuse importing traffic with migrating proxy rules. For rules, choose
-one source tool only after collecting its real, redistributable or sanitized
-export fixtures and a documented mapping of its matching/action semantics.
-No fixture means no claim of support for that format. Preference should be
-based on actual user demand and sample availability, not a guessed parser.
+Retain existing RelayCraft JSON/ZIP and HAR entry points, but route input
+recognition through a source-specific preparation step before review and
+commit. Do not change existing imports just to display an unsupported
+third-party preset. HAR is traffic interchange, not rule migration.
 
-Deliver a read-only preview with a per-item result: exact mapping, manual
-adjustment, or unsupported, including reasons. Reject invalid files without
-changing state. Imported rules are disabled until the user reviews and enables
-them. Never convert a file-serving Map Local action into a response-body rewrite
-or assume an arbitrary third-party script is portable.
+After collecting real, redistributable or sanitized export fixtures for one
+source tool, add its adapter at that step. The adapter returns a read-only
+per-item result: exact mapping, manual adjustment, or unsupported, including
+reasons. Reject invalid files without changing state. Imported rules are
+disabled until reviewed and enabled. Never convert a file-serving Map Local
+action into a response-body rewrite or assume third-party scripts are portable.
 
-Acceptance: fixtures cover simple matching, ordering, stop-on-match, mock,
-Map Local/Remote, unsupported predicates, conflict with existing rules and
-repeat imports. A round-trip test checks the resulting behavior against the
-source fixture's documented intent, not only successful deserialization.
+Acceptance for a future adapter: fixtures cover matching, ordering,
+stop-on-match, mock, Map Local/Remote, unsupported predicates, conflicts and
+repeat imports. Wire tests check behavior against the source fixture's
+documented intent, not only successful deserialization. Without fixtures,
+do not claim support for a third-party format.
 
 ### 3. Sanitized diagnostic package
 
-First release: explicitly selected HTTP flows, local file only, sanitized
-request/response metadata and a short user-authored reproduction note. Fetch
-details on demand through an adapter: neither the frontend's currently loaded
-flows nor the legacy Python database is the export source of truth. A package
-can be reopened in a **read-only** viewer; it does not replay requests.
+First slice delivered: a single selected HTTP flow, local JSON file, method,
+status and scheme only, plus an optional user-authored note. Fetch detail on
+demand through the existing flow-service adapter; fail closed when it cannot
+be fetched. Preview exact output before saving and reopen it in a **read-only**
+viewer. The note is copied verbatim and explicitly requires human review.
+This metadata-only package is not a replacement for a full HAR.
 
-Default to excluding bodies, files, binary/encoded payloads, WebSocket/SSE
-messages, credentials, device/user identifiers and engine-specific metadata.
-Sanitize URLs (including query strings), headers, cookies, redirects and
-allowed textual fields separately. Unknown media types or parse errors fail
-closed. Show the exact final contents and a residual-risk warning before
-writing. Do not upload packages or call an external service.
+This first slice omits host, URL path/query, headers, cookies, bodies, files,
+WebSocket/SSE messages, device/user identifiers and engine-specific metadata
+altogether. A future richer package must sanitize those fields separately
+and default to excluding unknown content; do not copy them from a raw HAR.
+Do not upload packages or call an external service.
 
-Acceptance: synthetic secrets in each supported location are absent from the
-final bytes, including HAR extension fields and nested content. Tests cover
-case variants, duplicate headers, URL encoding, base64 and malformed data.
-Bounded reads and output prevent large sessions from exhausting memory.
-RelayCore's persistence redaction is a separate layer and cannot substitute
-for export review.
+Acceptance for richer packages: synthetic secrets in every supported location
+must be absent from final bytes, including HAR extension fields and nested
+content. Tests must cover case variants, duplicates, encoding and malformed
+data. Bound reads and output to prevent large sessions exhausting memory.
+RelayCore's persistence redaction cannot substitute for export review.
 
 ### 4. Template reuse and Mock workflow
 
-Ship curated rule templates only after the safe importer exists. Preview
-required local files, missing engine capabilities and resulting rule
-conflicts; install disabled, with an explicit enable step. Keep Python and
-RelayCore JS script catalogs separate, labeled by engine and execution
-permissions; defer executable script installation until host-level trust,
-review and error reporting exist.
+First slice delivered: two built-in rule drafts (exact-URL block and manual
+JSON Mock), opened in the existing editor, not installed from ZIP; each
+remains disabled after saving. Distributable file templates still require the
+safe importer, dependency checks, capability review and conflict preview.
+Keep Python and RelayCore JS script catalogs separate, labeled by engine and
+execution permissions; defer executable installation until trust, review
+and error reporting exist.
 
 Extend the existing API Workbench's Mock workflow rather than create another
-route CRUD system. `rules.createMock` creates a Map Local rule; the host retains
-ownership/provenance and can explain which entry/rule produced the response.
+route CRUD system. `rules.createMock` creates a Map Local rule; owner-checked
+`rules.disableMock` can stop it without modifying another plugin's rule.
+The host retains ownership/provenance and should eventually explain which
+entry/rule produced a response.
 Call it a Mock **rule/workflow** in 1.6. An independently accessible Mock
 Server requires RelayCore reverse + forward listener coexistence, lifecycle
 and wire tests as a separate gate; do not use a Python-only listener shortcut.
@@ -135,16 +140,16 @@ public bridge contracts rather than monorepo-private imports.
 ## Commit and release discipline
 
 Make one reviewed, tested commit per independently usable slice: exchange
-compatibility, safe import, first source converter, local diagnostic package,
-curated templates, and Mock workflow. Keep the existing `src-tauri` Rust tests
+compatibility, safe import, import-source seam, richer local diagnostic
+packages, distributable templates and Mock workflow. Keep `src-tauri` Rust tests
 and frontend tests green; run `cargo fmt`, `cargo test`, `pnpm lint`, behavior
 tests, and `pnpm check:i18n` when translations change. Add cross-engine
 contract fixtures at the adapter boundary, with live-wire assertions for
 rules and Mock responses. Do not mark unsupported RelayCore behaviors stable.
 
 Stop a slice rather than merging a compatibility regression, destructive
-import path or privacy claim without a fixture-backed test. The proposed
-October scope is one source-tool rule converter, local diagnostic packages,
-curated **rule** templates and a Mock rule workflow. Cross-engine script
-translation, cloud sharing and an independent Mock listener are not 1.6
-release promises.
+import path or privacy claim without a fixture-backed test. The near-term
+scope is an import-source seam (not a source-tool converter), metadata-first
+local diagnostic packages, curated **rule** drafts and a Mock rule workflow.
+Third-party rule conversion, cross-engine script translation, cloud sharing
+and an independent Mock listener are not 1.6 release promises.
