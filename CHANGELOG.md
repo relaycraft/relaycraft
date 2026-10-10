@@ -1,5 +1,20 @@
 # Changelog
 
+# [1.6.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.5.1...v1.6.0) (2026-10-10)
+
+### Bug Fixes
+
+* **plugins:** restore mocks after failed updates ([80d6312](https://github-relaycraft/relaycraft/relaycraft/commit/80d6312b8da9adc28cd815e232fffc3bfc73c79c))
+* **rules:** preserve groups in JSON bundles ([11f55ec](https://github-relaycraft/relaycraft/relaycraft/commit/11f55ec91856060804f27a9ef3117ad711b60976))
+* **rules:** stage rule files before replacing them ([b6ed545](https://github-relaycraft/relaycraft/relaycraft/commit/b6ed5450e852083f8201a45e0c916d816ebff5f4))
+
+### Features
+
+* **plugins:** expose owned mocks for editing ([fe96d13](https://github-relaycraft/relaycraft/relaycraft/commit/fe96d13678e03a81ba9a048c846cfbe793f60da8))
+* **plugins:** let plugins disable owned mocks ([f5e83f4](https://github-relaycraft/relaycraft/relaycraft/commit/f5e83f49994fda14f4ba691715e9c0fd9fa287fd))
+* **rules:** add disabled starter templates ([78d7ada](https://github-relaycraft/relaycraft/relaycraft/commit/78d7ada738c5e741609753cad0cbda277f139388))
+* **traffic:** export reviewed local diagnostics ([3a0f983](https://github-relaycraft/relaycraft/relaycraft/commit/3a0f983e9e192b8d412438902b4654eaf0afc881))
+
 ## [1.5.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.5.0...v1.5.1) (2026-09-08)
 
 ### Bug Fixes
