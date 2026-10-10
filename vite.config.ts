@@ -12,6 +12,29 @@ export default defineConfig(async () => ({
     alias: {
       "@": "/src",
     },
+    // CodeMirror and Lezer packages rely on instanceof across package
+    // boundaries — a duplicated copy in the bundle throws "Unrecognized
+    // extension value" at render time and takes the whole UI down.
+    dedupe: [
+      "@codemirror/state",
+      "@codemirror/view",
+      "@codemirror/language",
+      "@codemirror/autocomplete",
+      "@codemirror/commands",
+      "@codemirror/lint",
+      "@codemirror/search",
+      "@codemirror/theme-one-dark",
+      "@codemirror/merge",
+      "codemirror",
+      "@uiw/react-codemirror",
+      "@uiw/codemirror-extensions-basic-setup",
+      "@lezer/common",
+      "@lezer/highlight",
+      "@lezer/javascript",
+      "@lezer/python",
+      "@lezer/json",
+      "@lezer/yaml",
+    ],
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

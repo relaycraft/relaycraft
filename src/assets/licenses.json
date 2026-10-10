@@ -79,7 +79,7 @@
   {
     "ecosystem": "Node.js",
     "name": "@codemirror/state",
-    "version": "6.7.1",
+    "version": "6.7.5",
     "license": "MIT",
     "repository": "N/A"
   },
@@ -93,7 +93,7 @@
   {
     "ecosystem": "Node.js",
     "name": "@codemirror/view",
-    "version": "6.43.8",
+    "version": "6.43.12",
     "license": "MIT",
     "repository": "N/A"
   },
@@ -163,35 +163,35 @@
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-dialog",
-    "version": "2.7.2",
+    "version": "2.7.3",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-fs",
-    "version": "2.5.1",
+    "version": "2.5.2",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-http",
-    "version": "2.5.9",
+    "version": "2.6.1",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-log",
-    "version": "2.9.0",
+    "version": "2.9.1",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-opener",
-    "version": "2.5.4",
+    "version": "2.5.5",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
@@ -212,7 +212,7 @@
   {
     "ecosystem": "Node.js",
     "name": "@tauri-apps/plugin-updater",
-    "version": "2.10.1",
+    "version": "2.11.0",
     "license": "MIT OR Apache-2.0",
     "repository": "https://github.com/tauri-apps/plugins-workspace#readme"
   },
@@ -261,7 +261,7 @@
   {
     "ecosystem": "Node.js",
     "name": "@types/react",
-    "version": "19.2.18",
+    "version": "19.3.0",
     "license": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react"
   },
@@ -891,7 +891,7 @@
   {
     "ecosystem": "Python",
     "name": "charset-normalizer",
-    "version": "3.5.1",
+    "version": "3.5.2",
     "license": "MIT",
     "repository": "https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md"
   },
@@ -919,7 +919,7 @@
   {
     "ecosystem": "Python",
     "name": "click",
-    "version": "8.4.2",
+    "version": "8.5.0",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/pallets/click/"
   },
@@ -1366,6 +1366,13 @@
   },
   {
     "ecosystem": "Rust",
+    "name": "dirs",
+    "version": "7.0.0",
+    "license": "Apache-2.0 OR MIT",
+    "repository": "https://codeberg.org/dirs/dirs-rs"
+  },
+  {
+    "ecosystem": "Rust",
     "name": "dirs-sys",
     "version": "0.5.0",
     "license": "Apache-2.0 OR MIT",
@@ -1682,7 +1689,7 @@
   {
     "ecosystem": "Node.js",
     "name": "framer-motion",
-    "version": "13.1.0",
+    "version": "13.4.0",
     "license": "MIT",
     "repository": "https://github.com/motiondivision/motion#readme"
   },
@@ -1710,7 +1717,7 @@
   {
     "ecosystem": "Rust",
     "name": "futures-core",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
@@ -1724,7 +1731,7 @@
   {
     "ecosystem": "Rust",
     "name": "futures-io",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
@@ -1738,21 +1745,21 @@
   {
     "ecosystem": "Rust",
     "name": "futures-macro",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
   {
     "ecosystem": "Rust",
     "name": "futures-sink",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
   {
     "ecosystem": "Rust",
     "name": "futures-task",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
@@ -1766,7 +1773,7 @@
   {
     "ecosystem": "Rust",
     "name": "futures-util",
-    "version": "0.3.33",
+    "version": "0.3.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/futures-rs"
   },
@@ -2144,7 +2151,7 @@
   {
     "ecosystem": "Node.js",
     "name": "i18next",
-    "version": "26.3.6",
+    "version": "26.4.2",
     "license": "MIT",
     "repository": "https://www.i18next.com"
   },
@@ -2158,7 +2165,7 @@
   {
     "ecosystem": "Node.js",
     "name": "i18next-http-backend",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "license": "MIT",
     "repository": "https://github.com/i18next/i18next-http-backend"
   },
@@ -2256,7 +2263,7 @@
   {
     "ecosystem": "Python",
     "name": "idna",
-    "version": "3.19",
+    "version": "3.20",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/kjd/idna"
   },
@@ -2431,7 +2438,7 @@
   {
     "ecosystem": "Node.js",
     "name": "js-yaml",
-    "version": "5.3.0",
+    "version": "5.4.2",
     "license": "MIT",
     "repository": "https://github.com/nodeca/js-yaml#readme"
   },
@@ -2585,7 +2592,7 @@
   {
     "ecosystem": "Rust",
     "name": "log",
-    "version": "0.4.33",
+    "version": "0.4.34",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rust-lang/log"
   },
@@ -2606,7 +2613,7 @@
   {
     "ecosystem": "Node.js",
     "name": "lucide-react",
-    "version": "1.31.0",
+    "version": "1.47.0",
     "license": "ISC",
     "repository": "https://lucide.dev"
   },
@@ -2655,7 +2662,7 @@
   {
     "ecosystem": "Python",
     "name": "MarkupSafe",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/pallets/markupsafe/"
   },
@@ -3054,14 +3061,14 @@
   {
     "ecosystem": "Node.js",
     "name": "motion-dom",
-    "version": "13.0.0",
+    "version": "13.3.0",
     "license": "MIT",
     "repository": "https://github.com/motiondivision/motion#readme"
   },
   {
     "ecosystem": "Node.js",
     "name": "motion-utils",
-    "version": "13.0.0",
+    "version": "13.3.0",
     "license": "MIT",
     "repository": "https://github.com/motiondivision/motion#readme"
   },
@@ -3453,13 +3460,6 @@
   {
     "ecosystem": "Rust",
     "name": "pem",
-    "version": "3.0.6",
-    "license": "MIT",
-    "repository": "https://github.com/jcreekmore/pem-rs.git"
-  },
-  {
-    "ecosystem": "Rust",
-    "name": "pem",
     "version": "4.0.0",
     "license": "MIT",
     "repository": "https://github.com/jcreekmore/pem-rs.git"
@@ -3789,21 +3789,21 @@
   {
     "ecosystem": "Python",
     "name": "pycparser",
-    "version": "3.0",
+    "version": "3.11",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/eliben/pycparser"
   },
   {
     "ecosystem": "Python",
     "name": "pyinstaller",
-    "version": "6.22.0",
+    "version": "6.22.2",
     "license": "GNU General Public License v2 (GPLv2)",
     "repository": "https://pyinstaller.org"
   },
   {
     "ecosystem": "Python",
     "name": "pyinstaller-hooks-contrib",
-    "version": "2026.6",
+    "version": "2026.8",
     "license": "Apache Software License; GNU General Public License v2 (GPLv2)",
     "repository": "https://github.com/pyinstaller/pyinstaller-hooks-contrib"
   },
@@ -3978,28 +3978,28 @@
   {
     "ecosystem": "Rust",
     "name": "rcgen",
-    "version": "0.14.8",
+    "version": "0.14.10",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/rustls/rcgen"
   },
   {
     "ecosystem": "Node.js",
     "name": "react",
-    "version": "19.2.8",
+    "version": "19.3.0",
     "license": "MIT",
     "repository": "https://react.dev/"
   },
   {
     "ecosystem": "Node.js",
     "name": "react-dom",
-    "version": "19.2.8",
+    "version": "19.3.0",
     "license": "MIT",
     "repository": "https://react.dev/"
   },
   {
     "ecosystem": "Node.js",
     "name": "react-i18next",
-    "version": "17.0.11",
+    "version": "17.0.14",
     "license": "MIT",
     "repository": "https://github.com/i18next/react-i18next"
   },
@@ -4013,7 +4013,7 @@
   {
     "ecosystem": "Node.js",
     "name": "react-virtuoso",
-    "version": "4.18.11",
+    "version": "4.18.13",
     "license": "MIT",
     "repository": "https://virtuoso.dev/"
   },
@@ -4125,7 +4125,7 @@
   {
     "ecosystem": "Rust",
     "name": "reqwest",
-    "version": "0.13.4",
+    "version": "0.13.5",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/seanmonstar/reqwest"
   },
@@ -4146,14 +4146,14 @@
   {
     "ecosystem": "Rust",
     "name": "rstest",
-    "version": "0.26.1",
+    "version": "0.27.0",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/la10736/rstest"
   },
   {
     "ecosystem": "Rust",
     "name": "rstest_macros",
-    "version": "0.26.1",
+    "version": "0.27.0",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/la10736/rstest"
   },
@@ -4265,7 +4265,7 @@
   {
     "ecosystem": "Node.js",
     "name": "scheduler",
-    "version": "0.27.0",
+    "version": "0.28.0",
     "license": "MIT",
     "repository": "https://react.dev/"
   },
@@ -4335,7 +4335,7 @@
   {
     "ecosystem": "Rust",
     "name": "semver",
-    "version": "1.0.27",
+    "version": "1.0.28",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/dtolnay/semver"
   },
@@ -4580,7 +4580,7 @@
   {
     "ecosystem": "Python",
     "name": "soupsieve",
-    "version": "2.9.2",
+    "version": "3.0.1",
     "license": "MIT",
     "repository": "https://github.com/facelessuser/soupsieve"
   },
@@ -4741,7 +4741,7 @@
   {
     "ecosystem": "Node.js",
     "name": "tailwind-merge",
-    "version": "3.6.0",
+    "version": "3.7.0",
     "license": "MIT",
     "repository": "https://github.com/dcastil/tailwind-merge"
   },
@@ -4811,35 +4811,35 @@
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-dialog",
-    "version": "2.7.2",
+    "version": "2.7.3",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-fs",
-    "version": "2.5.1",
+    "version": "2.5.2",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-http",
-    "version": "2.5.9",
+    "version": "2.6.0",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-log",
-    "version": "2.9.0",
+    "version": "2.9.1",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-opener",
-    "version": "2.5.4",
+    "version": "2.5.5",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
@@ -4853,14 +4853,14 @@
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-single-instance",
-    "version": "2.4.3",
+    "version": "2.4.4",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
   {
     "ecosystem": "Rust",
     "name": "tauri-plugin-updater",
-    "version": "2.10.1",
+    "version": "2.11.0",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/tauri-apps/plugins-workspace"
   },
@@ -5112,7 +5112,7 @@
   {
     "ecosystem": "Rust",
     "name": "tower-http",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "license": "MIT",
     "repository": "https://github.com/tower-rs/tower-http"
   },
@@ -5350,7 +5350,7 @@
   {
     "ecosystem": "Python",
     "name": "urllib3",
-    "version": "2.7.0",
+    "version": "2.8.0",
     "license": "MIT",
     "repository": "https://github.com/urllib3/urllib3/blob/main/CHANGES.rst"
   },
@@ -5392,7 +5392,7 @@
   {
     "ecosystem": "Rust",
     "name": "uuid",
-    "version": "1.24.0",
+    "version": "1.26.1",
     "license": "Apache-2.0 OR MIT",
     "repository": "https://github.com/uuid-rs/uuid"
   },
@@ -5602,7 +5602,7 @@
   {
     "ecosystem": "Python",
     "name": "websockets",
-    "version": "17.0.1",
+    "version": "17.1",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/python-websockets/websockets"
   },
@@ -5630,7 +5630,7 @@
   {
     "ecosystem": "Python",
     "name": "Werkzeug",
-    "version": "3.1.8",
+    "version": "3.1.9",
     "license": "BSD-3-Clause",
     "repository": "https://github.com/pallets/werkzeug/"
   },
@@ -6295,7 +6295,7 @@
   {
     "ecosystem": "Node.js",
     "name": "zod",
-    "version": "4.4.3",
+    "version": "4.6.5",
     "license": "MIT",
     "repository": "https://zod.dev"
   },
