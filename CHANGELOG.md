@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.0...v1.6.1) (2026-10-10)
+
+### Bug Fixes
+
+* **build:** ship a single CodeMirror state instance ([9bbcb1f](https://github-relaycraft/relaycraft/relaycraft/commit/9bbcb1f5a8ad2e211f0bb2908d369f15b34870b3))
+
 # [1.6.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.5.1...v1.6.0) (2026-10-10)
 
 ### Bug Fixes
