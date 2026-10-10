@@ -163,7 +163,7 @@ the plugin detail panel.
 | `storage:read` | low | `api.storage.get()`, `api.storage.list()` |
 | `stats:read` | low | `api.stats.getProcessStats()` |
 | `storage:write` | medium | `api.storage.set()`, `api.storage.delete()`, `api.storage.clear()` |
-| `rules:write` | medium | `api.rules.createMock()`, `api.rules.disableMock()` |
+| `rules:write` | medium | `api.rules.createMock()`, `api.rules.disableMock()`, `api.rules.getOwnMock()` |
 | `fs:read_logs` | medium | Reserved (no bridge command yet) |
 | `network:outbound` | high | `api.http.send()` |
 | `ai:chat` | high | `api.ai.chat()`, `api.ai.chatStream()` (calls are audit-logged) |
