@@ -73,7 +73,7 @@ export function IconWrapper({
       <div
         className={cn(
           "relative z-10 transition-colors duration-300",
-          active ? "text-foreground" : "text-muted-foreground/60",
+          active ? "text-foreground" : "text-muted-foreground/60 group-hover:text-muted-foreground",
         )}
       >
         {renderIcon()}

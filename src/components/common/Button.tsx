@@ -53,7 +53,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={isLoading || props.disabled}
-        whileHover={{ scale: 1.015 }}
         whileTap={{ scale: 0.96 }}
         transition={{ type: "spring", stiffness: 500, damping: 25 }}
         {...(props as any)}

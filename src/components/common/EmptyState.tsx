@@ -47,7 +47,7 @@ export function EmptyState({
               className="absolute inset-0 bg-primary/20 rounded-full animate-radar-ping"
               style={{ animationDelay: "0.5s" }}
             />
-            <div className="relative z-10 w-full h-full bg-background border-2 border-primary/20 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]">
+            <div className="relative z-10 w-full h-full bg-background border-2 border-primary/20 rounded-full flex items-center justify-center shadow-[0_0_20px_color-mix(in_srgb,var(--color-primary),transparent_90%)]">
               <div className="relative">
                 <Icon className="w-10 h-10 text-primary" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />

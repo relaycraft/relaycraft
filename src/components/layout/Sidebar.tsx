@@ -116,7 +116,7 @@ export function Sidebar({ isMacOS }: SidebarProps) {
       {pillRect && (
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute z-[1] rounded-xl border border-primary/20 bg-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+          className="pointer-events-none absolute z-[1] rounded-xl border border-primary/20 bg-primary/20 shadow-[0_0_15px_color-mix(in_srgb,var(--color-primary),transparent_85%)]"
           initial={false}
           animate={{
             top: pillRect.top,
@@ -150,13 +150,12 @@ export function Sidebar({ isMacOS }: SidebarProps) {
               else navButtonRefs.current.delete(item.id);
             }}
             onClick={() => navigate(item.id as any)}
-            className="relative z-10 w-10 h-10 flex items-center justify-center group"
+            className="relative z-10 w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group"
           >
             <motion.div
               animate={{
                 scale: activeTab === item.id ? 1.15 : 1,
               }}
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="relative z-10"
             >
@@ -183,13 +182,12 @@ export function Sidebar({ isMacOS }: SidebarProps) {
             else navButtonRefs.current.delete("settings");
           }}
           onClick={() => navigate("settings")}
-          className="relative z-10 w-10 h-10 flex items-center justify-center group mb-2"
+          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group mb-2"
         >
           <motion.div
             animate={{
               scale: activeTab === "settings" ? 1.15 : 1,
             }}
-            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="relative z-10"
           >

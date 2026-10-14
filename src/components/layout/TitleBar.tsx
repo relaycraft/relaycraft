@@ -114,7 +114,7 @@ export function TitleBar({ running, loading, onToggle }: TitleBarProps) {
                 }`}
               >
                 {running && (
-                  <div className="absolute inset-0 bg-green-500/5 animate-pulse pointer-events-none" />
+                  <div className="absolute inset-0 bg-success/5 animate-pulse pointer-events-none" />
                 )}
                 {loading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -69,7 +69,7 @@ export function Tooltip({
         createPortal(
           <div
             data-relaycraft-tooltip
-            className={`relaycraft-popup fixed z-(--z-tooltip) px-3 py-1.5 text-ui font-semibold text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-lg pointer-events-none animate-in fade-in zoom-in-95 duration-200 ${
+            className={`relaycraft-popup fixed z-(--z-tooltip) px-2.5 py-1 text-xs font-medium text-popover-foreground bg-popover/95 backdrop-blur-xl border border-border/50 shadow-xl rounded-md pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
               multiline ? "whitespace-pre-wrap break-all max-w-[320px]" : "whitespace-nowrap"
             }`}
             style={{

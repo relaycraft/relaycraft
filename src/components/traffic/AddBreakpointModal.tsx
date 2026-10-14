@@ -147,7 +147,7 @@ export function AddBreakpointModal({
         {/* Preview */}
         <div className="p-4 bg-muted/10 rounded-2xl border border-border/40 relative overflow-hidden group/preview">
           <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]" />
+            <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--color-primary),transparent_70%)]" />
             <span className="text-tiny font-bold text-foreground/70 uppercase tracking-widest">
               {t("breakpoint.preview", "Rules Preview")}
             </span>
@@ -191,7 +191,7 @@ export function AddBreakpointModal({
               <div className="relative flex items-center justify-center">
                 <div
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]",
+                    "w-1.5 h-1.5 rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--color-primary),transparent_60%)]",
                     !(breakOnRequest || breakOnResponse)
                       ? "bg-red-500 shadow-red-500/40"
                       : "bg-primary shadow-primary/40",

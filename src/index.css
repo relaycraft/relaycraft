@@ -111,6 +111,14 @@
   /* Rose 400 - Better Dark Mode Contrast */
   --color-destructive-foreground: #ffffff;
 
+  /*
+   * `error` is a semantic alias for destructive. Many components use
+   * bg-error/10, text-error/60 etc.; without a theme color those alpha
+   * variants silently compile to nothing. Keeping it as a var() reference
+   * lets runtime theme overrides of --color-destructive flow through.
+   */
+  --color-error: var(--color-destructive);
+
   --color-success: #10b981;
   --color-success-foreground: #ffffff;
 
@@ -265,6 +273,15 @@ button:disabled {
     "calt" 1;
   outline-color: var(--color-primary);
   border-color: var(--color-border);
+}
+
+/* Unlayered so this beats the universal border-color above.
+   `--color-border-subtle` does not generate a `border-subtle` utility.
+   An unlayered rule also beats every Tailwind utility, regardless of
+   specificity. Do not pair `border-subtle` with another border color
+   such as `hover:border-primary`; the hover color would never apply. */
+.border-subtle {
+  border-color: var(--color-border-subtle);
 }
 
 /* Typography Hierarchy */

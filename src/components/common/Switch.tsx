@@ -35,7 +35,7 @@ export function Switch({
                 ${isSm ? "h-[16px] w-[30px]" : "h-[20px] w-[36px]"}
                 ${
                   checked
-                    ? "bg-primary border-primary shadow-[0_0_12px_rgba(var(--primary-rgb),0.2)]"
+                    ? "bg-primary border-primary shadow-[0_0_12px_color-mix(in_srgb,var(--color-primary),transparent_80%)]"
                     : "bg-muted/20 border-border/80 hover:border-muted-foreground/30"
                 }
                 ${disabled ? "opacity-40 cursor-not-allowed grayscale" : ""}
@@ -49,7 +49,7 @@ export function Switch({
                     ${isSm ? "h-[12px] w-[12px]" : "h-[14px] w-[14px]"}
                     ${
                       checked
-                        ? `bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] ${isSm ? "left-[16px]" : "left-[19px]"}`
+                        ? `bg-white shadow-[0_0_8px_rgba(255,255,255,0.3)] ${isSm ? "left-[16px]" : "left-[19px]"}`
                         : `bg-muted-foreground/40 group-hover:bg-muted-foreground/60 left-[2px]`
                     }
                 `}

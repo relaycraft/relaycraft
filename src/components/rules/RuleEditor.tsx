@@ -211,7 +211,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
         {ruleType !== "block_request" && (
           <section className="space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.4)]" />
+              <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--color-primary),transparent_60%)]" />
               <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest">
                 {t("rules.editor.sections.action")}
               </span>
@@ -301,7 +301,7 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
         {ruleType === "block_request" && (
           <section className="space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-0.5 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
+              <div className="w-0.5 h-3 bg-primary rounded-full shadow-[0_0_10px_color-mix(in_srgb,var(--color-primary),transparent_50%)]" />
               <span className="text-xs font-semibold text-foreground/80 uppercase tracking-widest py-1">
                 {t("rules.editor.sections.action")}
               </span>

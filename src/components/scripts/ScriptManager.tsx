@@ -224,7 +224,7 @@ export function ScriptManager() {
               onClick={() => selectScript(null)}
               className={`group/script-draft-row flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-ui transition-all border bg-primary/5 border-primary/20 text-primary font-medium ${!selectedScript ? "ring-1 ring-primary/30" : ""}`}
             >
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_color-mix(in_srgb,var(--color-primary),transparent_60%)]" />
               <Plus className="w-4 h-4 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="truncate block">

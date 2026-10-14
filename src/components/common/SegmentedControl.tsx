@@ -35,7 +35,7 @@ export function SegmentedControl({
             key={option.value}
             onClick={() => onChange(option.value)}
             className={`
-                            relative flex-1 flex items-center justify-center px-3 py-1.5 text-ui font-bold transition-colors z-10
+                            relative flex-1 flex items-center justify-center px-3 py-1.5 text-ui font-medium transition-colors z-10
                             ${isSelected ? "text-foreground" : "text-muted-foreground hover:text-foreground"}
                             ${size === "sm" ? "h-7" : "h-9"}
                         `}
@@ -43,7 +43,7 @@ export function SegmentedControl({
             {isSelected && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 bg-white/10 rounded-lg shadow-sm border border-white/10 z-[-1]"
+                className="absolute inset-0 bg-foreground/10 rounded-lg shadow-sm border border-foreground/10 z-[-1]"
                 transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
               />
             )}

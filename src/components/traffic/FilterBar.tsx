@@ -243,7 +243,7 @@ export function FilterBar({
                   <button
                     key={filter}
                     onClick={() => appendFilter(filter)}
-                    className="px-1.5 py-0.5 bg-background border border-border rounded hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
+                    className="px-1.5 py-0.5 bg-background border border-border rounded-md hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
                   >
                     {filter}
                   </button>

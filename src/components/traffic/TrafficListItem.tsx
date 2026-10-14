@@ -84,7 +84,7 @@ export const TrafficListItem = memo(
         onClick={() => onSelect(index)}
         onContextMenu={(e) => onContextMenu(e, index)}
         className={`group flex items-center gap-2 px-3 cursor-pointer relative border-b border-subtle transition-[background-color] duration-150 ${
-          isSelected ? "bg-primary/5" : "bg-transparent hover:bg-muted/40"
+          isSelected ? "bg-primary/10" : "bg-transparent hover:bg-muted/40"
         }`}
         style={{
           height: rowHeight,
@@ -95,7 +95,7 @@ export const TrafficListItem = memo(
       >
         {/* Status Indicator Bar */}
         <div
-          className={`absolute left-0 top-0 bottom-0 w-1 transition-colors ${
+          className={`absolute left-0 top-0 bottom-0 w-0.5 transition-colors ${
             isSelected ? "bg-primary" : "bg-transparent"
           }`}
         />

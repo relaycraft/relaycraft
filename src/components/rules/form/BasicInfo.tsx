@@ -153,7 +153,7 @@ export function BasicInfo({
   return (
     <section className="space-y-4 relative z-10">
       <div className="flex items-center gap-2.5 mb-2">
-        <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
+        <div className="w-1 h-3.5 bg-primary rounded-full shadow-[0_0_10px_color-mix(in_srgb,var(--color-primary),transparent_50%)]" />
         <span className="text-xs font-bold text-foreground/90 uppercase tracking-widest py-1">
           {t("rules.editor.sections.core")}
         </span>

@@ -246,12 +246,12 @@ export function StatusBar() {
                   onClick={() => setShowBreakpoints(!showBreakpoints)}
                   className={`breakpoint-manager-trigger flex items-center gap-2 transition-all cursor-pointer select-none rounded-full px-2 py-0.5 ${
                     showBreakpoints
-                      ? "bg-error/10 text-error ring-1 ring-error/30 shadow-[0_0_10px_rgba(var(--error-rgb),0.2)]"
+                      ? "bg-error/10 text-error ring-1 ring-error/30 shadow-[0_0_10px_color-mix(in_srgb,var(--color-error),transparent_80%)]"
                       : "text-error/80 hover:text-error hover:bg-error/5"
                   }`}
                 >
                   <div className="relative flex items-center justify-center">
-                    <div className="w-2 h-2 bg-error rounded-full shadow-[0_0_8px_rgba(var(--error-rgb),0.6)]" />
+                    <div className="w-2 h-2 bg-error rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--color-error),transparent_40%)]" />
                     <div className="absolute inset-0 bg-error rounded-full blur-[3px] opacity-40 animate-pulse" />
                   </div>
                   <span className="font-bold font-mono text-[11px] leading-none">
