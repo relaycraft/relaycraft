@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.1...v1.6.2) (2026-10-14)
+
+### Bug Fixes
+
+* restore theme colors that never painted ([95d2e85](https://github-relaycraft/relaycraft/relaycraft/commit/95d2e85b2271a8d28bf998ef854f91444091b7f3))
+
+### Performance Improvements
+
+* merge traffic indices instead of resorting the window ([640aff8](https://github-relaycraft/relaycraft/relaycraft/commit/640aff840b968ac4143222156dc861f42cac0b74))
+
 ## [1.6.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.0...v1.6.1) (2026-10-10)
 
 ### Bug Fixes
