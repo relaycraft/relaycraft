@@ -90,6 +90,9 @@ export function useTrafficSearch({
 
   const filteredIndices = useMemo(() => {
     const sourceIndices = pausedIndices || indices;
+    // No active filter: keep the store array so a poll that did not change
+    // the list does not allocate another copy for the virtualizer.
+    if (!(onlyMatched || filterText) && deepMatchIds === null) return sourceIndices;
     return sourceIndices.filter((idx) => {
       if (onlyMatched && (!idx.hits || idx.hits.length === 0)) return false;
       if (!filterText) return true;

@@ -7,6 +7,7 @@
 
 import { create } from "zustand";
 import { fetchFlowDetail } from "../lib/traffic";
+import { mergeFlowIndices } from "../lib/traffic/mergeIndices";
 import type { Flow, FlowIndex } from "../types";
 
 // ==================== Type Definitions ====================
@@ -99,35 +100,9 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
 
   addIndices: (newIndices) => {
     set((state) => {
-      if (newIndices.length === 0) return state;
-
-      const indicesMap = new Map(state.indices.map((i) => [i.id, i]));
-      const hasNewItems = newIndices.some((idx) => !indicesMap.has(idx.id));
-
-      // Update or add items
-      newIndices.forEach((idx) => {
-        indicesMap.set(idx.id, idx);
-      });
-
-      let updatedIndices: FlowIndex[];
-
-      if (hasNewItems) {
-        // Sort by msg_ts (ascending) when new items are added
-        updatedIndices = Array.from(indicesMap.values()).sort(
-          (a, b) => (a.msg_ts || 0) - (b.msg_ts || 0),
-        );
-      } else {
-        // No new items, just return updated values
-        updatedIndices = Array.from(indicesMap.values());
-      }
-
-      // Evict oldest entries when exceeding the window cap to prevent
-      // unbounded memory growth in long-running / large sessions.
-      if (updatedIndices.length > MAX_INDICES) {
-        updatedIndices = updatedIndices.slice(updatedIndices.length - MAX_INDICES);
-      }
-
-      return { indices: updatedIndices };
+      const indices = mergeFlowIndices(state.indices, newIndices, MAX_INDICES);
+      if (indices === state.indices) return state;
+      return { indices };
     });
   },
 

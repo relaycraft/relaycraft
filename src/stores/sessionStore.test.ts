@@ -127,7 +127,7 @@ describe("sessionStore", () => {
 
       expect(useTrafficStore.getState().indices).toEqual([{ id: "live-1", msg_ts: 1 }]);
       expect(useSessionStore.getState().showSessionId).toBe("s1");
-      expect(setPollTimestamp).toHaveBeenCalledWith(4242);
+      expect(setPollTimestamp).toHaveBeenCalledWith(4242, "");
       expect(useSessionStore.getState().loading).toBe(false);
     });
   });

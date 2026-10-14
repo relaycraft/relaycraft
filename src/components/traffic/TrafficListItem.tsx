@@ -83,7 +83,7 @@ export const TrafficListItem = memo(
       <div
         onClick={() => onSelect(index)}
         onContextMenu={(e) => onContextMenu(e, index)}
-        className={`group flex items-center gap-2 px-3 cursor-pointer relative border-b border-subtle transition-[background-color] duration-150 ${
+        className={`group flex items-center gap-2 px-3 cursor-default relative border-b border-subtle transition-[background-color] duration-150 ${
           isSelected ? "bg-primary/10" : "bg-transparent hover:bg-muted/40"
         }`}
         style={{

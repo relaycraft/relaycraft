@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS sse_events (
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_indices_session_ts ON flow_indices(session_id, msg_ts DESC);
+CREATE INDEX IF NOT EXISTS idx_indices_session_ts_id ON flow_indices(session_id, msg_ts, id);
 CREATE INDEX IF NOT EXISTS idx_indices_session_host ON flow_indices(session_id, host);
 CREATE INDEX IF NOT EXISTS idx_indices_session_status ON flow_indices(session_id, status);
 CREATE INDEX IF NOT EXISTS idx_details_session ON flow_details(session_id);

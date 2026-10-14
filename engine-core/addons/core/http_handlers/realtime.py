@@ -20,8 +20,15 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
         limit_param = query.get("limit")
         limit_val = int(limit_param) if limit_param and int(limit_param) > 0 else 10000
 
+        since_id = query.get("since_id") or None
         session_id_param = query.get("session_id", None)
-        db_indices = get_indices(monitor.db, session_id=session_id_param, since=since_ts, limit=limit_val)
+        db_indices = get_indices(
+            monitor.db,
+            session_id=session_id_param,
+            since=since_ts,
+            limit=limit_val,
+            since_id=since_id,
+        )
 
         indices = []
         for idx in db_indices:
@@ -53,13 +60,20 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
                 }
             )
 
-        max_msg_ts = 0
+        # Cursor is the last row in (msg_ts, id) order, not the max timestamp.
+        # Rows that share that timestamp and sort after this id still need to
+        # be delivered on the next poll.
+        server_ts = since_ts
+        server_id = since_id or ""
         if indices:
-            max_msg_ts = max(idx.get("msg_ts", 0) for idx in indices)
+            last = indices[-1]
+            server_ts = last.get("msg_ts") or since_ts
+            server_id = last.get("id") or ""
 
         response_data = {
             "indices": indices,
-            "server_ts": max_msg_ts if max_msg_ts > 0 else since_ts,
+            "server_ts": server_ts,
+            "server_id": server_id,
             "notifications": monitor.db.drain_notifications(),
         }
         json_str = json.dumps(response_data, default=safe_json_default, ensure_ascii=False)

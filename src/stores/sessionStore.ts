@@ -127,7 +127,10 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         // Set poll timestamp to the latest loaded flow so subsequent polls
         // only fetch newer data (not re-fetch everything since epoch).
         if (data.server_ts && data.server_ts > 0) {
-          setPollTimestamp(data.server_ts);
+          setPollTimestamp(
+            data.server_ts,
+            typeof data.server_id === "string" ? data.server_id : "",
+          );
         } else {
           setPollTimestamp(0);
         }

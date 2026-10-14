@@ -42,6 +42,17 @@ describe("trafficStore", () => {
     expect(useTrafficStore.getState().indices).toEqual([index3, index1, index2]);
   });
 
+  it("keeps the same indices array when a poll repeats an unchanged row", () => {
+    const store = useTrafficStore.getState();
+    const index1 = { id: "1", method: "GET", url: "http://test1.com", msg_ts: 100 } as any;
+    store.addIndices([index1]);
+    const snapshot = useTrafficStore.getState().indices;
+
+    store.addIndices([{ ...index1 }]);
+
+    expect(useTrafficStore.getState().indices).toBe(snapshot);
+  });
+
   it("should update intercepted flows", () => {
     const store = useTrafficStore.getState();
     const mockFlow = { id: "flow-1", request: { url: "test.com" } } as any;

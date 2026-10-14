@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VirtuosoHandle } from "react-virtuoso";
@@ -398,7 +397,7 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
                   onClick={() => {
                     virtuosoRef.current?.scrollToIndex({
                       index: filteredIndices.length - 1,
-                      behavior: "smooth",
+                      behavior: "auto",
                     });
                     setAtBottom(true);
                     setNewRequestsCount(0);
@@ -411,24 +410,15 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
           </div>
         </div>
 
-        <AnimatePresence>
-          {selectedFlow && (
-            <motion.div
-              key="flow-detail-drawer"
-              initial={{ width: 0, minWidth: 0, opacity: 0 }}
-              animate={{ width: "50%", minWidth: 450, opacity: 1 }}
-              exit={{ width: 0, minWidth: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden bg-background border-l border-border shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.2)] flex flex-col max-w-[1200px] will-change-[width,min-width,opacity]"
-            >
-              <FlowDetail
-                key={selectedFlow.id}
-                flow={selectedFlow}
-                onClose={() => selectFlow(null)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {selectedFlow && (
+          <div className="w-1/2 min-w-[450px] max-w-[1200px] overflow-hidden bg-background border-l border-border flex flex-col">
+            <FlowDetail
+              key={selectedFlow.id}
+              flow={selectedFlow}
+              onClose={() => selectFlow(null)}
+            />
+          </div>
+        )}
       </div>
 
       <ContextMenu

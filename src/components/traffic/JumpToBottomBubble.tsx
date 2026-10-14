@@ -25,7 +25,7 @@ export function JumpToBottomBubble({
         >
           <button
             onClick={onClick}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-xs font-medium backdrop-blur-xl ring-1 ring-white/5"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/90 hover:bg-muted text-muted-foreground border border-white/5 rounded-full shadow-lg transition-colors text-xs font-medium backdrop-blur-xl ring-1 ring-white/5"
           >
             <div className="flex items-center gap-1.5">
               <div className="px-1 min-w-[14px] h-3.5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-micro font-bold">

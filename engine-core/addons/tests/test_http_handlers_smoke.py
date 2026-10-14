@@ -67,6 +67,9 @@ class TestHttpHandlersSmoke(unittest.TestCase):
             handled = handle_realtime_routes(monitor, flow, "relay_poll", _FakeResponse, _safe_json_default)
             self.assertTrue(handled)
             self.assertEqual(flow.response.status_code, 200)
+            body = json.loads(flow.response.content.decode("utf-8"))
+            self.assertEqual(body["server_ts"], 123)
+            self.assertEqual(body["server_id"], "f1")
 
         with patch("core.http_handlers.realtime.get_indices", side_effect=RuntimeError("db error")):
             flow = _make_flow(query={"since": "0"})

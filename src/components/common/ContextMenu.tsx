@@ -83,9 +83,7 @@ export function ContextMenu({ x, y, visible, items, onClose }: ContextMenuProps)
     left: adjustedPos.x + 2,
     opacity: isPositioned ? 1 : 0,
     pointerEvents: isPositioned ? "auto" : "none",
-    // CRITICAL: Ensure NO transitions on top/left to prevent "flying in"
-    // Increased duration to 250ms and refined timing for a more "natural" feel
-    transition: isPositioned ? "opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)" : "none",
+    transition: "none",
   };
 
   return createPortal(
@@ -112,7 +110,7 @@ export function ContextMenu({ x, y, visible, items, onClose }: ContextMenuProps)
               }}
               disabled={item.disabled}
               className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded-lg text-ui transition-colors w-full text-left",
+                "flex items-center gap-2 px-2 py-1.5 rounded-lg text-ui transition-colors w-full text-left cursor-default",
                 item.disabled
                   ? "opacity-50 cursor-not-allowed"
                   : item.danger

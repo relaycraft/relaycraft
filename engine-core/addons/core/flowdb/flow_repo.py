@@ -332,8 +332,20 @@ def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
     }
 
 
-def get_indices(db, session_id: str = None, since: float = 0, limit: int = None) -> List[Dict]:
-    """Get flow indices for polling."""
+def get_indices(
+    db,
+    session_id: str = None,
+    since: float = 0,
+    limit: int = None,
+    since_id: str = None,
+) -> List[Dict]:
+    """Get flow indices for polling.
+
+    With ``since_id``, the cursor is exclusive on ``(msg_ts, id)`` so a full
+    page of rows that share one timestamp cannot be re-read forever, and rows
+    past the limit are not skipped. Without it, ``msg_ts >= since`` is kept
+    for the initial page.
+    """
     import time as time_module
 
     t0 = time_module.time()
@@ -346,12 +358,20 @@ def get_indices(db, session_id: str = None, since: float = 0, limit: int = None)
     def _query(conn):
         t1 = time_module.time()
 
-        query = """
-            SELECT * FROM flow_indices
-            WHERE session_id = ? AND msg_ts >= ?
-            ORDER BY msg_ts ASC
-        """
-        params = [session_id, since]
+        if since_id:
+            query = """
+                SELECT * FROM flow_indices
+                WHERE session_id = ? AND (msg_ts > ? OR (msg_ts = ? AND id > ?))
+                ORDER BY msg_ts ASC, id ASC
+            """
+            params = [session_id, since, since, since_id]
+        else:
+            query = """
+                SELECT * FROM flow_indices
+                WHERE session_id = ? AND msg_ts >= ?
+                ORDER BY msg_ts ASC, id ASC
+            """
+            params = [session_id, since]
 
         if limit:
             query += " LIMIT ?"

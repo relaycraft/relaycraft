@@ -17,10 +17,12 @@ export { getBackendPort } from "./portState";
 
 let pollInterval: number | null = null;
 let lastTimestamp = 0;
+let lastId = "";
 let isPolling = false;
 
-export function setPollTimestamp(ts: number) {
+export function setPollTimestamp(ts: number, id = "") {
   lastTimestamp = ts;
+  lastId = id;
 }
 
 export function hasActivePoll(): boolean {
@@ -40,6 +42,7 @@ export function startPollInterval() {
 
 export function resetTimestamp() {
   lastTimestamp = 0;
+  lastId = "";
 }
 
 export async function pollTraffic(): Promise<void> {
@@ -48,7 +51,9 @@ export async function pollTraffic(): Promise<void> {
 
   try {
     const pollUrl = `http://127.0.0.1:${getBackendPort()}/_relay/poll`;
-    const response = await tauriFetch(`${pollUrl}?since=${lastTimestamp}`, {
+    const params = new URLSearchParams({ since: String(lastTimestamp) });
+    if (lastId) params.set("since_id", lastId);
+    const response = await tauriFetch(`${pollUrl}?${params}`, {
       method: "GET",
       cache: "no-store",
     });
@@ -110,6 +115,7 @@ export async function pollTraffic(): Promise<void> {
         }
 
         lastTimestamp = data.server_ts;
+        lastId = typeof data.server_id === "string" ? data.server_id : "";
 
         if (data.notifications && data.notifications.length > 0) {
           try {

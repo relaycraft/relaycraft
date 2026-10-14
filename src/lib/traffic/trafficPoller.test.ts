@@ -117,6 +117,20 @@ describe("trafficPoller", () => {
     expect((tauriFetch as any).mock.calls[1][0]).toContain("since=500");
   });
 
+  it("sends since_id so the next poll does not re-read the cursor row", async () => {
+    (tauriFetch as any)
+      .mockResolvedValueOnce(
+        okResponse({ server_ts: 500, server_id: "flow-1", indices: [makeIndex()] }),
+      )
+      .mockResolvedValueOnce(okResponse({ server_ts: 500, server_id: "flow-1", indices: [] }));
+
+    await pollTraffic();
+    await pollTraffic();
+
+    expect((tauriFetch as any).mock.calls[1][0]).toContain("since=500");
+    expect((tauriFetch as any).mock.calls[1][0]).toContain("since_id=flow-1");
+  });
+
   it("setPollTimestamp overrides the since parameter", async () => {
     setPollTimestamp(777);
     (tauriFetch as any).mockResolvedValueOnce(okResponse({ server_ts: 800, indices: [] }));
