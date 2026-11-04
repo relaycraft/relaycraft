@@ -30,7 +30,7 @@ serde_yaml = "0.9"
 semver = "1"
 local-ip-address = "0.6"
 dirs = "7.0.0"
-sysinfo = "0.39"
+sysinfo = "0.40"
 regex = "1"
 libc = "0.2"
 log = "0.4"
@@ -48,7 +48,7 @@ rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
 walkdir = "2"
-zip = "8.6"
+zip = "9.1"
 tauri-plugin-single-instance = "2.4.2"
 thiserror = "2.0"
 sha1 = "0.11.0"
@@ -59,7 +59,7 @@ window-vibrancy = "0.8.0"
 tempfile = "3"
 
 [dev-dependencies]
-rstest = "0.27"
+rstest = "0.28"
 pem = "4.0.0"
 
 [target.'cfg(windows)'.dependencies]
