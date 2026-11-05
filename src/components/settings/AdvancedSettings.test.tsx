@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppConfig } from "../../stores/settingsStore";
 import { AdvancedSettings } from "./AdvancedSettings";
 
-const { settingsState, useSettingsStoreMock } = vi.hoisted(() => {
+const { settingsState, settingsStoreMock } = vi.hoisted(() => {
   const defaultConfig: AppConfig = {
     ssl_insecure: false,
     proxy_port: 9090,
@@ -36,17 +36,17 @@ const { settingsState, useSettingsStoreMock } = vi.hoisted(() => {
     updateDisableGpuAcceleration: vi.fn(),
   };
 
-  const useSettingsStoreMock = (selector?: (state: any) => any) =>
+  const settingsStoreMock = (selector?: (state: any) => any) =>
     selector ? selector(settingsState) : settingsState;
 
   return {
     settingsState,
-    useSettingsStoreMock,
+    settingsStoreMock,
   };
 });
 
 vi.mock("../../stores/settingsStore", () => ({
-  useSettingsStore: useSettingsStoreMock,
+  useSettingsStore: settingsStoreMock,
 }));
 
 vi.mock("../../stores/uiStore", () => ({

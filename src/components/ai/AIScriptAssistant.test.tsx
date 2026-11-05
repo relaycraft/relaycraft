@@ -2,19 +2,19 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AIScriptAssistant } from "./AIScriptAssistant";
 
-const { chatCompletionWithTools, chatCompletionStream, useUIStoreMock } = vi.hoisted(() => {
+const { chatCompletionWithTools, chatCompletionStream, uiStoreMock } = vi.hoisted(() => {
   const chatCompletionWithTools = vi.fn();
   const chatCompletionStream = vi.fn();
   const setDraftScriptPrompt = vi.fn();
-  const useUIStoreMock = () => ({
+  const uiStoreMock = () => ({
     draftScriptPrompt: null,
     setDraftScriptPrompt,
   });
-  (useUIStoreMock as any).getState = () => ({
+  (uiStoreMock as any).getState = () => ({
     draftScriptPrompt: null,
     setDraftScriptPrompt,
   });
-  return { chatCompletionWithTools, chatCompletionStream, useUIStoreMock };
+  return { chatCompletionWithTools, chatCompletionStream, uiStoreMock };
 });
 
 vi.mock("../../stores/aiStore", () => ({
@@ -27,7 +27,7 @@ vi.mock("../../stores/aiStore", () => ({
 }));
 
 vi.mock("../../stores/uiStore", () => ({
-  useUIStore: useUIStoreMock,
+  useUIStore: uiStoreMock,
 }));
 
 vi.mock("../../lib/ai/lang", () => ({
