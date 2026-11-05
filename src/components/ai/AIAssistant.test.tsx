@@ -3,12 +3,12 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AIAssistant } from "./AIAssistant";
 
-const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStoreMock } =
-  vi.hoisted(() => {
+const { chatCompletionWithTools, chatCompletionStream, aiStoreMock, uiStoreMock } = vi.hoisted(
+  () => {
     const chatCompletionWithTools = vi.fn();
     const chatCompletionStream = vi.fn();
     const abortChat = vi.fn();
-    const useAIStoreMock = (selector?: (state: any) => any) => {
+    const aiStoreMock = (selector?: (state: any) => any) => {
       const state = {
         chatCompletionStream,
         chatCompletionWithTools,
@@ -17,25 +17,26 @@ const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStor
       };
       return selector ? selector(state) : state;
     };
-    const useUIStoreMock = (selector?: (state: any) => any) => {
+    const uiStoreMock = (selector?: (state: any) => any) => {
       const state = {};
       return selector ? selector(state) : state;
     };
-    (useUIStoreMock as any).getState = () => ({ activeTab: "traffic" });
+    (uiStoreMock as any).getState = () => ({ activeTab: "traffic" });
     return {
       chatCompletionWithTools,
       chatCompletionStream,
-      useAIStoreMock,
-      useUIStoreMock,
+      aiStoreMock,
+      uiStoreMock,
     };
-  });
+  },
+);
 
 vi.mock("../../stores/aiStore", () => ({
-  useAIStore: useAIStoreMock,
+  useAIStore: aiStoreMock,
 }));
 
 vi.mock("../../stores/uiStore", () => ({
-  useUIStore: useUIStoreMock,
+  useUIStore: uiStoreMock,
 }));
 
 vi.mock("../../lib/ai/lang", () => ({

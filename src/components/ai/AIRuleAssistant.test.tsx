@@ -2,11 +2,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AIRuleAssistant } from "./AIRuleAssistant";
 
-const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStoreMock } =
-  vi.hoisted(() => {
+const { chatCompletionWithTools, chatCompletionStream, aiStoreMock, uiStoreMock } = vi.hoisted(
+  () => {
     const chatCompletionWithTools = vi.fn();
     const chatCompletionStream = vi.fn();
-    const useAIStoreMock = Object.assign(
+    const aiStoreMock = Object.assign(
       (selector?: (state: any) => any) => {
         const state = {
           settings: { enabled: true },
@@ -21,29 +21,30 @@ const { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStor
       },
     );
 
-    const useUIStoreMock = (selector?: (state: any) => any) => {
+    const uiStoreMock = (selector?: (state: any) => any) => {
       const state = {
         draftRulePrompt: null,
         setDraftRulePrompt: vi.fn(),
       };
       return selector ? selector(state) : state;
     };
-    (useUIStoreMock as any).getState = () => ({
+    (uiStoreMock as any).getState = () => ({
       showConfirm: vi.fn(),
       setActiveTab: vi.fn(),
       draftRulePrompt: null,
       setDraftRulePrompt: vi.fn(),
     });
 
-    return { chatCompletionWithTools, chatCompletionStream, useAIStoreMock, useUIStoreMock };
-  });
+    return { chatCompletionWithTools, chatCompletionStream, aiStoreMock, uiStoreMock };
+  },
+);
 
 vi.mock("../../stores/aiStore", () => ({
-  useAIStore: useAIStoreMock,
+  useAIStore: aiStoreMock,
 }));
 
 vi.mock("../../stores/uiStore", () => ({
-  useUIStore: useUIStoreMock,
+  useUIStore: uiStoreMock,
 }));
 
 vi.mock("../../stores/scriptStore", () => ({

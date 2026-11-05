@@ -4,74 +4,69 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppConfig } from "../../stores/settingsStore";
 import { NetworkSettings } from "./NetworkSettings";
 
-const {
-  settingsState,
-  proxyState,
-  useSettingsStoreMock,
-  useProxyStoreMock,
-  resetUpstreamStatusMock,
-} = vi.hoisted(() => {
-  const defaultConfig: AppConfig = {
-    ssl_insecure: false,
-    proxy_port: 9090,
-    verbose_logging: false,
-    language: "en",
-    upstream_proxy: {
-      enabled: false,
-      url: "",
-      bypass_domains: "localhost,127.0.0.1",
-    },
-    always_on_top: false,
-    plugin_registry_url: "",
-    auto_check_update: false,
-    confirm_exit: false,
-    auto_start_proxy: false,
-    display_density: "comfortable",
-    enable_vibrancy: false,
-    disable_gpu_acceleration: false,
-    mcp_config: {
-      enabled: false,
-      port: 7090,
-    },
-  };
+const { settingsState, proxyState, settingsStoreMock, proxyStoreMock, resetUpstreamStatusMock } =
+  vi.hoisted(() => {
+    const defaultConfig: AppConfig = {
+      ssl_insecure: false,
+      proxy_port: 9090,
+      verbose_logging: false,
+      language: "en",
+      upstream_proxy: {
+        enabled: false,
+        url: "",
+        bypass_domains: "localhost,127.0.0.1",
+      },
+      always_on_top: false,
+      plugin_registry_url: "",
+      auto_check_update: false,
+      confirm_exit: false,
+      auto_start_proxy: false,
+      display_density: "comfortable",
+      enable_vibrancy: false,
+      disable_gpu_acceleration: false,
+      mcp_config: {
+        enabled: false,
+        port: 7090,
+      },
+    };
 
-  const settingsState = {
-    config: defaultConfig,
-    loading: true,
-    updateProxyPort: vi.fn(),
-    updateSslInsecure: vi.fn(),
-    updateUpstreamProxy: vi.fn(),
-    testingUpstream: false,
-    upstreamStatus: "idle" as const,
-    testUpstreamConnectivity: vi.fn(),
-    resetUpstreamStatus: vi.fn(),
-  };
+    const settingsState = {
+      config: defaultConfig,
+      loading: true,
+      updateProxyPort: vi.fn(),
+      updateSslInsecure: vi.fn(),
+      updateUpstreamProxy: vi.fn(),
+      testingUpstream: false,
+      upstreamStatus: "idle" as const,
+      testUpstreamConnectivity: vi.fn(),
+      resetUpstreamStatus: vi.fn(),
+    };
 
-  const proxyState = {
-    running: true,
-    restartProxy: vi.fn().mockResolvedValue(undefined),
-  };
+    const proxyState = {
+      running: true,
+      restartProxy: vi.fn().mockResolvedValue(undefined),
+    };
 
-  const useSettingsStoreMock = (selector?: (state: any) => any) =>
-    selector ? selector(settingsState) : settingsState;
-  const useProxyStoreMock = (selector?: (state: any) => any) =>
-    selector ? selector(proxyState) : proxyState;
+    const settingsStoreMock = (selector?: (state: any) => any) =>
+      selector ? selector(settingsState) : settingsState;
+    const proxyStoreMock = (selector?: (state: any) => any) =>
+      selector ? selector(proxyState) : proxyState;
 
-  return {
-    settingsState,
-    proxyState,
-    useSettingsStoreMock,
-    useProxyStoreMock,
-    resetUpstreamStatusMock: settingsState.resetUpstreamStatus,
-  };
-});
+    return {
+      settingsState,
+      proxyState,
+      settingsStoreMock,
+      proxyStoreMock,
+      resetUpstreamStatusMock: settingsState.resetUpstreamStatus,
+    };
+  });
 
 vi.mock("../../stores/settingsStore", () => ({
-  useSettingsStore: useSettingsStoreMock,
+  useSettingsStore: settingsStoreMock,
 }));
 
 vi.mock("../../stores/proxyStore", () => ({
-  useProxyStore: useProxyStoreMock,
+  useProxyStore: proxyStoreMock,
 }));
 
 vi.mock("react-i18next", async (importOriginal) => {
