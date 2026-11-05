@@ -20,6 +20,25 @@ pub struct StartupWarnings {
     pub config_was_reset: bool,
 }
 
+fn init_sysinfo_system() -> sysinfo::System {
+    sysinfo::System::new_all().unwrap_or_else(|e| {
+        log::warn!("sysinfo System::new_all failed ({e}); falling back to System::new()");
+        sysinfo::System::new().expect("sysinfo System::new failed")
+    })
+}
+
+fn init_sysinfo_networks() -> sysinfo::Networks {
+    sysinfo::Networks::new_with_refreshed_list().unwrap_or_else(|e| {
+        log::warn!(
+            "sysinfo Networks::new_with_refreshed_list failed ({e}); falling back to Networks::new()"
+        );
+        let mut networks =
+            sysinfo::Networks::new().expect("sysinfo Networks::new failed");
+        networks.refresh(false);
+        networks
+    })
+}
+
 #[tauri::command]
 fn get_startup_warnings(state: tauri::State<'_, StartupWarnings>) -> bool {
     state.config_was_reset
@@ -227,8 +246,8 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .manage(proxy::ProxyState {
             engine: Arc::new(proxy::MitmproxyEngine::new()),
-            system: Mutex::new(sysinfo::System::new_all()),
-            networks: Mutex::new(sysinfo::Networks::new_with_refreshed_list()),
+            system: Mutex::new(init_sysinfo_system()),
+            networks: Mutex::new(init_sysinfo_networks()),
             last_rx: Mutex::new(0),
             last_tx: Mutex::new(0),
             last_update: Mutex::new(std::time::Instant::now()),

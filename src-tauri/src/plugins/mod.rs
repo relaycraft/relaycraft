@@ -438,14 +438,17 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
         let mut file = archive
             .by_index(i)
             .map_err(|e| format!("[archive] Failed to read zip entry: {}", e))?;
-        if file.name().ends_with("plugin.json") {
+        let entry_name = file
+            .name()
+            .map_err(|e| format!("[archive] Invalid zip entry name: {}", e))?;
+        if entry_name.ends_with("plugin.json") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
                 return Err("[manifest] plugin.json is too large".to_string());
             }
             file.read_to_string(&mut plugin_manifest_content)
                 .map_err(|e| format!("[manifest] Failed to read plugin.json: {}", e))?;
-        } else if file.name().ends_with("plugin.yaml") || file.name().ends_with("plugin.yml") {
+        } else if entry_name.ends_with("plugin.yaml") || entry_name.ends_with("plugin.yml") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
                 return Err("[manifest] plugin.yaml is too large".to_string());
@@ -453,7 +456,7 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
             file.read_to_string(&mut plugin_manifest_content)
                 .map_err(|e| format!("[manifest] Failed to read plugin.yaml: {}", e))?;
             is_yaml_plugin = true;
-        } else if file.name().ends_with("theme.yaml") || file.name().ends_with("theme.yml") {
+        } else if entry_name.ends_with("theme.yaml") || entry_name.ends_with("theme.yml") {
             use std::io::Read;
             if file.size() > 1024 * 1024 {
                 return Err("[manifest] theme manifest is too large".to_string());
@@ -530,7 +533,10 @@ pub fn install_plugin_from_zip(zip_path: &Path, app_dir: &Path) -> Result<String
             None => continue,
         };
 
-        if (*file.name()).ends_with('/') {
+        let entry_name = file
+            .name()
+            .map_err(|e| format!("[archive] Invalid zip entry name: {}", e))?;
+        if entry_name.ends_with('/') {
             fs::create_dir_all(&outpath)
                 .map_err(|e| format!("[filesystem] Failed to create directory: {}", e))?;
         } else {
