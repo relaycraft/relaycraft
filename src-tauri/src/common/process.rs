@@ -5,7 +5,10 @@ use std::path::Path;
 /// deliberately NOT used.
 pub fn kill_engine_processes_by_path(engine_path: &Path) {
     let target = normalize_exe_path(engine_path);
-    let mut sys = sysinfo::System::new();
+    let Ok(mut sys) = sysinfo::System::new() else {
+        log::warn!("Failed to initialize sysinfo; skipping engine process cleanup");
+        return;
+    };
     sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
     let mut matched: Vec<sysinfo::Pid> = Vec::new();

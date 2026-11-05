@@ -334,7 +334,10 @@ impl RuleStorage {
                 continue;
             }
 
-            let name = file.name().to_string();
+            let name = file
+                .name()
+                .map(|n| n.into_owned())
+                .map_err(|e| RuleError::Parse(format!("Invalid ZIP entry name: {}", e)))?;
             if name.contains("__MACOSX")
                 || std::path::Path::new(&name)
                     .file_name()
