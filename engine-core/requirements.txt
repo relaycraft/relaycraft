@@ -1,6 +1,6 @@
-mitmproxy==12.3.0
-websockets==17.3
-jsonpath-ng==1.13.0
+mitmproxy==12.3.1
+websockets==17.4
+jsonpath-ng==1.16.0
 h11==0.16.0
 requests==2.34.2
 pyinstaller==6.22.3
