@@ -245,7 +245,28 @@ page:
 | Hand-crafted secrets in `settings` are ignored | denylist test on `inspect_snapshot` |
 | `requires.host` newer than app blocks apply | version comparison test |
 
-## 10. Open questions
+## 10. Engine independence
+
+Everything a snapshot touches is host-owned: `AppConfig` fields, the plugin
+manifest, the manifest envelope, and the `config.json` write path. The
+proxy engine never sees a snapshot — it only ever receives launch arguments
+translated from config in `engine.rs`, so an engine swap (2.0) replaces the
+translation layer, not the semantics being snapshotted. Engine-side state
+(certificates, rules dir, scripts, flow DB) is deliberately out of scope and
+keeps its own exchange paths.
+
+Forward compatibility is built into the schema rather than deferred:
+
+- Unknown keys inside `settings`/`machine_bound` are ignored + flagged, so a
+  snapshot written by a 2.0 build degrades gracefully when imported into
+  1.7.
+- `version` covers a genuine semantic break; `requires.host` gates on app
+  version.
+- New config fields added by 2.0 get classified by the §4 rule of thumb
+  (opens a listener or binds security posture → machine-bound; else
+  portable); the pipeline itself does not change.
+
+## 11. Open questions
 
 1. Installed themes: include an `installed theme ids` informational list
    alongside `plugins`, or leave themes to their own path? No active-theme
