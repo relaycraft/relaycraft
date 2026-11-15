@@ -237,6 +237,9 @@ export interface RcExtension {
   // 元信息
   clientIp?: string;
   serverIp?: string;
+  pid?: number | null; // 本机客户端进程 PID
+  processName?: string | null; // 本机客户端进程名
+  processPath?: string | null; // 本机客户端进程可执行文件路径
   error?: RcError;
 
   // WebSocket
@@ -321,6 +324,8 @@ export interface FlowIndex {
   clientIp?: string; // 客户端IP，用于区分本机和远程请求
   appName?: string; // 来源应用标识符，如 "com.apple.MobileSafari"
   appDisplayName?: string; // 来源应用显示名称，如 "Safari"
+  pid?: number | null; // 本机客户端进程 PID（远程设备/未解析为 null）
+  processName?: string; // 本机客户端进程名（如 "curl"、"Google Chrome"）
 
   // 标记
   hasError: boolean;

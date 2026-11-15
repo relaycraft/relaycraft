@@ -394,6 +394,34 @@ export function FlowDetail({ flow, onClose }: FlowDetailProps) {
             )}
           </div>
 
+          {(flow._rc.processName || flow._rc.pid != null || flow._rc.processPath) && (
+            <div className="flex flex-col gap-1 rounded-md border border-subtle bg-muted/20 px-2.5 py-1.5">
+              {(flow._rc.processName || flow._rc.pid != null) && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-micro font-semibold tracking-wider text-muted-foreground uppercase shrink-0">
+                    {t("flow.process.title")}
+                  </span>
+                  <span className="text-xs font-mono text-foreground/90 truncate">
+                    {flow._rc.processName || "—"}
+                    {flow._rc.pid != null ? ` · PID ${flow._rc.pid}` : ""}
+                  </span>
+                </div>
+              )}
+              {flow._rc.processPath && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-micro font-semibold tracking-wider text-muted-foreground uppercase shrink-0">
+                    {t("flow.process.path")}
+                  </span>
+                  <Tooltip content={flow._rc.processPath} side="bottom" className="min-w-0">
+                    <span className="text-xs font-mono text-muted-foreground/80 truncate">
+                      {flow._rc.processPath}
+                    </span>
+                  </Tooltip>
+                </div>
+              )}
+            </div>
+          )}
+
           {flow._rc.hits && flow._rc.hits.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">

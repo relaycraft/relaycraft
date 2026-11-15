@@ -24,7 +24,7 @@ from typing import Optional, Dict, Any, Tuple, List
 from mitmproxy import http
 
 from .debug import DebugManager
-from .utils import setup_logging
+from .utils import setup_logging, is_reverse_client, is_reverse_flow
 from .flow_database import FlowDatabase
 from .har_converters import (
     cookies_to_har,
@@ -36,7 +36,7 @@ from .har_converters import (
     safe_decode,
 )
 from .flowdb.flow_repo import store_flow as _store_flow_repo
-from . import sse_processor, ws_handler
+from . import capture_scope, sse_processor, ws_handler
 from .import source_detector
 from .http_handlers import (
     handle_realtime_routes,
@@ -65,9 +65,10 @@ def is_engine_internal_host(host: Optional[str]) -> bool:
 class TrafficMonitor:
     """Converts mitmproxy flows to HAR-compatible format with SQLite persistence."""
 
-    def __init__(self, debug_mgr: DebugManager):
+    def __init__(self, debug_mgr: DebugManager, process_resolver=None):
         self.logger = setup_logging()
         self.debug_mgr = debug_mgr
+        self.process_resolver = process_resolver
 
         # Initialize SQLite database
         self.db = FlowDatabase()
@@ -288,6 +289,58 @@ class TrafficMonitor:
 
     # ==================== Flow Processing ====================
 
+    def _peek_process_info(self, client_conn: Any) -> Optional[Dict[str, Any]]:
+        """Best-effort process lookup from the resolver cache (never awaits)."""
+        try:
+            resolver = getattr(self, "process_resolver", None)
+            if resolver is None or client_conn is None:
+                return None
+            return resolver.peek(client_conn)
+        except Exception:
+            return None
+
+    def _flow_out_of_capture_scope(
+        self, flow: http.HTTPFlow, process_info: Optional[Dict[str, Any]]
+    ) -> bool:
+        """Whether the flow is excluded by the capture scope (fail-open).
+
+        Reverse-mode (share entry) flows are always exempt.
+        """
+        try:
+            if not capture_scope.is_enabled():
+                return False
+            if is_reverse_flow(flow):
+                return False
+            return not capture_scope.is_in_scope(process_info)
+        except Exception as e:
+            self.logger.debug(f"capture scope check failed, treating as in-scope: {e}")
+            return False
+
+    def _client_out_of_capture_scope(
+        self, client_conn: Any, process_info: Optional[Dict[str, Any]]
+    ) -> bool:
+        """Scope check for non-flow paths (e.g. TLS errors)."""
+        try:
+            if not capture_scope.is_enabled():
+                return False
+            if is_reverse_client(client_conn):
+                return False
+            return not capture_scope.is_in_scope(process_info)
+        except Exception as e:
+            self.logger.debug(f"capture scope check failed, treating as in-scope: {e}")
+            return False
+
+    @staticmethod
+    def _rc_process_fields(process_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Flat _rc fields for process attribution (None when unknown)."""
+        if not process_info:
+            return {"pid": None, "processName": None, "processPath": None}
+        return {
+            "pid": process_info.get("pid"),
+            "processName": process_info.get("name") or None,
+            "processPath": process_info.get("path"),
+        }
+
     def process_flow(self, flow: http.HTTPFlow) -> Optional[Dict[str, Any]]:
         """
         Convert flow to HAR-compatible serializable dict.
@@ -296,6 +349,19 @@ class TrafficMonitor:
         under the '_rc' namespace.
         """
         try:
+            # Capture scope: flows flagged out-of-scope at request time, or
+            # excluded by the current scope, are never recorded.
+            if flow.metadata.get("_relaycraft_out_of_scope"):
+                return None
+            process_info = flow.metadata.get("_relaycraft_process")
+            if process_info is None:
+                process_info = self._peek_process_info(
+                    getattr(flow, "client_conn", None)
+                )
+            if self._flow_out_of_capture_scope(flow, process_info):
+                return None
+            rc_process = self._rc_process_fields(process_info)
+
             # ========== Body Decoding ==========
             req_body, req_enc, req_truncated = self.decode_content(flow.request)
             res_body, res_enc, res_truncated = "", "text", False
@@ -429,6 +495,9 @@ class TrafficMonitor:
                     "appName": app_name,
                     "appDisplayName": app_display_name,
                     "platform": platform,
+                    "pid": rc_process["pid"],
+                    "processName": rc_process["processName"],
+                    "processPath": rc_process["processPath"],
                     "error": error_detail,
                     "isWebsocket": is_websocket,
                     "isSse": sse["is_sse"],
@@ -468,6 +537,11 @@ class TrafficMonitor:
         try:
             client_conn = tls_start.context.client
             server_conn = tls_start.context.server
+
+            process_info = self._peek_process_info(client_conn)
+            if self._client_out_of_capture_scope(client_conn, process_info):
+                return
+            rc_process = self._rc_process_fields(process_info)
 
             client_ip = client_conn.peername[0] if client_conn.peername else None
             server_ip = server_conn.peername[0] if server_conn.peername else None
@@ -516,6 +590,9 @@ class TrafficMonitor:
                 "_rc": {
                     "clientIp": client_ip,
                     "serverIp": server_ip,
+                    "pid": rc_process["pid"],
+                    "processName": rc_process["processName"],
+                    "processPath": rc_process["processPath"],
                     "error": {
                         "message": error_msg,
                         "type": "tls",
@@ -586,6 +663,10 @@ class TrafficMonitor:
             return "relay_stats"
         if "/_relay/traffic_active" in path:
             return "relay_traffic_active"
+        if "/_relay/capture_scope" in path:
+            return "relay_capture_scope"
+        if "/_relay/processes" in path:
+            return "relay_processes"
         if "/_relay/connectivity" in path:
             return "relay_connectivity"
         if "/_relay/scripts/load_status" in path:
@@ -676,6 +757,8 @@ class TrafficMonitor:
                 "clientIp": rc.get("clientIp") or "",
                 "appName": rc.get("appName") or "",
                 "appDisplayName": rc.get("appDisplayName") or "",
+                "pid": rc.get("pid"),
+                "processName": rc.get("processName") or "",
                 "hasError": bool(rc.get("error")),
                 "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                 "hasResponseBody": bool((resp.get("content") or {}).get("text")),

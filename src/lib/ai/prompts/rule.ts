@@ -21,7 +21,7 @@ The "rule" object MUST strictly follow this TypeScript interface.
 
 export type RuleType = 'map_local' | 'map_remote' | 'rewrite_header' | 'rewrite_body' | 'throttle' | 'block_request';
 export type UrlMatchType = 'contains' | 'exact' | 'regex' | 'wildcard';
-export type MatchAtomType = 'url' | 'host' | 'path' | 'method' | 'header' | 'query' | 'port' | 'ip';
+export type MatchAtomType = 'url' | 'host' | 'path' | 'method' | 'header' | 'query' | 'port' | 'ip' | 'process';
 
 export interface MatchAtom {
     type: MatchAtomType;
@@ -188,6 +188,7 @@ User: "帮我构造一个业务代理" -> { "message": "你是想做目标地址
 - ALWAYS include the "execution" object in your "rule" output.
 - For header operations, ALWAYS include the "operation" field ('add', 'set', or 'remove').
 - **Match Constraint Rule**: For each field type (e.g., 'url', 'host', 'path'), provide at most ONE entry in the request array for that type. If multiple constraints target the SAME field type, merge them into one expression (typically a single 'regex' atom). Constraints for different field types should remain separate atoms.
+- **Process Atom**: 'process' matches the local client process name (case-insensitive; contains/exact/wildcard/regex). It NEVER matches remote devices (phones/LAN) — do not use it when the user means "any device" or a remote client.
 - **Impossible Request Rule**: If a user request is fundamentally impossible to implement as a rule (e.g., "Change the color of all buttons on the web"), or is too ambiguous, use the "message" field to explain the limitation or ask for clarification instead of generating a broken rule.
 
 ${RULE_SCHEMA_DEFINITION}

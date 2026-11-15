@@ -357,6 +357,8 @@ pub fn run() {
             proxy::restart_proxy,
             proxy::get_proxy_status,
             proxy::set_proxy_active,
+            proxy::get_capture_scope,
+            proxy::set_capture_scope,
             proxy::check_port_available,
             proxy::prepare_update_install,
             proxy::get_process_stats,

@@ -78,8 +78,49 @@ class RuleMatcher:
             result = str(flow.request.port) == str(value)
         elif target_type == "ip":
             result, _ = self.match_url(flow.client_conn.address[0], str(value), match_type, compiled_re)
+        elif target_type == "process":
+            metadata = getattr(flow, "metadata", None) or {}
+            proc_info = metadata.get("_relaycraft_process") or {}
+            actual = proc_info.get("name")
+            if match_type == "exists":
+                result = actual is not None
+            elif match_type == "not_exists":
+                result = actual is None
+            elif actual is None:
+                result = False
+            else:
+                result = self._match_process_name(
+                    str(actual), str(value), match_type, compiled_re
+                )
 
         return not result if invert else result
+
+    def _match_process_name(
+        self,
+        actual: str,
+        pattern: str,
+        match_type: str,
+        compiled_re: Optional[re.Pattern] = None,
+    ) -> bool:
+        """Case-insensitive match on the process NAME only (no pid matching)."""
+        try:
+            if match_type == "contains":
+                return pattern.lower() in actual.lower()
+            elif match_type == "exact":
+                return pattern.lower() == actual.lower()
+            elif match_type == "regex":
+                if compiled_re is not None:
+                    return bool(compiled_re.search(actual))
+                return bool(re.search(pattern, actual, re.IGNORECASE))
+            elif match_type == "wildcard":
+                if compiled_re is not None:
+                    return bool(compiled_re.match(actual))
+                regex_pattern = pattern.replace(".", r"\.").replace("*", ".*").replace("?", ".")
+                return bool(re.match(f"^{regex_pattern}$", actual, re.IGNORECASE))
+        except Exception as e:
+            self.logger.error(f"Error matching process name: {e}")
+            return False
+        return False
 
     def match_rule(self, flow: http.HTTPFlow, rule: Dict[str, Any], compiled_patterns: Dict[tuple, "re.Pattern"] = None) -> Tuple[bool, Optional[re.Match]]:
         """Check if flow matches rule conditions (Request Phase)

@@ -292,7 +292,7 @@ fn handle_tools_list() -> Value {
             },
             {
                 "name": "list_flows",
-                "description": "Query HTTP flows (requests/responses) within a session. Returns lightweight metadata for each flow. Supports filtering by HTTP method, status code, domain, and more. Use get_flow to retrieve the full request/response body for a specific flow.",
+                "description": "Query HTTP flows (requests/responses) within a session. Returns lightweight metadata for each flow, including the local client process (pid/processName) when the traffic came from this machine. Supports filtering by HTTP method, status code, domain, process, and more. Use get_flow to retrieve the full request/response body for a specific flow.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -321,6 +321,10 @@ fn handle_tools_list() -> Value {
                         "domain": {
                             "type": "string",
                             "description": "Filter by domain (substring match), e.g. 'api.example.com'."
+                        },
+                        "process": {
+                            "type": "string",
+                            "description": "Filter by the local client process that made the request. All digits match the PID exactly (e.g. \"4321\"); anything else is a case-insensitive substring of the process name (e.g. \"chrome\", \"Code.exe\"). Remote devices have no process and never match a non-empty filter."
                         },
                         "has_error": {
                             "type": "boolean",
@@ -693,6 +697,29 @@ async fn tool_list_sessions(state: &ServerState, engine_port: u16) -> Result<Val
 
 // ─── Tool: list_flows ────────────────────────────────────────────────────────
 
+/// Process filter for list_flows: an all-digit value matches the flow's `pid`
+/// exactly; anything else is a case-insensitive substring of `processName`.
+/// Flows without process attribution (remote devices, unresolved) never
+/// match a non-empty filter.
+fn flow_matches_process_filter(flow: &Value, filter: &str) -> bool {
+    let trimmed = filter.trim();
+    if trimmed.is_empty() {
+        return true;
+    }
+    if trimmed.chars().all(|c| c.is_ascii_digit()) {
+        let Ok(pid) = trimmed.parse::<i64>() else {
+            return false;
+        };
+        return flow["pid"].as_i64() == Some(pid);
+    }
+    let needle = trimmed.to_lowercase();
+    flow["processName"]
+        .as_str()
+        .unwrap_or("")
+        .to_lowercase()
+        .contains(&needle)
+}
+
 async fn tool_list_flows(
     state: &ServerState,
     engine_port: u16,
@@ -706,6 +733,7 @@ async fn tool_list_flows(
     let domain_filter = args["domain"].as_str().map(|s| s.to_lowercase());
     let has_error_filter = args["has_error"].as_bool();
     let content_type_filter = args["content_type"].as_str().map(|s| s.to_lowercase());
+    let process_filter = args["process"].as_str();
 
     let since_sec = since_ms.map(|ms| ms / 1000.0).unwrap_or(0.0);
     let mut url = format!("http://127.0.0.1:{engine_port}/_relay/poll?since={since_sec}");
@@ -784,6 +812,12 @@ async fn tool_list_flows(
                     return false;
                 }
             }
+            // process filter (local client process name or pid)
+            if let Some(p) = process_filter {
+                if !flow_matches_process_filter(flow, p) {
+                    return false;
+                }
+            }
             true
         })
         .take(limit)
@@ -807,7 +841,9 @@ async fn tool_list_flows(
                 "hasError": flow["hasError"],
                 "hasRequestBody": flow["hasRequestBody"],
                 "hasResponseBody": flow["hasResponseBody"],
-                "isWebsocket": flow["isWebsocket"]
+                "isWebsocket": flow["isWebsocket"],
+                "pid": flow["pid"],
+                "processName": flow["processName"]
             })
         })
         .collect();
@@ -912,6 +948,20 @@ async fn tool_get_flow(
             "contentType": res["content"]["mimeType"]
         });
         output["timings"] = timings.clone();
+        // Local client process attribution (absent for remote/unknown clients)
+        if let Some(pid) = rc["pid"].as_i64() {
+            output["pid"] = json!(pid);
+        }
+        if let Some(name) = rc["processName"].as_str() {
+            if !name.is_empty() {
+                output["processName"] = json!(name);
+            }
+        }
+        if let Some(path) = rc["processPath"].as_str() {
+            if !path.is_empty() {
+                output["processPath"] = json!(path);
+            }
+        }
     }
 
     if want_headers {
@@ -1790,4 +1840,45 @@ pub async fn apply_mcp_config(
         stop(&state);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::flow_matches_process_filter;
+    use serde_json::json;
+
+    fn flow(pid: Option<i64>, name: Option<&str>) -> serde_json::Value {
+        json!({
+            "pid": pid,
+            "processName": name,
+        })
+    }
+
+    #[test]
+    fn process_filter_matches_pid_exactly() {
+        let f = flow(Some(4321), Some("curl"));
+        assert!(flow_matches_process_filter(&f, "4321"));
+        assert!(!flow_matches_process_filter(&f, "4322"));
+        // Leading zeros still parse to the same pid.
+        assert!(flow_matches_process_filter(&f, "04321"));
+    }
+
+    #[test]
+    fn process_filter_matches_name_case_insensitive_substring() {
+        let f = flow(Some(1), Some("Google Chrome"));
+        assert!(flow_matches_process_filter(&f, "chrome"));
+        assert!(flow_matches_process_filter(&f, "GOOGLE"));
+        assert!(!flow_matches_process_filter(&f, "firefox"));
+    }
+
+    #[test]
+    fn process_filter_rejects_unattributed_flows() {
+        // Remote devices / unresolved clients have pid=null, processName="".
+        let f = flow(None, Some(""));
+        assert!(!flow_matches_process_filter(&f, "curl"));
+        assert!(!flow_matches_process_filter(&f, "1234"));
+        // Empty filter matches everything.
+        assert!(flow_matches_process_filter(&f, ""));
+        assert!(flow_matches_process_filter(&f, "   "));
+    }
 }

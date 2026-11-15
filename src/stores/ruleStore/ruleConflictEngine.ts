@@ -35,7 +35,7 @@ function isSuperset(ruleA: Rule, ruleB: Rule): boolean {
       );
       const isMethodSuperset = [...methodsB].every((m) => methodsA.has(m));
       if (!isMethodSuperset) return false;
-    } else if (type === "host" || type === "url" || type === "path") {
+    } else if (type === "host" || type === "url" || type === "path" || type === "process") {
       for (const ua of listA) {
         const valA = ua.value as string;
         const typeA = ua.matchType;

@@ -72,6 +72,13 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
         value: a.value as string,
       })) || [],
   );
+  const [processPattern, setProcessPattern] = useState(
+    (rule?.match?.request?.find((a) => a.type === "process")?.value as string) || "",
+  );
+  const [processMatchType, setProcessMatchType] = useState<UrlMatchType>(
+    (rule?.match?.request?.find((a) => a.type === "process")?.matchType as UrlMatchType) ||
+      "contains",
+  );
 
   // --- Action States (initialized from prop) ---
   const parsed = parseActionsToState(rule?.actions || []);
@@ -155,10 +162,24 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
 
   // --- Build Current Rule Object (for AI & preview) ---
   const getCurrentRuleObject = useCallback((): Partial<Rule> => {
-    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders);
+    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders, {
+      pattern: processPattern,
+      matchType: processMatchType,
+    });
     const actions = buildActionsForPreview(ruleType, getActionState());
     return buildRuleForPreview(rule, name, ruleType, matchRequest, actions);
-  }, [rule, name, ruleType, urlPattern, urlMatchType, methods, requiredHeaders, getActionState]);
+  }, [
+    rule,
+    name,
+    ruleType,
+    urlPattern,
+    urlMatchType,
+    methods,
+    requiredHeaders,
+    processPattern,
+    processMatchType,
+    getActionState,
+  ]);
 
   // --- Sync State from Rule Prop ---
   useEffect(() => {
@@ -191,6 +212,13 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
           value: a.value as string,
         })),
       );
+
+      const processAtom = atoms.find((a) => a.type === "process");
+      setProcessPattern((processAtom?.value as string) || "");
+      setProcessMatchType((processAtom?.matchType as UrlMatchType) || "contains");
+    } else {
+      setProcessPattern("");
+      setProcessMatchType("contains");
     }
 
     // Reset + populate action states
@@ -248,7 +276,13 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
             })),
           );
         }
+        const processAtom = atoms.find((a) => a.type === "process");
+        setProcessPattern((processAtom?.value as string) || "");
+        setProcessMatchType((processAtom?.matchType as UrlMatchType) || "contains");
       }
+    } else {
+      setProcessPattern("");
+      setProcessMatchType("contains");
     }
 
     // Parse and apply actions
@@ -288,7 +322,10 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
 
   // --- Save Logic ---
   const handleSave = useCallback(() => {
-    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders);
+    const matchRequest = buildMatchRequest(urlPattern, urlMatchType, methods, requiredHeaders, {
+      pattern: processPattern,
+      matchType: processMatchType,
+    });
     const actions = buildActionsForSave(ruleType, getActionState());
 
     let finalName = name.trim();
@@ -323,6 +360,8 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     urlMatchType,
     methods,
     requiredHeaders,
+    processPattern,
+    processMatchType,
     groupId,
     t,
     getActionState,
@@ -345,6 +384,8 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
       urlMatchType,
       methods,
       requiredHeaders,
+      processPattern,
+      processMatchType,
       rewriteTarget,
       rewriteType,
       rewriteContent,
@@ -377,6 +418,8 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     urlMatchType,
     methods,
     requiredHeaders,
+    processPattern,
+    processMatchType,
     rewriteTarget,
     rewriteType,
     rewriteContent,
@@ -420,6 +463,10 @@ export function useRuleEditor({ rule, onClose }: UseRuleEditorProps) {
     setMethods,
     requiredHeaders,
     setRequiredHeaders,
+    processPattern,
+    setProcessPattern,
+    processMatchType,
+    setProcessMatchType,
     rewriteTarget,
     setRewriteTarget,
     rewriteType,

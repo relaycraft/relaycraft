@@ -55,6 +55,10 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
     setMethods,
     requiredHeaders,
     setRequiredHeaders,
+    processPattern,
+    setProcessPattern,
+    processMatchType,
+    setProcessMatchType,
     rewriteTarget,
     setRewriteTarget,
     rewriteType,
@@ -205,6 +209,10 @@ export function RuleEditor({ rule, onClose }: RuleEditorProps) {
           onChangeMethods={setMethods}
           requiredHeaders={requiredHeaders}
           onChangeHeaders={setRequiredHeaders}
+          processPattern={processPattern}
+          onChangeProcessPattern={setProcessPattern}
+          processMatchType={processMatchType}
+          onChangeProcessMatchType={setProcessMatchType}
         />
 
         {/* 3. Action Config */}

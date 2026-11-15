@@ -36,7 +36,19 @@ export const RULE_GENERATION_TOOLS: Tool[] = [
                   properties: {
                     type: {
                       type: "string",
-                      enum: ["url", "host", "path", "method", "header", "query", "port", "ip"],
+                      enum: [
+                        "url",
+                        "host",
+                        "path",
+                        "method",
+                        "header",
+                        "query",
+                        "port",
+                        "ip",
+                        "process",
+                      ],
+                      description:
+                        "process 匹配本地客户端进程名（不区分大小写），远程设备永不匹配；其余字段按 HTTP 请求属性匹配",
                     },
                     matchType: {
                       type: "string",

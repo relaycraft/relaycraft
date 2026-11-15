@@ -94,4 +94,26 @@ describe("buildTrafficPathModel", () => {
       }).egress,
     ).toEqual({ type: "upstream", url: "http://127.0.0.1:7890" });
   });
+
+  it("passes through an enabled capture scope and nulls an empty one", () => {
+    expect(buildTrafficPathModel(base).captureScope).toBeNull();
+    expect(
+      buildTrafficPathModel({
+        ...base,
+        captureScope: { include: [], exclude: [] },
+      }).captureScope,
+    ).toBeNull();
+    expect(
+      buildTrafficPathModel({
+        ...base,
+        captureScope: { include: ["curl"], exclude: ["Safari"] },
+      }).captureScope,
+    ).toEqual({ include: ["curl"], exclude: ["Safari"] });
+    expect(
+      buildTrafficPathModel({
+        ...base,
+        captureScope: { include: [], exclude: ["Safari"] },
+      }).captureScope,
+    ).toEqual({ include: [], exclude: ["Safari"] });
+  });
 });

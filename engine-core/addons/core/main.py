@@ -3,12 +3,13 @@ import threading
 import time
 from typing import Optional, Any, List
 from mitmproxy import http, ctx, tls
-from mitmproxy.proxy import mode_specs
 from .rules import RuleEngine
 from .monitor import TrafficMonitor
 from .debug import DebugManager
 from .proxy import ProxyManager
-from .utils import setup_logging, RelayCraftLogger
+from .process_resolver import ProcessResolver
+from . import capture_scope
+from .utils import setup_logging, RelayCraftLogger, is_reverse_flow
 from . import sse_processor, ws_handler
 
 # Global traffic active state (in-memory, controlled via HTTP API)
@@ -34,7 +35,10 @@ class CoreAddon:
         self.rule_engine: RuleEngine = RuleEngine()
         self.debug_mgr: DebugManager = DebugManager()
         self.proxy_mgr: ProxyManager = ProxyManager()
-        self.traffic_monitor: TrafficMonitor = TrafficMonitor(self.debug_mgr)
+        self.process_resolver: ProcessResolver = ProcessResolver()
+        self.traffic_monitor: TrafficMonitor = TrafficMonitor(
+            self.debug_mgr, process_resolver=self.process_resolver
+        )
 
     def load(self, loader: Any) -> None:
         """Standard mitmproxy load hook"""
@@ -64,6 +68,24 @@ class CoreAddon:
         # is paused.
         if not is_traffic_active() and not self._is_reverse_flow(flow):
             flow.kill()
+            return
+
+        # Per-process attribution, then the capture-scope gate. Out-of-scope
+        # flows pass through untouched: no rule engine, no breakpoints, no
+        # recording.
+        try:
+            process_info = await self.process_resolver.resolve(flow.client_conn)
+        except Exception:
+            process_info = None
+        flow.metadata["_relaycraft_process"] = process_info
+        if process_info is not None:
+            try:
+                self.process_resolver.note_seen(process_info)
+            except Exception:
+                pass
+
+        if self._is_out_of_capture_scope(flow):
+            flow.metadata["_relaycraft_out_of_scope"] = True
             return
 
         try:
@@ -96,6 +118,8 @@ class CoreAddon:
 
     async def response(self, flow: http.HTTPFlow) -> None:
         if self.is_internal_request(flow):
+            return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
             return
 
         try:
@@ -174,9 +198,19 @@ class CoreAddon:
     @staticmethod
     def _is_reverse_flow(flow: http.HTTPFlow) -> bool:
         """Whether the flow entered via a reverse-mode listener (share entry)."""
+        return is_reverse_flow(flow)
+
+    def _is_out_of_capture_scope(self, flow: http.HTTPFlow) -> bool:
+        """Whether the flow is excluded by the capture scope (fail-open)."""
         try:
-            return isinstance(flow.client_conn.proxy_mode, mode_specs.ReverseMode)
-        except Exception:
+            if not capture_scope.is_enabled():
+                return False
+            if self._is_reverse_flow(flow):
+                return False
+            process_info = flow.metadata.get("_relaycraft_process")
+            return not capture_scope.is_in_scope(process_info)
+        except Exception as e:
+            self.logger.debug(f"capture scope check failed, treating as in-scope: {e}")
             return False
 
     def _is_sse_flow(self, flow: http.HTTPFlow) -> bool:
@@ -196,6 +230,8 @@ class CoreAddon:
     async def error(self, flow: http.HTTPFlow) -> None:
         """Handle errors (e.g. connection failures)"""
         if self.is_internal_request(flow):
+            return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
             return
 
         err_msg = str(flow.error)
@@ -235,6 +271,8 @@ class CoreAddon:
         """Attach SSE stream handler as early as response headers are available."""
         if self.is_internal_request(flow):
             return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
+            return
         try:
             sse_processor.bind_sse_stream_if_needed(self.traffic_monitor, flow)
         except Exception as e:
@@ -243,6 +281,8 @@ class CoreAddon:
     def websocket_start(self, flow: http.HTTPFlow) -> None:
         """Called when a WebSocket connection is established (after handshake)."""
         if self.is_internal_request(flow):
+            return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
             return
 
         try:
@@ -255,6 +295,8 @@ class CoreAddon:
         """Called when a WebSocket message is received."""
         if self.is_internal_request(flow):
             return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
+            return
 
         try:
             self.traffic_monitor.handle_websocket_message(flow)
@@ -264,6 +306,8 @@ class CoreAddon:
     def websocket_end(self, flow: http.HTTPFlow) -> None:
         """Called when a WebSocket connection closes."""
         if self.is_internal_request(flow):
+            return
+        if flow.metadata.get("_relaycraft_out_of_scope"):
             return
 
         try:
@@ -277,6 +321,21 @@ class CoreAddon:
                 ws_handler.unregister_ws_flow(self.traffic_monitor, flow)
             except Exception as e:
                 self.logger.debug(f"WS registry unregister failed: {e}")
+
+    def client_connected(self, client: Any) -> None:
+        """Start process resolution for local clients (fire-and-forget)."""
+        try:
+            if is_traffic_active():
+                self.process_resolver.start(client)
+        except Exception as e:
+            self.logger.debug(f"client_connected hook failed: {e}")
+
+    def client_disconnected(self, client: Any) -> None:
+        """Drop process-resolution state for the closed client."""
+        try:
+            self.process_resolver.forget(client)
+        except Exception as e:
+            self.logger.debug(f"client_disconnected hook failed: {e}")
 
     def tls_failed_client(self, tls_start: tls.TlsData) -> None:
         """Hook called when a client TLS handshake fails."""

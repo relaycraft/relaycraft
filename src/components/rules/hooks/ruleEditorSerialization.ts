@@ -34,6 +34,7 @@ export function buildMatchRequest(
     value?: string;
     matchType: "contains" | "exact" | "regex";
   }>,
+  process?: { pattern: string; matchType: UrlMatchType },
 ): MatchAtom[] {
   const atoms: MatchAtom[] = [{ type: "url", matchType: urlMatchType, value: urlPattern }];
   if (methods.length > 0) {
@@ -41,6 +42,13 @@ export function buildMatchRequest(
   }
   for (const h of requiredHeaders) {
     atoms.push({ type: "header", key: h.key, matchType: h.matchType, value: h.value });
+  }
+  if (process && process.pattern.trim() !== "") {
+    atoms.push({
+      type: "process",
+      matchType: process.matchType,
+      value: process.pattern.trim(),
+    });
   }
   return atoms;
 }

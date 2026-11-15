@@ -45,6 +45,35 @@ pub struct ProxyStatus {
     pub active_scripts: Vec<String>,
 }
 
+/// Per-process capture scope (issue #149). Host-owned, in-memory only —
+/// intentionally NOT persisted so a restart never silently keeps filtering
+/// out traffic the user forgot about.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CaptureScope {
+    #[serde(default)]
+    pub include: Vec<String>,
+    #[serde(default)]
+    pub exclude: Vec<String>,
+}
+
+impl CaptureScope {
+    /// Trim entries and drop empties.
+    pub fn normalized(mut self) -> Self {
+        self.include = normalize_scope_entries(&self.include);
+        self.exclude = normalize_scope_entries(&self.exclude);
+        self
+    }
+}
+
+fn normalize_scope_entries(entries: &[String]) -> Vec<String> {
+    entries
+        .iter()
+        .map(|e| e.trim().to_string())
+        .filter(|e| !e.is_empty())
+        .collect()
+}
+
 pub struct EngineStats {
     pub memory_usage: u64,
     pub cpu_usage: f32,
@@ -63,6 +92,11 @@ pub trait ProxyEngine: Send + Sync {
     fn get_status(&self) -> ProxyStatus;
     fn get_stats(&self, system: &mut sysinfo::System) -> Result<EngineStats, AppError>;
     fn set_active(&self, active: bool) -> Result<(), AppError>;
+    fn get_capture_scope(&self) -> CaptureScope;
+    fn set_capture_scope(&self, scope: CaptureScope) -> Result<(), AppError>;
+    /// Engine listen port while the engine process is actually running.
+    /// Unlike `last_port` (never cleared on stop), this verifies the child.
+    fn running_port(&self) -> Option<u16>;
 }
 
 struct EngineInner {
@@ -74,6 +108,8 @@ struct EngineInner {
     pub last_pid_refresh: Mutex<std::time::Instant>,
     /// Traffic processing state
     pub traffic_active: AtomicBool,
+    /// Per-process capture scope, mirrored to the engine via env/HTTP.
+    pub capture_scope: Mutex<CaptureScope>,
 }
 
 /// Mitmproxy-based engine implementation
@@ -94,6 +130,7 @@ impl MitmproxyEngine {
                     std::time::Instant::now() - std::time::Duration::from_secs(60),
                 ),
                 traffic_active: AtomicBool::new(false),
+                capture_scope: Mutex::new(CaptureScope::default()),
             }),
         }
     }
@@ -251,6 +288,14 @@ impl ProxyEngine for MitmproxyEngine {
 
         // Provide user scripts for internal loading
         cmd.env("RELAYCRAFT_USER_SCRIPTS", &user_scripts_joined);
+
+        // Per-process capture scope (in-memory host state, survives engine
+        // restarts but not app restarts by design).
+        if let Ok(scope) = self.inner.capture_scope.lock() {
+            if let Ok(json) = serde_json::to_string(&*scope) {
+                cmd.env("RELAYCRAFT_CAPTURE_SCOPE", json);
+            }
+        }
 
         // Force UTF-8 for Python stdio across platforms (especially Windows code pages).
         // Keep both for compatibility with different Python/runtime behaviors.
@@ -533,6 +578,55 @@ impl ProxyEngine for MitmproxyEngine {
         }
 
         Ok(())
+    }
+
+    fn get_capture_scope(&self) -> CaptureScope {
+        self.inner
+            .capture_scope
+            .lock()
+            .map(|s| s.clone())
+            .unwrap_or_default()
+    }
+
+    /// Store a new capture scope (normalized). Callers that need to push it
+    /// to the running engine must POST `/_relay/capture_scope` themselves —
+    /// `set_capture_scope` keeps no side effects so a failed push can be
+    /// reverted by storing the previous scope again. A stopped engine picks
+    /// the stored scope up from RELAYCRAFT_CAPTURE_SCOPE on next spawn.
+    fn set_capture_scope(&self, scope: CaptureScope) -> Result<(), AppError> {
+        let scope = scope.normalized();
+        {
+            let mut lock = self
+                .inner
+                .capture_scope
+                .lock()
+                .map_err(|_| AppError::Config("Lock poisoned".into()))?;
+            *lock = scope.clone();
+        }
+        log::info!(
+            "Capture scope updated: include={:?} exclude={:?}",
+            scope.include,
+            scope.exclude
+        );
+        Ok(())
+    }
+
+    fn running_port(&self) -> Option<u16> {
+        let running = self
+            .inner
+            .child
+            .lock()
+            .ok()
+            .and_then(|mut child| {
+                child
+                    .as_mut()
+                    .map(|c| c.try_wait().map(|s| s.is_none()).unwrap_or(false))
+            })
+            .unwrap_or(false);
+        if !running {
+            return None;
+        }
+        self.inner.last_port.lock().ok().and_then(|p| *p)
     }
 
     fn get_stats(&self, sys: &mut sysinfo::System) -> Result<EngineStats, AppError> {

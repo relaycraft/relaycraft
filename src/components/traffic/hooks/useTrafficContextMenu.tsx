@@ -1,10 +1,20 @@
-import { AlertTriangle, Code, Copy, RotateCcw, Send, Terminal, Workflow } from "lucide-react";
+import {
+  AlertTriangle,
+  Code,
+  Copy,
+  Crosshair,
+  RotateCcw,
+  Send,
+  Terminal,
+  Workflow,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateCurlCommand } from "../../../lib/curl";
 import { Logger } from "../../../lib/logger";
 import { notify } from "../../../lib/notify";
 import { fetchFlowDetail, replayRequest } from "../../../lib/traffic";
+import { useCaptureScopeStore } from "../../../stores/captureScopeStore";
 import { useComposerStore } from "../../../stores/composerStore";
 import {
   type TrafficFlowSummary,
@@ -237,6 +247,28 @@ export function useTrafficContextMenu() {
             handleCloseMenu();
           },
         },
+        ...(menuTargetIndex?.processName
+          ? [
+              {
+                label: t("traffic.context_menu.record_only_process", {
+                  name: menuTargetIndex.processName,
+                }),
+                icon: <Crosshair className="w-3.5 h-3.5" />,
+                onClick: () => {
+                  useCaptureScopeStore
+                    .getState()
+                    .apply({ include: [menuTargetIndex.processName!], exclude: [] })
+                    .then(() =>
+                      notify.success(t("capture_scope.applied_toast"), { toastOnly: true }),
+                    )
+                    .catch((e) =>
+                      notify.error(typeof e === "string" ? e : t("capture_scope.apply_failed")),
+                    );
+                  handleCloseMenu();
+                },
+              } as ContextMenuItem,
+            ]
+          : []),
         { separator: true, label: "" },
         {
           label: t("traffic.context_menu.copy_req_body"),

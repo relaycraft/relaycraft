@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { version as APP_VERSION } from "../../../package.json";
 import { buildTrafficPathModel } from "../../lib/traffic/trafficPath";
 import { useBreakpointStore } from "../../stores/breakpointStore";
+import { useCaptureScopeStore } from "../../stores/captureScopeStore";
 import { useMcpActivityStore } from "../../stores/mcpActivityStore";
 import { useNotificationStore } from "../../stores/notificationStore";
 import { PLUGIN_SLOTS, usePluginSlotStore } from "../../stores/pluginSlotStore";
@@ -36,6 +37,7 @@ export function StatusBar() {
   const rules = useRuleStore((state) => state.rules);
   const ruleGroupsList = useRuleStore((state) => state.groups);
   const ruleGroupMap = useRuleStore((state) => state.ruleGroups);
+  const captureScope = useCaptureScopeStore((state) => state.scope);
   const [showBreakpoints, setShowBreakpoints] = useState(false);
   const [showMcpTimeline, setShowMcpTimeline] = useState(false);
   const [showTrafficPath, setShowTrafficPath] = useState(false);
@@ -51,8 +53,19 @@ export function StatusBar() {
         rules,
         groups: ruleGroupsList,
         ruleGroups: ruleGroupMap,
+        captureScope,
       }),
-    [port, running, active, shareConfig, upstreamProxy, rules, ruleGroupsList, ruleGroupMap],
+    [
+      port,
+      running,
+      active,
+      shareConfig,
+      upstreamProxy,
+      rules,
+      ruleGroupsList,
+      ruleGroupMap,
+      captureScope,
+    ],
   );
   const { t } = useTranslation();
   const isOpen = useNotificationStore((state) => state.isOpen);

@@ -9,7 +9,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUIStore } from "../../stores/uiStore";
 import { AIAssistant } from "../ai/AIAssistant";
@@ -30,6 +30,7 @@ interface FilterBarProps {
   totalCount: number;
   autoScroll: boolean;
   bodySearching?: boolean;
+  captureScopeSlot?: ReactNode;
   onToggleAutoScroll: () => void;
 }
 // Props definition for FilterBar
@@ -47,6 +48,7 @@ export function FilterBar({
   totalCount,
   autoScroll,
   bodySearching = false,
+  captureScopeSlot,
   onToggleAutoScroll,
 }: FilterBarProps) {
   const { t } = useTranslation();
@@ -212,6 +214,8 @@ export function FilterBar({
           <span className="opacity-40 mx-1">/</span>
           <span className="opacity-60">{totalCount}</span>
         </div>
+
+        {captureScopeSlot}
       </div>
 
       {/* Advanced Filters Help / Quick Chips */}
@@ -233,6 +237,8 @@ export function FilterBar({
                   "type:json",
                   "source:ios",
                   "source:android",
+                  "process:chrome",
+                  "pid:4321",
                   "size:>1mb",
                   "duration:>500ms",
                   "-domain:google",
@@ -265,6 +271,10 @@ export function FilterBar({
                 <div>
                   • <b>{t("traffic.filter.compare")}</b>{" "}
                   <span className="opacity-60 text-tiny">(e.g. size:&gt;1mb)</span>
+                </div>
+                <div>
+                  • <b>process: / pid:</b>{" "}
+                  <span className="opacity-60 text-tiny">{t("traffic.filter.process_desc")}</span>
                 </div>
               </div>
               <div className="flex items-start gap-1.5 mt-2 px-2 py-1.5 bg-primary/5 border border-primary/15 rounded-md text-xs text-muted-foreground">

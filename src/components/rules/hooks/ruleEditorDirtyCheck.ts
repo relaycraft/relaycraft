@@ -34,6 +34,8 @@ export interface DirtyCheckParams {
     value?: string;
     matchType: "contains" | "exact" | "regex";
   }>;
+  processPattern: string;
+  processMatchType: UrlMatchType;
   rewriteTarget: "request" | "response";
   rewriteType: "set" | "replace" | "regex_replace" | "json";
   rewriteContent: string;
@@ -62,6 +64,7 @@ function isNewRuleDirty(p: DirtyCheckParams): boolean {
   if (p.urlPattern.trim() !== "") return true;
   if (p.methods.length > 0) return true;
   if (p.requiredHeaders.length > 0) return true;
+  if (p.processPattern.trim() !== "") return true;
 
   if (p.ruleType === "map_remote" && p.targetUrl.trim() !== "") return true;
   if (p.ruleType === "map_local" && (p.localPath.trim() !== "" || p.mapLocalContent.trim() !== ""))
@@ -133,6 +136,12 @@ export function checkIsDirty(p: DirtyCheckParams): boolean {
         value: a.value as string,
       })) || [];
   if (JSON.stringify(p.requiredHeaders) !== JSON.stringify(initialHeaders)) return true;
+
+  const initialProcessAtom = initialAtoms.find((a) => a.type === "process");
+  const initialProcessPattern = (initialProcessAtom?.value as string) || "";
+  const initialProcessMatchType = (initialProcessAtom?.matchType as UrlMatchType) || "contains";
+  if (p.processPattern !== initialProcessPattern) return true;
+  if (p.processPattern.trim() !== "" && p.processMatchType !== initialProcessMatchType) return true;
 
   // Action fields
   const actions = ir?.actions || [];

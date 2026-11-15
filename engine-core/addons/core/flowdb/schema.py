@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS flow_indices (
     client_ip TEXT,
     app_name TEXT,
     app_display_name TEXT,
+    pid INTEGER,
+    process_name TEXT,
 
     has_error INTEGER DEFAULT 0,
     has_request_body INTEGER DEFAULT 0,

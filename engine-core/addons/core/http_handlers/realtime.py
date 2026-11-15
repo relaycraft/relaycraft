@@ -48,6 +48,8 @@ def _handle_poll(monitor: Any, flow: Any, Response: Any, safe_json_default: Call
                     "clientIp": idx.get("client_ip", ""),
                     "appName": idx.get("app_name", ""),
                     "appDisplayName": idx.get("app_display_name", ""),
+                    "pid": idx.get("pid"),
+                    "processName": idx.get("process_name", "") or "",
                     "hasError": bool(idx.get("has_error")),
                     "hasRequestBody": bool(idx.get("has_request_body")),
                     "hasResponseBody": bool(idx.get("has_response_body")),

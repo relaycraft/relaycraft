@@ -51,6 +51,25 @@ def setup_logging(name: str = "relaycraft") -> RelayCraftLogger:
 
     return RelayCraftLogger(name)
 
+def is_reverse_client(client_conn) -> bool:
+    """Whether a client connection entered via a reverse-mode (share entry) listener."""
+    try:
+        from mitmproxy.proxy import mode_specs
+        return isinstance(
+            getattr(client_conn, "proxy_mode", None), mode_specs.ReverseMode
+        )
+    except Exception:
+        return False
+
+
+def is_reverse_flow(flow) -> bool:
+    """Whether the flow entered via a reverse-mode (share entry) listener."""
+    try:
+        return is_reverse_client(getattr(flow, "client_conn", None))
+    except Exception:
+        return False
+
+
 def get_mime_type(file_path: str) -> str:
     """Detect MIME type from file extension"""
     ext = Path(file_path).suffix.lower()

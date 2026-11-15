@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUpFromDot, Filter, Server, Share2 } from "lucide-react";
+import { ArrowDown, ArrowUpFromDot, Crosshair, Filter, Server, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TrafficPathModel } from "../../lib/traffic/trafficPath";
 import { cn } from "../../lib/utils";
@@ -112,6 +112,25 @@ export function TrafficPathPanel({ model }: { model: TrafficPathModel }) {
       </div>
 
       <FlowArrow />
+
+      {/* Capture scope */}
+      {model.captureScope && (
+        <div className="flex flex-col gap-1.5">
+          <SectionLabel icon={Crosshair} text={t("status_bar.tp_capture_scope")} />
+          <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2 flex flex-col gap-1">
+            {model.captureScope.include.length > 0 && (
+              <div className="text-[11px] font-mono text-muted-foreground truncate">
+                {t("status_bar.tp_scope_include")}: {model.captureScope.include.join(", ")}
+              </div>
+            )}
+            {model.captureScope.exclude.length > 0 && (
+              <div className="text-[11px] font-mono text-muted-foreground truncate">
+                {t("status_bar.tp_scope_exclude")}: {model.captureScope.exclude.join(", ")}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Egress */}
       <div className="flex flex-col gap-1.5">

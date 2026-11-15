@@ -16,9 +16,11 @@ from .control import (
     _handle_sessions_post,
 )
 from .data import (
+    _handle_capture_scope,
     _handle_export_har,
     _handle_export_progress,
     _handle_export_session,
+    _handle_processes,
     _handle_search,
     _handle_stats,
     _handle_traffic_active,
@@ -90,6 +92,8 @@ def handle_data_routes(
         "relay_search": lambda: _handle_search(monitor, flow, Response),
         "relay_stats": lambda: _handle_stats(monitor, flow, Response),
         "relay_traffic_active": lambda: _handle_traffic_active(monitor, flow, Response),
+        "relay_capture_scope": lambda: _handle_capture_scope(monitor, flow, Response),
+        "relay_processes": lambda: _handle_processes(monitor, flow, Response),
         "relay_export_session": lambda: _handle_export_session(monitor, flow, Response, safe_json_default),
         "relay_export_har": lambda: _handle_export_har(monitor, flow, Response, safe_json_default),
         "relay_export_progress": lambda: _handle_export_progress(monitor, flow, Response),

@@ -111,6 +111,8 @@ def normalize_har_entries(entries: list) -> Tuple[list, list]:
                 "time": flow_data["time"],
                 "size": flow_data["size"],
                 "hasError": bool(rc.get("error")),
+                "pid": rc.get("pid"),
+                "processName": rc.get("processName") or "",
                 "hasRequestBody": bool((req.get("postData") or {}).get("text")),
                 "hasResponseBody": bool(resp_content.get("text")),
                 "isWebsocket": bool(rc.get("isWebsocket")),

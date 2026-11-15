@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  AppWindow,
   CirclePause,
   Laptop,
   ShieldAlert,
@@ -130,20 +131,38 @@ export const TrafficListItem = memo(
 
         {/* App Slot */}
         <div className="w-7 flex justify-center flex-shrink-0">
-          {index.appDisplayName ? (
-            (() => {
+          {(() => {
+            const processLabel = index.processName
+              ? `${index.processName}${index.pid != null ? ` · PID ${index.pid}` : ""}`
+              : "";
+            const appTooltip = [
+              index.appDisplayName || "",
+              processLabel,
+              index.clientIp ? `(${index.clientIp})` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ");
+            if (index.appDisplayName) {
               const { Icon, toneClass } = getAppIcon(index.appName);
               return (
-                <Tooltip content={`${index.appDisplayName} (${index.clientIp})`} side="bottom">
+                <Tooltip content={appTooltip} side="bottom">
                   <Icon className={`w-3.5 h-3.5 ${toneClass}`} />
                 </Tooltip>
               );
-            })()
-          ) : (
-            <Tooltip content={t("traffic.source.app.empty")} side="bottom">
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/15" />
-            </Tooltip>
-          )}
+            }
+            if (index.processName) {
+              return (
+                <Tooltip content={appTooltip} side="bottom">
+                  <AppWindow className="w-3.5 h-3.5 text-muted-foreground/50" />
+                </Tooltip>
+              );
+            }
+            return (
+              <Tooltip content={t("traffic.source.app.empty")} side="bottom">
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/15" />
+              </Tooltip>
+            );
+          })()}
         </div>
 
         {/* Main Content */}

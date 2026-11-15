@@ -24,6 +24,10 @@ interface MatchConfigProps {
   onChangeMethods: (methods: HttpMethod[]) => void;
   requiredHeaders: HeaderMatch[];
   onChangeHeaders: (headers: HeaderMatch[]) => void;
+  processPattern?: string;
+  onChangeProcessPattern?: (val: string) => void;
+  processMatchType?: UrlMatchType;
+  onChangeProcessMatchType?: (val: UrlMatchType) => void;
 }
 
 // LABEL_STYLE removed
@@ -37,6 +41,10 @@ export function MatchConfig({
   onChangeMethods,
   requiredHeaders,
   onChangeHeaders,
+  processPattern,
+  onChangeProcessPattern,
+  processMatchType,
+  onChangeProcessMatchType,
 }: MatchConfigProps) {
   const { t } = useTranslation();
 
@@ -212,6 +220,45 @@ export function MatchConfig({
             )}
           </div>
         </div>
+
+        {/* Process Match (local client process name; remote devices never match) */}
+        {onChangeProcessPattern && (
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-foreground/60 uppercase tracking-widest">
+                {t("rules.editor.match.process.label")}
+              </label>
+              <span className="text-xs text-muted-foreground/40 font-medium uppercase tracking-tighter mb-0.5">
+                {t("common.optional")}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Select
+                value={processMatchType || "contains"}
+                onChange={(val) => onChangeProcessMatchType?.(val as UrlMatchType)}
+                className="h-8 py-1 text-xs w-28 shrink-0"
+                containerClassName="shrink-0"
+              >
+                <option value="contains">{t("rules.editor.match.url_match_type.contains")}</option>
+                <option value="exact">{t("rules.editor.match.url_match_type.exact")}</option>
+                <option value="wildcard">{t("rules.editor.match.url_match_type.wildcard")}</option>
+                <option value="regex">{t("rules.editor.match.url_match_type.regex")}</option>
+              </Select>
+              <div className="flex-1 min-w-0">
+                <Input
+                  type="text"
+                  value={processPattern || ""}
+                  onChange={(e) => onChangeProcessPattern(e.target.value)}
+                  placeholder={t("rules.editor.match.process.placeholder")}
+                  className="h-8 font-mono text-xs placeholder:font-sans placeholder:text-xs bg-background/50"
+                />
+              </div>
+            </div>
+            <p className="mt-1 text-tiny text-muted-foreground/50">
+              {t("rules.editor.match.process.hint")}
+            </p>
+          </div>
+        )}
 
         {/* Headers Match */}
         <div className="pt-2">

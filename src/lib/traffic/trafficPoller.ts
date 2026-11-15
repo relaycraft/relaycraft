@@ -79,6 +79,8 @@ export async function pollTraffic(): Promise<void> {
             clientIp: idx.clientIp || "",
             appName: idx.appName || "",
             appDisplayName: idx.appDisplayName || "",
+            pid: idx.pid ?? null,
+            processName: idx.processName || "",
             hasError: idx.hasError,
             hasRequestBody: idx.hasRequestBody,
             hasResponseBody: idx.hasResponseBody,

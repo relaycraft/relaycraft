@@ -18,6 +18,8 @@ export interface FilterCriteria {
   duration: FilterItem[];
   ip: FilterItem[];
   source: FilterItem[];
+  process: FilterItem[];
+  pid: FilterItem[];
 }
 
 export function parseFilter(input: string): FilterCriteria {
@@ -34,6 +36,8 @@ export function parseFilter(input: string): FilterCriteria {
     duration: [],
     ip: [],
     source: [],
+    process: [],
+    pid: [],
   };
 
   const parts = input.split(" ").filter((p) => p.trim() !== "");
@@ -170,6 +174,23 @@ export function parseFilter(input: string): FilterCriteria {
         case "src":
         case "source":
           criteria.source.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
+          break;
+        case "process":
+        case "proc":
+          criteria.process.push({
+            key,
+            value, // Retain case for sensitive searches
+            negative: isNegative,
+            operator,
+          });
+          break;
+        case "pid":
+          criteria.pid.push({
             key,
             value, // Retain case for sensitive searches
             negative: isNegative,
@@ -329,14 +350,35 @@ export function matchFlow(
   )
     return false;
 
-  // 6. Source (IP or App)
+  // 6. Source (IP or App or process name)
+  const flowProcessName = flow.processName || flow._rc?.processName || "";
   if (
     !checkGroup(criteria.source, (item) => {
       return (
         (flow.clientIp || "").includes(item.value) ||
         matchString(flow.appName || "", item.value) ||
-        matchString(flow.appDisplayName || "", item.value)
+        matchString(flow.appDisplayName || "", item.value) ||
+        matchString(flowProcessName, item.value)
       );
+    })
+  )
+    return false;
+
+  // 6b. Process name (local client process)
+  if (
+    !checkGroup(criteria.process, (item) => {
+      return matchString(flowProcessName, item.value);
+    })
+  )
+    return false;
+
+  // 6c. PID (exact numeric match; flows without pid never match)
+  if (
+    !checkGroup(criteria.pid, (item) => {
+      const expected = Number.parseInt(item.value, 10);
+      if (Number.isNaN(expected)) return false;
+      const actual = flow.pid ?? flow._rc?.pid;
+      return typeof actual === "number" && actual === expected;
     })
   )
     return false;

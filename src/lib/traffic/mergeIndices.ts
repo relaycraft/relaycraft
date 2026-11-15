@@ -39,6 +39,8 @@ function flowIndexUnchanged(prev: FlowIndex, next: FlowIndex): boolean {
     prev.clientIp === next.clientIp &&
     prev.appName === next.appName &&
     prev.appDisplayName === next.appDisplayName &&
+    prev.pid === next.pid &&
+    prev.processName === next.processName &&
     prev.hasError === next.hasError &&
     prev.hasRequestBody === next.hasRequestBody &&
     prev.hasResponseBody === next.hasResponseBody &&

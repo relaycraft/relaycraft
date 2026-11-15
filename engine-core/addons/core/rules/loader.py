@@ -132,16 +132,18 @@ class RuleLoader:
                 val = str(atom.get("value", ""))
 
                 # Pre-compile into separate dict keyed by (rule object id, atom index)
+                # Process-name matching is case-insensitive.
+                flags = re.IGNORECASE if atom.get("type") == "process" else 0
                 if m_type == "regex":
                     try:
-                        compiled[(rule_key, i)] = re.compile(val)
+                        compiled[(rule_key, i)] = re.compile(val, flags)
                     except re.error as e:
                         self.logger.error(f"Failed to pre-compile regex '{val}' in rule {rule_id}: {e}")
                 elif m_type == "wildcard":
                     try:
                         regex_pattern = val.replace(".", r"\.").replace("*", ".*").replace("?", ".")
                         regex_pattern = f"^{regex_pattern}$"
-                        compiled[(rule_key, i)] = re.compile(regex_pattern)
+                        compiled[(rule_key, i)] = re.compile(regex_pattern, flags)
                     except re.error as e:
                         self.logger.error(f"Failed to pre-compile wildcard '{val}' in rule {rule_id}: {e}")
 

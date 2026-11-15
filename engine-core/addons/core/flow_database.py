@@ -215,6 +215,10 @@ class FlowDatabase:
                 "UPDATE flow_indices SET is_sse = 1 "
                 "WHERE lower(content_type) LIKE 'text/event-stream%'"
             )
+        if "pid" not in existing:
+            conn.execute("ALTER TABLE flow_indices ADD COLUMN pid INTEGER")
+        if "process_name" not in existing:
+            conn.execute("ALTER TABLE flow_indices ADD COLUMN process_name TEXT")
 
     # ==================== Body Storage Adapters ====================
 

@@ -88,6 +88,60 @@ pub async fn set_proxy_active(
     Ok(())
 }
 
+/// Current per-process capture scope (in-memory only, resets on app restart).
+#[tauri::command]
+pub async fn get_capture_scope(
+    state: tauri::State<'_, ProxyState>,
+) -> Result<CaptureScope, String> {
+    Ok(state.engine.get_capture_scope())
+}
+
+/// Apply a new capture scope; returns the normalized value actually stored.
+/// When the engine is running, waits for `/_relay/capture_scope` to confirm;
+/// on failure the stored scope is reverted so host state always reflects
+/// what the engine applies.
+#[tauri::command]
+pub async fn set_capture_scope(
+    state: tauri::State<'_, ProxyState>,
+    scope: CaptureScope,
+) -> Result<CaptureScope, String> {
+    let engine = state.engine.clone();
+    let previous = engine.get_capture_scope();
+    engine.set_capture_scope(scope).map_err(|e| e.to_string())?;
+
+    if let Some(port) = engine.running_port() {
+        let applied = engine.get_capture_scope();
+        let url = format!("http://127.0.0.1:{}/_relay/capture_scope", port);
+        let body = serde_json::to_string(&applied)
+            .unwrap_or_else(|_| "{\"include\":[],\"exclude\":[]}".to_string());
+        let result = crate::common::http::loopback_client()
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .body(body)
+            .timeout(std::time::Duration::from_secs(5))
+            .send()
+            .await;
+        let ok = matches!(result, Ok(ref resp) if resp.status().is_success());
+        if !ok {
+            let detail = match result {
+                Ok(resp) => format!("HTTP {}", resp.status()),
+                Err(e) => e.to_string(),
+            };
+            log::warn!(
+                "Capture scope push to engine failed ({}); reverting",
+                detail
+            );
+            let _ = engine.set_capture_scope(previous);
+            return Err(format!(
+                "Failed to apply capture scope to the running engine: {}",
+                detail
+            ));
+        }
+    }
+
+    Ok(engine.get_capture_scope())
+}
+
 /// Check whether a local TCP port is free to bind (used by the share entry UI).
 #[tauri::command]
 pub fn check_port_available(port: u16) -> bool {

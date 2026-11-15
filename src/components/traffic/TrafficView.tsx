@@ -11,6 +11,7 @@ import type { FlowIndex } from "../../types";
 import { ContextMenu } from "../common/ContextMenu";
 import { SetupGuideModal } from "../layout/SetupGuideModal";
 import { AddBreakpointModal } from "./AddBreakpointModal";
+import { CaptureScopeButton } from "./CaptureScopeButton";
 import { CertificateWarningBanner } from "./CertificateWarningBanner";
 import { FilterBar } from "./FilterBar";
 import { FlowDetail } from "./FlowDetail";
@@ -334,6 +335,7 @@ export function TrafficView({ onToggleProxy, loading }: TrafficViewProps) {
             totalCount={indices.length}
             autoScroll={autoScroll}
             bodySearching={bodySearching}
+            captureScopeSlot={<CaptureScopeButton />}
             onToggleAutoScroll={() => {
               const nextValue = !autoScroll;
               setAutoScroll(nextValue);

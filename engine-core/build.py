@@ -78,8 +78,12 @@ def build(sync_only=False):
         '--hidden-import=sqlite3',
         '--hidden-import=pysqlite3',
         '--hidden-import=ijson',
+        # Addons load at runtime (not analyzed from the wrapper entry), so
+        # process_resolver's psutil import must be declared explicitly.
+        '--hidden-import=psutil',
         '--collect-all=mitmproxy',
         '--collect-all=jsonpath_ng',
+        '--collect-all=psutil',
         '--clean',
         '--noconfirm',
         '--log-level=INFO',

@@ -12,6 +12,7 @@ export interface TrafficPathModel {
   egress: { type: "direct" | "upstream"; url: string | null };
   enabledRuleCount: number;
   ruleStats: RuleStat[];
+  captureScope?: { include: string[]; exclude: string[] } | null;
 }
 
 /** Display order for action chips in the panel. */
@@ -45,6 +46,7 @@ export function buildTrafficPathModel(input: {
   rules: Rule[];
   groups: RuleGroup[];
   ruleGroups: Record<string, string>;
+  captureScope?: { include: string[]; exclude: string[] } | null;
 }): TrafficPathModel {
   const enabledRules = input.rules.filter((r) =>
     isRuleEffectiveEnabled(r, input.groups, input.ruleGroups),
@@ -80,5 +82,10 @@ export function buildTrafficPathModel(input: {
         : { type: "direct", url: null },
     enabledRuleCount: enabledRules.length,
     ruleStats,
+    captureScope:
+      input.captureScope &&
+      (input.captureScope.include.length > 0 || input.captureScope.exclude.length > 0)
+        ? input.captureScope
+        : null,
   };
 }

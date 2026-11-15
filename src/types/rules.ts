@@ -12,7 +12,16 @@ export type RuleType =
 export type UrlMatchType = "contains" | "exact" | "regex" | "wildcard";
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
-export type MatchAtomType = "url" | "host" | "path" | "method" | "header" | "query" | "port" | "ip";
+export type MatchAtomType =
+  | "url"
+  | "host"
+  | "path"
+  | "method"
+  | "header"
+  | "query"
+  | "port"
+  | "ip"
+  | "process";
 
 export interface MatchAtom {
   type: MatchAtomType;

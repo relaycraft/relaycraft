@@ -502,6 +502,10 @@
       "messages": "消息",
       "request": "请求",
       "response": "响应"
+    },
+    "process": {
+      "title": "进程",
+      "path": "可执行路径"
     }
   },
   "header_editor": {
@@ -951,7 +955,12 @@
           "regex": "正则",
           "wildcard": "通配符"
         },
-        "url_placeholder": "输入匹配路径..."
+        "url_placeholder": "输入匹配路径...",
+        "process": {
+          "label": "进程匹配",
+          "placeholder": "chrome / Code.exe，留空表示不限进程",
+          "hint": "匹配本机客户端进程名（不区分大小写）；远程设备（手机/局域网）永不匹配。"
+        }
       },
       "sections": {
         "action": "动作配置",
@@ -1320,7 +1329,10 @@
     "tp_action_rewrite_header": "Header 改写",
     "tp_action_rewrite_body": "Body 改写",
     "tp_action_block_request": "阻断",
-    "tp_action_throttle": "节流"
+    "tp_action_throttle": "节流",
+    "tp_capture_scope": "记录范围",
+    "tp_scope_include": "仅记录",
+    "tp_scope_exclude": "排除"
   },
   "titlebar": {
     "close": "关闭",
@@ -1349,7 +1361,8 @@
       "req_body_copied": "请求体已复制",
       "res_body_copied": "响应体已复制",
       "set_breakpoint": "为此域名设置断点",
-      "url_copied": "链接已复制"
+      "url_copied": "链接已复制",
+      "record_only_process": "只记录 {{name}} 的流量"
     },
     "empty_search": "没有匹配的请求",
     "file_not_found": "文件未找到",
@@ -1369,7 +1382,8 @@
       "placeholder": "请输入过滤条件...",
       "quick": "快速过滤",
       "regex_tooltip": "正则匹配",
-      "deep_search_notice": "请求/响应体、请求/响应头等深度搜索最多扫描最近 5000 条，不支持负条件、正则及大小写区分，多条件取并集"
+      "deep_search_notice": "请求/响应体、请求/响应头等深度搜索最多扫描最近 5000 条，不支持负条件、正则及大小写区分，多条件取并集",
+      "process_desc": "按本地客户端进程名 / PID 过滤（process:、proc:、pid:）"
     },
     "list_cleared": "流量列表已清空",
     "listening": "正在监听网络流量...",
@@ -1472,5 +1486,21 @@
     "status_themes": "正在加载自定义主题...",
     "status_plugins": "正在初始化插件系统...",
     "status_complete": "准备就绪"
+  },
+  "capture_scope": {
+    "button": "记录范围",
+    "button_hint": "按进程设置记录范围",
+    "title": "记录范围",
+    "include_label": "仅记录（include）",
+    "include_placeholder": "进程名或 PID，逗号分隔",
+    "exclude_label": "排除（exclude）",
+    "exclude_placeholder": "进程名或 PID，逗号分隔",
+    "recent_label": "最近进程",
+    "syntax_hint": "支持进程名子串、* / ? 通配符；纯数字按 PID 精确匹配。",
+    "semantics_note": "范围外的流量仍可正常访问，但不会被记录，规则与断点也不生效。设置 include 时远程设备不会被记录；分享入口流量始终记录。应用重启后此设置会重置。",
+    "clear": "清除",
+    "apply": "应用",
+    "applied_toast": "已应用记录范围",
+    "apply_failed": "应用记录范围失败"
   }
 }

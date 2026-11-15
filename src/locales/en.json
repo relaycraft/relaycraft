@@ -502,6 +502,10 @@
       "messages": "Messages",
       "request": "Request",
       "response": "Response"
+    },
+    "process": {
+      "title": "Process",
+      "path": "Executable path"
     }
   },
   "header_editor": {
@@ -951,7 +955,12 @@
           "regex": "Regex",
           "wildcard": "Wildcard"
         },
-        "url_placeholder": "Enter match pattern..."
+        "url_placeholder": "Enter match pattern...",
+        "process": {
+          "label": "Process",
+          "placeholder": "chrome / Code.exe — empty means any process",
+          "hint": "Matches the local client process name (case-insensitive); remote devices never match."
+        }
       },
       "sections": {
         "action": "Action Config",
@@ -1320,7 +1329,10 @@
     "tp_action_rewrite_header": "Header Rewrite",
     "tp_action_rewrite_body": "Body Rewrite",
     "tp_action_block_request": "Block",
-    "tp_action_throttle": "Throttle"
+    "tp_action_throttle": "Throttle",
+    "tp_capture_scope": "Capture scope",
+    "tp_scope_include": "Include",
+    "tp_scope_exclude": "Exclude"
   },
   "titlebar": {
     "close": "Close",
@@ -1349,7 +1361,8 @@
       "req_body_copied": "Request body copied to clipboard",
       "res_body_copied": "Response body copied",
       "set_breakpoint": "Set Breakpoint",
-      "url_copied": "URL copied to clipboard"
+      "url_copied": "URL copied to clipboard",
+      "record_only_process": "Record only {{name}} traffic"
     },
     "empty_search": "No matching requests",
     "file_not_found": "File not found",
@@ -1369,7 +1382,8 @@
       "placeholder": "Enter filter conditions...",
       "quick": "Quick Filters",
       "regex_tooltip": "Regex",
-      "deep_search_notice": "Deep search (resbody/reqbody/header) scans up to 5000 recent flows. Negation, regex, and case-sensitivity not supported; multiple conditions use OR logic"
+      "deep_search_notice": "Deep search (resbody/reqbody/header) scans up to 5000 recent flows. Negation, regex, and case-sensitivity not supported; multiple conditions use OR logic",
+      "process_desc": "Filter by local client process name / PID (process:, proc:, pid:)"
     },
     "list_cleared": "Traffic list cleared",
     "listening": "Listening for traffic...",
@@ -1472,5 +1486,21 @@
     "status_themes": "Loading custom themes...",
     "status_plugins": "Initializing plugins...",
     "status_complete": "Ready"
+  },
+  "capture_scope": {
+    "button": "Capture scope",
+    "button_hint": "Filter captured traffic by process",
+    "title": "Capture scope",
+    "include_label": "Record only (include)",
+    "include_placeholder": "Process name or PID, comma-separated",
+    "exclude_label": "Exclude",
+    "exclude_placeholder": "Process name or PID, comma-separated",
+    "recent_label": "Recent processes",
+    "syntax_hint": "Process-name substring, * / ? wildcards; all digits match PID exactly.",
+    "semantics_note": "Out-of-scope traffic still works but is not recorded, and rules/breakpoints do not apply. With an include list, remote devices are not recorded; share-entry traffic is always recorded. This setting resets when the app restarts.",
+    "clear": "Clear",
+    "apply": "Apply",
+    "applied_toast": "Capture scope applied",
+    "apply_failed": "Failed to apply capture scope"
   }
 }

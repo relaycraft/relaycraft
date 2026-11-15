@@ -129,11 +129,11 @@ def insert_flow_rows(
         INSERT OR REPLACE INTO flow_indices (
             id, session_id, method, url, host, path, status, http_version,
             content_type, started_datetime, time, size, client_ip,
-            app_name, app_display_name,
+            app_name, app_display_name, pid, process_name,
             has_error, has_request_body, has_response_body,
             is_websocket, is_sse, websocket_frame_count, is_intercepted,
             hits, msg_ts
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             index_data["id"],
@@ -151,6 +151,8 @@ def insert_flow_rows(
             index_data["client_ip"],
             index_data.get("app_name", ""),
             index_data.get("app_display_name", ""),
+            index_data.get("pid"),
+            index_data.get("process_name", ""),
             index_data["has_error"],
             index_data["has_request_body"],
             index_data["has_response_body"],
@@ -320,6 +322,8 @@ def extract_index(db, flow_data: Dict, session_id: str) -> Dict:
         "client_ip": rc.get("clientIp", "") or flow_data.get("clientIp", ""),
         "app_name": rc.get("appName", "") or flow_data.get("appName", ""),
         "app_display_name": rc.get("appDisplayName", "") or flow_data.get("appDisplayName", ""),
+        "pid": rc.get("pid") if isinstance(rc.get("pid"), int) else None,
+        "process_name": rc.get("processName") or "",
         "has_error": 1 if rc.get("error") else 0,
         "has_request_body": 1 if (req.get("postData") or {}).get("text") else 0,
         "has_response_body": 1 if (res.get("content") or {}).get("text") else 0,

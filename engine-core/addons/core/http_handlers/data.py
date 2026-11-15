@@ -76,6 +76,35 @@ def _handle_traffic_active(monitor: Any, flow: Any, Response: Any) -> None:
         flow.response = Response.make(405, b"Method Not Allowed", CORS_HEADERS)
 
 
+def _handle_capture_scope(monitor: Any, flow: Any, Response: Any) -> None:
+    from .. import capture_scope
+
+    if flow.request.method == "GET":
+        cfg = capture_scope.get()
+        cfg["enabled"] = bool(cfg["include"] or cfg["exclude"])
+        json_str = json.dumps(cfg, ensure_ascii=False)
+        flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)
+    elif flow.request.method == "POST":
+        try:
+            data = json.loads(flow.request.content.decode("utf-8"))
+            cfg = capture_scope.set_config(data)
+            cfg["enabled"] = bool(cfg["include"] or cfg["exclude"])
+            json_str = json.dumps(cfg, ensure_ascii=False)
+            flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)
+        except (json.JSONDecodeError, ValueError) as e:
+            body = json.dumps({"error": str(e)}, ensure_ascii=False)
+            flow.response = Response.make(400, body.encode("utf-8"), JSON_HEADERS)
+    else:
+        flow.response = Response.make(405, b"Method Not Allowed", CORS_HEADERS)
+
+
+def _handle_processes(monitor: Any, flow: Any, Response: Any) -> None:
+    resolver = getattr(monitor, "process_resolver", None)
+    processes = resolver.recent_processes() if resolver is not None else []
+    json_str = json.dumps({"processes": processes}, ensure_ascii=False)
+    flow.response = Response.make(200, json_str.encode("utf-8"), JSON_HEADERS)
+
+
 def _handle_export_session(
     monitor: Any,
     flow: Any,
