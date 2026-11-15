@@ -32,6 +32,7 @@ export type SettingsTabType =
   | "ai"
   | "plugins"
   | "certificate"
+  | "privacy"
   | "advanced"
   | "about";
 

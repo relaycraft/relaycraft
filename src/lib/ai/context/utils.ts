@@ -10,6 +10,117 @@ export const truncate = (val: string, limit: number = 200): string => {
   return `${val.substring(0, limit)}... [TRUNCATED ${val.length - limit} chars]`;
 };
 
+/** Headers whose values are replaced before request data reaches the AI. */
+export const SENSITIVE_HEADERS = [
+  "cookie",
+  "set-cookie",
+  "authorization",
+  "proxy-authorization",
+  "x-api-key",
+  "api-key",
+  "x-auth-token",
+  "x-access-token",
+  "x-csrf-token",
+  "x-xsrf-token",
+];
+
+const SENSITIVE_HEADER_SET = new Set(SENSITIVE_HEADERS);
+
+/**
+ * Query parameter names whose values are redacted from URLs sent to the AI.
+ * Compared case-insensitively against the percent-decoded parameter name.
+ */
+export const SENSITIVE_QUERY_PARAMS = [
+  "token",
+  "access_token",
+  "refresh_token",
+  "id_token",
+  "api_key",
+  "apikey",
+  "key",
+  "secret",
+  "client_secret",
+  "password",
+  "passwd",
+  "auth",
+  "signature",
+  "sig",
+  "session",
+  "sessionid",
+];
+
+const SENSITIVE_QUERY_PARAM_SET = new Set(SENSITIVE_QUERY_PARAMS);
+
+/** Truncation limits applied to URLs and bodies in the AI context. */
+export const URL_TRUNCATE_LIMIT = 300;
+export const BODY_TRUNCATE_LIMIT = 500;
+
+const REDACTED = "[REDACTED]";
+
+/**
+ * Redact userinfo credentials (`user:pass@`) inside the authority component.
+ * The authority is the span after `scheme://` (or from the start for
+ * scheme-less URLs) up to the first `/`, `?` or `#`. An `@` in the path or
+ * query (e.g. `/users/@me`, `?email=a@b.com`) is left untouched.
+ */
+const redactUserinfo = (url: string): string => {
+  const schemeMatch = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.exec(url);
+  const authStart = schemeMatch ? schemeMatch[0].length : url.startsWith("//") ? 2 : 0;
+
+  let authEnd = url.length;
+  for (let i = authStart; i < url.length; i++) {
+    const ch = url[i];
+    if (ch === "/" || ch === "?" || ch === "#") {
+      authEnd = i;
+      break;
+    }
+  }
+
+  const authority = url.slice(authStart, authEnd);
+  const atIndex = authority.lastIndexOf("@");
+  if (atIndex < 0) return url;
+
+  return url.slice(0, authStart) + REDACTED + authority.slice(atIndex) + url.slice(authEnd);
+};
+
+/**
+ * Replace values of sensitive query parameters with "[REDACTED]" and strip
+ * userinfo credentials from the authority.
+ * Operates on the raw string so malformed or relative URLs never throw and
+ * unrelated encoding is preserved byte-for-byte.
+ */
+export const sanitizeUrl = (url: string): string => {
+  if (!url) return url;
+
+  const hashIndex = url.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+  const queryIndex = beforeHash.indexOf("?");
+  const beforeQuery = redactUserinfo(
+    queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash,
+  );
+  if (queryIndex < 0) return `${beforeQuery}${hash}`;
+
+  const query = beforeHash.slice(queryIndex + 1);
+  const sanitizedQuery = query
+    .split("&")
+    .map((pair) => {
+      const eqIndex = pair.indexOf("=");
+      const rawName = eqIndex >= 0 ? pair.slice(0, eqIndex) : pair;
+      let name = rawName;
+      try {
+        name = decodeURIComponent(rawName);
+      } catch {
+        // Keep the raw name when it is not valid percent-encoding.
+      }
+      if (!SENSITIVE_QUERY_PARAM_SET.has(name.toLowerCase())) return pair;
+      return `${rawName}=${REDACTED}`;
+    })
+    .join("&");
+
+  return `${beforeQuery}?${sanitizedQuery}${hash}`;
+};
+
 export const summarizeRule = (rule: Rule): { match: string; action: string } => {
   const matches = rule.match.request
     .map((atom) => {
@@ -47,12 +158,10 @@ export const summarizeRule = (rule: Rule): { match: string; action: string } => 
   return { match: matches, action: actions };
 };
 
-const BLACKLISTED_HEADERS = ["cookie", "set-cookie", "authorization", "proxy-authorization"];
-
 export const sanitizeHeaders = (headers: Record<string, string>): Record<string, string> => {
   const sanitized: Record<string, string> = {};
   for (const [k, v] of Object.entries(headers)) {
-    sanitized[k] = BLACKLISTED_HEADERS.includes(k.toLowerCase())
+    sanitized[k] = SENSITIVE_HEADER_SET.has(k.toLowerCase())
       ? "[SENSITIVE_REDACTED]"
       : truncate(v, 100);
   }

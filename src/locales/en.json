@@ -801,6 +801,97 @@
     "title": "Plugins",
     "uninstall": "Uninstall"
   },
+  "privacy": {
+    "title": "Security & Privacy",
+    "hero": {
+      "all_clear": "Only reachable from this machine — nothing needs attention",
+      "desc": "A summary of what RelayCraft exposes externally, how your AI key is used, and what data is sent to AI providers.",
+      "summary": "{{reachable}} entries reachable from other devices · {{attention}} items need attention"
+    },
+    "reachability": {
+      "title": "Reachability"
+    },
+    "status": {
+      "info": "Info",
+      "off": "Off",
+      "ok": "OK",
+      "warn": "Attention"
+    },
+    "tiles": {
+      "ai": {
+        "off": "Disabled",
+        "sends_to": "Data is sent to {{host}}",
+        "title": "AI Service"
+      },
+      "mcp": {
+        "local": "Localhost only · port {{port}}",
+        "off": "Disabled",
+        "title": "MCP Service"
+      },
+      "plugins": {
+        "detail": "{{enabled}} enabled · {{high}} with high-risk permissions",
+        "title": "Plugins"
+      },
+      "proxy": {
+        "lan_detail": "Port {{port}} · reachable from LAN devices (for phone debugging)",
+        "off": "Proxy not running",
+        "title": "Proxy Entry"
+      },
+      "share": {
+        "lan": "LAN accessible · port {{port}}",
+        "local": "Localhost only · port {{port}}",
+        "off": "Disabled",
+        "title": "Share Entry"
+      },
+      "ssl": {
+        "insecure": "Upstream TLS certificate verification disabled",
+        "secure": "Upstream TLS certificate verification enabled",
+        "title": "Upstream Certificate Check"
+      }
+    },
+    "ai": {
+      "caller": {
+        "app": "App Features",
+        "test": "Connection Test"
+      },
+      "caller_title": "Callers",
+      "chart_day": "{{date}} · {{tokens}} tokens · {{requests}} requests",
+      "clear": "Clear History",
+      "clear_confirm_msg": "This clears this session's request details and all historical usage stats. This cannot be undone.",
+      "clear_confirm_title": "Clear AI Usage History",
+      "detail_unavailable": "Request details are no longer available (kept in memory only).",
+      "estimated_note": "Contains estimates",
+      "estimated_tooltip": "Some requests report no usage from the model or come from streaming output; tokens are estimated as characters ÷ 4.",
+      "key_desc": "The key is stored in the local data directory and is never written to config.json.",
+      "key_storage_badge": "Locally obfuscated (not encrypted)",
+      "msg_chars": "{{count}} chars",
+      "msg_truncated": "Truncated",
+      "no_key": "No key configured",
+      "recent_desc": "Kept in memory only — cleared on restart",
+      "recent_empty": "No requests yet",
+      "recent_title": "Recent Requests",
+      "title": "AI Key & Usage",
+      "today_tokens": "Tokens today",
+      "week_requests": "Requests (7d)",
+      "week_tokens": "Tokens (7d)"
+    },
+    "sent": {
+      "desc": "When calling the AI, RelayCraft sends the following sanitized context to your configured AI provider: system & rule summaries, recent traffic, the selected request details (optional), and MCP activity summaries.",
+      "headers_label": "Redacted request headers",
+      "note": "Recent proxy engine log lines may be included when the question is about logs or errors. Plugins with the AI permission compose their own messages and bypass this redaction — the \"Recent Requests\" list above shows exactly what was sent.",
+      "params_label": "Redacted URL query parameters",
+      "title": "Data Sent to AI",
+      "truncation": "URLs are truncated at {{url}} chars; request/response bodies at {{body}} chars."
+    },
+    "plugins": {
+      "calls": "{{count}} calls",
+      "denied": "{{count}} denied",
+      "desc": "The following enabled plugins declare medium- or high-risk permissions and may read or modify proxy rules, traffic, storage, or make outbound requests.",
+      "empty": "No enabled plugin holds medium/high-risk permissions",
+      "session_note": "Call stats cover this session only and reset on restart.",
+      "title": "Plugin Permissions"
+    }
+  },
   "proxy_store": {
     "scripts_loaded": "Loaded {{count}} scripts.",
     "start_fail_msg": "Failed to start traffic capture. Error: {{error}}",

@@ -21,7 +21,14 @@ import {
   CONTEXT_CACHE_TTL_MS,
   CONTEXT_MAX_CHARS_BY_PROFILE,
 } from "./budget";
-import { sanitizeHarHeaders, summarizeRule, truncate } from "./utils";
+import {
+  BODY_TRUNCATE_LIMIT,
+  sanitizeHarHeaders,
+  sanitizeUrl,
+  summarizeRule,
+  truncate,
+  URL_TRUNCATE_LIMIT,
+} from "./utils";
 
 let contextCache: {
   key: string;
@@ -107,7 +114,7 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
     .map((idx) => ({
       id: idx.id,
       method: idx.method,
-      url: truncate(idx.url, 150),
+      url: truncate(sanitizeUrl(idx.url), 150),
       status: idx.status,
     }))
     .reverse();
@@ -172,9 +179,9 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
   let summary = `System on port ${port}. Tab: ${activeTab}. `;
   summary += `Captured requests: ${indices.length}. `;
   if (config.upstream_proxy?.enabled) {
-    summary += `Upstream: ${config.upstream_proxy.url}. `;
+    summary += `Upstream: ${sanitizeUrl(config.upstream_proxy.url)}. `;
   }
-  if (selectedFlow) summary += `Focused on: ${selectedFlow.request.url}. `;
+  if (selectedFlow) summary += `Focused on: ${sanitizeUrl(selectedFlow.request.url)}. `;
 
   const context = applyContextBudget(
     {
@@ -189,7 +196,9 @@ export const buildAIContext = async (options: AIContextOptions = {}): Promise<AI
       mcpActivitySummary: mcpActivitySummary.length > 0 ? mcpActivitySummary : undefined,
       system: {
         proxyPort: port,
-        upstreamProxy: config.upstream_proxy?.enabled ? config.upstream_proxy.url : undefined,
+        upstreamProxy: config.upstream_proxy?.enabled
+          ? sanitizeUrl(config.upstream_proxy.url)
+          : undefined,
         version: APP_VERSION,
       },
     },
@@ -253,7 +262,7 @@ function buildSelectedItem(
       id: selectedFlow.id,
       details: {
         method: selectedFlow.request.method,
-        url: truncate(selectedFlow.request.url, 300),
+        url: truncate(sanitizeUrl(selectedFlow.request.url), URL_TRUNCATE_LIMIT),
         statusCode: selectedFlow.response.status,
         requestHeaders: includeHeaders
           ? sanitizeHarHeaders(selectedFlow.request.headers)
@@ -262,10 +271,10 @@ function buildSelectedItem(
           ? sanitizeHarHeaders(selectedFlow.response.headers)
           : undefined,
         requestBody: includeBody
-          ? truncate(selectedFlow.request.postData?.text || "", 500)
+          ? truncate(selectedFlow.request.postData?.text || "", BODY_TRUNCATE_LIMIT)
           : undefined,
         responseBody: includeBody
-          ? truncate(selectedFlow.response.content.text || "", 500)
+          ? truncate(selectedFlow.response.content.text || "", BODY_TRUNCATE_LIMIT)
           : undefined,
       },
     };

@@ -8,6 +8,7 @@ import {
   Server,
   Settings as SettingsIcon,
   Shield,
+  ShieldCheck,
   Sparkles,
   Wrench,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { MarketView } from "./MarketView";
 import { McpSettings } from "./McpSettings";
 import { NetworkSettings } from "./NetworkSettings";
 import { PluginSettings } from "./PluginSettings";
+import { PrivacySettings } from "./PrivacySettings";
 import { SettingsPage, SettingsTabButton } from "./SettingsLayout";
 
 interface SystemInfo {
@@ -56,6 +58,7 @@ export function SettingsView() {
     { id: "ai", label: t("ai.title"), icon: Sparkles },
     { id: "plugins", label: t("plugins.title"), icon: PackageIcon },
     { id: "certificate", label: t("sidebar.certificate"), icon: Shield },
+    { id: "privacy", label: t("privacy.title"), icon: ShieldCheck },
     { id: "advanced", label: t("settings.advanced.title"), icon: Wrench },
     { id: "about", label: t("settings.about.title"), icon: Info },
   ] as const;
@@ -91,6 +94,7 @@ export function SettingsView() {
           {settingsTab === "ai" && <AISettingsPanel />}
           {settingsTab === "plugins" && <PluginSettings />}
           {settingsTab === "certificate" && <CertificateSettings />}
+          {settingsTab === "privacy" && <PrivacySettings />}
           {settingsTab === "advanced" && <AdvancedSettings systemInfo={systemInfo} />}
           {settingsTab === "about" && <AboutSettings systemInfo={systemInfo} />}
 

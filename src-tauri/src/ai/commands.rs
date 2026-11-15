@@ -1,5 +1,6 @@
 use crate::ai::profiles::{self, AIProviderProfile};
 use crate::ai::tool_args::normalize_and_validate_tool_calls;
+use crate::ai::usage::AiCaller;
 use crate::ai::{crypto, AIClient, AIConfig, ChatCompletionChunk, ChatMessage, Tool, ToolChoice};
 use futures_util::StreamExt;
 use serde::Serialize;
@@ -106,9 +107,10 @@ fn load_runtime_config(state: &AIState, normalize_profile: bool) -> Result<AICon
 fn build_ai_client(
     state: &AIState,
     normalize_profile: bool,
+    caller: AiCaller,
 ) -> Result<(AIClient, AIConfig), String> {
     let config = load_runtime_config(state, normalize_profile)?;
-    Ok((AIClient::new(config.clone()), config))
+    Ok((AIClient::new(config.clone(), caller), config))
 }
 
 #[tauri::command]
@@ -177,7 +179,7 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
 
 #[tauri::command]
 pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, String> {
-    let (client, config) = build_ai_client(&state, false)?;
+    let (client, config) = build_ai_client(&state, false, AiCaller::ConnectionTest)?;
     log::info!("Testing AI connection. Provider: {}", config.provider);
 
     log::info!("Executing AI test connection request...");
@@ -197,7 +199,7 @@ pub async fn test_ai_connection(state: State<'_, AIState>) -> Result<String, Str
 pub async fn probe_ai_capabilities(
     state: State<'_, AIState>,
 ) -> Result<CapabilityProbeResult, String> {
-    let (client, config) = build_ai_client(&state, true)?;
+    let (client, config) = build_ai_client(&state, true, AiCaller::ConnectionTest)?;
     let profile_id = config.profile_id.clone();
 
     let chat = match client.test_connection().await {
@@ -241,13 +243,13 @@ pub async fn probe_ai_capabilities(
     })
 }
 
-#[tauri::command]
-pub async fn ai_chat_completion(
+pub async fn ai_chat_completion_inner(
     messages: Vec<(String, String)>,
     temperature: Option<f32>,
-    state: State<'_, AIState>,
+    state: &AIState,
+    caller: AiCaller,
 ) -> Result<String, String> {
-    let (client, _) = build_ai_client(&state, false)?;
+    let (client, _) = build_ai_client(state, false, caller)?;
 
     let response = client
         .chat_completion(messages, temperature)
@@ -262,6 +264,15 @@ pub async fn ai_chat_completion(
 }
 
 #[tauri::command]
+pub async fn ai_chat_completion(
+    messages: Vec<(String, String)>,
+    temperature: Option<f32>,
+    state: State<'_, AIState>,
+) -> Result<String, String> {
+    ai_chat_completion_inner(messages, temperature, state.inner(), AiCaller::App).await
+}
+
+#[tauri::command]
 pub async fn ai_chat_completion_with_tools(
     messages: Vec<ChatMessage>,
     tools: Vec<Tool>,
@@ -269,7 +280,7 @@ pub async fn ai_chat_completion_with_tools(
     temperature: Option<f32>,
     state: State<'_, AIState>,
 ) -> Result<ToolCompletionResult, String> {
-    let (client, _) = build_ai_client(&state, false)?;
+    let (client, _) = build_ai_client(&state, false, AiCaller::App)?;
 
     let response = client
         .chat_completion_with_tools(messages, tools, tool_choice, temperature)
@@ -295,7 +306,7 @@ pub async fn ai_chat_completion_stream(
 ) -> Result<(), String> {
     let chat_messages = tuple_messages_to_chat_messages(messages);
 
-    let (client, _) = build_ai_client(&state, false)?;
+    let (client, _) = build_ai_client(&state, false, AiCaller::App)?;
     let mut stream = client
         .chat_completion_stream_with_tools(chat_messages, None, None, temperature)
         .await
@@ -437,7 +448,7 @@ pub async fn ai_chat_completion_stream_with_tools(
     on_chunk: Channel<ChatCompletionChunk>,
     state: State<'_, AIState>,
 ) -> Result<(), String> {
-    let (client, _) = build_ai_client(&state, false)?;
+    let (client, _) = build_ai_client(&state, false, AiCaller::App)?;
     let mut stream = client
         .chat_completion_stream_with_tools(messages, tools, tool_choice, temperature)
         .await

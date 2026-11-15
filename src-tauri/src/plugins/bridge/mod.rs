@@ -108,7 +108,9 @@ pub async fn plugin_call(
         "storage_list" => host::storage_list(&payload.plugin_id, &payload.args).await,
         "storage_clear" => host::storage_clear(&payload.plugin_id).await,
         "host_get_runtime" => host::host_get_runtime(&app).await,
-        "ai_chat_completion" => host::ai_chat_completion(&app, payload.args).await,
+        "ai_chat_completion" => {
+            host::ai_chat_completion(&app, &payload.plugin_id, payload.args).await
+        }
         "get_process_stats" => host::get_process_stats(&app).await,
         "http_send" => host::http_send(payload.args).await,
         // ── engine domain ────────────────────────────────────────────────────

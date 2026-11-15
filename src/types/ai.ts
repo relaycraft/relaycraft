@@ -226,3 +226,60 @@ export interface ChatCompletionChunk {
     finish_reason?: string;
   }[];
 }
+
+// ── AI usage / privacy statistics (mirrors src-tauri/src/ai/usage.rs) ──────
+
+export interface AiUsageMessage {
+  role: string;
+  content: string;
+  originalChars: number;
+  truncated: boolean;
+}
+
+export interface AiUsageDailyBucket {
+  date: string;
+  caller: string;
+  model: string;
+  requests: number;
+  errors: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedRequests: number;
+}
+
+export interface AiUsageRecentMeta {
+  id: string;
+  timestampMs: number;
+  caller: string;
+  provider: string;
+  model: string;
+  endpointHost: string;
+  stream: boolean;
+  tools: boolean;
+  toolNames: string[];
+  status: string;
+  durationMs: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimated: boolean;
+  error: string | null;
+  messageCount: number;
+  totalChars: number;
+}
+
+export interface AiUsageSummary {
+  daily: AiUsageDailyBucket[];
+  recent: AiUsageRecentMeta[];
+}
+
+export interface AiUsageRecord extends AiUsageRecentMeta {
+  messages: AiUsageMessage[];
+}
+
+export interface AiKeyStatus {
+  provider: string;
+  hasKey: boolean;
+  masked: string;
+}

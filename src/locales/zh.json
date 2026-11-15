@@ -801,6 +801,97 @@
     "title": "插件管理",
     "uninstall": "卸载"
   },
+  "privacy": {
+    "title": "安全与隐私",
+    "hero": {
+      "all_clear": "仅本机可访问，暂无需要注意的项",
+      "desc": "这里汇总了 RelayCraft 对外暴露的入口、AI 密钥的使用情况，以及发送给 AI 服务商的数据范围。",
+      "summary": "{{reachable}} 个入口可被其他设备访问 · {{attention}} 项需要注意"
+    },
+    "reachability": {
+      "title": "可访问性摘要"
+    },
+    "status": {
+      "info": "提示",
+      "off": "关闭",
+      "ok": "正常",
+      "warn": "注意"
+    },
+    "tiles": {
+      "ai": {
+        "off": "未启用",
+        "sends_to": "数据会发送至 {{host}}",
+        "title": "AI 服务"
+      },
+      "mcp": {
+        "local": "仅本机 · 端口 {{port}}",
+        "off": "未启用",
+        "title": "MCP 服务"
+      },
+      "plugins": {
+        "detail": "{{enabled}} 个已启用 · {{high}} 个拥有高风险权限",
+        "title": "插件"
+      },
+      "proxy": {
+        "lan_detail": "端口 {{port}} · 局域网设备可连接（用于手机抓包）",
+        "off": "代理未运行",
+        "title": "代理入口"
+      },
+      "share": {
+        "lan": "局域网可访问 · 端口 {{port}}",
+        "local": "仅本机 · 端口 {{port}}",
+        "off": "未启用",
+        "title": "分享入口"
+      },
+      "ssl": {
+        "insecure": "已关闭上游 TLS 证书校验",
+        "secure": "已开启上游 TLS 证书校验",
+        "title": "上游证书校验"
+      }
+    },
+    "ai": {
+      "caller": {
+        "app": "宿主功能",
+        "test": "连接测试"
+      },
+      "caller_title": "调用来源",
+      "chart_day": "{{date}} · {{tokens}} tokens · {{requests}} 次请求",
+      "clear": "清除记录",
+      "clear_confirm_msg": "将清除本次会话的请求明细与全部历史用量统计，且无法恢复。",
+      "clear_confirm_title": "清除 AI 用量记录",
+      "detail_unavailable": "请求详情已不可用（仅保留在内存中）。",
+      "estimated_note": "含估算值",
+      "estimated_tooltip": "部分请求由模型未上报 usage 或来自流式输出，tokens 按字符数 ÷ 4 估算。",
+      "key_desc": "密钥保存在本机数据目录，不写入 config.json。",
+      "key_storage_badge": "本地混淆存储（非加密）",
+      "msg_chars": "{{count}} 字符",
+      "msg_truncated": "已截断",
+      "no_key": "未配置密钥",
+      "recent_desc": "仅保留在内存中，重启后清除",
+      "recent_empty": "暂无请求记录",
+      "recent_title": "最近请求",
+      "title": "AI 密钥与用量",
+      "today_tokens": "今日 tokens",
+      "week_requests": "近 7 天请求数",
+      "week_tokens": "近 7 天 tokens"
+    },
+    "sent": {
+      "desc": "调用 AI 时，RelayCraft 会把以下经过脱敏的上下文发送给所配置的 AI 服务商：系统与规则摘要、最近流量、选中的请求详情（可选）以及 MCP 活动摘要。",
+      "headers_label": "已脱敏的请求头字段",
+      "note": "当问题涉及日志或报错时，可能包含最近的代理引擎日志行。拥有 AI 权限的插件自行组织消息，不经过上述脱敏；上方「最近请求」列表展示的即为实际发送内容。",
+      "params_label": "已脱敏的 URL 查询参数",
+      "title": "发送给 AI 的数据",
+      "truncation": "URL 最长 {{url}} 字符；请求/响应体最长 {{body}} 字符，超出部分会被截断。"
+    },
+    "plugins": {
+      "calls": "{{count}} 次调用",
+      "denied": "{{count}} 次被拒",
+      "desc": "以下已启用插件声明了中风险或高风险权限，可能读写代理规则、流量、存储或发起外部请求。",
+      "empty": "没有已启用插件持有中/高风险权限",
+      "session_note": "调用统计仅限本次会话，重启后清零。",
+      "title": "插件权限"
+    }
+  },
   "proxy_store": {
     "scripts_loaded": "已加载 {{count}} 个脚本。",
     "start_fail_msg": "无法开始监听。错误: {{error}}",

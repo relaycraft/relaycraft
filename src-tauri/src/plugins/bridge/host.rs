@@ -127,13 +127,21 @@ pub async fn host_get_runtime(app: &AppHandle) -> Result<serde_json::Value, Stri
 
 pub async fn ai_chat_completion(
     app: &AppHandle,
+    plugin_id: &str,
     args: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     // Accept both tuple arrays and object arrays for compatibility:
     // [["user","hi"], ...] OR [{ role: "user", content: "hi" }, ...]
     let messages = parse_plugin_ai_messages(args)?;
 
-    let response = crate::ai::commands::ai_chat_completion(messages, None, app.state()).await?;
+    let ai_state = app.state::<crate::ai::AIState>();
+    let response = crate::ai::commands::ai_chat_completion_inner(
+        messages,
+        None,
+        ai_state.inner(),
+        crate::ai::AiCaller::Plugin(plugin_id.to_string()),
+    )
+    .await?;
     Ok(serde_json::to_value(response).map_err(|e| e.to_string())?)
 }
 

@@ -1,5 +1,6 @@
 use super::config::AIConfig;
 use super::error::AIError;
+use super::usage::{AiCaller, UsageGuard};
 use crate::logging;
 use futures_util::StreamExt;
 use reqwest::Client;
@@ -277,10 +278,11 @@ pub struct ChunkDelta {
 pub struct AIClient {
     client: Client,
     config: AIConfig,
+    caller: AiCaller,
 }
 
 impl AIClient {
-    pub fn new(config: AIConfig) -> Self {
+    pub fn new(config: AIConfig, caller: AiCaller) -> Self {
         // Use longer timeout for reasoning models that may take a while to respond
         let client = crate::common::http::app_client_builder()
             .timeout(std::time::Duration::from_secs(120)) // 2 minutes total timeout
@@ -288,7 +290,11 @@ impl AIClient {
             .build()
             .unwrap_or_else(|_| Client::new());
 
-        Self { client, config }
+        Self {
+            client,
+            config,
+            caller,
+        }
     }
 
     fn resolve_temperature(&self, temp_override: Option<f32>) -> f32 {
@@ -306,6 +312,57 @@ impl AIClient {
     }
 
     async fn do_chat_completion(
+        &self,
+        messages: Vec<ChatMessage>,
+        tools: Option<Vec<Tool>>,
+        tool_choice: Option<ToolChoice>,
+        temp_override: Option<f32>,
+    ) -> Result<ChatCompletionResponse, AIError> {
+        // Rough estimate: ~4 chars per token (same approximation as the
+        // request audit line inside the inner call).
+        let message_chars: usize = messages
+            .iter()
+            .map(|m| m.content.as_ref().map(|v| v.len()).unwrap_or(0))
+            .sum();
+        let approx_prompt_tokens = u32::try_from(message_chars / 4).unwrap_or(u32::MAX);
+
+        let mut usage = UsageGuard::new(
+            &self.caller,
+            &self.config,
+            false,
+            &messages,
+            tools.as_deref(),
+        );
+
+        let result = self
+            .do_chat_completion_inner(messages, tools, tool_choice, temp_override)
+            .await;
+
+        match &result {
+            Ok(response) => {
+                let approx_completion_tokens = estimate_output_tokens(response);
+                let (prompt_tokens, completion_tokens, total_tokens, usage_source) =
+                    usage_tokens_from_response(
+                        response.usage.as_ref(),
+                        approx_prompt_tokens,
+                        approx_completion_tokens,
+                    );
+                usage.record_success(
+                    prompt_tokens,
+                    completion_tokens,
+                    total_tokens,
+                    usage_source != "response",
+                );
+            }
+            Err(error) => {
+                usage.record_error(error.to_string());
+            }
+        }
+
+        result
+    }
+
+    async fn do_chat_completion_inner(
         &self,
         messages: Vec<ChatMessage>,
         tools: Option<Vec<Tool>>,
@@ -338,12 +395,13 @@ impl AIClient {
         let _ = logging::write_domain_log(
             "audit",
             &format!(
-                "AI Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}",
+                "AI Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}, caller={}",
                 endpoint,
                 self.config.model,
                 self.config.max_tokens,
                 approx_input_tokens,
-                tools.is_some()
+                tools.is_some(),
+                self.caller.label()
             ),
         );
 
@@ -410,8 +468,8 @@ impl AIClient {
         let _ = logging::write_domain_log(
             "audit",
             &format!(
-                "AI Usage: endpoint={}, model={}, prompt_tokens={}, completion_tokens={}, total_tokens={}, usage_source={}",
-                endpoint, self.config.model, prompt_tokens, completion_tokens, total_tokens, usage_source
+                "AI Usage: endpoint={}, model={}, prompt_tokens={}, completion_tokens={}, total_tokens={}, usage_source={}, caller={}",
+                endpoint, self.config.model, prompt_tokens, completion_tokens, total_tokens, usage_source, self.caller.label()
             ),
         );
 
@@ -456,6 +514,39 @@ impl AIClient {
         tool_choice: Option<ToolChoice>,
         temp_override: Option<f32>,
     ) -> Result<ChatChunkStream, AIError> {
+        let mut usage = UsageGuard::new(
+            &self.caller,
+            &self.config,
+            true,
+            &messages,
+            tools.as_deref(),
+        );
+
+        let base_endpoint = self.config.get_endpoint();
+        let endpoint = format!("{}/chat/completions", base_endpoint.trim_end_matches('/'));
+
+        match self
+            .do_chat_completion_stream_inner(messages, tools, tool_choice, temp_override)
+            .await
+        {
+            Ok(stream) => {
+                usage.set_finish_audit_endpoint(endpoint);
+                Ok(Box::pin(track_stream_usage(stream, usage)))
+            }
+            Err(error) => {
+                usage.record_error(error.to_string());
+                Err(error)
+            }
+        }
+    }
+
+    async fn do_chat_completion_stream_inner(
+        &self,
+        messages: Vec<ChatMessage>,
+        tools: Option<Vec<Tool>>,
+        tool_choice: Option<ToolChoice>,
+        temp_override: Option<f32>,
+    ) -> Result<ChatChunkStream, AIError> {
         let base_endpoint = self.config.get_endpoint();
         let base_endpoint = base_endpoint.trim_end_matches('/');
         let endpoint = format!("{}/chat/completions", base_endpoint);
@@ -472,12 +563,13 @@ impl AIClient {
         let _ = logging::write_domain_log(
             "audit",
             &format!(
-                "AI Stream Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}",
+                "AI Stream Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}, caller={}",
                 endpoint,
                 self.config.model,
                 self.config.max_tokens,
                 approx_input_tokens,
-                tools.is_some()
+                tools.is_some(),
+                self.caller.label()
             ),
         );
 
@@ -691,6 +783,32 @@ impl AIClient {
 
         extract_tools_probe_result(&response)
     }
+}
+
+/// Wrap a parsed chunk stream so the usage guard observes every chunk and
+/// finalizes exactly once: success on stream end, error on a stream error
+/// item, and "aborted" via the guard's `Drop` when the consumer drops the
+/// stream early (e.g. the frontend channel closed).
+fn track_stream_usage(stream: ChatChunkStream, usage: UsageGuard) -> ChatChunkStream {
+    Box::pin(futures_util::stream::unfold(
+        (stream, usage),
+        |(mut stream, mut usage)| async move {
+            match stream.next().await {
+                Some(Ok(chunk)) => {
+                    usage.observe_chunk(&chunk);
+                    Some((Ok(chunk), (stream, usage)))
+                }
+                Some(Err(error)) => {
+                    usage.record_error(error.to_string());
+                    Some((Err(error), (stream, usage)))
+                }
+                None => {
+                    usage.record_stream_end();
+                    None
+                }
+            }
+        },
+    ))
 }
 
 fn extract_tools_probe_result(response: &ChatCompletionResponse) -> Result<String, AIError> {
