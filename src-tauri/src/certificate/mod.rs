@@ -1,4 +1,3 @@
-use crate::logging;
 use anyhow::{Context, Result as AnyResult};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -254,15 +253,27 @@ pub async fn check_cert_installed() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn install_cert_automated() -> Result<(), String> {
-    let _ = logging::write_domain_log("audit", "Triggered automated certificate installation");
     let cert_path = get_cert_path()?;
-    platform().install(&cert_path)
+    let result = platform().install(&cert_path);
+    crate::audit::audit(match &result {
+        Ok(()) => crate::audit::AuditEvent::user("cert.install"),
+        Err(e) => crate::audit::AuditEvent::user("cert.install")
+            .result(crate::audit::AuditResult::Error)
+            .detail(e.clone()),
+    });
+    result
 }
 
 #[tauri::command]
 pub async fn remove_cert_automated() -> Result<(), String> {
-    let _ = logging::write_domain_log("audit", "Triggered automated certificate removal");
-    platform().remove()
+    let result = platform().remove();
+    crate::audit::audit(match &result {
+        Ok(()) => crate::audit::AuditEvent::user("cert.remove"),
+        Err(e) => crate::audit::AuditEvent::user("cert.remove")
+            .result(crate::audit::AuditResult::Error)
+            .detail(e.clone()),
+    });
+    result
 }
 
 #[tauri::command]
@@ -281,7 +292,7 @@ pub async fn regenerate_root_ca(_app: tauri::AppHandle) -> Result<(), String> {
 
     ensure_ca_exists(&cert_dir).map_err(|e| e.to_string())?;
 
-    let _ = logging::write_domain_log("audit", "Regenerated CA Root");
+    crate::audit::audit(crate::audit::AuditEvent::user("cert.regenerate"));
 
     Ok(())
 }

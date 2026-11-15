@@ -11,7 +11,6 @@ use super::commands::AIState;
 use super::config::AIConfig;
 use super::crypto;
 use crate::common::sync::lock_unpoisoned;
-use crate::logging;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, VecDeque};
 use std::fs;
@@ -408,10 +407,10 @@ fn mask_api_key(key: &str) -> String {
 /// frontend dropped a stream early).
 pub struct UsageGuard {
     record: Option<AiUsageRecord>,
+    caller: AiCaller,
     started: Instant,
     output_chars: usize,
     approx_prompt_tokens: u32,
-    audit_endpoint: Option<String>,
     record_fn: fn(AiUsageRecord),
     finalized: bool,
 }
@@ -484,17 +483,10 @@ impl UsageGuard {
             started: Instant::now(),
             output_chars: 0,
             approx_prompt_tokens,
-            audit_endpoint: None,
+            caller: caller.clone(),
             record_fn,
             finalized: false,
         }
-    }
-
-    /// Enable the "AI Usage" audit line written when the guard finalizes.
-    /// Only used on the streaming path, where the non-stream audit site
-    /// does not exist.
-    pub fn set_finish_audit_endpoint(&mut self, endpoint: String) {
-        self.audit_endpoint = Some(endpoint);
     }
 
     /// Accumulate streamed output size (content + tool call fragments).
@@ -589,32 +581,51 @@ impl UsageGuard {
         record.estimated = estimated;
         record.error = error.map(|e| e.chars().take(ERROR_LIMIT).collect());
 
-        self.write_finish_audit(&record);
+        self.write_request_audit(&record);
         (self.record_fn)(record);
     }
 
-    fn write_finish_audit(&self, record: &AiUsageRecord) {
-        let Some(endpoint) = &self.audit_endpoint else {
-            return;
+    /// Emit the single `ai.request` audit event for this request. Runs once
+    /// per guard at finalization; never carries message content.
+    fn write_request_audit(&self, record: &AiUsageRecord) {
+        use crate::audit::{audit, AuditActor, AuditEvent, AuditResult};
+
+        let (actor, actor_id) = match &self.caller {
+            AiCaller::App | AiCaller::ConnectionTest => (AuditActor::User, None),
+            AiCaller::Plugin(id) => (AuditActor::Plugin, Some(id.clone())),
         };
-        let usage_source = if record.estimated {
-            "estimated_chars_div_4"
-        } else {
-            "response"
+        let result = match record.status.as_str() {
+            "error" => AuditResult::Error,
+            "aborted" => AuditResult::Aborted,
+            _ => AuditResult::Ok,
         };
-        let _ = logging::write_domain_log(
-            "audit",
-            &format!(
-                "AI Usage: endpoint={}, model={}, prompt_tokens={}, completion_tokens={}, total_tokens={}, usage_source={}, caller={}",
-                endpoint,
-                record.model,
-                record.prompt_tokens,
-                record.completion_tokens,
-                record.total_tokens,
-                usage_source,
-                record.caller
-            ),
-        );
+
+        let mut meta = serde_json::json!({
+            "model": record.model,
+            "provider": record.provider,
+            "endpointHost": record.endpoint_host,
+            "stream": record.stream,
+            "tools": record.tools,
+            "promptTokens": record.prompt_tokens,
+            "completionTokens": record.completion_tokens,
+            "totalTokens": record.total_tokens,
+            "estimated": record.estimated,
+            "durationMs": record.duration_ms,
+        });
+        if matches!(self.caller, AiCaller::ConnectionTest) {
+            meta["caller"] = serde_json::json!("connection_test");
+        }
+        if let Some(error) = &record.error {
+            meta["error"] = serde_json::json!(error);
+        }
+
+        let mut event = AuditEvent::new(actor, "ai.request")
+            .result(result)
+            .meta(meta);
+        if let Some(actor_id) = actor_id {
+            event = event.actor_id(actor_id);
+        }
+        audit(event);
     }
 }
 
@@ -653,7 +664,7 @@ pub fn get_ai_request_detail(id: String) -> Option<AiUsageRecord> {
 #[tauri::command]
 pub fn clear_ai_usage() -> Result<(), String> {
     lock_unpoisoned(&USAGE_STORE).clear();
-    let _ = logging::write_domain_log("audit", "Cleared AI usage history");
+    crate::audit::audit(crate::audit::AuditEvent::user("ai.usage.clear"));
     Ok(())
 }
 
@@ -710,10 +721,7 @@ pub fn delete_ai_key(provider: String, state: State<'_, AIState>) -> Result<(), 
         }
     }
 
-    let _ = logging::write_domain_log(
-        "audit",
-        &format!("Deleted AI API key for provider {}", provider),
-    );
+    crate::audit::audit(crate::audit::AuditEvent::user("ai.key.delete").target(provider));
     Ok(())
 }
 

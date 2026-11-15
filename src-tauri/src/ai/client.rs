@@ -1,7 +1,6 @@
 use super::config::AIConfig;
 use super::error::AIError;
 use super::usage::{AiCaller, UsageGuard};
-use crate::logging;
 use futures_util::StreamExt;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -384,27 +383,6 @@ impl AIClient {
             tool_choice: tool_choice.clone(),
         };
 
-        // Calculate approximate token count for audit logging
-        let message_chars: usize = messages
-            .iter()
-            .map(|m| m.content.as_ref().map(|v| v.len()).unwrap_or(0))
-            .sum();
-        let approx_input_tokens = message_chars / 4; // Rough estimate: ~4 chars per token
-
-        // Audit log: endpoint and token info
-        let _ = logging::write_domain_log(
-            "audit",
-            &format!(
-                "AI Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}, caller={}",
-                endpoint,
-                self.config.model,
-                self.config.max_tokens,
-                approx_input_tokens,
-                tools.is_some(),
-                self.caller.label()
-            ),
-        );
-
         // Debug log: full request details (only when verbose logging is enabled)
         log::debug!(
             "AI Request Details: endpoint={}, model={}, temperature={}, max_tokens={}, messages_count={}",
@@ -457,22 +435,6 @@ impl AIClient {
                 AIError::ParseError(e.to_string())
             })?;
 
-        let approx_prompt_tokens = u32::try_from(approx_input_tokens).unwrap_or(u32::MAX);
-        let approx_completion_tokens = estimate_output_tokens(&response_body);
-        let (prompt_tokens, completion_tokens, total_tokens, usage_source) =
-            usage_tokens_from_response(
-                response_body.usage.as_ref(),
-                approx_prompt_tokens,
-                approx_completion_tokens,
-            );
-        let _ = logging::write_domain_log(
-            "audit",
-            &format!(
-                "AI Usage: endpoint={}, model={}, prompt_tokens={}, completion_tokens={}, total_tokens={}, usage_source={}, caller={}",
-                endpoint, self.config.model, prompt_tokens, completion_tokens, total_tokens, usage_source, self.caller.label()
-            ),
-        );
-
         Ok(response_body)
     }
 
@@ -522,17 +484,11 @@ impl AIClient {
             tools.as_deref(),
         );
 
-        let base_endpoint = self.config.get_endpoint();
-        let endpoint = format!("{}/chat/completions", base_endpoint.trim_end_matches('/'));
-
         match self
             .do_chat_completion_stream_inner(messages, tools, tool_choice, temp_override)
             .await
         {
-            Ok(stream) => {
-                usage.set_finish_audit_endpoint(endpoint);
-                Ok(Box::pin(track_stream_usage(stream, usage)))
-            }
+            Ok(stream) => Ok(Box::pin(track_stream_usage(stream, usage))),
             Err(error) => {
                 usage.record_error(error.to_string());
                 Err(error)
@@ -551,27 +507,6 @@ impl AIClient {
         let base_endpoint = base_endpoint.trim_end_matches('/');
         let endpoint = format!("{}/chat/completions", base_endpoint);
         let temperature = self.resolve_temperature(temp_override);
-
-        // Calculate approximate token count for audit logging
-        let message_chars: usize = messages
-            .iter()
-            .map(|m| m.content.as_ref().map(|v| v.len()).unwrap_or(0))
-            .sum();
-        let approx_input_tokens = message_chars / 4; // Rough estimate: ~4 chars per token
-
-        // Audit log: endpoint and token info
-        let _ = logging::write_domain_log(
-            "audit",
-            &format!(
-                "AI Stream Request: endpoint={}, model={}, max_tokens={}, approx_input_tokens={}, tools_enabled={}, caller={}",
-                endpoint,
-                self.config.model,
-                self.config.max_tokens,
-                approx_input_tokens,
-                tools.is_some(),
-                self.caller.label()
-            ),
-        );
 
         // Debug log: full request details (only when verbose logging is enabled)
         log::debug!(

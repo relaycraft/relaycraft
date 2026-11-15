@@ -15,6 +15,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
+import { formatAuditLine } from "../../lib/auditLog";
 import { Logger } from "../../lib/logger";
 import { useProxyStore } from "../../stores/proxyStore";
 import { Button } from "../common/Button";
@@ -192,6 +193,13 @@ export function LogViewer({ onClose }: LogViewerProps) {
     return result;
   }, [logs, logType, searchQuery, proxyPort]);
 
+  // Audit entries are JSONL: render them as readable text; legacy lines
+  // pass through the formatter unchanged.
+  const displayLogs = useMemo(
+    () => (logType === "audit" ? filteredLogs.map(formatAuditLine) : filteredLogs),
+    [filteredLogs, logType],
+  );
+
   const tabs = [
     { id: "proxy", label: t("log_viewer.proxy_logs"), icon: Server },
     { id: "app", label: t("log_viewer.app_logs"), icon: Cpu },
@@ -322,9 +330,9 @@ export function LogViewer({ onClose }: LogViewerProps) {
               className="h-full relative font-mono selection:bg-primary/30"
             >
               <Virtuoso
-                data={filteredLogs}
+                data={displayLogs}
                 followOutput="auto"
-                initialTopMostItemIndex={Math.max(0, filteredLogs.length - 1)}
+                initialTopMostItemIndex={Math.max(0, displayLogs.length - 1)}
                 style={{ height: "100%" }}
                 itemContent={(index, line) => (
                   <LogLine

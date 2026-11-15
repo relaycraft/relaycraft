@@ -1,6 +1,5 @@
 use crate::common::sync::lock_unpoisoned;
 use crate::config;
-use crate::logging;
 use crate::plugins::{config::PluginInfo, discover_plugins, PluginCache};
 use tauri::{AppHandle, Manager};
 
@@ -46,9 +45,11 @@ pub async fn toggle_plugin(id: String, enabled: bool, _app: AppHandle) -> Result
                 id,
                 reason
             );
-            let _ = logging::write_domain_log(
-                "audit",
-                &format!("Refused to enable incompatible Plugin {}: {}", id, reason),
+            crate::audit::audit(
+                crate::audit::AuditEvent::user("plugin.enable_refused")
+                    .target(id.clone())
+                    .result(crate::audit::AuditResult::Denied)
+                    .detail(reason.clone()),
             );
             return Err(message);
         }
@@ -62,7 +63,11 @@ pub async fn toggle_plugin(id: String, enabled: bool, _app: AppHandle) -> Result
     config::save_config(config)?;
 
     log::info!("Toggling plugin {} to {}", id, enabled);
-    let _ = logging::write_domain_log("audit", &format!("Toggled Plugin {}: {}", id, enabled));
+    crate::audit::audit(
+        crate::audit::AuditEvent::user("plugin.toggle")
+            .target(id)
+            .detail(if enabled { "enabled" } else { "disabled" }),
+    );
     Ok(())
 }
 
@@ -150,13 +155,14 @@ pub async fn uninstall_plugin(
         id,
         if remove_data { "removed" } else { "kept" }
     );
-    let _ = logging::write_domain_log(
-        "audit",
-        &format!(
-            "Uninstalled Plugin: {} (data {})",
-            id,
-            if remove_data { "removed" } else { "kept" }
-        ),
+    crate::audit::audit(
+        crate::audit::AuditEvent::user("plugin.uninstall")
+            .target(id)
+            .detail(if remove_data {
+                "data removed"
+            } else {
+                "data kept"
+            }),
     );
     Ok(())
 }
@@ -172,7 +178,11 @@ pub async fn plugin_install_local_zip(path: String, _app: AppHandle) -> Result<S
 
     let id = crate::plugins::install_plugin_from_zip(zip_path, &app_root)?;
 
-    let _ = logging::write_domain_log("audit", &format!("Installed Local Plugin/Theme: {}", id));
+    crate::audit::audit(
+        crate::audit::AuditEvent::user("plugin.install")
+            .target(id.clone())
+            .detail("local file"),
+    );
 
     Ok(id)
 }
@@ -296,6 +306,6 @@ pub async fn uninstall_theme(id: String, _app: AppHandle) -> Result<(), String> 
     std::fs::remove_dir_all(&theme_dir).map_err(|e| format!("Failed to remove theme: {}", e))?;
 
     log::info!("[Themes] Uninstalled theme: {}", id);
-    let _ = logging::write_domain_log("audit", &format!("Uninstalled Theme: {}", id));
+    crate::audit::audit(crate::audit::AuditEvent::user("theme.uninstall").target(id));
     Ok(())
 }

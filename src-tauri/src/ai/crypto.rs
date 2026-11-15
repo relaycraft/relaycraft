@@ -37,11 +37,7 @@ fn unmask_data(data: &[u8]) -> String {
 
 /// Store API key in local file (with XOR obfuscation)
 pub fn store_api_key(provider: &str, key: &str) -> Result<(), Box<dyn Error>> {
-    log::debug!(
-        "[KeyStore] Storing API Key (Provider: {}, Key Len: {})",
-        provider,
-        key.len()
-    );
+    log::debug!("[KeyStore] Storing API Key (Provider: {})", provider);
 
     let path = get_secret_path(provider)?;
     let masked = mask_data(key);

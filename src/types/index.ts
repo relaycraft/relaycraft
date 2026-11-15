@@ -7,6 +7,8 @@
  * 3. 支持内存优化（FlowIndex + FlowDetail 分离）
  */
 
+// ==================== Audit 类型 ====================
+export * from "./audit";
 // ==================== HAR 标准类型 ====================
 export {
   type Flow,
@@ -43,6 +45,5 @@ export {
   type SsePollResponse,
   type WsResendRequest,
 } from "./flow";
-
 // ==================== Rules 类型 ====================
 export * from "./rules";

@@ -895,6 +895,65 @@
       "empty": "No enabled plugin holds medium/high-risk permissions",
       "session_note": "Call stats cover this session only and reset on restart.",
       "title": "Plugin Permissions"
+    },
+    "audit": {
+      "action_mcp": "MCP · {{tool}}",
+      "actions": {
+        "ai.key.delete": "Delete AI key",
+        "ai.key.update": "Update AI key",
+        "ai.request": "AI request",
+        "ai.usage.clear": "Clear AI usage",
+        "cert.install": "Install certificate",
+        "cert.regenerate": "Regenerate CA",
+        "cert.remove": "Remove certificate",
+        "config.update": "Update config",
+        "har.export": "Export HAR",
+        "note": "Note",
+        "plugin.call": "Plugin call",
+        "plugin.enable_refused": "Plugin enable refused",
+        "plugin.install": "Install plugin/theme",
+        "plugin.toggle": "Toggle plugin",
+        "plugin.uninstall": "Uninstall plugin",
+        "rules.delete": "Delete rule",
+        "rules.groups.save": "Save rule groups",
+        "rules.import": "Import rules",
+        "rules.save": "Save rules",
+        "script.delete": "Delete script",
+        "script.rename": "Rename script",
+        "script.save": "Save script",
+        "script.toggle": "Toggle script",
+        "session.save": "Save session",
+        "theme.install": "Install theme",
+        "theme.uninstall": "Uninstall theme"
+      },
+      "actor": {
+        "ai": "AI",
+        "mcp": "MCP",
+        "plugin": "Plugin",
+        "system": "System",
+        "user": "User"
+      },
+      "empty": "No activity recorded yet",
+      "filter": {
+        "ai": "AI",
+        "all": "All",
+        "mcp": "MCP",
+        "plugin": "Plugin",
+        "system": "System",
+        "user": "User"
+      },
+      "legacy_badge": "Legacy",
+      "loading": "Loading…",
+      "refresh": "Refresh",
+      "result": {
+        "aborted": "Aborted",
+        "denied": "Denied",
+        "error": "Error",
+        "ok": "OK"
+      },
+      "retention": "audit.log rotates automatically at 10 MB and keeps up to 3 rotated files.",
+      "search_placeholder": "Search action, target or detail…",
+      "title": "Activity Log"
     }
   },
   "proxy_store": {

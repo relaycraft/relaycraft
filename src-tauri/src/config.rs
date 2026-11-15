@@ -3,7 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::ai::config::AIConfig;
-use crate::logging;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct McpConfig {
@@ -404,14 +403,10 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
     fs::rename(&tmp_path, &config_path)
         .map_err(|e| format!("Failed to finalize config write: {}", e))?;
 
-    // Log changes to audit
-    if changes.is_empty() {
-        let _ =
-            logging::write_domain_log("audit", "Updated Application Configuration (no changes)");
-    } else {
-        let _ = logging::write_domain_log(
-            "audit",
-            &format!("Updated Configuration: {}", changes.join(", ")),
+    // Audit only real changes — a no-op save is noise.
+    if !changes.is_empty() {
+        crate::audit::audit(
+            crate::audit::AuditEvent::user("config.update").detail(changes.join(", ")),
         );
     }
     Ok(())

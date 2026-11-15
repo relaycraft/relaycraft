@@ -3,7 +3,6 @@
 //! This module handles conversion between Flow and HAR format.
 //! Since Flow is now HAR-compatible, conversion is straightforward.
 
-use crate::logging;
 use crate::session::har_model::{
     HarContent, HarCreator, HarEntry, HarHeader, HarLog, HarLogContent, HarRequest, HarResponse,
     HarTimings,
@@ -134,7 +133,7 @@ pub async fn export_har(path: String, flows: Vec<Flow>) -> Result<(), String> {
     let writer = std::io::BufWriter::new(file);
     serde_json::to_writer(writer, &har_log)
         .map_err(|e| format!("Failed to serialize HAR: {}", e))?;
-    let _ = logging::write_domain_log("audit", &format!("Exported HAR to {}", path));
+    crate::audit::audit(crate::audit::AuditEvent::user("har.export").target(path));
     Ok(())
 }
 

@@ -75,23 +75,29 @@ pub fn init_log_dir(path: PathBuf) {
                 let file_path = log_dir.join(filename);
                 let file_key = filename.to_string();
 
-                // Standardize prefixing
-                let domain_prefix = match entry.domain.as_str() {
-                    "audit" => "[AUDIT]",
-                    "script" => "[SCRIPT]",
-                    "plugin" => "[PLUGIN]",
-                    "crash" => "[CRASH]",
-                    _ => "",
-                };
-
-                let final_message =
-                    if !domain_prefix.is_empty() && !entry.message.contains(domain_prefix) {
-                        format!("{} {}", domain_prefix, entry.message)
-                    } else {
-                        entry.message
+                // Audit events are self-describing JSONL: write the payload
+                // as-is (it carries its own RFC3339 timestamp) instead of
+                // the "[ts] [DOMAIN] message" text format used below.
+                let line = if entry.domain == "audit" {
+                    format!("{}\n", entry.message)
+                } else {
+                    // Standardize prefixing
+                    let domain_prefix = match entry.domain.as_str() {
+                        "script" => "[SCRIPT]",
+                        "plugin" => "[PLUGIN]",
+                        "crash" => "[CRASH]",
+                        _ => "",
                     };
 
-                let line = format!("[{}] {}\n", entry.timestamp, final_message);
+                    let final_message =
+                        if !domain_prefix.is_empty() && !entry.message.contains(domain_prefix) {
+                            format!("{} {}", domain_prefix, entry.message)
+                        } else {
+                            entry.message
+                        };
+
+                    format!("[{}] {}\n", entry.timestamp, final_message)
+                };
 
                 // Rotate before writing when this line would push the file past
                 // the size cap. Rotation produces X.log.N files, which the
@@ -174,7 +180,7 @@ fn rotate_log_file(path: &Path, max_generations: u32) -> std::io::Result<()> {
 }
 
 /// `engine.log` + generation 2 → `engine.log.2`
-fn rotated_path(path: &Path, generation: u32) -> PathBuf {
+pub(crate) fn rotated_path(path: &Path, generation: u32) -> PathBuf {
     let mut name = path.as_os_str().to_owned();
     name.push(format!(".{}", generation));
     PathBuf::from(name)
@@ -292,6 +298,16 @@ pub fn setup_panic_hook() {
 /// slow/full disk), the new entry is dropped and counted rather than
 /// blocking the caller or growing memory. Logs are best-effort.
 pub fn write_domain_log(domain: &str, message: &str) -> std::io::Result<()> {
+    // Audit lines must stay machine-readable JSONL: anything that is not
+    // already a JSON object is wrapped as a system "note" event.
+    let wrapped_audit;
+    let message = if domain == "audit" {
+        wrapped_audit = crate::audit::ensure_audit_json(message);
+        wrapped_audit.as_str()
+    } else {
+        message
+    };
+
     if let Ok(guard) = LOG_TX.lock() {
         if let Some(tx) = &*guard {
             let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
@@ -403,7 +419,7 @@ pub async fn get_logs(log_name: String, lines: usize) -> Result<Vec<String>, Str
 
 /// Read the last `n` lines from a file by seeking backwards in chunks.
 /// Avoids reading the entire file, making it fast even for very large logs.
-fn read_last_n_lines(path: &std::path::Path, n: usize) -> std::io::Result<Vec<String>> {
+pub(crate) fn read_last_n_lines(path: &std::path::Path, n: usize) -> std::io::Result<Vec<String>> {
     use std::io::{Read, Seek, SeekFrom};
 
     let mut file = std::fs::File::open(path)?;

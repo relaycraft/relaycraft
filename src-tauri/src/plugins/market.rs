@@ -1,5 +1,4 @@
 use crate::config::get_data_dir;
-use crate::logging;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::command;
@@ -151,9 +150,10 @@ pub async fn plugin_market_install(url: String) -> Result<String, String> {
 
     match result {
         Ok(id) => {
-            let _ = logging::write_domain_log(
-                "audit",
-                &format!("Installed Plugin from Market: {}", id),
+            crate::audit::audit(
+                crate::audit::AuditEvent::user("plugin.install")
+                    .target(id.clone())
+                    .detail("market"),
             );
             Ok(id)
         }

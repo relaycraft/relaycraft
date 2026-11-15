@@ -1,4 +1,3 @@
-use crate::logging;
 use crate::session::model::Session;
 use std::fs::File;
 use std::io::BufWriter;
@@ -13,6 +12,6 @@ pub async fn save_session(path: String, session: Session) -> Result<(), String> 
     let writer = BufWriter::new(file);
     serde_json::to_writer(writer, &session)
         .map_err(|e| format!("Failed to serialize session: {}", e))?;
-    let _ = logging::write_domain_log("audit", &format!("Saved Session to {}", path));
+    crate::audit::audit(crate::audit::AuditEvent::user("session.save").target(path));
     Ok(())
 }

@@ -1,5 +1,4 @@
 use crate::common::error::ToTauriError;
-use crate::logging;
 use crate::scripts::model::ScriptInfo;
 use crate::scripts::storage::ScriptStorage;
 
@@ -25,7 +24,7 @@ pub fn save_script(name: String, content: String) -> Result<(), String> {
         .save_script(&name, &content)
         .map_err(|e| e.to_tauri_error())?;
 
-    let _ = logging::write_domain_log("audit", &format!("Saved script: {}", name));
+    crate::audit::audit(crate::audit::AuditEvent::user("script.save").target(name));
     Ok(())
 }
 
@@ -37,7 +36,7 @@ pub fn delete_script(name: String) -> Result<(), String> {
         .delete_script(&name)
         .map_err(|e| e.to_tauri_error())?;
 
-    let _ = logging::write_domain_log("audit", &format!("Deleted script: {}", name));
+    crate::audit::audit(crate::audit::AuditEvent::user("script.delete").target(name));
     Ok(())
 }
 
@@ -49,7 +48,11 @@ pub fn set_script_enabled(name: String, enabled: bool) -> Result<(), String> {
         .set_enabled(&name, enabled)
         .map_err(|e| e.to_tauri_error())?;
 
-    let _ = logging::write_domain_log("audit", &format!("Set script {} active: {}", name, enabled));
+    crate::audit::audit(
+        crate::audit::AuditEvent::user("script.toggle")
+            .target(name)
+            .detail(if enabled { "enabled" } else { "disabled" }),
+    );
     Ok(())
 }
 
@@ -61,9 +64,10 @@ pub fn rename_script(old_name: String, new_name: String) -> Result<(), String> {
         .rename_script(&old_name, &new_name)
         .map_err(|e| e.to_tauri_error())?;
 
-    let _ = logging::write_domain_log(
-        "audit",
-        &format!("Renamed script {} to {}", old_name, new_name),
+    crate::audit::audit(
+        crate::audit::AuditEvent::user("script.rename")
+            .target(new_name)
+            .detail(format!("renamed from {}", old_name)),
     );
     Ok(())
 }

@@ -1,4 +1,5 @@
 mod ai;
+mod audit;
 mod certificate;
 mod common;
 mod config;
@@ -81,9 +82,10 @@ fn handle_file_open<R: tauri::Runtime>(app: &tauri::AppHandle<R>, paths: &[std::
         match plugins::install_plugin_from_zip(path, &app_root) {
             Ok(id) => {
                 log::info!("[FileOpen] Installed successfully: {}", id);
-                let _ = logging::write_domain_log(
-                    "audit",
-                    &format!("Installed via file association: {}", id),
+                crate::audit::audit(
+                    crate::audit::AuditEvent::user("plugin.install")
+                        .target(&id)
+                        .detail("via file association"),
                 );
                 let _ = app.emit("plugin-installed-from-file", &id);
             }
@@ -433,6 +435,7 @@ pub fn run() {
             rules::import_rules_zip,
             logging::log_domain_event,
             logging::get_logs,
+            audit::get_audit_events,
             get_startup_warnings,
             mcp::get_mcp_status,
             mcp::get_mcp_token,

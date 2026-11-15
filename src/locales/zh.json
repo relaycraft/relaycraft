@@ -895,6 +895,65 @@
       "empty": "没有已启用插件持有中/高风险权限",
       "session_note": "调用统计仅限本次会话，重启后清零。",
       "title": "插件权限"
+    },
+    "audit": {
+      "action_mcp": "MCP · {{tool}}",
+      "actions": {
+        "ai.key.delete": "删除 AI 密钥",
+        "ai.key.update": "更新 AI 密钥",
+        "ai.request": "AI 请求",
+        "ai.usage.clear": "清除 AI 用量",
+        "cert.install": "安装证书",
+        "cert.regenerate": "重新生成 CA",
+        "cert.remove": "移除证书",
+        "config.update": "更新配置",
+        "har.export": "导出 HAR",
+        "note": "记录",
+        "plugin.call": "插件调用",
+        "plugin.enable_refused": "插件启用被拒",
+        "plugin.install": "安装插件/主题",
+        "plugin.toggle": "切换插件",
+        "plugin.uninstall": "卸载插件",
+        "rules.delete": "删除规则",
+        "rules.groups.save": "保存规则分组",
+        "rules.import": "导入规则",
+        "rules.save": "保存规则",
+        "script.delete": "删除脚本",
+        "script.rename": "重命名脚本",
+        "script.save": "保存脚本",
+        "script.toggle": "切换脚本",
+        "session.save": "保存会话",
+        "theme.install": "安装主题",
+        "theme.uninstall": "卸载主题"
+      },
+      "actor": {
+        "ai": "AI",
+        "mcp": "MCP",
+        "plugin": "插件",
+        "system": "系统",
+        "user": "用户"
+      },
+      "empty": "暂无操作记录",
+      "filter": {
+        "ai": "AI",
+        "all": "全部",
+        "mcp": "MCP",
+        "plugin": "插件",
+        "system": "系统",
+        "user": "用户"
+      },
+      "legacy_badge": "旧格式",
+      "loading": "加载中…",
+      "refresh": "刷新",
+      "result": {
+        "aborted": "已中止",
+        "denied": "已拒绝",
+        "error": "失败",
+        "ok": "成功"
+      },
+      "retention": "audit.log 超过 10 MB 自动轮转，最多保留 3 个轮转文件。",
+      "search_placeholder": "搜索操作、目标或详情…",
+      "title": "操作记录"
     }
   },
   "proxy_store": {

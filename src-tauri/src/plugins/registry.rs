@@ -126,7 +126,7 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
         ApiDomain::Host,
         Some("storage:write"),
         "storage.clear",
-        false,
+        true,
         None,
     ),
     spec(
@@ -158,7 +158,7 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
         ApiDomain::Host,
         Some("network:outbound"),
         "http.send",
-        false,
+        true,
         None,
     ),
     // ── engine domain ────────────────────────────────────────────────────────
@@ -199,7 +199,7 @@ pub const BRIDGE_COMMANDS: &[BridgeCommandSpec] = &[
         ApiDomain::Engine,
         Some("rules:write"),
         "rules.createMock",
-        false,
+        true,
         None,
     ),
     spec(
@@ -481,7 +481,10 @@ mod tests {
         assert_eq!(
             audited,
             [
+                "storage_clear",
                 "ai_chat_completion",
+                "http_send",
+                "rules_create_mock",
                 "rules_disable_mock",
                 "rules_get_own_mock"
             ],

@@ -614,6 +614,14 @@ async fn handle_tools_call(
         activity.phase = "failed".to_string();
         activity.status = "unauthorized".to_string();
         activity.error_message = Some("Unauthorized: Bearer token missing or invalid".to_string());
+        audit_mcp_call(
+            activity.client_name.as_deref(),
+            name,
+            args,
+            activity.argument_summary.as_deref(),
+            activity.intent.as_deref(),
+            crate::audit::AuditResult::Denied,
+        );
         let _ = state.app.emit("mcp-activity", &activity);
         return Ok(error_result(
             "Unauthorized: this tool requires a Bearer token. \
@@ -677,9 +685,63 @@ async fn handle_tools_call(
         }
     }
 
+    // Write tools are audited for every outcome; read tools only leave an
+    // audit trail when they were denied above.
+    if is_write {
+        let audit_result = match activity.status.as_str() {
+            "success" => crate::audit::AuditResult::Ok,
+            _ => crate::audit::AuditResult::Error,
+        };
+        audit_mcp_call(
+            activity.client_name.as_deref(),
+            name,
+            args,
+            activity.argument_summary.as_deref(),
+            activity.intent.as_deref(),
+            audit_result,
+        );
+    }
+
     let _ = state.app.emit("mcp-activity", &activity);
 
     result
+}
+
+/// Record one `mcp.<tool>` audit event. `argument_summary` is the same
+/// bounded summary shown in the MCP activity feed — request bodies are
+/// never copied into the audit log.
+fn audit_mcp_call(
+    client_name: Option<&str>,
+    tool_name: &str,
+    args: &Value,
+    argument_summary: Option<&str>,
+    intent: Option<&str>,
+    result: crate::audit::AuditResult,
+) {
+    use crate::audit::{audit, AuditEvent};
+
+    let action = format!("mcp.{}", tool_name.chars().take(64).collect::<String>());
+    let target = args["rule_id"]
+        .as_str()
+        .or_else(|| args["flow_id"].as_str())
+        .or_else(|| args["id"].as_str());
+    let detail = match (argument_summary, intent) {
+        (Some(summary), Some(intent)) if !intent.is_empty() => {
+            Some(format!("{summary} — {intent}"))
+        }
+        (Some(summary), _) => Some(summary.to_string()),
+        (None, Some(intent)) if !intent.is_empty() => Some(intent.to_string()),
+        _ => None,
+    };
+
+    let mut event = AuditEvent::mcp(client_name.unwrap_or("unknown"), action).result(result);
+    if let Some(target) = target {
+        event = event.target(target);
+    }
+    if let Some(detail) = detail {
+        event = event.detail(detail);
+    }
+    audit(event);
 }
 
 /// Read the current proxy port from config (engine listens on this port).

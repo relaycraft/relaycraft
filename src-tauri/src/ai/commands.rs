@@ -155,9 +155,8 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
             log::error!("Failed to store API key: {}", e);
             format!("Failed to store API key: {}", e)
         })?;
-        let _ = crate::logging::write_domain_log(
-            "audit",
-            &format!("Updated AI API key for provider {}", config.provider),
+        crate::audit::audit(
+            crate::audit::AuditEvent::user("ai.key.update").target(config.provider.clone()),
         );
     }
 
