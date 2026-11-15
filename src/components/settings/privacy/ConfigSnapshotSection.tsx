@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { Camera, Download, FileWarning, ShieldAlert, Upload } from "lucide-react";
+import { Camera, Check, Download, FileWarning, ShieldAlert, Upload } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Logger } from "../../../lib/logger";
@@ -359,25 +359,41 @@ export function ConfigSnapshotSection() {
                   {t("privacy.snapshot.machine_bound_hint")}
                 </p>
                 <div className="divide-y divide-border/30 rounded-lg border border-border/40">
-                  {preview.machine_bound.map((entry) => (
-                    <label
-                      key={entry.key}
-                      className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted/30"
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 shrink-0 accent-primary"
-                        checked={checkedMachineBound.has(entry.key)}
-                        onChange={() => toggleMachineBound(entry.key)}
-                      />
-                      <span className="w-40 shrink-0 font-mono font-semibold text-foreground">
-                        {entry.key}
-                      </span>
-                      <ValueCell value={entry.current} tone="current" />
-                      <span className="shrink-0 text-muted-foreground/50">→</span>
-                      <ValueCell value={entry.incoming} tone="incoming" />
-                    </label>
-                  ))}
+                  {preview.machine_bound.map((entry) => {
+                    const checked = checkedMachineBound.has(entry.key);
+                    return (
+                      <label
+                        key={entry.key}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted/30"
+                      >
+                        <span className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                          <input
+                            type="checkbox"
+                            className="peer absolute inset-0 z-10 cursor-pointer opacity-0"
+                            checked={checked}
+                            onChange={() => toggleMachineBound(entry.key)}
+                          />
+                          <span
+                            aria-hidden
+                            className={cn(
+                              "flex h-3.5 w-3.5 items-center justify-center rounded-[3px] border transition-colors",
+                              checked
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/80 bg-muted/40 peer-hover:border-muted-foreground/50",
+                            )}
+                          >
+                            {checked ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : null}
+                          </span>
+                        </span>
+                        <span className="w-40 shrink-0 font-mono font-semibold text-foreground">
+                          {entry.key}
+                        </span>
+                        <ValueCell value={entry.current} tone="current" />
+                        <span className="shrink-0 text-muted-foreground/50">→</span>
+                        <ValueCell value={entry.incoming} tone="incoming" />
+                      </label>
+                    );
+                  })}
                 </div>
               </section>
             )}

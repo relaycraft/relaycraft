@@ -261,28 +261,36 @@ export function AiUsageSection() {
       {/* 7-day chart */}
       {weekRequests > 0 && (
         <div className="px-4 py-3 border-t border-border/30">
-          <div className="flex items-end gap-1.5 h-24">
+          <div className="flex items-end gap-1.5 h-28">
             {chartDays.map((day) => (
-              <div
+              <Tooltip
                 key={day.date}
-                className="flex-1 h-full flex flex-col items-center justify-end gap-1 group"
-                title={t("privacy.ai.chart_day", {
+                side="top"
+                content={t("privacy.ai.chart_day", {
                   date: day.label,
                   tokens: formatTokens(day.tokens),
                   requests: day.requests,
                 })}
+                className="flex-1 h-full"
               >
-                <motion.div
-                  className={cn(
-                    "w-full rounded-t-sm",
-                    day.tokens > 0 ? "bg-primary/70 group-hover:bg-primary" : "bg-muted/40",
-                  )}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${day.heightPct}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-                <span className="text-tiny text-muted-foreground/50">{day.label}</span>
-              </div>
+                <div className="flex h-full w-full flex-col items-center justify-end gap-1 group">
+                  <div className="relative flex w-full flex-1 items-end justify-center">
+                    <span className="pointer-events-none absolute -top-0.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-popover px-1 py-0.5 text-tiny font-mono font-semibold text-popover-foreground opacity-0 shadow-sm ring-1 ring-border/50 transition-opacity group-hover:opacity-100">
+                      {formatTokens(day.tokens)}
+                    </span>
+                    <motion.div
+                      className={cn(
+                        "w-full rounded-t-sm",
+                        day.tokens > 0 ? "bg-primary/70 group-hover:bg-primary" : "bg-muted/40",
+                      )}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${day.heightPct}%` }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                  </div>
+                  <span className="text-tiny text-muted-foreground/50">{day.label}</span>
+                </div>
+              </Tooltip>
             ))}
           </div>
         </div>

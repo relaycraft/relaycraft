@@ -301,9 +301,9 @@ describe("PrivacySettings", () => {
   it("renders AI usage chart and recent requests from get_ai_usage_summary", async () => {
     render(<PrivacySettings />);
 
-    // Seven daily bars render once usage data arrives.
+    // Seven daily bars render once usage data arrives (Tooltip uses aria-label).
     await waitFor(() => {
-      expect(document.querySelectorAll('[title="privacy.ai.chart_day"]')).toHaveLength(7);
+      expect(document.querySelectorAll('[aria-label="privacy.ai.chart_day"]')).toHaveLength(7);
     });
 
     // Recent list shows caller-resolved labels, models and estimated tokens.
