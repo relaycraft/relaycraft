@@ -122,7 +122,7 @@ def _flow_data(flow_id="f1", pid=4321, process_name="curl", process_path="/usr/b
         "_rc": {
             "clientIp": "127.0.0.1",
             "appName": "macos.curl",
-            "appDisplayName": "macOS · curl",
+            "appDisplayName": "curl",
             "pid": pid,
             "processName": process_name,
             "processPath": process_path,

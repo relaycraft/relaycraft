@@ -11,7 +11,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { getReadableUrlPreview } from "../../lib/flowUrl";
 import { formatGrpcListTitle, isGrpcMime } from "../../lib/grpc";
-import { getAppIcon } from "../../lib/sourceIcons";
+import { formatAppSourceTooltip, getAppIcon } from "../../lib/sourceIcons";
 import {
   formatProtocol,
   getDurationBadgeClass,
@@ -132,27 +132,25 @@ export const TrafficListItem = memo(
         {/* App Slot */}
         <div className="w-7 flex justify-center flex-shrink-0">
           {(() => {
-            const processLabel = index.processName
-              ? `${index.processName}${index.pid != null ? ` · PID ${index.pid}` : ""}`
-              : "";
-            const appTooltip = [
-              index.appDisplayName || "",
-              processLabel,
-              index.clientIp ? `(${index.clientIp})` : "",
-            ]
-              .filter(Boolean)
-              .join(" · ");
+            const appTooltip = formatAppSourceTooltip({
+              appDisplayName: index.appDisplayName,
+              appName: index.appName,
+              processName: index.processName,
+              pid: index.pid,
+              clientIp: index.clientIp,
+              isLocal,
+            });
             if (index.appDisplayName) {
               const { Icon, toneClass } = getAppIcon(index.appName);
               return (
-                <Tooltip content={appTooltip} side="bottom">
+                <Tooltip content={appTooltip || index.appDisplayName} side="bottom">
                   <Icon className={`w-3.5 h-3.5 ${toneClass}`} />
                 </Tooltip>
               );
             }
             if (index.processName) {
               return (
-                <Tooltip content={appTooltip} side="bottom">
+                <Tooltip content={appTooltip || index.processName} side="bottom">
                   <AppWindow className="w-3.5 h-3.5 text-muted-foreground/50" />
                 </Tooltip>
               );

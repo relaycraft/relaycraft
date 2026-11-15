@@ -8,7 +8,7 @@ Extracts appName and appDisplayName from:
 
 Output format:
 - appName: machine-readable identifier (e.g. "ios.safari", "android.okhttp")
-- appDisplayName: human-readable label (e.g. "Safari", "Android OkHttp")
+- appDisplayName: short human-readable app label (e.g. "Safari", "OkHttp", "Chrome")
 - platform: detected OS platform (ios/android/macos/windows/linux/unknown)
 """
 
@@ -107,18 +107,6 @@ def _detect_framework(ua: str, platform: str) -> Tuple[str, str]:
     return f"{platform}.unknown", "Unknown"
 
 
-def _platform_display_name(platform: str) -> str:
-    """Get human-readable platform name."""
-    return {
-        "ios": "iOS",
-        "android": "Android",
-        "macos": "macOS",
-        "windows": "Windows",
-        "linux": "Linux",
-        "unknown": "Unknown",
-    }.get(platform, "Unknown")
-
-
 def detect_source(flow) -> Tuple[Optional[str], Optional[str], str]:
     """
     Detect traffic source from a mitmproxy flow.
@@ -144,8 +132,5 @@ def detect_source(flow) -> Tuple[Optional[str], Optional[str], str]:
         if parts and parts[0] != "unknown":
             effective_platform = parts[0]
 
-    # Build display name: "Platform · App"
-    platform_label = _platform_display_name(effective_platform)
-    display_name = f"{platform_label} · {app_display}"
-
-    return app_name, display_name, effective_platform
+    # Short app label only — platform lives in a separate device column / tooltip.
+    return app_name, app_display, effective_platform
