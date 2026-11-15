@@ -685,22 +685,22 @@ async fn handle_tools_call(
         }
     }
 
-    // Write tools are audited for every outcome; read tools only leave an
-    // audit trail when they were denied above.
-    if is_write {
-        let audit_result = match activity.status.as_str() {
-            "success" => crate::audit::AuditResult::Ok,
-            _ => crate::audit::AuditResult::Error,
-        };
-        audit_mcp_call(
-            activity.client_name.as_deref(),
-            name,
-            args,
-            activity.argument_summary.as_deref(),
-            activity.intent.as_deref(),
-            audit_result,
-        );
-    }
+    // Every authenticated tools/call is audited with its outcome — reads
+    // included, since read tools are what exfiltrate captured traffic.
+    // (The unauthorized denial above and unknown-tool early return keep
+    // their own audit paths.)
+    let audit_result = match activity.status.as_str() {
+        "success" => crate::audit::AuditResult::Ok,
+        _ => crate::audit::AuditResult::Error,
+    };
+    audit_mcp_call(
+        activity.client_name.as_deref(),
+        name,
+        args,
+        activity.argument_summary.as_deref(),
+        activity.intent.as_deref(),
+        audit_result,
+    );
 
     let _ = state.app.emit("mcp-activity", &activity);
 

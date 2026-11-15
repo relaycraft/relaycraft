@@ -49,6 +49,8 @@ export interface SnapshotPreview {
   ignored_secrets: string[];
   /** Non-allowlisted keys ignored for forward compatibility. */
   ignored_unknown: string[];
+  /** Incoming `upstream_proxy.url` embeds userinfo — flagged before apply. */
+  proxy_credentials: boolean;
 }
 
 export interface SnapshotImportResult {

@@ -222,6 +222,9 @@ pub struct SnapshotPreview {
     /// Keys not on either allowlist (dotted paths) — forward-compat noise
     /// from newer app versions or foreign files.
     pub ignored_unknown: Vec<String>,
+    /// True when the incoming `upstream_proxy.url` embeds userinfo
+    /// credentials — the preview flags them before apply.
+    pub proxy_credentials: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -555,6 +558,13 @@ pub fn plan_import(
         plugins_not_restored: Vec::new(),
         ignored_secrets: inspected.ignored_secrets.clone(),
         ignored_unknown: inspected.ignored_unknown.clone(),
+        proxy_credentials: inspected
+            .settings
+            .get("upstream_proxy")
+            .and_then(|proxy| proxy.get("url"))
+            .and_then(|url| url.as_str())
+            .map(upstream_url_has_credentials)
+            .unwrap_or(false),
     };
 
     for entry in &inspected.plugins {
@@ -972,6 +982,7 @@ pub async fn preview_config_snapshot(path: String) -> Result<SnapshotPreview, St
 pub async fn apply_config_snapshot(
     path: String,
     apply_machine_bound: Vec<String>,
+    state: tauri::State<'_, crate::ai::AIState>,
 ) -> Result<SnapshotImportResult, String> {
     // Re-validate the file — never trust a serialized preview.
     let inspected = match inspect_snapshot_file(&path) {
@@ -1043,6 +1054,22 @@ pub async fn apply_config_snapshot(
         event = event.meta(serde_json::json!({ "partial": true }));
     }
     crate::audit::audit(event);
+
+    // Sync the cached AI runtime config so requests pick up the imported
+    // provider/model/endpoint without a restart. The disk copy carries no
+    // api_key — `apply_stored_api_key` merges the stored key at request
+    // time. A poisoned lock only skips the refresh, never fails the
+    // already-committed import.
+    if result.error.is_none() {
+        match state.config.lock() {
+            Ok(mut guard) => {
+                *guard = crate::config::load_config_internal()?.ai_config;
+            }
+            Err(e) => {
+                log::warn!("[Snapshot] AI runtime config refresh skipped: {}", e);
+            }
+        }
+    }
 
     Ok(result)
 }

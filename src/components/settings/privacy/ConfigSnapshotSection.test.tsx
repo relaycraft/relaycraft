@@ -3,12 +3,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SnapshotPreview } from "../../../types/snapshot";
 import { ConfigSnapshotSection } from "./ConfigSnapshotSection";
 
-const { invokeMock, saveDialog, openDialog, notify, settingsState, loadConfig } = vi.hoisted(() => {
+const {
+  invokeMock,
+  saveDialog,
+  openDialog,
+  notify,
+  settingsState,
+  loadConfig,
+  pluginState,
+  syncPluginsWithConfig,
+  setAlwaysOnTop,
+  applyVibrancy,
+} = vi.hoisted(() => {
   const settingsState = {
     config: {
       upstream_proxy: { enabled: false, url: "", bypass_domains: "" },
+      always_on_top: false,
     } as any,
   };
+  const pluginState = {} as any;
   return {
     invokeMock: vi.fn(),
     saveDialog: vi.fn(),
@@ -16,11 +29,19 @@ const { invokeMock, saveDialog, openDialog, notify, settingsState, loadConfig } 
     notify: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
     settingsState,
     loadConfig: vi.fn(async () => {}),
+    pluginState,
+    syncPluginsWithConfig: vi.fn(async () => {}),
+    setAlwaysOnTop: vi.fn(async () => {}),
+    applyVibrancy: vi.fn(),
   };
 });
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: invokeMock,
+}));
+
+vi.mock("@tauri-apps/api/window", () => ({
+  getCurrentWindow: () => ({ setAlwaysOnTop }),
 }));
 
 vi.mock("@tauri-apps/plugin-dialog", () => ({
@@ -31,8 +52,20 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 vi.mock("../../../stores/settingsStore", () => {
   const useSettingsStore: any = (selector: any) =>
     selector ? selector({ ...settingsState, loadConfig }) : settingsState;
+  useSettingsStore.getState = () => ({ ...settingsState, loadConfig });
   return { useSettingsStore };
 });
+
+vi.mock("../../../stores/pluginStore", () => {
+  const usePluginStore: any = (selector: any) =>
+    selector ? selector({ ...pluginState, syncPluginsWithConfig }) : pluginState;
+  usePluginStore.getState = () => ({ ...pluginState, syncPluginsWithConfig });
+  return { usePluginStore };
+});
+
+vi.mock("../../../stores/themeStore", () => ({
+  useThemeStore: { getState: () => ({ applyVibrancy }) },
+}));
 
 vi.mock("../../../lib/notify", () => ({ notify }));
 vi.mock("../../../lib/logger", () => ({
@@ -74,6 +107,7 @@ const basePreview: SnapshotPreview = {
   plugins_not_restored: [],
   ignored_secrets: ["settings.ai.apiKey"],
   ignored_unknown: ["settings.future_field"],
+  proxy_credentials: false,
 };
 
 describe("ConfigSnapshotSection", () => {

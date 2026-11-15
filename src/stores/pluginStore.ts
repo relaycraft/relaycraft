@@ -46,6 +46,13 @@ interface PluginStore {
   // Actions
   fetchPlugins: () => Promise<void>;
   togglePlugin: (id: string, enabled: boolean) => Promise<void>;
+  /**
+   * Re-fetch plugins after an external change to `enabled_plugins` (e.g.
+   * a config snapshot import) and load the UI of every newly enabled
+   * plugin. Snapshot merge semantics only ever enable — never disable —
+   * so only enable→load is needed.
+   */
+  syncPluginsWithConfig: () => Promise<void>;
 
   // Market Actions
   fetchMarketPlugins: (type: "plugin" | "theme") => Promise<void>;
@@ -142,6 +149,20 @@ export const usePluginStore = create<PluginStore>((set, get) => ({
       });
 
       throw error;
+    }
+  },
+
+  syncPluginsWithConfig: async () => {
+    const previouslyEnabled = new Set(
+      get()
+        .plugins.filter((p) => p.enabled)
+        .map((p) => p.manifest.id),
+    );
+    await get().fetchPlugins();
+    for (const plugin of get().plugins) {
+      if (plugin.enabled && !previouslyEnabled.has(plugin.manifest.id)) {
+        await loadPluginUI(plugin);
+      }
     }
   },
 

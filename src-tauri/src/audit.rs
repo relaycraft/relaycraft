@@ -29,9 +29,8 @@ pub enum AuditActor {
     User,
     Plugin,
     Mcp,
-    /// Reserved for host-initiated AI actions that are not user requests
-    /// (e.g. background maintenance); `ai.request` events use user/plugin.
-    #[allow(dead_code)]
+    /// AI usage events (`ai.request`); `actor_id` carries the caller label
+    /// ("app", "plugin:<id>", "connection_test").
     Ai,
     System,
 }

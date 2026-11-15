@@ -586,14 +586,12 @@ impl UsageGuard {
     }
 
     /// Emit the single `ai.request` audit event for this request. Runs once
-    /// per guard at finalization; never carries message content.
+    /// per guard at finalization; never carries message content. The actor
+    /// is always `ai`; `actor_id` carries the caller label ("app",
+    /// "plugin:<id>", "connection_test") for attribution.
     fn write_request_audit(&self, record: &AiUsageRecord) {
         use crate::audit::{audit, AuditActor, AuditEvent, AuditResult};
 
-        let (actor, actor_id) = match &self.caller {
-            AiCaller::App | AiCaller::ConnectionTest => (AuditActor::User, None),
-            AiCaller::Plugin(id) => (AuditActor::Plugin, Some(id.clone())),
-        };
         let result = match record.status.as_str() {
             "error" => AuditResult::Error,
             "aborted" => AuditResult::Aborted,
@@ -612,19 +610,14 @@ impl UsageGuard {
             "estimated": record.estimated,
             "durationMs": record.duration_ms,
         });
-        if matches!(self.caller, AiCaller::ConnectionTest) {
-            meta["caller"] = serde_json::json!("connection_test");
-        }
         if let Some(error) = &record.error {
             meta["error"] = serde_json::json!(error);
         }
 
-        let mut event = AuditEvent::new(actor, "ai.request")
+        let event = AuditEvent::new(AuditActor::Ai, "ai.request")
+            .actor_id(self.caller.label())
             .result(result)
             .meta(meta);
-        if let Some(actor_id) = actor_id {
-            event = event.actor_id(actor_id);
-        }
         audit(event);
     }
 }

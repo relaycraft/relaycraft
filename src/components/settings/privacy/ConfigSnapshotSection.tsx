@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { Camera, Download, FileWarning, ShieldAlert, Upload } from "lucide-react";
 import React from "react";
@@ -6,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Logger } from "../../../lib/logger";
 import { notify } from "../../../lib/notify";
 import { cn } from "../../../lib/utils";
+import { usePluginStore } from "../../../stores/pluginStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import type {
   SnapshotExportResult,
@@ -31,6 +33,21 @@ function urlHasCredentials(raw: string | undefined): boolean {
     return value.includes("@");
   }
 }
+
+/**
+ * Applied values that only take effect on engine/app restart — used to
+ * append a restart hint to the apply-success notice. MCP keys are
+ * excluded because `apply_mcp_config` live-reloads them.
+ */
+const RESTART_SETTINGS_KEYS = new Set(["upstream_proxy"]);
+const RESTART_MACHINE_BOUND_KEYS = new Set([
+  "proxy_port",
+  "share_enabled",
+  "share_port",
+  "share_listen_lan",
+  "ssl_insecure",
+  "disable_gpu_acceleration",
+]);
 
 function formatValue(value: unknown): string {
   if (value === undefined) return "—";
@@ -65,6 +82,7 @@ export function ConfigSnapshotSection() {
   const { t } = useTranslation();
   const upstreamProxyUrl = useSettingsStore((state) => state.config.upstream_proxy?.url);
   const loadConfig = useSettingsStore((state) => state.loadConfig);
+  const syncPluginsWithConfig = usePluginStore((state) => state.syncPluginsWithConfig);
 
   const [exporting, setExporting] = React.useState(false);
   const [previewing, setPreviewing] = React.useState(false);
@@ -152,18 +170,51 @@ export function ConfigSnapshotSection() {
         }
         return;
       }
+
+      // Re-read config so settings surfaces reflect the imported values —
+      // same contract as a manual save. Consumers that keep their own
+      // runtime copies are synced below.
+      await loadConfig();
+      const newConfig = useSettingsStore.getState().config;
+
+      // Applied MCP listener fields go live immediately — the same apply
+      // path the MCP settings toggle uses.
+      if (["mcp_enabled", "mcp_port"].some((key) => checkedMachineBound.has(key))) {
+        try {
+          await invoke("apply_mcp_config");
+        } catch (error) {
+          Logger.error("Failed to apply MCP config after snapshot import:", error);
+        }
+      }
+
+      // Window-level settings mirror the manual save paths (idempotent).
+      try {
+        await getCurrentWindow().setAlwaysOnTop(newConfig.always_on_top);
+      } catch (error) {
+        Logger.error("Failed to apply always-on-top after snapshot import:", error);
+      }
+      // Same lazy-import pattern as settingsStore.updateEnableVibrancy —
+      // avoids a circular init between the two stores.
+      import("../../../stores/themeStore")
+        .then((m) => m.useThemeStore.getState().applyVibrancy())
+        .catch((e) => Logger.error("Failed to apply vibrancy:", e));
+
+      // Snapshot merge only ever enables plugins — load the UI of each
+      // newly enabled one.
+      await syncPluginsWithConfig();
+
+      const needsRestart =
+        previewState.preview.settings.some((diff) => RESTART_SETTINGS_KEYS.has(diff.key)) ||
+        Array.from(checkedMachineBound).some((key) => RESTART_MACHINE_BOUND_KEYS.has(key));
       notify.success(
         t("privacy.snapshot.apply_success", {
           applied: result.applied_settings,
           bound: result.applied_machine_bound,
           plugins: result.plugins_enabled,
-        }),
+        }) + (needsRestart ? ` ${t("privacy.snapshot.apply_restart_hint")}` : ""),
         t("privacy.snapshot.title"),
       );
       setPreviewState(null);
-      // Re-read config so settings surfaces reflect the imported values —
-      // same contract as a manual save.
-      loadConfig().catch(() => {});
     } catch (error) {
       Logger.error("Config snapshot apply failed:", error);
       notify.error(String(error), t("privacy.snapshot.title"));
@@ -391,11 +442,17 @@ export function ConfigSnapshotSection() {
             )}
 
             {/* Ignored content notices */}
-            {(preview.ignored_secrets.length > 0 ||
+            {(preview.proxy_credentials ||
+              preview.ignored_secrets.length > 0 ||
               preview.ignored_unknown.length > 0 ||
               preview.invalid_settings.length > 0 ||
               preview.invalid_machine_bound.length > 0) && (
               <section className="space-y-1.5 rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5">
+                {preview.proxy_credentials && (
+                  <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                    {t("privacy.snapshot.incoming_proxy_credentials")}
+                  </p>
+                )}
                 {preview.ignored_secrets.length > 0 && (
                   <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
                     {t("privacy.snapshot.secrets_ignored", {
