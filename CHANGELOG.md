@@ -1,5 +1,22 @@
 # Changelog
 
+# [1.7.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.2...v1.7.0) (2026-11-15)
+
+### Bug Fixes
+
+* accept camelCase groupId in save_all_rules payload ([c5090d6](https://github-relaycraft/relaycraft/relaycraft/commit/c5090d6abfc6d6072404fe8fc9433b552e79ffce))
+* complete post-import sync and audit the unknown MCP tool path ([f164c99](https://github-relaycraft/relaycraft/relaycraft/commit/f164c99417ece2cb1e1871670cd441186feaea4c))
+* require MCP token for all tools and stop exposing the AI key ([2036eb5](https://github-relaycraft/relaycraft/relaycraft/commit/2036eb56230df162effe89e5501c863e24fa935a))
+* sync runtime state after snapshot import and close audit gaps ([fd8875b](https://github-relaycraft/relaycraft/relaycraft/commit/fd8875bda6a21a6cc2acb41a9b5fbf1d8dc268bc))
+
+### Features
+
+* add config snapshot import/export to privacy settings ([d45d04a](https://github-relaycraft/relaycraft/relaycraft/commit/d45d04af51e679da1efbdb29092c8a8d233b16fa))
+* add per-process attribution, filtering, and capture scope ([fd0afb9](https://github-relaycraft/relaycraft/relaycraft/commit/fd0afb9cd394d7a046892b74852def4d8c0a39e5))
+* add security & privacy settings page with AI usage insight ([1acca7e](https://github-relaycraft/relaycraft/relaycraft/commit/1acca7e0e9b9adae79b533c7b1292fffd3859777))
+* record structured audit events and add audit viewer ([69a6319](https://github-relaycraft/relaycraft/relaycraft/commit/69a6319fc365fc2a0a0b119faa1cf43c12e718f1))
+* shorten traffic source labels and use real browser marks ([a1f8509](https://github-relaycraft/relaycraft/relaycraft/commit/a1f8509e5147ab88eb3800306b363ba9fe2ca54e))
+
 ## [1.6.2](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.1...v1.6.2) (2026-10-14)
 
 ### Bug Fixes
