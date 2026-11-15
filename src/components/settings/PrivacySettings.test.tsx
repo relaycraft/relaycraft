@@ -125,11 +125,14 @@ vi.mock("react-i18next", async (importOriginal) => {
 });
 
 vi.mock("framer-motion", () => ({
+  AnimatePresence: ({ children }: any) => <>{children}</>,
   motion: {
     div: ({
       children,
       initial: _initial,
       animate: _animate,
+      exit: _exit,
+      variants: _variants,
       transition: _transition,
       ...props
     }: any) => <div {...props}>{children}</div>,

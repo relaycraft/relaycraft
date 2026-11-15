@@ -47,3 +47,5 @@ export {
 } from "./flow";
 // ==================== Rules 类型 ====================
 export * from "./rules";
+// ==================== Config Snapshot 类型 ====================
+export * from "./snapshot";

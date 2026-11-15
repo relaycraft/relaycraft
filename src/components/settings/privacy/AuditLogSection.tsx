@@ -46,6 +46,9 @@ const KNOWN_ACTIONS = new Set([
   "rules.delete",
   "rules.import",
   "rules.groups.save",
+  "snapshot.export",
+  "snapshot.import",
+  "snapshot.import.denied",
   "note",
 ]);
 

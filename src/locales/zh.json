@@ -923,6 +923,9 @@
         "script.save": "保存脚本",
         "script.toggle": "切换脚本",
         "session.save": "保存会话",
+        "snapshot.export": "导出配置快照",
+        "snapshot.import": "导入配置快照",
+        "snapshot.import.denied": "配置快照导入被拒",
         "theme.install": "安装主题",
         "theme.uninstall": "卸载主题"
       },
@@ -954,6 +957,36 @@
       "retention": "audit.log 超过 10 MB 自动轮转，最多保留 3 个轮转文件。",
       "search_placeholder": "搜索操作、目标或详情…",
       "title": "操作记录"
+    },
+    "snapshot": {
+      "apply": "应用导入",
+      "apply_note": "设置将在下次读取时生效；涉及监听的字段在引擎下次启动时生效。点击应用前不会写入任何内容。",
+      "apply_partial": "配置写入失败且回滚未完全恢复 — config.json 可能处于部分应用状态。",
+      "apply_success": "已应用 {{applied}} 项设置、{{bound}} 项本机字段，启用 {{plugins}} 个插件",
+      "blocked_version": "该快照要求 RelayCraft {{requirement}}（当前 {{current}}），无法导入。",
+      "desc": "将可携带的设置与插件清单导出为单个文件，或在另一台机器上恢复。密钥（AI 密钥、MCP 令牌）永远不会离开本机；端口与监听入口属于本机绑定字段，默认不导入，需逐项勾选。",
+      "empty_diff": "所有设置与本机一致，无需变更。",
+      "export": "导出快照",
+      "export_success": "快照已导出 — {{settings}} 项设置、{{plugins}} 个插件",
+      "file_filter": "RelayCraft 配置快照",
+      "import": "导入快照",
+      "invalid_ignored": "无效字段已跳过：{{keys}}",
+      "machine_bound_hint": "以下字段与本机绑定（端口、监听入口、安全策略），默认不导入。逐项勾选后才会应用。",
+      "plugins_matching": "状态一致",
+      "plugins_missing": "未安装 — 不会自动安装",
+      "plugins_not_restored": "快照中标记为禁用 — 本机保持启用",
+      "plugins_restore": "将启用",
+      "preview_title": "导入预览",
+      "proxy_credentials_warning": "当前上级代理地址包含用户名和密码，快照将原样写入这些信息。",
+      "secrets_ignored": "快照包含密钥字段 — 已忽略：{{keys}}",
+      "sections": {
+        "machine_bound": "本机绑定字段",
+        "plugins": "插件",
+        "settings": "设置变更"
+      },
+      "title": "配置快照",
+      "unchanged": "{{count}} 项设置已一致",
+      "unknown_ignored": "未知字段已忽略：{{keys}}"
     }
   },
   "proxy_store": {

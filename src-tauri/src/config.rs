@@ -256,8 +256,49 @@ pub fn get_themes_dir() -> Result<PathBuf, String> {
     Ok(themes_dir)
 }
 
-fn get_config_path() -> Result<PathBuf, String> {
+pub(crate) fn get_config_path() -> Result<PathBuf, String> {
     Ok(get_config_dir()?.join("config.json"))
+}
+
+/// Write bytes to `path` atomically: stage in a tempfile inside the target
+/// directory (same filesystem), fsync, then rename. A failure leaves any
+/// previous file untouched rather than truncated.
+pub(crate) fn write_file_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+
+    let dir = path
+        .parent()
+        .ok_or_else(|| "Invalid target path".to_string())?;
+    if !dir.exists() {
+        fs::create_dir_all(dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+    }
+    let mut tmp =
+        tempfile::NamedTempFile::new_in(dir).map_err(|e| format!("Failed to stage file: {}", e))?;
+    tmp.write_all(bytes)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+    tmp.as_file()
+        .sync_all()
+        .map_err(|e| format!("Failed to sync file: {}", e))?;
+    tmp.persist(path)
+        .map_err(|e| format!("Failed to finalize file write: {}", e.error))?;
+    Ok(())
+}
+
+/// Serialize `config` and write `config.json` via tempfile + fsync + rename.
+/// Shared by the snapshot import commit path; `save_config` keeps its own
+/// equivalent inline write unchanged.
+pub(crate) fn write_config_atomic(
+    config_path: &std::path::Path,
+    config: &AppConfig,
+) -> Result<(), String> {
+    // Same contract as `save_config`: config.json never carries a plaintext
+    // API key — callers may pass a `load_config_internal` clone still
+    // holding a legacy one.
+    let mut sanitized = config.clone();
+    sanitized.ai_config.api_key = String::new();
+    let json = serde_json::to_string_pretty(&sanitized)
+        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+    write_file_atomic(config_path, json.as_bytes())
 }
 
 #[tauri::command]

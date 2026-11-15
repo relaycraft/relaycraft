@@ -8,6 +8,7 @@ pub mod plugins;
 mod proxy;
 mod rules;
 mod session;
+mod snapshot;
 mod traffic;
 
 use std::sync::{Arc, Mutex};
@@ -440,6 +441,9 @@ pub fn run() {
             mcp::get_mcp_status,
             mcp::get_mcp_token,
             mcp::apply_mcp_config,
+            snapshot::export_config_snapshot,
+            snapshot::preview_config_snapshot,
+            snapshot::apply_config_snapshot,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

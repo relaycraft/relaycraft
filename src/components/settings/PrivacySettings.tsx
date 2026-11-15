@@ -13,6 +13,7 @@ import type { SettingsTabType } from "../../stores/uiStore";
 import { useUIStore } from "../../stores/uiStore";
 import { AiUsageSection } from "./privacy/AiUsageSection";
 import { AuditLogSection } from "./privacy/AuditLogSection";
+import { ConfigSnapshotSection } from "./privacy/ConfigSnapshotSection";
 import { PluginPermissionsSection } from "./privacy/PluginPermissionsSection";
 import { SentToAiSection } from "./privacy/SentToAiSection";
 
@@ -291,6 +292,7 @@ export function PrivacySettings() {
       <AuditLogSection />
       <SentToAiSection />
       <PluginPermissionsSection />
+      <ConfigSnapshotSection />
     </div>
   );
 }
