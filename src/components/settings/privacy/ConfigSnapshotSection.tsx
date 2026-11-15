@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Logger } from "../../../lib/logger";
 import { notify } from "../../../lib/notify";
 import { cn } from "../../../lib/utils";
+import { useAIStore } from "../../../stores/aiStore";
 import { usePluginStore } from "../../../stores/pluginStore";
 import { useSettingsStore } from "../../../stores/settingsStore";
 import type {
@@ -33,21 +34,6 @@ function urlHasCredentials(raw: string | undefined): boolean {
     return value.includes("@");
   }
 }
-
-/**
- * Applied values that only take effect on engine/app restart — used to
- * append a restart hint to the apply-success notice. MCP keys are
- * excluded because `apply_mcp_config` live-reloads them.
- */
-const RESTART_SETTINGS_KEYS = new Set(["upstream_proxy"]);
-const RESTART_MACHINE_BOUND_KEYS = new Set([
-  "proxy_port",
-  "share_enabled",
-  "share_port",
-  "share_listen_lan",
-  "ssl_insecure",
-  "disable_gpu_acceleration",
-]);
 
 function formatValue(value: unknown): string {
   if (value === undefined) return "—";
@@ -203,15 +189,16 @@ export function ConfigSnapshotSection() {
       // newly enabled one.
       await syncPluginsWithConfig();
 
-      const needsRestart =
-        previewState.preview.settings.some((diff) => RESTART_SETTINGS_KEYS.has(diff.key)) ||
-        Array.from(checkedMachineBound).some((key) => RESTART_MACHINE_BOUND_KEYS.has(key));
+      // The AI settings panel keeps its own store copy — re-pull so a
+      // mounted settings view doesn't show stale provider/model values.
+      await useAIStore.getState().loadSettings();
+
       notify.success(
         t("privacy.snapshot.apply_success", {
           applied: result.applied_settings,
           bound: result.applied_machine_bound,
           plugins: result.plugins_enabled,
-        }) + (needsRestart ? ` ${t("privacy.snapshot.apply_restart_hint")}` : ""),
+        }) + (result.restart_required ? ` ${t("privacy.snapshot.apply_restart_hint")}` : ""),
         t("privacy.snapshot.title"),
       );
       setPreviewState(null);

@@ -60,6 +60,19 @@ const MACHINE_BOUND_KEYS: &[&str] = &[
 /// `API-KEY` all match.
 const DENIED_SECRET_KEYS: &[&str] = &["apikey", "mcptoken", "token", "password"];
 
+/// Keys whose applied value only takes effect on engine/app restart — sets
+/// `restart_required` on the import result. MCP keys are excluded: the
+/// frontend live-reloads them via `apply_mcp_config`.
+const RESTART_SETTINGS_KEYS: &[&str] = &["upstream_proxy", "share_upstream_url"];
+const RESTART_MACHINE_BOUND_KEYS: &[&str] = &[
+    "proxy_port",
+    "share_enabled",
+    "share_port",
+    "share_listen_lan",
+    "ssl_insecure",
+    "disable_gpu_acceleration",
+];
+
 // ── Schema (design §3) ───────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -254,6 +267,9 @@ pub struct SnapshotImportResult {
     /// Set when the write itself failed (rollback outcome in `partial`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    /// True when an applied value only takes effect after an engine/app
+    /// restart — computed from the actually-applied keys, not the preview.
+    pub restart_required: bool,
 }
 
 // ── Phase A — inspect (pure, fs-free) ────────────────────────────────────
@@ -701,6 +717,7 @@ pub fn commit_import(
     let mut applied_settings = 0usize;
     let mut unchanged_settings = 0usize;
     let mut skipped_settings = 0usize;
+    let mut restart_required = false;
     for (key, value) in &inspected.settings {
         match apply_setting(&mut new_config, key, value) {
             Ok(()) => {
@@ -708,6 +725,13 @@ pub fn commit_import(
                     unchanged_settings += 1;
                 } else {
                     applied_settings += 1;
+                    // share_upstream_url is inert unless the share listener
+                    // is enabled in the post-import config.
+                    if RESTART_SETTINGS_KEYS.contains(&key.as_str())
+                        && (key != "share_upstream_url" || new_config.share.enabled)
+                    {
+                        restart_required = true;
+                    }
                 }
             }
             Err(e) => {
@@ -724,7 +748,12 @@ pub fn commit_import(
     for key in checked {
         if let Some(value) = inspected.machine_bound.get(key) {
             match apply_machine_bound_key(&mut new_config, key, value) {
-                Ok(()) => applied_machine_bound += 1,
+                Ok(()) => {
+                    applied_machine_bound += 1;
+                    if RESTART_MACHINE_BOUND_KEYS.contains(&key) {
+                        restart_required = true;
+                    }
+                }
                 Err(e) => log::warn!("[Snapshot] skipped machine-bound {}: {}", key, e),
             }
         }
@@ -757,6 +786,8 @@ pub fn commit_import(
             missing_plugins,
             partial: false,
             error: Some(write_err.clone()),
+            // Nothing persisted — no restart hint regardless of what was staged.
+            restart_required: false,
         };
         return match restore_fn() {
             Ok(()) => base,
@@ -782,6 +813,7 @@ pub fn commit_import(
         missing_plugins,
         partial: false,
         error: None,
+        restart_required,
     }
 }
 
@@ -1461,6 +1493,69 @@ mod tests {
         assert!(written.ai_config.enabled);
         assert_eq!(written.language, "en");
         assert_eq!(written.proxy_port, 8866);
+    }
+
+    #[test]
+    fn restart_required_reflects_applied_keys_not_the_file() {
+        // An unchecked restart-relevant key must not raise the hint.
+        let file = snapshot_json(
+            json!({ "language": "en" }),
+            json!({ "proxy_port": 8866 }),
+            json!([]),
+        );
+        let inspected = inspect_snapshot(&file).unwrap();
+        let mut written = None;
+        let result = commit_import(
+            &inspected,
+            &AppConfig::default(),
+            &[],
+            &[],
+            &mut ok_writer(&mut written),
+            &mut || Ok(()),
+        );
+        assert!(!result.restart_required);
+
+        // Checking proxy_port applies it → hint.
+        let result = commit_import(
+            &inspected,
+            &AppConfig::default(),
+            &[],
+            &["proxy_port".to_string()],
+            &mut ok_writer(&mut written),
+            &mut || Ok(()),
+        );
+        assert!(result.restart_required);
+
+        // share_upstream_url only counts while the share listener is on.
+        let share_file = snapshot_json(
+            json!({ "share_upstream_url": "http://localhost:3000" }),
+            json!({}),
+            json!([]),
+        );
+        let inspected = inspect_snapshot(&share_file).unwrap();
+        let mut off = AppConfig::default();
+        off.share.enabled = false;
+        let result = commit_import(
+            &inspected,
+            &off,
+            &[],
+            &[],
+            &mut ok_writer(&mut written),
+            &mut || Ok(()),
+        );
+        assert!(!result.restart_required);
+
+        let mut on = AppConfig::default();
+        on.share.enabled = true;
+        let result = commit_import(
+            &inspected,
+            &on,
+            &[],
+            &[],
+            &mut ok_writer(&mut written),
+            &mut || Ok(()),
+        );
+        assert!(result.restart_required);
     }
 
     // ── requires.host gate ───────────────────────────────────────────────

@@ -14,6 +14,7 @@ const {
   syncPluginsWithConfig,
   setAlwaysOnTop,
   applyVibrancy,
+  aiLoadSettings,
 } = vi.hoisted(() => {
   const settingsState = {
     config: {
@@ -33,6 +34,7 @@ const {
     syncPluginsWithConfig: vi.fn(async () => {}),
     setAlwaysOnTop: vi.fn(async () => {}),
     applyVibrancy: vi.fn(),
+    aiLoadSettings: vi.fn(async () => {}),
   };
 });
 
@@ -66,6 +68,13 @@ vi.mock("../../../stores/pluginStore", () => {
 vi.mock("../../../stores/themeStore", () => ({
   useThemeStore: { getState: () => ({ applyVibrancy }) },
 }));
+
+vi.mock("../../../stores/aiStore", () => {
+  const useAIStore: any = (selector: any) =>
+    selector ? selector({ loadSettings: aiLoadSettings }) : { loadSettings: aiLoadSettings };
+  useAIStore.getState = () => ({ loadSettings: aiLoadSettings });
+  return { useAIStore };
+});
 
 vi.mock("../../../lib/notify", () => ({ notify }));
 vi.mock("../../../lib/logger", () => ({
@@ -139,6 +148,7 @@ describe("ConfigSnapshotSection", () => {
             missing_plugins: 1,
             partial: false,
             error: null,
+            restart_required: false,
           });
         default:
           return Promise.resolve(null);
@@ -219,6 +229,8 @@ describe("ConfigSnapshotSection", () => {
       expect(notify.success).toHaveBeenCalled();
     });
     expect(loadConfig).toHaveBeenCalled();
+    expect(aiLoadSettings).toHaveBeenCalled();
+    expect(syncPluginsWithConfig).toHaveBeenCalled();
   });
 
   it("applies without machine-bound keys when none are checked", async () => {

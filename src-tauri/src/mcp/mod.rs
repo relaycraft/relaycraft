@@ -648,6 +648,15 @@ async fn handle_tools_call(
             activity.phase = "failed".to_string();
             activity.status = "error".to_string();
             activity.error_message = Some(format!("Unknown tool: {name}"));
+            // Authenticated but unknown tool — still an auditable call.
+            audit_mcp_call(
+                activity.client_name.as_deref(),
+                name,
+                args,
+                activity.argument_summary.as_deref(),
+                activity.intent.as_deref(),
+                crate::audit::AuditResult::Error,
+            );
             let _ = state.app.emit("mcp-activity", &activity);
             return Ok(error_result(format!(
                 "Unknown tool: '{name}'. Use tools/list to see available tools."

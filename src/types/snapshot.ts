@@ -64,6 +64,8 @@ export interface SnapshotImportResult {
   partial: boolean;
   /** Set when the config write failed (rollback outcome in `partial`). */
   error?: string | null;
+  /** True when an applied value only takes effect after an engine/app restart. */
+  restart_required: boolean;
 }
 
 export interface SnapshotExportResult {
