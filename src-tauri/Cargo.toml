@@ -20,10 +20,10 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2.11.1", features = ["macos-private-api", "protocol-asset"] }
-tauri-plugin-opener = "2"
-tauri-plugin-dialog = "2"
-tauri-plugin-log = "2"
-tauri-plugin-http = "2"
+tauri-plugin-opener = "2.7.2"
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-log = "2.10.1"
+tauri-plugin-http = "2.8.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
@@ -39,11 +39,11 @@ reqwest = { version = "0.13.3", features = ["json", "gzip", "brotli", "deflate",
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
 url = "2"
-tauri-plugin-fs = "2.4.5"
+tauri-plugin-fs = "2.7.1"
 tokio = { version = "1", features = ["process", "rt-multi-thread", "net", "sync", "time"] }
 axum = { version = "0.8", features = [] }
 tower-http = { version = "0.7", features = ["cors"] }
-tauri-plugin-process = "2"
+tauri-plugin-process = "2.4.0"
 rcgen = "0.14"
 time = { version = "0.3", features = ["macros"] }
 anyhow = "1.0"
