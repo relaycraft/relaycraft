@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.1](https://github-relaycraft/relaycraft/relaycraft/compare/v1.7.0...v1.7.1) (2026-11-15)
+
+### Bug Fixes
+
+* **deps:** align Tauri plugin crates with npm majors ([f4354be](https://github-relaycraft/relaycraft/relaycraft/commit/f4354be3734b2acd92df9edda9f5951c0313a2a3))
+
 # [1.7.0](https://github-relaycraft/relaycraft/relaycraft/compare/v1.6.2...v1.7.0) (2026-11-15)
 
 ### Bug Fixes
