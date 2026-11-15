@@ -79,6 +79,8 @@ If full validation is not run, explicitly report what was skipped.
 - Prefer simpler, industry-common first scopes for protocol features over over-engineered v1 designs.
 - Prefer product-domain language over generic infra jargon (e.g. avoid bare「网关」; frame share/reverse as sharing a composed local environment / environment entry).
 - Ship working capability first, then polish UI/UX, then deepen AI assistance—do not block core function on polish.
+- Commit messages must not include a `Co-Authored-By: Devin` (or other AI assistant) trailer.
+- Security hardening for this local tool must not hurt usability: fix severe issues only, no full plugin isolation, never use the OS keychain for AI keys (its prompts are unacceptable).
 - Rule actions have distinct semantics: Map Local = short-circuit with local content (owns file mode for large/static content); rewrite_body = modify the upstream response. Do not add file mode to rewrite_body; route "serve local file" needs to Map Local.
 
 ## 8) Learned Workspace Facts
