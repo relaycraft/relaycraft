@@ -122,7 +122,7 @@ fn extract_file_paths_from_args(args: &[String]) -> Vec<std::path::PathBuf> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Load existing config or use default; detect corruption so we can notify the user.
-    let config_load_result = config::load_config();
+    let config_load_result = config::load_config_internal();
     let config_was_reset = config_load_result.is_err();
     if config_was_reset {
         log::error!(
@@ -391,11 +391,11 @@ pub fn run() {
             ai::commands::ai_chat_completion_with_tools,
             ai::commands::ai_chat_completion_stream,
             ai::commands::ai_chat_completion_stream_with_tools,
-            ai::commands::get_api_key,
             ai::usage::get_ai_usage_summary,
             ai::usage::get_ai_request_detail,
             ai::usage::clear_ai_usage,
             ai::usage::get_ai_key_status,
+            ai::usage::delete_ai_key,
             plugins::commands::get_plugins,
             plugins::commands::toggle_plugin,
             plugins::commands::read_plugin_file,

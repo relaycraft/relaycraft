@@ -107,7 +107,7 @@ pub async fn storage_clear(plugin_id: &str) -> Result<serde_json::Value, String>
 
 pub async fn host_get_runtime(app: &AppHandle) -> Result<serde_json::Value, String> {
     // No permission required — only exposes non-sensitive runtime info.
-    let config = crate::config::load_config().unwrap_or_default();
+    let config = crate::config::load_config_internal().unwrap_or_default();
     let proxy_status = crate::proxy::get_proxy_status(app.state()).await?;
     let mcp_state = app.state::<crate::mcp::McpState>();
     let mcp_running = mcp_state.running.load(std::sync::atomic::Ordering::Relaxed);

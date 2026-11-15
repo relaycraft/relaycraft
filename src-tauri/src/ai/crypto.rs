@@ -78,7 +78,6 @@ pub fn retrieve_api_key(provider: &str) -> Result<String, Box<dyn Error>> {
 }
 
 /// Delete API key file
-#[allow(dead_code)]
 pub fn delete_api_key(provider: &str) -> Result<(), Box<dyn Error>> {
     let path = get_secret_path(provider)?;
     if path.exists() {

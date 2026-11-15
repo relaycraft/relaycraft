@@ -17,7 +17,7 @@ pub async fn start_proxy(
     state: tauri::State<'_, ProxyState>,
 ) -> Result<String, String> {
     // Load configuration
-    let config = config::load_config()?;
+    let config = config::load_config_internal()?;
 
     // engine.start() is synchronous and can block for up to ~120s while it
     // polls for engine readiness; run it off the async runtime worker.
@@ -49,7 +49,7 @@ pub async fn restart_proxy(
     state: tauri::State<'_, ProxyState>,
 ) -> Result<String, String> {
     // Load configuration
-    let config = config::load_config()?;
+    let config = config::load_config_internal()?;
 
     // Stop first, then start (this reloads scripts). Both engine calls are
     // synchronous and potentially long-blocking, so they run off the async

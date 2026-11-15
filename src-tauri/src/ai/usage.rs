@@ -657,15 +657,64 @@ pub fn clear_ai_usage() -> Result<(), String> {
     Ok(())
 }
 
+/// Provider whose key status is reported: an explicit non-empty override
+/// wins, otherwise the provider of the currently loaded AI config.
+fn key_status_provider(config_provider: &str, requested: Option<String>) -> String {
+    requested
+        .filter(|p| !p.is_empty())
+        .unwrap_or_else(|| config_provider.to_string())
+}
+
 #[tauri::command]
-pub fn get_ai_key_status(state: State<'_, AIState>) -> Result<AiKeyStatus, String> {
-    let provider = lock_unpoisoned(&state.config).provider.clone();
+pub fn get_ai_key_status(
+    state: State<'_, AIState>,
+    provider: Option<String>,
+) -> Result<AiKeyStatus, String> {
+    let provider = key_status_provider(&lock_unpoisoned(&state.config).provider, provider);
     let key = crypto::retrieve_api_key(&provider).unwrap_or_default();
     Ok(AiKeyStatus {
         provider,
         has_key: !key.is_empty(),
         masked: mask_api_key(&key),
     })
+}
+
+/// Blank the in-memory API key only when it belongs to `provider`, so
+/// deleting one provider's key never disturbs another's.
+fn clear_in_memory_key(config: &mut AIConfig, provider: &str) {
+    if config.provider == provider {
+        config.clear_api_key();
+    }
+}
+
+#[tauri::command]
+pub fn delete_ai_key(provider: String, state: State<'_, AIState>) -> Result<(), String> {
+    crypto::delete_api_key(&provider).map_err(|e| e.to_string())?;
+
+    // Drop any in-memory copy so requests stop using the deleted key
+    // immediately instead of only after a restart. The lock is never held
+    // across an await (this command is synchronous).
+    {
+        let mut config = lock_unpoisoned(&state.config);
+        clear_in_memory_key(&mut config, &provider);
+    }
+
+    // Scrub a legacy plaintext key from config.json for the same provider so
+    // it cannot re-seed AIState on next startup. Best-effort: the delete
+    // itself already succeeded.
+    if let Ok(app_config) = crate::config::load_config_internal() {
+        if !app_config.ai_config.api_key.is_empty() && app_config.ai_config.provider == provider {
+            if let Err(e) = crate::config::save_config(app_config) {
+                log::warn!("Failed to scrub legacy AI key from config.json: {}", e);
+            }
+        }
+    }
+
+    let _ = logging::write_domain_log(
+        "audit",
+        &format!("Deleted AI API key for provider {}", provider),
+    );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -930,6 +979,36 @@ mod tests {
         assert!(store.recent.is_empty());
         assert!(store.days.is_empty());
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn clear_in_memory_key_only_clears_matching_provider() {
+        let mut config = AIConfig {
+            provider: "openai".to_string(),
+            api_key: "sk-secret".to_string(),
+            ..AIConfig::default()
+        };
+        // A different provider's delete must not touch this key.
+        clear_in_memory_key(&mut config, "groq");
+        assert_eq!(config.api_key, "sk-secret");
+        // Matching provider clears it.
+        clear_in_memory_key(&mut config, "openai");
+        assert_eq!(config.api_key, "");
+        assert_eq!(config.provider, "openai");
+    }
+
+    #[test]
+    fn key_status_provider_prefers_non_empty_override() {
+        assert_eq!(
+            key_status_provider("openai", Some("groq".to_string())),
+            "groq"
+        );
+        // Empty override falls back to the configured provider.
+        assert_eq!(
+            key_status_provider("openai", Some("".to_string())),
+            "openai"
+        );
+        assert_eq!(key_status_provider("openai", None), "openai");
     }
 
     #[test]

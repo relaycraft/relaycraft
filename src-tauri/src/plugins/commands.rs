@@ -9,7 +9,7 @@ pub async fn get_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, String> {
     let app_dir = config::get_data_dir()?;
     let plugins_dir = app_dir.join("plugins");
 
-    let config = config::load_config().unwrap_or_default();
+    let config = config::load_config_internal().unwrap_or_default();
     let plugins = discover_plugins(&plugins_dir, &config.enabled_plugins);
 
     // Update cache
@@ -22,7 +22,7 @@ pub async fn get_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, String> {
 
 #[tauri::command]
 pub async fn toggle_plugin(id: String, enabled: bool, _app: AppHandle) -> Result<(), String> {
-    let mut config = config::load_config().unwrap_or_default();
+    let mut config = config::load_config_internal().unwrap_or_default();
 
     if enabled {
         // Re-check compatibility against the on-disk manifest before enabling,
@@ -126,7 +126,7 @@ pub async fn uninstall_plugin(
         .ok_or_else(|| format!("Plugin not found: {}", id))?;
 
     // 1. Remove from config
-    let mut config = config::load_config().unwrap_or_default();
+    let mut config = config::load_config_internal().unwrap_or_default();
     if config.enabled_plugins.contains(&id) {
         config.enabled_plugins.retain(|x| x != &id);
         config::save_config(config)?;

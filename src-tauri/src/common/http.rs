@@ -13,7 +13,7 @@ use crate::config;
 pub fn app_client_builder() -> reqwest::ClientBuilder {
     let mut builder = reqwest::Client::builder().no_proxy();
 
-    let upstream = config::load_config()
+    let upstream = config::load_config_internal()
         .map(|c| c.upstream_proxy)
         .unwrap_or_default();
 

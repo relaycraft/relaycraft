@@ -55,7 +55,7 @@ pub async fn plugin_call(
             // Drop the lock before refreshing
             drop(cached);
 
-            let config = config::load_config().unwrap_or_default();
+            let config = config::load_config_internal().unwrap_or_default();
             let plugins = crate::plugins::discover_plugins(&plugins_dir, &config.enabled_plugins);
             let plugin = plugins
                 .iter()

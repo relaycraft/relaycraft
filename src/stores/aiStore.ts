@@ -10,6 +10,7 @@ import type {
   AIProviderProfile,
   AISettings,
   AIToolMessage,
+  AiKeyStatus,
   ChatCompletionChunk,
   Tool,
   ToolChoice,
@@ -76,7 +77,8 @@ interface AIStore {
   testConnection: () => Promise<void>;
   loadProfiles: () => Promise<void>;
   probeCapabilities: () => Promise<AICapabilityProbeResult>;
-  getProviderKey: (provider: string) => Promise<string>;
+  getKeyStatus: (provider?: string) => Promise<AiKeyStatus>;
+  deleteKey: (provider: string) => Promise<void>;
   chatCompletion: (
     messages: AIMessage[],
     temperature?: number,
@@ -163,7 +165,9 @@ export const useAIStore = create<AIStore>((set, get) => {
       set({ loading: true });
       try {
         await invoke("save_ai_config", { config: settings });
-        set({ settings });
+        // The backend stores the key in the local secrets store; never keep
+        // the plaintext value in frontend state afterwards.
+        set({ settings: { ...settings, apiKey: "" } });
       } catch (error) {
         Logger.error("Failed to save AI settings:", error);
         throw error;
@@ -214,12 +218,23 @@ export const useAIStore = create<AIStore>((set, get) => {
       }
     },
 
-    getProviderKey: async (provider: string) => {
+    getKeyStatus: async (provider) => {
       try {
-        return await invoke<string>("get_api_key", { provider });
+        return await invoke<AiKeyStatus>("get_ai_key_status", {
+          provider: provider ?? null,
+        });
       } catch (error) {
-        Logger.error(`Failed to get API key for provider ${provider}:`, error);
-        return "";
+        Logger.error(`Failed to get AI key status for provider ${provider}:`, error);
+        return { provider: provider ?? "", hasKey: false, masked: "" };
+      }
+    },
+
+    deleteKey: async (provider) => {
+      try {
+        await invoke("delete_ai_key", { provider });
+      } catch (error) {
+        Logger.error(`Failed to delete AI key for provider ${provider}:`, error);
+        throw error;
       }
     },
 

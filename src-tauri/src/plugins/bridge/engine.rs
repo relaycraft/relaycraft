@@ -47,7 +47,7 @@ pub async fn traffic_list_flows(args: serde_json::Value) -> Result<serde_json::V
         serde_json::from_value(args).map_err(|e| format!("Invalid Args: {e}"))?;
     let limit = args.limit.min(1000);
 
-    let engine_port = crate::config::load_config()
+    let engine_port = crate::config::load_config_internal()
         .map(|c| c.proxy_port)
         .unwrap_or(9090);
 
@@ -167,7 +167,7 @@ pub async fn traffic_get_flow(args: &serde_json::Value) -> Result<serde_json::Va
         .unwrap_or(128 * 1024)
         .min(2 * 1024 * 1024); // 128 KB default, hard cap 2 MB
 
-    let engine_port = crate::config::load_config()
+    let engine_port = crate::config::load_config_internal()
         .map(|c| c.proxy_port)
         .unwrap_or(9090);
 

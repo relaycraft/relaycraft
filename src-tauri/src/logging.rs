@@ -357,8 +357,19 @@ pub fn write_domain_log(domain: &str, message: &str) -> std::io::Result<()> {
     ))
 }
 
+/// Domains the frontend may write through `log_domain_event`. "audit" is
+/// backend-only: a frontend-reachable writer could forge audit entries, so
+/// it is rejected even though other domains stay open.
+fn frontend_may_write(domain: &str) -> bool {
+    domain != "audit"
+}
+
 #[tauri::command]
 pub fn log_domain_event(domain: String, message: String) {
+    if !frontend_may_write(&domain) {
+        log::warn!("Rejected frontend write to reserved log domain: {}", domain);
+        return;
+    }
     let _ = write_domain_log(&domain, &message);
 }
 
@@ -506,5 +517,16 @@ mod tests {
     fn rotated_path_appends_generation_suffix() {
         let log = Path::new("/tmp/engine.log");
         assert_eq!(rotated_path(log, 1), PathBuf::from("/tmp/engine.log.1"));
+    }
+
+    #[test]
+    fn frontend_cannot_write_audit_domain() {
+        assert!(!frontend_may_write("audit"));
+        for allowed in ["script", "plugin", "proxy", "crash", "app", "custom"] {
+            assert!(
+                frontend_may_write(allowed),
+                "domain should stay writable: {allowed}"
+            );
+        }
     }
 }

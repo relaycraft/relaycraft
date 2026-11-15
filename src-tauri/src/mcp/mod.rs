@@ -3,21 +3,24 @@
 //! Exposes RelayCraft traffic data to AI tools (Claude Desktop, Cursor, etc.)
 //! via the MCP standard. Implements Streamable HTTP transport (POST /mcp).
 //!
-//! Read-only Tools (Phase 1):
+//! Read Tools (Phase 1):
 //!   - list_sessions  — list all recorded sessions
 //!   - list_flows     — query flows in a session with filtering
 //!   - get_flow       — full request/response detail for a single flow
 //!   - search_flows   — keyword search across flow URLs
 //!
-//! Read Tools (Phase 2, no auth required):
+//! Read Tools (Phase 2):
 //!   - get_session_stats — aggregate stats for current session
 //!   - list_rules        — list all proxy rules
 //!
-//! Write Tools (Phase 2, require Bearer token auth):
+//! Write Tools (Phase 2):
 //!   - create_rule       — create a proxy rule (all 6 types)
 //!   - delete_rule       — delete a rule by ID
 //!   - toggle_rule       — enable or disable a rule
 //!   - replay_request    — replay a captured request through the proxy
+//!
+//! Every tools/call requires a Bearer token in the Authorization header;
+//! only initialize / notifications / ping / tools/list are unauthenticated.
 
 use axum::{extract::State, http::HeaderMap, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
@@ -28,7 +31,7 @@ use std::sync::{
 };
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::Emitter;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
 // ─── Token management ────────────────────────────────────────────────────────
 
@@ -77,7 +80,7 @@ pub struct McpState {
     pub running: Arc<AtomicBool>,
     /// Current listening port — std Mutex so it can be read from sync commands
     pub port: Arc<Mutex<u16>>,
-    /// Bearer token required for tools/call (write operations)
+    /// Bearer token required for every tools/call
     pub token: Arc<Mutex<String>>,
     /// Shutdown channel — tokio Mutex since it's only accessed from async tasks
     pub shutdown_tx: Arc<tokio::sync::Mutex<Option<tokio::sync::oneshot::Sender<()>>>>,
@@ -240,7 +243,9 @@ async fn handle_mcp(
     }
 }
 
-/// Write tools that require a valid Bearer token.
+/// Tools whose calls mutate proxy state. Every tools/call requires the
+/// Bearer token; this list only selects which calls get an argument
+/// summary in the activity feed.
 const WRITE_TOOLS: &[&str] = &[
     "create_rule",
     "delete_rule",
@@ -273,7 +278,7 @@ fn handle_initialize() -> Value {
             "name": "relaycraft",
             "version": env!("CARGO_PKG_VERSION")
         },
-        "instructions": "RelayCraft MCP Server lets you read and manipulate HTTP/HTTPS traffic captured by the RelayCraft proxy.\n\nRead tools (no auth required): list_sessions, list_flows, get_flow, search_flows, get_session_stats, list_rules.\n\nWrite tools (require Bearer token in Authorization header): create_rule, delete_rule, toggle_rule, replay_request.\n\nTypical workflow:\n1. Call get_session_stats() to understand the current traffic at a glance.\n2. Call list_flows() with filters (status, domain, method) to find relevant requests.\n3. Call get_flow(id) to inspect the full request/response.\n4. Call create_rule() to immediately add a proxy rule (map_local, map_remote, rewrite_header, rewrite_body, throttle, block_request).\n5. Call replay_request(flow_id) to resend a request through the proxy and verify the fix.\n\nAll write operations take effect immediately and are visible in the RelayCraft UI."
+        "instructions": "RelayCraft MCP Server lets you read and manipulate HTTP/HTTPS traffic captured by the RelayCraft proxy.\n\nAll tools require a Bearer token in the Authorization header — copy it from RelayCraft Settings → Integrations → MCP Server.\n\nRead tools: list_sessions, list_flows, get_flow, search_flows, get_session_stats, list_rules.\n\nWrite tools: create_rule, delete_rule, toggle_rule, replay_request.\n\nTypical workflow:\n1. Call get_session_stats() to understand the current traffic at a glance.\n2. Call list_flows() with filters (status, domain, method) to find relevant requests.\n3. Call get_flow(id) to inspect the full request/response.\n4. Call create_rule() to immediately add a proxy rule (map_local, map_remote, rewrite_header, rewrite_body, throttle, block_request).\n5. Call replay_request(flow_id) to resend a request through the proxy and verify the fix.\n\nAll write operations take effect immediately and are visible in the RelayCraft UI."
     })
 }
 
@@ -525,6 +530,36 @@ fn handle_tools_list() -> Value {
     })
 }
 
+/// The Authorization header must be exactly `Bearer <token>`. An empty
+/// configured token never authorizes anyone.
+fn is_authorized(auth_header: &str, token: &str) -> bool {
+    if token.is_empty() {
+        return false;
+    }
+    auth_header
+        .strip_prefix("Bearer ")
+        .is_some_and(|presented| presented == token)
+}
+
+/// CORS is restricted to loopback origins: the MCP server is a local tool,
+/// so only pages served from localhost / 127.0.0.1 / [::1] may call it
+/// cross-origin. Any port (or none) is accepted; everything else —
+/// including `null` and lookalike hosts — is rejected.
+fn is_loopback_origin(origin: &str) -> bool {
+    let Ok(url) = url::Url::parse(origin) else {
+        return false;
+    };
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return false;
+    }
+    match url.host() {
+        Some(url::Host::Domain(domain)) => domain.eq_ignore_ascii_case("localhost"),
+        Some(url::Host::Ipv4(ip)) => ip == std::net::Ipv4Addr::LOCALHOST,
+        Some(url::Host::Ipv6(ip)) => ip == std::net::Ipv6Addr::LOCALHOST,
+        None => false,
+    }
+}
+
 // ─── tools/call ─────────────────────────────────────────────────────────────
 
 async fn handle_tools_call(
@@ -574,21 +609,17 @@ async fn handle_tools_call(
         let _ = state.app.emit("mcp-activity", &activity);
     }
 
-    // Write tools require a valid Bearer token; read tools are open.
-    if is_write {
-        let expected = format!("Bearer {}", state.token);
-        if auth != expected {
-            activity.phase = "failed".to_string();
-            activity.status = "unauthorized".to_string();
-            activity.error_message =
-                Some("Unauthorized: Bearer token missing or invalid".to_string());
-            let _ = state.app.emit("mcp-activity", &activity);
-            return Ok(error_result(
-                "Unauthorized: this tool requires a Bearer token. \
-                 Copy it from RelayCraft Settings → Integrations → MCP Server."
-                    .to_string(),
-            ));
-        }
+    // Every tools/call requires a valid Bearer token, read or write.
+    if !is_authorized(auth, &state.token) {
+        activity.phase = "failed".to_string();
+        activity.status = "unauthorized".to_string();
+        activity.error_message = Some("Unauthorized: Bearer token missing or invalid".to_string());
+        let _ = state.app.emit("mcp-activity", &activity);
+        return Ok(error_result(
+            "Unauthorized: this tool requires a Bearer token. \
+             Copy it from RelayCraft Settings → Integrations → MCP Server."
+                .to_string(),
+        ));
     }
 
     let engine_port = get_engine_port();
@@ -653,7 +684,7 @@ async fn handle_tools_call(
 
 /// Read the current proxy port from config (engine listens on this port).
 fn get_engine_port() -> u16 {
-    crate::config::load_config()
+    crate::config::load_config_internal()
         .map(|c| c.proxy_port)
         .unwrap_or(9090)
 }
@@ -1312,7 +1343,7 @@ async fn tool_replay_request(
     };
 
     // Build headers: start from original, apply overrides
-    let proxy_port = crate::config::load_config()
+    let proxy_port = crate::config::load_config_internal()
         .map(|c| c.proxy_port)
         .unwrap_or(9090);
     let proxy_url = format!("http://127.0.0.1:{proxy_port}");
@@ -1780,7 +1811,9 @@ async fn run_server(
     };
 
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(AllowOrigin::predicate(|origin, _parts| {
+            origin.to_str().map(is_loopback_origin).unwrap_or(false)
+        }))
         .allow_methods(Any)
         .allow_headers(Any);
 
@@ -1833,7 +1866,7 @@ pub async fn apply_mcp_config(
     state: tauri::State<'_, McpState>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    let config = crate::config::load_config().unwrap_or_default();
+    let config = crate::config::load_config_internal().unwrap_or_default();
     if config.mcp_config.enabled {
         start(&state, config.mcp_config.port, config.proxy_port, app);
     } else {
@@ -1844,7 +1877,7 @@ pub async fn apply_mcp_config(
 
 #[cfg(test)]
 mod tests {
-    use super::flow_matches_process_filter;
+    use super::{flow_matches_process_filter, is_authorized, is_loopback_origin};
     use serde_json::json;
 
     fn flow(pid: Option<i64>, name: Option<&str>) -> serde_json::Value {
@@ -1880,5 +1913,51 @@ mod tests {
         // Empty filter matches everything.
         assert!(flow_matches_process_filter(&f, ""));
         assert!(flow_matches_process_filter(&f, "   "));
+    }
+
+    #[test]
+    fn authorized_requires_exact_bearer_token() {
+        let token = "rc_abc123";
+        assert!(is_authorized("Bearer rc_abc123", token));
+        // Missing header, wrong token, and missing prefix are all rejected.
+        assert!(!is_authorized("", token));
+        assert!(!is_authorized("Bearer wrong", token));
+        assert!(!is_authorized("rc_abc123", token));
+        assert!(!is_authorized("bearer rc_abc123", token));
+        assert!(!is_authorized("Bearer  rc_abc123", token));
+        assert!(!is_authorized("Bearer rc_abc123 ", token));
+        // An empty configured token never authorizes, even a matching header.
+        assert!(!is_authorized("Bearer ", ""));
+        assert!(!is_authorized("Bearer rc_abc123", ""));
+    }
+
+    #[test]
+    fn loopback_origin_allows_local_hosts_only() {
+        for ok in [
+            "http://localhost",
+            "http://localhost:1420",
+            "https://localhost:3000",
+            "http://127.0.0.1",
+            "http://127.0.0.1:8080",
+            "http://[::1]:9090",
+            "https://LOCALHOST",
+        ] {
+            assert!(is_loopback_origin(ok), "expected allow: {ok}");
+        }
+        for rejected in [
+            "",
+            "null",
+            "http://evil.com",
+            "https://evil.com:8443",
+            "http://localhost.evil.com",
+            "http://127.0.0.1.evil.com",
+            "http://192.168.1.5",
+            "ftp://localhost",
+            "file://localhost",
+            "http://user@evil.com",
+            "not a url",
+        ] {
+            assert!(!is_loopback_origin(rejected), "expected reject: {rejected}");
+        }
     }
 }

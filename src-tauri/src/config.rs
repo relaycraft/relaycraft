@@ -266,7 +266,7 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
     let config_path = get_config_path()?;
 
     // Load old config to detect changes
-    let old_config = load_config().unwrap_or_default();
+    let old_config = load_config_internal().unwrap_or_default();
 
     // Sanitize sensitive data before serialization/saving
     config.ai_config.api_key = String::new();
@@ -417,8 +417,10 @@ pub fn save_config(mut config: AppConfig) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-pub fn load_config() -> Result<AppConfig, String> {
+/// Raw on-disk config for internal callers. Legacy files may still carry a
+/// plaintext `ai_config.api_key`; anything serialized to the frontend must go
+/// through the `load_config` command, which strips it.
+pub fn load_config_internal() -> Result<AppConfig, String> {
     let config_path = get_config_path()?;
 
     if !config_path.exists() {
@@ -443,6 +445,13 @@ pub fn load_config() -> Result<AppConfig, String> {
             Err(format!("Config parse error: {}. Backup saved.", e))
         }
     }
+}
+
+#[tauri::command]
+pub fn load_config() -> Result<AppConfig, String> {
+    let mut config = load_config_internal()?;
+    config.ai_config.clear_api_key();
+    Ok(config)
 }
 
 #[tauri::command]
@@ -507,6 +516,31 @@ mod tests {
         assert!(config.confirm_exit);
         assert_eq!(config.enable_vibrancy, cfg!(target_os = "macos"));
         assert!(!config.disable_gpu_acceleration);
+    }
+
+    #[test]
+    fn frontend_config_strips_legacy_plaintext_api_key() {
+        // Legacy config.json files saved before key sanitization could carry
+        // a plaintext ai_config.apiKey; the frontend-facing load_config
+        // command must blank it even though parsing succeeds.
+        let json = r#"{
+            "ssl_insecure": false,
+            "proxy_port": 9090,
+            "ai_config": {
+                "enabled": true,
+                "provider": "openai",
+                "apiKey": "sk-legacy-plaintext",
+                "model": "gpt-test"
+            }
+        }"#;
+        let mut config: AppConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.ai_config.api_key, "sk-legacy-plaintext");
+
+        config.ai_config.clear_api_key();
+        assert_eq!(config.ai_config.api_key, "");
+        // Non-secret fields survive untouched.
+        assert!(config.ai_config.enabled);
+        assert_eq!(config.ai_config.provider, "openai");
     }
 
     #[test]

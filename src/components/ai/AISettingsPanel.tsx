@@ -7,6 +7,7 @@ import {
   RotateCcw,
   RotateCw,
   Save,
+  Trash2,
   Wrench,
   XCircle,
 } from "lucide-react";
@@ -15,6 +16,8 @@ import { useTranslation } from "react-i18next";
 import { AI_PROVIDERS } from "../../lib/ai/providers";
 import { Logger } from "../../lib/logger";
 import { useAIStore } from "../../stores/aiStore";
+import { useUIStore } from "../../stores/uiStore";
+import type { AiKeyStatus } from "../../types/ai";
 import { Tooltip } from "../common/Tooltip";
 import {
   SettingsInput,
@@ -34,6 +37,9 @@ export function AISettingsPanel() {
   const loadProfiles = useAIStore((state) => state.loadProfiles);
   const saveSettings = useAIStore((state) => state.saveSettings);
   const probeCapabilities = useAIStore((state) => state.probeCapabilities);
+  const getKeyStatus = useAIStore((state) => state.getKeyStatus);
+  const deleteKey = useAIStore((state) => state.deleteKey);
+  const showConfirm = useUIStore((state) => state.showConfirm);
   const connectionMessage = useAIStore((state) => state.connectionMessage);
   const profiles = useAIStore((state) => state.profiles);
   const capabilityProbe = useAIStore((state) => state.capabilityProbe);
@@ -42,6 +48,10 @@ export function AISettingsPanel() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const prevConnectionFingerprintRef = useRef("");
+  // The stored key is never sent to the frontend: the input only holds what
+  // the user types, and saved-key state comes from get_ai_key_status.
+  const [typedKey, setTypedKey] = useState("");
+  const [keyStatus, setKeyStatus] = useState<AiKeyStatus | null>(null);
   const [customDraft, setCustomDraft] = useState({
     apiKey: "",
     customEndpoint: "",
@@ -58,31 +68,42 @@ export function AISettingsPanel() {
   }, [settings]);
 
   useEffect(() => {
-    setHasChanges(JSON.stringify(localSettings) !== JSON.stringify(settings));
-  }, [localSettings, settings]);
+    setHasChanges(
+      JSON.stringify(localSettings) !== JSON.stringify(settings) || typedKey.length > 0,
+    );
+  }, [localSettings, settings, typedKey]);
+
+  // Load saved-key status whenever the selected provider changes.
+  useEffect(() => {
+    const provider = localSettings.provider;
+    let cancelled = false;
+    getKeyStatus(provider).then((status) => {
+      if (!cancelled && status.provider === provider) {
+        setKeyStatus(status);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [localSettings.provider, getKeyStatus]);
 
   useEffect(() => {
     if (localSettings.provider !== "custom") {
       return;
     }
     setCustomDraft({
-      apiKey: localSettings.apiKey || "",
+      apiKey: typedKey,
       customEndpoint: localSettings.customEndpoint || "",
       model: localSettings.model || "",
     });
-  }, [
-    localSettings.provider,
-    localSettings.apiKey,
-    localSettings.customEndpoint,
-    localSettings.model,
-  ]);
+  }, [localSettings.provider, localSettings.customEndpoint, localSettings.model, typedKey]);
 
   const connectionFingerprint = JSON.stringify({
     provider: localSettings.provider,
     profileId: localSettings.profileId,
     adapterMode: localSettings.adapterMode,
     customEndpoint: localSettings.customEndpoint,
-    apiKey: localSettings.apiKey,
+    apiKey: typedKey,
     model: localSettings.model,
   });
 
@@ -100,9 +121,17 @@ export function AISettingsPanel() {
     prevConnectionFingerprintRef.current = connectionFingerprint;
   }, [connectionFingerprint, connectionStatus]);
 
+  const refreshKeyStatus = (provider: string) => {
+    getKeyStatus(provider).then(setKeyStatus);
+  };
+
   const handleSave = async () => {
     try {
-      await saveSettings(localSettings);
+      // An empty typed key means "keep the stored one" — the backend only
+      // persists non-empty keys.
+      await saveSettings({ ...localSettings, apiKey: typedKey });
+      setTypedKey("");
+      refreshKeyStatus(localSettings.provider);
     } catch (error) {
       Logger.error("Save error:", error);
       alert(
@@ -124,10 +153,33 @@ export function AISettingsPanel() {
     providerProfiles[0];
   const preferredDefaultModel = activeProfile?.defaultModel || "";
 
+  const handleRemoveKey = () => {
+    const provider = localSettings.provider;
+    showConfirm({
+      title: t("ai.api_key_remove_confirm_title"),
+      message: t("ai.api_key_remove_confirm_msg", { provider }),
+      variant: "warning",
+      confirmLabel: t("ai.api_key_remove"),
+      onConfirm: () => {
+        deleteKey(provider)
+          .then(() => {
+            setTypedKey("");
+            refreshKeyStatus(provider);
+          })
+          .catch((error) => {
+            Logger.error("Failed to remove AI key:", error);
+            alert(t("ai.api_key_remove_failed"));
+          });
+      },
+    });
+  };
+
   const handleTestConnection = async () => {
     try {
       if (hasChanges) {
-        await saveSettings(localSettings);
+        await saveSettings({ ...localSettings, apiKey: typedKey });
+        setTypedKey("");
+        refreshKeyStatus(localSettings.provider);
       }
       await probeCapabilities();
     } catch (error) {
@@ -190,7 +242,7 @@ export function AISettingsPanel() {
                       provider: "custom",
                       profileId: undefined,
                       adapterMode: "openai_compatible",
-                      apiKey: customDraft.apiKey,
+                      apiKey: "",
                       customEndpoint: customDraft.customEndpoint,
                       model: customDraft.model,
                     };
@@ -207,29 +259,9 @@ export function AISettingsPanel() {
                   };
                 });
 
-                // Fetch saved key for this provider
-                useAIStore
-                  .getState()
-                  .getProviderKey(providerId)
-                  .then((key) => {
-                    setLocalSettings((prev) => {
-                      if (prev.provider !== providerId) {
-                        return prev;
-                      }
-
-                      if (providerId === "custom") {
-                        return {
-                          ...prev,
-                          apiKey: key || prev.apiKey || "",
-                        };
-                      }
-
-                      return {
-                        ...prev,
-                        apiKey: key || "",
-                      };
-                    });
-                  });
+                // The key input always starts empty for a different provider;
+                // the custom draft restores only the still-unsaved typed key.
+                setTypedKey(providerId === "custom" ? customDraft.apiKey : "");
               }}
               options={AI_PROVIDERS.map((p) => ({
                 label: t(`ai.providers.${p.id}`) || p.description || p.id,
@@ -285,30 +317,43 @@ export function AISettingsPanel() {
           )}
 
           <SettingsRow title={t("ai.api_key")} description={t("ai.api_key_desc")}>
-            <div className="relative flex items-center gap-2">
-              <SettingsInput
-                className="w-64 pr-8 placeholder:font-sans"
-                type={showApiKey ? "text" : "password"}
-                value={localSettings.apiKey}
-                onChange={(e) =>
-                  setLocalSettings({
-                    ...localSettings,
-                    apiKey: e.target.value,
-                  })
-                }
-                placeholder={
-                  localSettings.provider === "openai"
-                    ? t("ai.connection.placeholder_openai")
-                    : t("ai.connection.placeholder_optional")
-                }
-              />
-              <button
-                type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-2 text-muted-foreground hover:text-foreground"
-              >
-                {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <SettingsInput
+                  className="w-64 pr-8 placeholder:font-sans"
+                  type={showApiKey ? "text" : "password"}
+                  value={typedKey}
+                  onChange={(e) => setTypedKey(e.target.value)}
+                  placeholder={
+                    keyStatus?.hasKey
+                      ? t("ai.api_key_saved_placeholder", { masked: keyStatus.masked })
+                      : localSettings.provider === "openai"
+                        ? t("ai.connection.placeholder_openai")
+                        : t("ai.connection.placeholder_optional")
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-2 text-muted-foreground hover:text-foreground"
+                >
+                  {showApiKey ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+              {keyStatus?.hasKey && (
+                <button
+                  type="button"
+                  onClick={handleRemoveKey}
+                  aria-label={t("ai.api_key_remove")}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </SettingsRow>
 
@@ -451,7 +496,7 @@ export function AISettingsPanel() {
                 onClick={handleTestConnection}
                 disabled={
                   testingConnection ||
-                  (localSettings.provider !== "custom" && !localSettings.apiKey)
+                  (localSettings.provider !== "custom" && !typedKey && !keyStatus?.hasKey)
                 }
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors disabled:opacity-50"
               >

@@ -123,17 +123,11 @@ pub async fn load_ai_config(state: State<'_, AIState>) -> Result<AIConfig, Strin
     normalize_profile_for_provider(&mut config_guard);
     let mut config = config_guard.clone();
 
-    apply_stored_api_key(&mut config);
+    // The API key never leaves the backend in plaintext; the frontend learns
+    // only has_key/masked via get_ai_key_status.
+    config.clear_api_key();
 
     Ok(config)
-}
-
-#[tauri::command]
-pub async fn get_api_key(provider: String) -> Result<String, String> {
-    match crypto::retrieve_api_key(&provider) {
-        Ok(key) => Ok(key),
-        Err(_) => Ok(String::new()), // Return empty string if not found
-    }
 }
 
 #[tauri::command]
@@ -161,6 +155,10 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
             log::error!("Failed to store API key: {}", e);
             format!("Failed to store API key: {}", e)
         })?;
+        let _ = crate::logging::write_domain_log(
+            "audit",
+            &format!("Updated AI API key for provider {}", config.provider),
+        );
     }
 
     // Update in-memory state and persist
@@ -170,7 +168,7 @@ pub async fn save_ai_config(config: AIConfig, state: State<'_, AIState>) -> Resu
         .map_err(|e| format!("Config lock poisoned: {}", e))? = config.clone();
 
     // Persist to config.json
-    let mut app_config = crate::config::load_config().unwrap_or_default();
+    let mut app_config = crate::config::load_config_internal().unwrap_or_default();
     app_config.ai_config = config;
     crate::config::save_config(app_config)?;
 

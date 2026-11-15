@@ -43,7 +43,7 @@ const REGISTRY_CACHE_DIR: &str = "market";
 
 #[command]
 pub async fn plugin_market_fetch(market_type: String) -> Result<RegistryIndex, String> {
-    let config = crate::config::load_config().map_err(|e| e.to_string())?;
+    let config = crate::config::load_config_internal().map_err(|e| e.to_string())?;
 
     // Determine URL and Cache File based on type
     let (registry_url, cache_filename) = if market_type == "theme" {

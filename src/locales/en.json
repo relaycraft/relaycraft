@@ -2,6 +2,11 @@
   "ai": {
     "api_key": "API Key",
     "api_key_desc": "Key for accessing the API",
+    "api_key_remove": "Remove",
+    "api_key_remove_confirm_msg": "This deletes the saved API key for {{provider}}. AI features will stop working until a new key is configured.",
+    "api_key_remove_confirm_title": "Remove API key?",
+    "api_key_remove_failed": "Failed to remove API key",
+    "api_key_saved_placeholder": "Saved: {{masked}} — type a new key to replace it",
     "assistant": {
       "analyzing": "Smart Assistant is thinking...",
       "naming": {
@@ -824,7 +829,7 @@
         "title": "AI Service"
       },
       "mcp": {
-        "local": "Localhost only · port {{port}}",
+        "local": "Local only · port {{port}} · token required",
         "off": "Disabled",
         "title": "MCP Service"
       },

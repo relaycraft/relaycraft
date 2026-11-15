@@ -107,6 +107,12 @@ impl AIConfig {
             .unwrap_or_else(|| "https://api.openai.com/v1".to_string())
     }
 
+    /// Blank the API key before a config value crosses to the frontend.
+    /// The key itself is only ever held in the local secrets store.
+    pub fn clear_api_key(&mut self) {
+        self.api_key = String::new();
+    }
+
     /// Validate configuration
     pub fn validate(&self) -> Result<(), String> {
         // Validation is relaxed - allow saving even without API key
@@ -153,6 +159,18 @@ mod tests {
             config.get_endpoint(),
             "https://open.bigmodel.cn/api/paas/v4"
         );
+    }
+
+    #[test]
+    fn clear_api_key_blanks_frontend_copy() {
+        let mut config = AIConfig {
+            api_key: "sk-secret".to_string(),
+            ..AIConfig::default()
+        };
+        config.clear_api_key();
+        assert_eq!(config.api_key, "");
+        // Other fields are untouched.
+        assert_eq!(config.provider, "openai");
     }
 
     #[test]

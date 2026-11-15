@@ -2,6 +2,11 @@
   "ai": {
     "api_key": "API Key",
     "api_key_desc": "访问 API 所需的密钥",
+    "api_key_remove": "删除",
+    "api_key_remove_confirm_msg": "将删除 {{provider}} 已保存的 API Key。AI 功能将无法使用，直到重新配置密钥。",
+    "api_key_remove_confirm_title": "删除 API Key？",
+    "api_key_remove_failed": "删除 API Key 失败",
+    "api_key_saved_placeholder": "已保存：{{masked}}，输入新值即可替换",
     "assistant": {
       "analyzing": "智能助手正在思考...",
       "naming": {
@@ -824,7 +829,7 @@
         "title": "AI 服务"
       },
       "mcp": {
-        "local": "仅本机 · 端口 {{port}}",
+        "local": "仅本机 · 端口 {{port}} · 调用需令牌",
         "off": "未启用",
         "title": "MCP 服务"
       },

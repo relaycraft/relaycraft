@@ -91,21 +91,6 @@ export const Logger = {
   },
 
   /**
-   * Log to audit.log (Sensitive Operations)
-   */
-  audit: async (message: string, context?: any) => {
-    const msg = context ? `${message} ${JSON.stringify(context)}` : message;
-    consola.withTag("AUDIT").log(message, context || "");
-
-    if (!isTauriRuntimeAvailable()) return;
-    try {
-      await invoke("log_domain_event", { domain: "audit", message: msg });
-    } catch (e) {
-      consola.error("Failed to write audit log", e);
-    }
-  },
-
-  /**
    * Log to script.log (User Script Output)
    */
   script: async (message: string, scriptName?: string) => {

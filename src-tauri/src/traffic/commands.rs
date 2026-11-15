@@ -28,7 +28,7 @@ pub struct ReplayResponse {
 /// Core implementation, usable by both the Tauri command and the plugin bridge.
 pub async fn replay_request_inner(req: ReplayRequest) -> Result<ReplayResponse, String> {
     // Load config to get the current proxy port
-    let config = crate::config::load_config().unwrap_or_default();
+    let config = crate::config::load_config_internal().unwrap_or_default();
     let proxy_url = format!("http://127.0.0.1:{}", config.proxy_port);
 
     let client_builder = reqwest::Client::builder()
@@ -152,7 +152,7 @@ pub struct WsResendRequest {
 /// this command — see AGENTS.md §3.2 #7.
 #[tauri::command]
 pub async fn ws_inject_frame(req: WsResendRequest) -> Result<(), String> {
-    let config = crate::config::load_config().unwrap_or_default();
+    let config = crate::config::load_config_internal().unwrap_or_default();
     let target = format!("http://127.0.0.1:{}/_relay/ws/inject", config.proxy_port);
 
     let client = crate::common::http::loopback_client_builder()
