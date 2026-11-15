@@ -102,6 +102,16 @@ pub async fn import_rules_zip(zip_path: String) -> Result<ImportResult, String> 
         .map_err(|e| e.to_tauri_error())
 }
 
+/// One entry of the `save_all_rules` payload. Accepts both the camelCase
+/// `groupId` the frontend sends and the legacy snake_case spelling.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SaveRuleEntry {
+    rule: Rule,
+    #[serde(alias = "group_id")]
+    group_id: String,
+}
+
 /// Save all rules and groups in a single batch operation
 /// This is more efficient than calling save_rule multiple times
 #[tauri::command]
@@ -109,12 +119,7 @@ pub async fn save_all_rules(rules_json: String, groups_json: String) -> Result<(
     let storage = RuleStorage::from_config().map_err(|e| e.to_tauri_error())?;
 
     // Parse rules with their group IDs
-    #[derive(serde::Deserialize)]
-    struct RuleEntry {
-        rule: Rule,
-        group_id: String,
-    }
-    let entries: Vec<RuleEntry> =
+    let entries: Vec<SaveRuleEntry> =
         serde_json::from_str(&rules_json).map_err(|e| format!("Failed to parse rules: {}", e))?;
 
     // Parse groups
@@ -134,4 +139,47 @@ pub async fn save_all_rules(rules_json: String, groups_json: String) -> Result<(
         .map_err(|e| e.to_tauri_error())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rules::model::{RuleExecution, RuleMatchConfig, RuleType};
+
+    fn test_rule(id: &str, name: &str) -> Rule {
+        Rule {
+            id: id.to_string(),
+            name: name.to_string(),
+            r#type: RuleType::MapLocal,
+            execution: RuleExecution {
+                enabled: true,
+                priority: 0,
+                stop_on_match: None,
+            },
+            match_config: RuleMatchConfig {
+                request: vec![],
+                response: vec![],
+            },
+            actions: vec![],
+            tags: None,
+            metadata: None,
+        }
+    }
+
+    #[test]
+    fn save_rule_entry_accepts_camel_and_snake_group_id() {
+        // ruleStore.ts sends `groupId`; the legacy spelling must keep working.
+        let camel: SaveRuleEntry = serde_json::from_value(serde_json::json!({
+            "rule": test_rule("r1", "Test"),
+            "groupId": "GroupA"
+        }))
+        .unwrap();
+        assert_eq!(camel.group_id, "GroupA");
+        let snake: SaveRuleEntry = serde_json::from_value(serde_json::json!({
+            "rule": test_rule("r1", "Test"),
+            "group_id": "GroupB"
+        }))
+        .unwrap();
+        assert_eq!(snake.group_id, "GroupB");
+    }
 }
