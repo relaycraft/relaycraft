@@ -30,7 +30,8 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "OpenAI".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.openai.com/v1".to_string(),
-            default_model: "gpt-5.6-luna".to_string(),
+            // Mid-tier (not Astra): fast / efficient GPT-6.1 line as of 2026-11.
+            default_model: "gpt-6.1-terra".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -44,7 +45,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "OpenRouter".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://openrouter.ai/api/v1".to_string(),
-            default_model: "google/gemini-3.7-flash".to_string(),
+            default_model: "google/gemini-3.6-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -58,7 +59,8 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "DeepSeek".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.deepseek.com/v1".to_string(),
-            default_model: "deepseek-v4-flash".to_string(),
+            // Current Flash alias (serves V4.1-Flash-1017); not Pro.
+            default_model: "deepseek-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -72,7 +74,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "SiliconFlow".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.siliconflow.cn/v1".to_string(),
-            default_model: "deepseek-ai/DeepSeek-V4-Pro".to_string(),
+            default_model: "deepseek-ai/DeepSeek-V4.1-Flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -86,7 +88,8 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Groq".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.groq.com/openai/v1".to_string(),
-            default_model: "openai/gpt-oss-120b".to_string(),
+            // Smaller OSS weight than 120b — better default latency/cost on Groq.
+            default_model: "openai/gpt-oss-20b".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -100,7 +103,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Alibaba China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
-            default_model: "qwen3.8-max".to_string(),
+            default_model: "qwen3.5-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -114,7 +117,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Alibaba Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1".to_string(),
-            default_model: "qwen3.8-max".to_string(),
+            default_model: "qwen3.5-flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -128,6 +131,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "Moonshot China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.moonshot.cn/v1".to_string(),
+            // K3 remains the primary API SKU after K2 retirement (no Flash alias yet).
             default_model: "kimi-k3".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
@@ -156,7 +160,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "MiniMax China".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.minimaxi.com/v1".to_string(),
-            default_model: "MiniMax-M3".to_string(),
+            default_model: "MiniMax-M3.1-Flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,
@@ -170,7 +174,7 @@ static PROFILES: LazyLock<Vec<AIProviderProfile>> = LazyLock::new(|| {
             label: "MiniMax Global".to_string(),
             adapter_mode: "openai_compatible".to_string(),
             base_url: "https://api.minimax.io/v1".to_string(),
-            default_model: "MiniMax-M3".to_string(),
+            default_model: "MiniMax-M3.1-Flash".to_string(),
             support_level: "verified".to_string(),
             capabilities: ProfileCapabilities {
                 chat: true,

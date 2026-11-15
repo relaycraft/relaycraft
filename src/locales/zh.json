@@ -75,7 +75,7 @@
     "memory_turns": "对话上下文轮数",
     "memory_turns_desc": "AI 将记住最近的对话轮数以保持上下文连贯 (仅在命令中心生效)",
     "model": "模型名称",
-    "model_desc": "例如: gpt-5.6-luna, qwen3.8-max, llama3",
+    "model_desc": "例如: gpt-6.1-terra, deepseek-flash, qwen3.5-flash",
     "model_reset": "恢复默认",
     "provider": "API 提供商",
     "provider_desc": "选择 AI 服务提供商",

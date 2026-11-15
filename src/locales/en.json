@@ -75,7 +75,7 @@
     "memory_turns": "Memory Turns",
     "memory_turns_desc": "Number of recent turns AI will remember for context (Command Center only)",
     "model": "Model Name",
-    "model_desc": "e.g. gpt-5.6-luna, qwen3.8-max, llama3",
+    "model_desc": "e.g. gpt-6.1-terra, deepseek-flash, qwen3.5-flash",
     "model_reset": "Reset Default",
     "provider": "API Provider",
     "provider_desc": "Select AI service provider",

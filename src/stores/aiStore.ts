@@ -124,7 +124,7 @@ export const useAIStore = create<AIStore>((set, get) => {
       adapterMode: "openai_compatible",
       apiKey: "",
       customEndpoint: "",
-      model: "gpt-5.6-luna",
+      model: "gpt-6.1-terra",
       maxTokens: 4096,
       temperature: 0.3,
       enableCaching: true,
