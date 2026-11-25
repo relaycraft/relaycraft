@@ -59,7 +59,7 @@ window-vibrancy = "0.8.0"
 tempfile = "3"
 
 [dev-dependencies]
-rstest = "0.28"
+rstest = "0.29"
 pem = "4.0.0"
 
 [target.'cfg(windows)'.dependencies]
